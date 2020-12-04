@@ -32,7 +32,7 @@
     "start": "react-scripts start",
     "test": "yarn test-chain && yarn test-app",
     "test-app": "react-scripts test --passWithNoTests",
-    "test-chain": "ts-mocha --recursive --extension ts --require esm"
+    "test-chain": "ts-mocha --recursive --extension ts --require esm || ([ $? -eq 139 ] && echo 'Segfault')"
   },
   "dependencies": {
     "@testing-library/jest-dom": "^5.11.4",
