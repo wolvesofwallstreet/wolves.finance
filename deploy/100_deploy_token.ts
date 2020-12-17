@@ -9,6 +9,7 @@
 /* eslint @typescript-eslint/no-var-requires: "off" */
 
 const ethers = require('ethers');
+const fs = require('fs');
 
 require('hardhat-deploy');
 require('hardhat-deploy-ethers');
@@ -24,6 +25,9 @@ const CONTROLLER_CONTRACT = 'Controller';
 const UNIV2_STAKE_FARM_CONTRACT = 'UniV2StakeFarm';
 const BOOSTER_CONTRACT = 'Booster';
 const PRESALE_CONTRACT = 'Crowdsale';
+
+// Path to generated addresses file
+const GENERATED_ADDRESSES = `${__dirname}/../src/config/generated-addresses.json`;
 
 // Helper function
 function log_step(step_string) {
@@ -159,12 +163,13 @@ const func = async function (hardhat_re) {
 
   log_step('Deploying address book');
 
-  await deploy(ADDRESS_BOOK_CONTRACT, {
+  const addressBookReceipt = await deploy(ADDRESS_BOOK_CONTRACT, {
     from: deployer,
     log: true,
     deterministicDeployment: true,
   });
 
+  const ADDRESS_BOOK_ADDRESS = addressBookReceipt.address;
   const ADDRESS_BOOK_INSTANCE = await hardhat_re.ethers.getContract(
     ADDRESS_BOOK_CONTRACT
   );
@@ -299,12 +304,14 @@ const func = async function (hardhat_re) {
 
   log_step('Deploying booster');
 
-  await deploy(BOOSTER_CONTRACT, {
+  const boosterReceipt = await deploy(BOOSTER_CONTRACT, {
     from: deployer,
     log: true,
     args: [deployer],
     deterministicDeployment: true,
   });
+
+  const BOOSTER_ADDRESS = boosterReceipt.address;
 
   //////////////////////////////////////////////////////////////////////////////
   //
@@ -323,7 +330,7 @@ const func = async function (hardhat_re) {
   const OPENING_TIME = Math.round(Date.now() / 1000) + 300; // Now + 5 min
   const CLOSING_TIME = Math.round(Date.now() / 1000) + 600; // Now + 10 min
 
-  await deploy(PRESALE_CONTRACT, {
+  const presaleReceipt = await deploy(PRESALE_CONTRACT, {
     from: deployer,
     args: [
       ADDRESS_REGISTRY_ADDRESS,
@@ -340,6 +347,8 @@ const func = async function (hardhat_re) {
     log: true,
     deterministicDeployment: true,
   });
+
+  const PRESALE_ADDRESS = presaleReceipt.address;
 
   //////////////////////////////////////////////////////////////////////////////
   //
@@ -375,6 +384,28 @@ const func = async function (hardhat_re) {
   //     Until we haven't an automatic process for maintanance
   //     this has to be done every 2 weeks
   //
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // Generate address registry file
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  log_step(`Writing ${GENERATED_ADDRESSES}`);
+
+  const addresses = {
+    hardhat: {
+      addressRegistry: ADDRESS_REGISTRY_ADDRESS,
+      addressBook: ADDRESS_BOOK_ADDRESS,
+      token: TOKEN_ADDRESS,
+      controller: CONTROLLER_ADDRESS,
+      stakeFarm: UNIV2_STAKE_FARM_ADDRESS,
+      booster: BOOSTER_ADDRESS,
+      presale: PRESALE_ADDRESS,
+    },
+  };
+
+  fs.writeFileSync(GENERATED_ADDRESSES, JSON.stringify(addresses, null, '  '));
 };
 
 module.exports = func;

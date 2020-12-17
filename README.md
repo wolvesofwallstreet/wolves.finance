@@ -63,7 +63,7 @@ Launches a local Ethereum VM for testing.
 
 ### `yarn hardhat:deploy`
 
-Performs a test deployment on a temporary network. This causes `addresses.json` to be generated.
+Performs a test deployment on a temporary network. This causes `generated-addresses.json` to be generated.
 
 Contracts can be deployed on the following networks:
 
