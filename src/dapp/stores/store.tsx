@@ -8,6 +8,7 @@
 
 import WalletConnectProvider from '@walletconnect/web3-provider';
 import CrowdsaleAbi from 'abi/contracts/src/crowdsale/Crowdsale.sol/Crowdsale.json';
+import TokenAbi from 'abi/contracts/src/token/Token.sol/WolfToken.json';
 import async from 'async';
 import { ethers } from 'ethers';
 import Emitter from 'events';
@@ -75,6 +76,7 @@ class Store {
   web3Modal: Web3Modal;
   ethersProvider: ethers.providers.Web3Provider | null = null;
   eventProvider: ethers.providers.InfuraWebSocketProvider | null = null;
+  tokenContract: ethers.Contract | null = null;
   presaleContract: ethers.Contract | null = null;
   presaleContractRO: ethers.Contract | null = null;
   networkName = 'rinkeby';
@@ -230,9 +232,10 @@ class Store {
   };
 
   _setupEvents(): boolean {
+    this.eventProvider?.removeAllListeners();
     // Listen to all presale TokensPurchased events
     if (this.presaleContractRO) {
-      const filter = this.presaleContractRO.filters.TokensPurchased(
+      let filter = this.presaleContractRO.filters.TokensPurchased(
         null,
         null,
         null,
@@ -241,6 +244,15 @@ class Store {
       this.eventProvider?.on(filter, (log, event) => {
         this._getPresaleState(undefined);
       });
+      if (this.address !== '') {
+        filter = this.presaleContractRO.filters.TokensClaimed(
+          this.address,
+          null
+        );
+        this.eventProvider?.on(filter, (log, event) => {
+          this._getPresaleState(undefined);
+        });
+      }
     }
     return true;
   }
@@ -275,9 +287,7 @@ class Store {
         };
 
         this.eventProvider?.removeAllListeners();
-
         this.eventProvider = eventProvider;
-        this._setupEvents();
 
         console.log('EventProvider launched on network: ', this.networkName);
         emitter.emit(CONNECTION_CHANGED, {
@@ -286,6 +296,7 @@ class Store {
           networkName: this.networkName,
         } as ConnectResult);
       }
+      this._setupEvents();
     } catch (e) {
       console.log(e);
       if (this.eventProvider) {
@@ -328,6 +339,11 @@ class Store {
       this.presaleContract = new ethers.Contract(
         chainAddresses.presale,
         CrowdsaleAbi,
+        signer
+      );
+      this.tokenContract = new ethers.Contract(
+        chainAddresses.token,
+        TokenAbi,
         signer
       );
       return true;

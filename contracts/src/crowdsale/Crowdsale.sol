@@ -94,7 +94,7 @@ contract Crowdsale is Context, ReentrancyGuard {
    * Event for claim logging
    * @param amountClaimed how many token were claimed
    */
-  event Claimed(uint256 amountClaimed);
+  event TokensClaimed(address indexed beneficiary, uint256 amountClaimed);
 
   // Uniswap Router for providing liquidity
   IUniswapV2Router02 private constant _uniV2Router =
@@ -325,7 +325,7 @@ contract Crowdsale is Context, ReentrancyGuard {
     _lockedTokens[msg.sender] = 0;
 
     _token.transfer(msg.sender, amount);
-    emit Claimed(amount);
+    emit TokensClaimed(msg.sender, amount);
   }
 
   /**
