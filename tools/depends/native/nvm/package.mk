@@ -57,6 +57,14 @@ $(S)/checkout-nvm: $(NVM_BIN_PATH)
 	unset npm_config_prefix && \
 	  export NVM_DIR="$(REPO_DIR_NVM)" && \
 	  source "$(REPO_DIR_NVM)/nvm.sh" && \
-	  nvm install 10
+	  nvm install 10 && \
+	  nvm install 12
+
+	# Set up yarn for Node 12
+	unset npm_config_prefix && \
+	  export NVM_DIR="$(REPO_DIR_NVM)" && \
+	  source "$(REPO_DIR_NVM)/nvm.sh" && \
+	  export NODE_VERSION=12 && \
+	  npm install -g yarn
 
 	touch "$@"

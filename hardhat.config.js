@@ -29,6 +29,23 @@ const config = {
         },
       },
       {
+        // Required by Uniswap
+        version: '0.6.6',
+        settings: {
+          evmVersion: 'berlin',
+          optimizer: {
+            enabled: true,
+            runs: 1000000,
+            details: {
+              yul: true,
+              deduplicate: true,
+              cse: true,
+              constantOptimizer: true,
+            },
+          },
+        },
+      },
+      {
         version: '0.6.5',
         settings: {
           evmVersion: 'berlin',
@@ -47,6 +64,23 @@ const config = {
       {
         // Required by W-ETH
         version: '0.5.17',
+        settings: {
+          evmVersion: 'berlin',
+          optimizer: {
+            enabled: true,
+            runs: 1000000,
+            details: {
+              yul: true,
+              deduplicate: true,
+              cse: true,
+              constantOptimizer: true,
+            },
+          },
+        },
+      },
+      {
+        // Required by Uniswap
+        version: '0.5.16',
         settings: {
           evmVersion: 'berlin',
           optimizer: {

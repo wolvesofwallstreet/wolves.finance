@@ -1,0 +1,167 @@
+From fd132c66c4f26aaa51bd4900c2e5c7153454214b Mon Sep 17 00:00:00 2001
+From: juztamau5 <juztamau5@gmail.com>
+Date: Sat, 26 Dec 2020 18:26:38 -0800
+Subject: [PATCH 2/2] Delegate import locations to dependency management
+
+---
+ contracts/UniswapV2Migrator.sol                       | 2 +-
+ contracts/UniswapV2Router01.sol                       | 4 ++--
+ contracts/UniswapV2Router02.sol                       | 4 ++--
+ contracts/examples/ExampleFlashSwap.sol               | 2 +-
+ contracts/examples/ExampleOracleSimple.sol            | 6 +++---
+ contracts/examples/ExampleSlidingWindowOracle.sol     | 6 +++---
+ contracts/examples/ExampleSwapToPrice.sol             | 6 +++---
+ contracts/libraries/UniswapV2Library.sol              | 4 ++--
+ contracts/libraries/UniswapV2LiquidityMathLibrary.sol | 8 ++++----
+ contracts/libraries/UniswapV2OracleLibrary.sol        | 4 ++--
+ 10 files changed, 23 insertions(+), 23 deletions(-)
+
+diff --git a/contracts/UniswapV2Migrator.sol b/contracts/UniswapV2Migrator.sol
+index fcd6354..2979481 100644
+--- a/contracts/UniswapV2Migrator.sol
++++ b/contracts/UniswapV2Migrator.sol
+@@ -1,6 +1,6 @@
+ pragma solidity =0.6.6;
+ 
+-import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
++import 'depends/uniswap-lib/libraries/TransferHelper.sol';
+ 
+ import './interfaces/IUniswapV2Migrator.sol';
+ import './interfaces/V1/IUniswapV1Factory.sol';
+diff --git a/contracts/UniswapV2Router01.sol b/contracts/UniswapV2Router01.sol
+index 74a4035..f2a4d14 100644
+--- a/contracts/UniswapV2Router01.sol
++++ b/contracts/UniswapV2Router01.sol
+@@ -1,7 +1,7 @@
+ pragma solidity =0.6.6;
+ 
+-import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol';
+-import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
++import 'depends/uniswap-v2-core/interfaces/IUniswapV2Factory.sol';
++import 'depends/uniswap-lib/libraries/TransferHelper.sol';
+ 
+ import './libraries/UniswapV2Library.sol';
+ import './interfaces/IUniswapV2Router01.sol';
+diff --git a/contracts/UniswapV2Router02.sol b/contracts/UniswapV2Router02.sol
+index c57d4e6..4091d30 100644
+--- a/contracts/UniswapV2Router02.sol
++++ b/contracts/UniswapV2Router02.sol
+@@ -1,7 +1,7 @@
+ pragma solidity =0.6.6;
+ 
+-import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol';
+-import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
++import 'depends/uniswap-v2-core/interfaces/IUniswapV2Factory.sol';
++import 'depends/uniswap-lib/libraries/TransferHelper.sol';
+ 
+ import './interfaces/IUniswapV2Router02.sol';
+ import './libraries/UniswapV2Library.sol';
+diff --git a/contracts/examples/ExampleFlashSwap.sol b/contracts/examples/ExampleFlashSwap.sol
+index 17b2781..a3777af 100644
+--- a/contracts/examples/ExampleFlashSwap.sol
++++ b/contracts/examples/ExampleFlashSwap.sol
+@@ -1,6 +1,6 @@
+ pragma solidity =0.6.6;
+ 
+-import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Callee.sol';
++import 'depends/uniswap-v2-core/interfaces/IUniswapV2Callee.sol';
+ 
+ import '../libraries/UniswapV2Library.sol';
+ import '../interfaces/V1/IUniswapV1Factory.sol';
+diff --git a/contracts/examples/ExampleOracleSimple.sol b/contracts/examples/ExampleOracleSimple.sol
+index 6ab916f..60a8e66 100644
+--- a/contracts/examples/ExampleOracleSimple.sol
++++ b/contracts/examples/ExampleOracleSimple.sol
+@@ -1,8 +1,8 @@
+ pragma solidity =0.6.6;
+ 
+-import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol';
+-import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol';
+-import '@uniswap/lib/contracts/libraries/FixedPoint.sol';
++import 'depends/uniswap-v2-core/interfaces/IUniswapV2Factory.sol';
++import 'depends/uniswap-v2-core/interfaces/IUniswapV2Pair.sol';
++import 'depends/uniswap-lib/libraries/FixedPoint.sol';
+ 
+ import '../libraries/UniswapV2OracleLibrary.sol';
+ import '../libraries/UniswapV2Library.sol';
+diff --git a/contracts/examples/ExampleSlidingWindowOracle.sol b/contracts/examples/ExampleSlidingWindowOracle.sol
+index 1b8af30..e270247 100644
+--- a/contracts/examples/ExampleSlidingWindowOracle.sol
++++ b/contracts/examples/ExampleSlidingWindowOracle.sol
+@@ -1,8 +1,8 @@
+ pragma solidity =0.6.6;
+ 
+-import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol';
+-import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol';
+-import '@uniswap/lib/contracts/libraries/FixedPoint.sol';
++import 'depends/uniswap-v2-core/interfaces/IUniswapV2Factory.sol';
++import 'depends/uniswap-v2-core/interfaces/IUniswapV2Pair.sol';
++import 'depends/uniswap-lib/libraries/FixedPoint.sol';
+ 
+ import '../libraries/SafeMath.sol';
+ import '../libraries/UniswapV2Library.sol';
+diff --git a/contracts/examples/ExampleSwapToPrice.sol b/contracts/examples/ExampleSwapToPrice.sol
+index e0f7eef..25cedc5 100644
+--- a/contracts/examples/ExampleSwapToPrice.sol
++++ b/contracts/examples/ExampleSwapToPrice.sol
+@@ -1,8 +1,8 @@
+ pragma solidity =0.6.6;
+ 
+-import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol';
+-import '@uniswap/lib/contracts/libraries/Babylonian.sol';
+-import '@uniswap/lib/contracts/libraries/TransferHelper.sol';
++import 'depends/uniswap-v2-core/interfaces/IUniswapV2Pair.sol';
++import 'depends/uniswap-lib/libraries/Babylonian.sol';
++import 'depends/uniswap-lib/libraries/TransferHelper.sol';
+ 
+ import '../libraries/UniswapV2LiquidityMathLibrary.sol';
+ import '../interfaces/IERC20.sol';
+diff --git a/contracts/libraries/UniswapV2Library.sol b/contracts/libraries/UniswapV2Library.sol
+index 1634585..d6d479c 100644
+--- a/contracts/libraries/UniswapV2Library.sol
++++ b/contracts/libraries/UniswapV2Library.sol
+@@ -1,7 +1,7 @@
+ pragma solidity >=0.5.0;
+ 
+-import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol';
+-import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol';
++import 'depends/uniswap-v2-core/interfaces/IUniswapV2Factory.sol';
++import 'depends/uniswap-v2-core/interfaces/IUniswapV2Pair.sol';
+ 
+ import "./SafeMath.sol";
+ 
+diff --git a/contracts/libraries/UniswapV2LiquidityMathLibrary.sol b/contracts/libraries/UniswapV2LiquidityMathLibrary.sol
+index 9b4afce..c54ad3b 100644
+--- a/contracts/libraries/UniswapV2LiquidityMathLibrary.sol
++++ b/contracts/libraries/UniswapV2LiquidityMathLibrary.sol
+@@ -1,9 +1,9 @@
+ pragma solidity >=0.5.0;
+ 
+-import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol';
+-import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol';
+-import '@uniswap/lib/contracts/libraries/Babylonian.sol';
+-import '@uniswap/lib/contracts/libraries/FullMath.sol';
++import 'depends/uniswap-v2-core/interfaces/IUniswapV2Pair.sol';
++import 'depends/uniswap-v2-core/interfaces/IUniswapV2Factory.sol';
++import 'depends/uniswap-lib/libraries/Babylonian.sol';
++import 'depends/uniswap-lib/libraries/FullMath.sol';
+ 
+ import './SafeMath.sol';
+ import './UniswapV2Library.sol';
+diff --git a/contracts/libraries/UniswapV2OracleLibrary.sol b/contracts/libraries/UniswapV2OracleLibrary.sol
+index 4cff017..ae155bd 100644
+--- a/contracts/libraries/UniswapV2OracleLibrary.sol
++++ b/contracts/libraries/UniswapV2OracleLibrary.sol
+@@ -1,7 +1,7 @@
+ pragma solidity >=0.5.0;
+ 
+-import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol';
+-import '@uniswap/lib/contracts/libraries/FixedPoint.sol';
++import 'depends/uniswap-v2-core/interfaces/IUniswapV2Pair.sol';
++import 'depends/uniswap-lib/libraries/FixedPoint.sol';
+ 
+ // library with helper methods for oracles that are concerned with computing average prices
+ library UniswapV2OracleLibrary {
+-- 
+2.17.1
+

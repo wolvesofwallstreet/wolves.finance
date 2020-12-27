@@ -56,6 +56,9 @@ TEST := 1
 
 include depends/native/canonical-weth/package.mk
 include depends/native/nvm/package.mk
+include depends/native/uniswap-core/package.mk
+include depends/native/uniswap-lib/package.mk
+include depends/native/uniswap-periphery/package.mk
 
 ################################################################################
 #
@@ -71,6 +74,9 @@ include depends/native/nvm/package.mk
 
 CHECKOUT_DEPENDS = \
   $(S)/checkout-nvm \
+  $(S)/checkout-uniswap-core \
+  $(S)/checkout-uniswap-lib \
+  $(S)/checkout-uniswap-periphery \
   $(S)/checkout-weth \
 
 #
@@ -78,6 +84,9 @@ CHECKOUT_DEPENDS = \
 #
 
 BUILD_DEPENDS = \
+  $(S)/build-uniswap-core \
+  $(S)/build-uniswap-lib \
+  $(S)/build-uniswap-periphery \
   $(S)/build-weth \
 
 #
@@ -85,6 +94,9 @@ BUILD_DEPENDS = \
 #
 
 TEST_DEPENDS = \
+  $(S)/test-uniswap-core \
+  $(S)/test-uniswap-lib \
+  $(S)/test-uniswap-periphery \
   $(S)/test-weth \
 
 #
@@ -92,6 +104,9 @@ TEST_DEPENDS = \
 #
 
 INSTALL_DEPENDS = \
+  $(S)/install-uniswap-core \
+  $(S)/install-uniswap-lib \
+  $(S)/install-uniswap-periphery \
   $(S)/install-weth \
 
 #
@@ -108,10 +123,22 @@ install: $(INSTALL_DEPENDS)
 #
 
 .PHONY: nvm
+.PHONY: uniswap-core
+.PHONY: uniswap-lib
+.PHONY: uniswap-periphery
 .PHONY: weth
 
 nvm: \
   $(S)/checkout-nvm
+
+uniswap-core: \
+  $(S)/install-uniswap-core
+
+uniswap-lib: \
+  $(S)/install-uniswap-lib
+
+uniswap-periphery: \
+  $(S)/install-uniswap-periphery
 
 weth: \
   $(S)/install-weth
