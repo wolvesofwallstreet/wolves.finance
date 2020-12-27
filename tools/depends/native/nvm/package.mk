@@ -53,4 +53,10 @@ $(NVM_BIN_PATH): $(S)/.precheckout
 	touch "$@"
 
 $(S)/checkout-nvm: $(NVM_BIN_PATH)
+	# Set up NPM for required Node versions
+	unset npm_config_prefix && \
+	  export NVM_DIR="$(REPO_DIR_NVM)" && \
+	  source "$(REPO_DIR_NVM)/nvm.sh" && \
+	  nvm install 10
+
 	touch "$@"

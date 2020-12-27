@@ -54,6 +54,7 @@ TEST := 1
 #
 ################################################################################
 
+include depends/native/canonical-weth/package.mk
 include depends/native/nvm/package.mk
 
 ################################################################################
@@ -70,24 +71,28 @@ include depends/native/nvm/package.mk
 
 CHECKOUT_DEPENDS = \
   $(S)/checkout-nvm \
+  $(S)/checkout-weth \
 
 #
 # Define targets for "make build"
 #
 
 BUILD_DEPENDS = \
+  $(S)/build-weth \
 
 #
 # Define targets for "make test"
 #
 
 TEST_DEPENDS = \
+  $(S)/test-weth \
 
 #
 # Define targets for "make install"
 #
 
 INSTALL_DEPENDS = \
+  $(S)/install-weth \
 
 #
 # Inject targets
@@ -103,9 +108,13 @@ install: $(INSTALL_DEPENDS)
 #
 
 .PHONY: nvm
+.PHONY: weth
 
 nvm: \
   $(S)/checkout-nvm
+
+weth: \
+  $(S)/install-weth
 
 ################################################################################
 #
