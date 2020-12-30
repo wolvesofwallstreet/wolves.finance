@@ -99,18 +99,27 @@ contract WolfToken is ERC20Capped, AccessControl {
     super._transfer(sender, recipient, amount);
   }
 
-  function _updateUniV2Blacklist() public {
+  /**
+   * Update _uniV2Blacklist by scanning all new pairs listed in UniswapV2,
+   * and blacklist all WOLF related pairs by default.
+   * Only minter and admin role are allowed to enable initial blacklisted
+   * pairs. Goal is to let us initialize uniV2 pairs with a ratio defined
+   * from concept.
+   */
+  function _updateUniV2Blacklist() internal {
     // Scan new UniV2Pairs
     uint256 newPairCount = _uniV2Factory.allPairsLength();
-    for (
-      uint256 current = _uniV2PairsScanned;
-      current < newPairCount;
-      current++
-    ) {
-      IUniswapV2Pair pair = IUniswapV2Pair(_uniV2Factory.allPairs(current));
-      if (pair.token0() == address(this) || pair.token1() == address(this))
-        _uniV2Blacklist[address(pair)] = true;
+    if (newPairCount > _uniV2PairsScanned) {
+      for (
+        uint256 current = _uniV2PairsScanned;
+        current < newPairCount;
+        current++
+      ) {
+        IUniswapV2Pair pair = IUniswapV2Pair(_uniV2Factory.allPairs(current));
+        if (pair.token0() == address(this) || pair.token1() == address(this))
+          _uniV2Blacklist[address(pair)] = true;
+      }
+      _uniV2PairsScanned = newPairCount;
     }
-    _uniV2PairsScanned = newPairCount;
   }
 }
