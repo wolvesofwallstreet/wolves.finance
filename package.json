@@ -24,6 +24,7 @@
     "audit": "audit-ci --moderate --package-manager yarn",
     "build": "react-scripts build",
     "compile": "hardhat compile",
+    "depends": "make -C tools -j 2",
     "deploy": "gh-pages -b master -r https://github.com/wolvesofwallstreet/wolvesofwallstreet.github.io.git -d build",
     "format": "prettier --write . && eslint --fix .",
     "lint": "yarn lint-chain && yarn lint-app",

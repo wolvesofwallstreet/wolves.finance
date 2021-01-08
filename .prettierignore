@@ -9,5 +9,10 @@
 /cache
 /bin
 
+# Depends build chain
+/contracts/depends
+/depends
+/tools
+
 # File for controlling the import order of Hardhat and plugins
 /src/web3/hardhat.ts

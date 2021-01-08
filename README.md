@@ -15,6 +15,11 @@ Installs the Javascript dependencies of the project.
 Audits installed Javascript dependencies for vulnerabilities.\
 Use `yarn run audit` when running on CI infrastructure.
 
+### `yarn depends TEST=0`
+
+Invokes the dependency build system and installs built depends.
+Omit `TEST=0` to also run the test cases for depends.
+
 ### `yarn compile`
 
 Compiles the smart contracts.
