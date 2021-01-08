@@ -54,6 +54,8 @@ TEST := 1
 #
 ################################################################################
 
+include depends/native/nvm/package.mk
+
 ################################################################################
 #
 # Build system targets
@@ -67,6 +69,7 @@ TEST := 1
 #
 
 CHECKOUT_DEPENDS = \
+  $(S)/checkout-nvm \
 
 #
 # Define targets for "make build"
@@ -98,6 +101,11 @@ install: $(INSTALL_DEPENDS)
 #
 # Define targets for building individual depends via "make <depend>"
 #
+
+.PHONY: nvm
+
+nvm: \
+  $(S)/checkout-nvm
 
 ################################################################################
 #
