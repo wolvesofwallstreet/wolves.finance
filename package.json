@@ -29,6 +29,7 @@
     "lint": "yarn lint-chain && yarn lint-app",
     "lint-app": "prettier --check . && eslint .",
     "lint-chain": "solhint 'contracts/interfaces/*.sol' 'contracts/src/*.sol'",
+    "postinstall": "bash tools/patch-depends.sh",
     "start": "react-scripts start",
     "test": "yarn test-chain && yarn test-app",
     "test-app": "react-scripts test --passWithNoTests",
@@ -60,6 +61,7 @@
     "web3modal": "^1.9.2"
   },
   "devDependencies": {
+    "@ethersproject/providers": "^5.0.19",
     "@openzeppelin/contracts": "^3.3.0",
     "@types/async": "^3.2.5",
     "@types/chai": "^4.2.14",

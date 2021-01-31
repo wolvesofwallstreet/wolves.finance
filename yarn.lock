@@ -1370,7 +1370,7 @@
   dependencies:
     "@ethersproject/logger" "^5.0.8"
 
-"@ethersproject/providers@5.0.19":
+"@ethersproject/providers@5.0.19", "@ethersproject/providers@^5.0.19":
   version "5.0.19"
   resolved "https://registry.yarnpkg.com/@ethersproject/providers/-/providers-5.0.19.tgz#94c8f1a86755ee4187911fc6250e94b1116c089a"
   integrity sha512-G+flo1jK1y/rvQy6b71+Nu7qOlkOKz+XqpgqFMZslkCzGuzQRmk9Qp7Ln4soK8RSyP1e5TCujaRf1H+EZahoaw==

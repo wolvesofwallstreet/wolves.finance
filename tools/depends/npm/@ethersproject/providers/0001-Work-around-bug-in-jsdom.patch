@@ -1,0 +1,105 @@
+From 5d013559c0cea95fe6cf28ae385e2837de29906f Mon Sep 17 00:00:00 2001
+From: juztamau5 <juztamau5@gmail.com>
+Date: Wed, 27 Jan 2021 07:47:30 -0800
+Subject: [PATCH] Work around bug in jsdom
+
+Providers don't check setTimeout() results to be null, because according to
+the standard they can't be null.
+
+However, the timers of `jest-environment-jsdom`, and possibly `jsdom` itself,
+don't perform correctly and return null instead of an open handle.
+
+See:
+
+  * https://github.com/facebook/jest/issues/7933
+  * https://github.com/bugsnag/bugsnag-js/issues/452
+---
+ lib.esm/base-provider.js      | 2 +-
+ lib.esm/websocket-provider.js | 2 +-
+ lib/base-provider.js          | 2 +-
+ lib/websocket-provider.js     | 2 +-
+ src.ts/base-provider.ts       | 2 +-
+ src.ts/websocket-provider.ts  | 2 +-
+ 6 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/lib.esm/base-provider.js b/lib.esm/base-provider.js
+index 3dfca54..ec66441 100644
+--- a/lib.esm/base-provider.js
++++ b/lib.esm/base-provider.js
+@@ -791,7 +791,7 @@ export class BaseProvider extends Provider {
+                         this.removeListener(transactionHash, handler);
+                         reject(logger.makeError("timeout exceeded", Logger.errors.TIMEOUT, { timeout: timeout }));
+                     }, timeout);
+-                    if (timer.unref) {
++                    if (timer && timer.unref) {
+                         timer.unref();
+                     }
+                 }
+diff --git a/lib.esm/websocket-provider.js b/lib.esm/websocket-provider.js
+index 33ff50c..4439fac 100644
+--- a/lib.esm/websocket-provider.js
++++ b/lib.esm/websocket-provider.js
+@@ -108,7 +108,7 @@ export class WebSocketProvider extends JsonRpcProvider {
+         const fauxPoll = setInterval(() => {
+             this.emit("poll");
+         }, 1000);
+-        if (fauxPoll.unref) {
++        if (fauxPoll && fauxPoll.unref) {
+             fauxPoll.unref();
+         }
+     }
+diff --git a/lib/base-provider.js b/lib/base-provider.js
+index 2ef93b4..f604dcb 100644
+--- a/lib/base-provider.js
++++ b/lib/base-provider.js
+@@ -958,7 +958,7 @@ var BaseProvider = /** @class */ (function (_super) {
+                                         _this.removeListener(transactionHash, handler);
+                                         reject(logger.makeError("timeout exceeded", logger_1.Logger.errors.TIMEOUT, { timeout: timeout }));
+                                     }, timeout);
+-                                    if (timer.unref) {
++                                    if (timer && timer.unref) {
+                                         timer.unref();
+                                     }
+                                 }
+diff --git a/lib/websocket-provider.js b/lib/websocket-provider.js
+index aa3fa34..a7a6884 100644
+--- a/lib/websocket-provider.js
++++ b/lib/websocket-provider.js
+@@ -151,7 +151,7 @@ var WebSocketProvider = /** @class */ (function (_super) {
+         var fauxPoll = setInterval(function () {
+             _this.emit("poll");
+         }, 1000);
+-        if (fauxPoll.unref) {
++        if (fauxPoll && fauxPoll.unref) {
+             fauxPoll.unref();
+         }
+         return _this;
+diff --git a/src.ts/base-provider.ts b/src.ts/base-provider.ts
+index 3b59b7e..0348ad6 100644
+--- a/src.ts/base-provider.ts
++++ b/src.ts/base-provider.ts
+@@ -959,7 +959,7 @@ export class BaseProvider extends Provider implements EnsProvider {
+                     this.removeListener(transactionHash, handler);
+                     reject(logger.makeError("timeout exceeded", Logger.errors.TIMEOUT, { timeout: timeout }));
+                 }, timeout);
+-                if (timer.unref) { timer.unref(); }
++                if (timer && timer.unref) { timer.unref(); }
+             }
+         });
+     }
+diff --git a/src.ts/websocket-provider.ts b/src.ts/websocket-provider.ts
+index cfa8239..40b9b1e 100644
+--- a/src.ts/websocket-provider.ts
++++ b/src.ts/websocket-provider.ts
+@@ -141,7 +141,7 @@ export class WebSocketProvider extends JsonRpcProvider {
+         const fauxPoll = setInterval(() => {
+             this.emit("poll");
+         }, 1000);
+-        if (fauxPoll.unref) { fauxPoll.unref(); }
++        if (fauxPoll && fauxPoll.unref) { fauxPoll.unref(); }
+     }
+ 
+     detectNetwork(): Promise<Network> {
+-- 
+2.17.1
+
