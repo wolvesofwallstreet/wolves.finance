@@ -17,6 +17,7 @@ import React from 'react';
 import Web3Modal from 'web3modal';
 
 import { addresses } from '../config/addresses';
+import { INFURA_API_KEY } from '../config/environment';
 import { privateNetwork } from '../config/networks';
 import {
   CONNECTION_CHANGED,
@@ -96,7 +97,7 @@ class Store {
         walletconnect: {
           package: WalletConnectProvider,
           options: {
-            infuraId: process.env.REACT_APP_INFURA_ID,
+            infuraId: INFURA_API_KEY,
           },
         },
       },
@@ -286,7 +287,7 @@ class Store {
         } else {
           eventProvider = ethers.providers.InfuraProvider.getWebSocketProvider(
             this.networkName,
-            process.env.REACT_APP_INFURA_ID
+            INFURA_API_KEY
           );
         }
         if (!this.chainId)

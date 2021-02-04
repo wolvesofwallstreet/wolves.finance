@@ -6,6 +6,12 @@
 #
 #   https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
 #
+# This workflow requires the following GitHub Actions secrets:
+#
+#   * INFURA_API_KEY: Your API key for Infura. Obtain one at https://infura.io/
+#   * PRIVATE_KEY: The wallet private key or mnemonic for determing the accounts
+#     to use for transactions
+#
 ################################################################################
 
 name: Node.js CI
@@ -72,6 +78,9 @@ jobs:
 
       - name: yarn test
         run: yarn test
+        env:
+          CI_INFURA_API_KEY: ${{ secrets.INFURA_API_KEY }}
+          CI_PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
 
       - name: yarn build
         run: yarn build
