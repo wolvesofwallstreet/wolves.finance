@@ -6,6 +6,9 @@
  * See the file LICENSES/README.md for more information.
  */
 
+import 'dotenv-defaults/config';
+
+import HDWalletProvider from '@truffle/hdwallet-provider';
 import WalletConnectProvider from '@walletconnect/web3-provider';
 import CrowdsaleAbi from 'abi/contracts/src/crowdsale/Crowdsale.sol/Crowdsale.json';
 import TokenAbi from 'abi/contracts/src/token/Token.sol/WowsToken.json';
@@ -136,17 +139,33 @@ class Store {
         await this.disconnect(false);
       }
 
-      let ethersProvider: ethers.providers.JsonRpcProvider;
-      if (this.networkName === 'private') {
+      let ethersProvider:
+        | ethers.providers.JsonRpcProvider
+        | ethers.providers.Web3Provider;
+
+      const walletSecret = process.env.PRIVATE_KEY || process.env.MNEMONIC;
+      if (walletSecret !== undefined) {
+        // In node-like environments that provide a wallet secret, use HDWallet
+        // provider
+        const web3Provider = new HDWalletProvider(
+          walletSecret,
+          `https://${this.networkName}.infura.io/v3/${process.env.INFURA_API_KEY}`
+        );
+        ethersProvider = new ethers.providers.Web3Provider(web3Provider);
+      } else if (this.networkName === 'private') {
+        // If private network was specified in the URL bar, use JSON-RPC
+        // provider
         ethersProvider = new ethers.providers.JsonRpcProvider(
           'http://' + privateNetwork
         );
       } else {
+        // For web browsers not on a private network, use web3modal
         const web3Provider = await this.web3Modal.connect();
         await this.subscribeProvider(web3Provider);
 
         ethersProvider = new ethers.providers.Web3Provider(web3Provider);
       }
+
       const accounts = await ethersProvider.listAccounts();
       this.address = accounts[0];
       const network = await ethersProvider.getNetwork();
@@ -289,6 +308,7 @@ class Store {
             process.env.INFURA_API_KEY
           );
         }
+
         if (!this.chainId)
           this.chainId = (await eventProvider.getNetwork()).chainId;
 
