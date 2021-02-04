@@ -96,7 +96,7 @@ class Store {
         walletconnect: {
           package: WalletConnectProvider,
           options: {
-            infuraId: process.env.REACT_APP_INFURA_ID,
+            infuraId: process.env.INFURA_API_KEY,
           },
         },
       },
@@ -286,7 +286,7 @@ class Store {
         } else {
           eventProvider = ethers.providers.InfuraProvider.getWebSocketProvider(
             this.networkName,
-            process.env.REACT_APP_INFURA_ID
+            process.env.INFURA_API_KEY
           );
         }
         if (!this.chainId)
