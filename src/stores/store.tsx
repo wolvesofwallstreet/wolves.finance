@@ -6,6 +6,7 @@
  * See the file LICENSES/README.md for more information.
  */
 
+import HDWalletProvider from '@truffle/hdwallet-provider';
 import WalletConnectProvider from '@walletconnect/web3-provider';
 import CrowdsaleAbi from 'abi/contracts/src/crowdsale/Crowdsale.sol/Crowdsale.json';
 import TokenAbi from 'abi/contracts/src/token/Token.sol/WowsToken.json';
@@ -17,7 +18,7 @@ import React from 'react';
 import Web3Modal from 'web3modal';
 
 import { addresses } from '../config/addresses';
-import { INFURA_API_KEY } from '../config/environment';
+import { INFURA_API_KEY, PRIVATE_KEY } from '../config/environment';
 import { privateNetwork } from '../config/networks';
 import {
   CONNECTION_CHANGED,
@@ -137,17 +138,37 @@ class Store {
         await this.disconnect(false);
       }
 
-      let ethersProvider: ethers.providers.JsonRpcProvider;
-      if (this.networkName === 'private') {
+      let ethersProvider:
+        | ethers.providers.JsonRpcProvider
+        | ethers.providers.Web3Provider;
+
+      // In node-like environments that provide a wallet secret, use HDWallet
+      // provider
+      if (PRIVATE_KEY !== undefined) {
+        if (!INFURA_API_KEY) {
+          throw new Error('INFURA_API_KEY is required');
+        }
+
+        const web3Provider = new HDWalletProvider(
+          PRIVATE_KEY,
+          `https://${this.networkName}.infura.io/v3/${INFURA_API_KEY}`
+        );
+
+        ethersProvider = new ethers.providers.Web3Provider(web3Provider);
+      } else if (this.networkName === 'private') {
+        // If private network was specified in the URL bar, use JSON-RPC
+        // provider
         ethersProvider = new ethers.providers.JsonRpcProvider(
           'http://' + privateNetwork
         );
       } else {
+        // For web browsers not on a private network, use web3modal
         const web3Provider = await this.web3Modal.connect();
         await this.subscribeProvider(web3Provider);
 
         ethersProvider = new ethers.providers.Web3Provider(web3Provider);
       }
+
       const accounts = await ethersProvider.listAccounts();
       this.address = accounts[0];
       const network = await ethersProvider.getNetwork();
@@ -290,6 +311,7 @@ class Store {
             INFURA_API_KEY
           );
         }
+
         if (!this.chainId)
           this.chainId = (await eventProvider.getNetwork()).chainId;
 

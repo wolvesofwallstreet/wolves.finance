@@ -32,7 +32,7 @@
     "postinstall": "bash tools/patch-depends.sh",
     "start": "react-scripts start",
     "test": "yarn test-chain && yarn test-app",
-    "test-app": "react-scripts test --passWithNoTests",
+    "test-app": "react-scripts test --passWithNoTests --forceExit --detectOpenHandles",
     "test-chain": "ts-mocha --recursive --extension ts --require esm || ([ $? -eq 139 ] && echo 'Segfault')"
   },
   "dependencies": {
@@ -63,6 +63,7 @@
   "devDependencies": {
     "@ethersproject/providers": "^5.0.19",
     "@openzeppelin/contracts": "^3.3.0",
+    "@truffle/hdwallet-provider": "^1.2.1",
     "@types/async": "^3.2.5",
     "@types/chai": "^4.2.14",
     "@types/flux": "^3.1.9",
@@ -79,6 +80,7 @@
     "esm": "^3.2.25",
     "hardhat": "^2.0.8",
     "hardhat-abi-exporter": "^2.0.8",
+    "jest-environment-jsdom": "25",
     "mocha": "^8.2.1",
     "prettier": "^2.2.1",
     "prettier-plugin-pkg": "^0.8.0",
