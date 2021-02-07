@@ -12,6 +12,7 @@ const env = require('./src/config/environment');
 
 // Inject Hardhat plugins
 require('@nomiclabs/hardhat-ethers');
+require('@nomiclabs/hardhat-etherscan');
 require('hardhat-abi-exporter');
 require('hardhat-deploy');
 require('hardhat-deploy-ethers');
@@ -150,6 +151,9 @@ const config = {
       url: `https://ropsten.infura.io/v3/${env.INFURA_API_KEY}`,
       accounts: TESTNET_ACCOUNTS,
     },
+  },
+  etherscan: {
+    apiKey: env.ETHERSCAN_API_KEY,
   },
   paths: {
     sources: './contracts',

@@ -73,6 +73,17 @@ Contracts can be deployed on the following networks:
 - `yarn kovan:deploy`
 - `yarn goerli:deploy`
 
+### `yarn <network>:verify`
+
+Verifies contracts with Etherscan on the given network.
+Set the `ETHERSCAN_API_KEY` variable in your .env file.
+Contracts can be verified on the following networks:
+
+- `yarn rinkeby:verify`
+- `yarn ropsten:verify`
+- `yarn kovan:verify`
+- `yarn goerli:verify`
+
 ## Deployment script naming scheme
 
 Deployment scripts are executed by Hardhat in lexicographic order. Number

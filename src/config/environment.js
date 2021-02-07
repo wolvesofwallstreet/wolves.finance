@@ -23,6 +23,8 @@ const INFURA_API_KEY =
   process.env.CI_INFURA_API_KEY ||
   process.env.REACT_APP_INFURA_ID ||
   process.env.INFURA_API_KEY;
+const ETHERSCAN_API_KEY =
+  process.env.CI_ETHERSCAN_API_KEY || process.env.ETHERSCAN_API_KEY;
 const DEPLOYER_WALLET =
   process.env.CI_DEPLOYER_WALLET || process.env.DEPLOYER_WALLET;
 const MARKETING_WALLET =
@@ -32,6 +34,7 @@ const TEST_WALLET = process.env.CI_TEST_WALLET || process.env.TEST_WALLET;
 
 module.exports = {
   INFURA_API_KEY,
+  ETHERSCAN_API_KEY,
   DEPLOYER_WALLET,
   MARKETING_WALLET,
   TEAM_WALLET,
