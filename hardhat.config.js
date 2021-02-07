@@ -6,10 +6,39 @@
  * See the file LICENSES/README.md for more information.
  */
 
+/* eslint @typescript-eslint/no-var-requires: "off" */
+
+const env = require('./src/config/environment');
+
 // Inject Hardhat plugins
+require('@nomiclabs/hardhat-ethers');
 require('hardhat-abi-exporter');
+require('hardhat-deploy');
+require('hardhat-deploy-ethers');
+
+// Testnet accounts
+const TESTNET_ACCOUNTS = [
+  env.DEPLOYER_WALLET,
+  env.MARKETING_WALLET,
+  env.TEAM_WALLET,
+  env.TEST_WALLET,
+].filter(Boolean);
 
 const config = {
+  namedAccounts: {
+    deployer: {
+      default: 0,
+    },
+    marketingWallet: {
+      default: 1,
+    },
+    teamWallet: {
+      default: 2,
+    },
+    testUser: {
+      default: 3,
+    },
+  },
   solidity: {
     compilers: [
       {
@@ -102,12 +131,44 @@ const config = {
     hardhat: {
       tags: ['test', 'local'],
     },
+    localhost: {
+      url: 'http://localhost:8545',
+    },
+    goerli: {
+      url: `https://goerli.infura.io/v3/${env.INFURA_API_KEY}`,
+      accounts: TESTNET_ACCOUNTS,
+    },
+    kovan: {
+      url: `https://kovan.infura.io/v3/${env.INFURA_API_KEY}`,
+      accounts: TESTNET_ACCOUNTS,
+    },
+    rinkeby: {
+      url: `https://rinkeby.infura.io/v3/${env.INFURA_API_KEY}`,
+      accounts: TESTNET_ACCOUNTS,
+    },
+    ropsten: {
+      url: `https://ropsten.infura.io/v3/${env.INFURA_API_KEY}`,
+      accounts: TESTNET_ACCOUNTS,
+    },
   },
   paths: {
     sources: './contracts',
     tests: './test',
     cache: './cache',
     artifacts: './artifacts',
+
+    // Contains the deploy script that are executed upon invocation of
+    // `hardhat deploy` or `hardhat node`
+    deploy: './deploy',
+
+    // Contains the resulting deployments (contract addresses along their ABI,
+    // bytecode, metadata...)
+    deployments: './deployments',
+
+    // Contains artifacts that were pre-compiled. Useful if you want to upgrade
+    // to a new solidity version but want to keep using previously compiled
+    // contracts.
+    imports: 'imports',
   },
   abiExporter: {
     // Path to ABI export directory (relative to Hardhat root)

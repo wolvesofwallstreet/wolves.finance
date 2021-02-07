@@ -6,6 +6,10 @@
 #
 #   https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
 #
+# This workflow uses the following GitHub Actions secrets:
+#
+#   * INFURA_API_KEY: Your API key for Infura. Obtain one at https://infura.io/
+#
 ################################################################################
 
 name: Node.js CI
@@ -83,8 +87,13 @@ jobs:
       - name: yarn compile
         run: yarn compile
 
+      - name: yarn hardhat:deploy
+        run: yarn hardhat:deploy
+
       - name: yarn test
         run: yarn test
+        env:
+          CI_INFURA_API_KEY: ${{ secrets.INFURA_API_KEY }}
 
       - name: yarn build
         run: yarn build

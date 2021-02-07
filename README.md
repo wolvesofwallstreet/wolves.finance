@@ -22,7 +22,7 @@ Omit `TEST=0` to also run the test cases for depends.
 
 ### `yarn compile`
 
-Compiles the smart contracts.
+Compiles the smart contracts. Required for test cases.
 
 ### `yarn start`
 
@@ -56,3 +56,29 @@ Applies automated formatting tools (prettier, eslint).
 ### `yarn lint`
 
 Runs linting tools for the project.
+
+### `yarn local-node`
+
+Launches a local Ethereum VM for testing.
+
+### `yarn hardhat:deploy`
+
+Performs a test deployment on a temporary network. This causes `addresses.json` to be generated.
+
+Contracts can be deployed on the following networks:
+
+- `yarn local:deploy`
+- `yarn rinkeby:deploy`
+- `yarn ropsten:deploy`
+- `yarn kovan:deploy`
+- `yarn goerli:deploy`
+
+## Deployment script naming scheme
+
+Deployment scripts are executed by Hardhat in lexicographic order. Number
+prefixes are used to control deployment order, with the following ranges
+defined here:
+
+- 000-099: Dependency contracts
+- 100: Token contract
+- 101-199: Dapp contracts

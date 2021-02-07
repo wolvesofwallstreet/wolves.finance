@@ -16,8 +16,12 @@
 /src/abi
 /artifacts
 /cache
+/deployments
 
 # Misc
 .DS_Store
 .vscode
 /bin
+
+# Secret environment variables. Don't commit this to git
+.env
