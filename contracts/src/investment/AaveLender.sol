@@ -96,6 +96,7 @@ contract AaveLender is IStrategy {
     return liquidityRate.div(1e9);
   }
 
+  // solhint-disable-next-line no-empty-blocks
   function refresh(address token) external override {}
 
   function _getPoolToken(address token) private view returns (address) {

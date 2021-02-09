@@ -138,6 +138,7 @@ contract DYdXLender is IStrategy {
       1e18;
   }
 
+  // solhint-disable-next-line no-empty-blocks
   function refresh(address token) external override {}
 
   function _token2dToken(address asset) internal pure returns (uint256) {

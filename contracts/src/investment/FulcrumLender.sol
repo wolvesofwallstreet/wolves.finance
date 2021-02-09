@@ -88,6 +88,7 @@ contract FulcrumLender is IStrategy {
     return Fulcrum(_token2iToken(token)).supplyInterestRate().div(100);
   }
 
+  // solhint-disable-next-line no-empty-blocks
   function refresh(address token) external override {}
 
   function _token2iToken(address asset) internal pure returns (address) {

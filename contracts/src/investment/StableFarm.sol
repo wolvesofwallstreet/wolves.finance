@@ -64,8 +64,10 @@ contract StableCoinFarm is IFarm, ERC20, Ownable, ReentrancyGuard {
   /* ========== ERC20 overrides ========== */
 
   // To receive ETH after converting it from USDC
+  // solhint-disable-next-line no-empty-blocks
   fallback() external payable {}
 
+  // solhint-disable-next-line no-empty-blocks
   receive() external payable {}
 
   function _beforeTokenTransfer(

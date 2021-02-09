@@ -280,6 +280,7 @@ contract UniV2StakeFarm is IFarm, IStakeFarm, Ownable, ReentrancyGuard {
   }
 
   // we don't have any rebalancing here
+  // solhint-disable-next-line no-empty-blocks
   function rebalance() external override onlyController {}
 
   // Added to support recovering LP Rewards from other systems to be distributed to holders
