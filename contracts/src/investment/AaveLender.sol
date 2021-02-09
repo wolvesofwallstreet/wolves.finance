@@ -20,17 +20,17 @@ import './interfaces/IStrategy.sol';
 contract AaveLender is IStrategy {
   using SafeMath for uint256;
   /*//mainnnet
-  address constant lendingPoolAddressProvider = 0x24a42fD28C976A61Df5D00D0599C34c4f90748c8;
-  address constant usdc = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-  address constant dai = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
-  address constant usdt = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
+  address constant LENDING_POOL_ADDRESS_PROVIDER = 0x24a42fD28C976A61Df5D00D0599C34c4f90748c8;
+  address constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+  address constant DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
+  address constant USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
   */
   // Kovan
-  address public constant lendingPoolAddressProvider =
+  address public constant LENDING_POOL_ADDRESS_PROVIDER =
     0x506B0B2CF20FAA8f38a4E2B524EE43e1f4458Cc5;
-  address public constant usdc = 0xe22da380ee6B445bb8273C81944ADEB6E8450422;
-  address public constant dai = 0xFf795577d9AC8bD7D90Ee22b6C1703490b6512FD;
-  address public constant usdt = 0x13512979ADE267AB5100878E2e0f485B568328a4;
+  address public constant USDC = 0xe22da380ee6B445bb8273C81944ADEB6E8450422;
+  address public constant DAI = 0xFf795577d9AC8bD7D90Ee22b6C1703490b6512FD;
+  address public constant USDT = 0x13512979ADE267AB5100878E2e0f485B568328a4;
 
   function getId() external pure override returns (bytes32) {
     return keccak256(abi.encodePacked('AaveLender'));
@@ -38,7 +38,7 @@ contract AaveLender is IStrategy {
 
   function approve(address token) external override {
     IERC20(token).approve(
-      AaveLPAddressProvider(lendingPoolAddressProvider).getLendingPoolCore(),
+      AaveLPAddressProvider(LENDING_POOL_ADDRESS_PROVIDER).getLendingPoolCore(),
       uint256(-1)
     );
   }
@@ -49,7 +49,7 @@ contract AaveLender is IStrategy {
     returns (uint256)
   {
     address lendingPool =
-      AaveLPAddressProvider(lendingPoolAddressProvider).getLendingPool();
+      AaveLPAddressProvider(LENDING_POOL_ADDRESS_PROVIDER).getLendingPool();
     require(lendingPool != address(0));
     // aave pegs token 1:1
     AaveLP(lendingPool).deposit(token, assetAmount, 0);
@@ -89,7 +89,9 @@ contract AaveLender is IStrategy {
 
   function getApr(address token) external view override returns (uint256) {
     (, , , , uint256 liquidityRate, , , , , , , , ) =
-      AaveLP(AaveLPAddressProvider(lendingPoolAddressProvider).getLendingPool())
+      AaveLP(
+        AaveLPAddressProvider(LENDING_POOL_ADDRESS_PROVIDER).getLendingPool()
+      )
         .getReserveData(token);
     return liquidityRate.div(1e9);
   }
@@ -98,7 +100,9 @@ contract AaveLender is IStrategy {
 
   function _getPoolToken(address token) private view returns (address) {
     (, , , , , , , , , , , address aToken, ) =
-      AaveLP(AaveLPAddressProvider(lendingPoolAddressProvider).getLendingPool())
+      AaveLP(
+        AaveLPAddressProvider(LENDING_POOL_ADDRESS_PROVIDER).getLendingPool()
+      )
         .getReserveData(token);
     return aToken;
   }

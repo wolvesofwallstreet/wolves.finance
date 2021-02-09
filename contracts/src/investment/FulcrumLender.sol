@@ -18,20 +18,20 @@ import './interfaces/IStrategy.sol';
 contract FulcrumLender is IStrategy {
   using SafeMath for uint256;
   /*//mainnnet
-  address public constant usdc = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-  address public constant iusdc = 0x32E4c68B3A4a813b710595AebA7f6B7604Ab9c15;
-  address public constant dai = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
-  address public constant idai = 0x6b093998D36f2C7F0cc359441FBB24CC629D5FF0;
-  address public constant usdt = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
-  address public constant iusdt = 0x7e9997a38A439b2be7ed9c9C4628391d3e055D48;
+  address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+  address public constant IUSDC = 0x32E4c68B3A4a813b710595AebA7f6B7604Ab9c15;
+  address public constant DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
+  address public constant IDAI = 0x6b093998D36f2C7F0cc359441FBB24CC629D5FF0;
+  address public constant USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
+  address public constant IUSDT = 0x7e9997a38A439b2be7ed9c9C4628391d3e055D48;
   */
   //Kovan
-  address public constant usdc = 0xB443f30CDd6076b1A5269dbc08b774F222d4Db4e;
-  address public constant iusdc = 0x021C5923398168311Ff320902BF8c8C725B4F288;
-  address public constant dai = address(0);
-  address public constant idai = address(0);
-  address public constant usdt = address(0);
-  address public constant iusdt = address(0);
+  address public constant USDC = 0xB443f30CDd6076b1A5269dbc08b774F222d4Db4e;
+  address public constant IUSDC = 0x021C5923398168311Ff320902BF8c8C725B4F288;
+  address public constant DAI = address(0);
+  address public constant IDAI = address(0);
+  address public constant USDT = address(0);
+  address public constant IUSDT = address(0);
 
   function getId() external pure override returns (bytes32) {
     return keccak256(abi.encodePacked('FulcrumLender'));
@@ -91,9 +91,9 @@ contract FulcrumLender is IStrategy {
   function refresh(address token) external override {}
 
   function _token2iToken(address asset) internal pure returns (address) {
-    if (asset == usdc) return iusdc;
-    if (asset == dai) return idai;
-    if (asset == usdt) return iusdt;
+    if (asset == USDC) return IUSDC;
+    if (asset == DAI) return IDAI;
+    if (asset == USDT) return IUSDT;
     return address(0);
   }
 }
