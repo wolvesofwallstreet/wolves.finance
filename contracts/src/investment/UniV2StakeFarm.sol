@@ -100,6 +100,7 @@ contract UniV2StakeFarm is IFarm, IStakeFarm, Ownable, ReentrancyGuard {
   }
 
   function lastTimeRewardApplicable() public view returns (uint256) {
+    // solhint-disable-next-line not-rely-on-time
     return block.timestamp < periodFinish ? block.timestamp : periodFinish;
   }
 
@@ -173,6 +174,7 @@ contract UniV2StakeFarm is IFarm, IStakeFarm, Ownable, ReentrancyGuard {
     if (
       firstStakeTime[msg.sender] == 0 &&
       _ethAmount(_balances[msg.sender]) >= ETH_LIMIT
+      // solhint-disable-next-line not-rely-on-time
     ) firstStakeTime[msg.sender] = block.timestamp;
 
     emit Staked(msg.sender, amount);
@@ -249,9 +251,11 @@ contract UniV2StakeFarm is IFarm, IStakeFarm, Ownable, ReentrancyGuard {
     onlyController
     updateReward(address(0))
   {
+    // solhint-disable-next-line not-rely-on-time
     if (block.timestamp >= periodFinish) {
       rewardRate = reward.div(rewardsDuration);
     } else {
+      // solhint-disable-next-line not-rely-on-time
       uint256 remaining = periodFinish.sub(block.timestamp);
       uint256 leftover = remaining.mul(rewardRate);
       rewardRate = reward.add(leftover).div(rewardsDuration);
@@ -267,8 +271,11 @@ contract UniV2StakeFarm is IFarm, IStakeFarm, Ownable, ReentrancyGuard {
       'Provided reward too high'
     );
 
+    // solhint-disable-next-line not-rely-on-time
     lastUpdateTime = block.timestamp;
+    // solhint-disable-next-line not-rely-on-time
     periodFinish = block.timestamp.add(rewardsDuration);
+
     emit RewardAdded(reward);
   }
 
@@ -295,6 +302,7 @@ contract UniV2StakeFarm is IFarm, IStakeFarm, Ownable, ReentrancyGuard {
     onlyOwner
   {
     require(
+      // solhint-disable-next-line not-rely-on-time
       periodFinish == 0 || block.timestamp > periodFinish,
       'reward period not finished'
     );

@@ -87,6 +87,7 @@ contract StableCoinFarm is IFarm, ERC20, Ownable, ReentrancyGuard {
   }
 
   function lastTimeRewardApplicable() public view returns (uint256) {
+    // solhint-disable-next-line not-rely-on-time
     return block.timestamp < periodFinish ? block.timestamp : periodFinish;
   }
 
@@ -230,9 +231,11 @@ contract StableCoinFarm is IFarm, ERC20, Ownable, ReentrancyGuard {
     onlyController
     updateReward(address(0))
   {
+    // solhint-disable-next-line not-rely-on-time
     if (block.timestamp >= periodFinish) {
       rewardRate = reward.div(rewardsDuration);
     } else {
+      // solhint-disable-next-line not-rely-on-time
       uint256 remaining = periodFinish.sub(block.timestamp);
       uint256 leftover = remaining.mul(rewardRate);
       rewardRate = reward.add(leftover).div(rewardsDuration);
@@ -248,8 +251,11 @@ contract StableCoinFarm is IFarm, ERC20, Ownable, ReentrancyGuard {
       'Provided reward too high'
     );
 
+    // solhint-disable-next-line not-rely-on-time
     lastUpdateTime = block.timestamp;
+    // solhint-disable-next-line not-rely-on-time
     periodFinish = block.timestamp.add(rewardsDuration);
+
     emit RewardAdded(reward);
   }
 
@@ -270,6 +276,7 @@ contract StableCoinFarm is IFarm, ERC20, Ownable, ReentrancyGuard {
     onlyOwner
   {
     require(
+      // solhint-disable-next-line not-rely-on-time
       periodFinish == 0 || block.timestamp > periodFinish,
       'reward period not finished'
     );

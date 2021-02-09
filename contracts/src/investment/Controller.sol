@@ -316,6 +316,7 @@ contract Controller is IController, Ownable, AddressBook {
       Farm storage farm = farms[iterAddress];
       if (
         farm.active &&
+        // solhint-disable-next-line not-rely-on-time
         block.timestamp + 86400 >= IFarm(iterAddress).periodFinish()
       ) {
         IFarm(iterAddress).notifyRewardAmount(farm.rewardPerDuration);

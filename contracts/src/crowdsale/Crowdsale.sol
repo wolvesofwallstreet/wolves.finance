@@ -272,6 +272,7 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
       weiRaised,
       openingTime,
       closingTime,
+      // solhint-disable-next-line not-rely-on-time
       block.timestamp,
       ethInvest,
       tokenAmount
@@ -413,8 +414,12 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
   }
 
   function testSetTimes() public {
+    // solhint-disable-next-line not-rely-on-time
     openingTime = block.timestamp + 10;
+
+    // solhint-disable-next-line not-rely-on-time
     closingTime = block.timestamp + 3600;
+
     token.enableUniV2Pair(false);
   }
 
@@ -512,6 +517,7 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
   ) internal returns (uint256) {
     // Add Liquidity, receiver of pool tokens is _wallet
     token.approve(address(uniV2Router), tokenBalance);
+
     (uint256 amountToken, uint256 amountETH, uint256 liquidity) =
       uniV2Router.addLiquidityETH{ value: ethBalance }(
         address(token),
@@ -519,8 +525,10 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
         tokenBalance.mul(90).div(100),
         ethBalance.mul(90).div(100),
         tokenOwner,
+        // solhint-disable-next-line not-rely-on-time
         block.timestamp + 86400
       );
+
     emit LiquidityAdded(tokenOwner, amountToken, amountETH, liquidity);
 
     // send remaining ETH to the team wallet
