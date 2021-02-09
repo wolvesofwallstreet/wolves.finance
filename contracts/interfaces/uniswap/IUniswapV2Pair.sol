@@ -40,8 +40,10 @@ interface IUniswapV2Pair {
     uint256 value
   ) external returns (bool);
 
+  // solhint-disable-next-line func-name-mixedcase
   function DOMAIN_SEPARATOR() external view returns (bytes32);
 
+  // solhint-disable-next-line func-name-mixedcase
   function PERMIT_TYPEHASH() external pure returns (bytes32);
 
   function nonces(address owner) external view returns (uint256);
@@ -73,6 +75,7 @@ interface IUniswapV2Pair {
   );
   event Sync(uint112 reserve0, uint112 reserve1);
 
+  // solhint-disable-next-line func-name-mixedcase
   function MINIMUM_LIQUIDITY() external pure returns (uint256);
 
   function factory() external view returns (address);
