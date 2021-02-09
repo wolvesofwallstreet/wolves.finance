@@ -26,11 +26,11 @@ contract AaveLender is IStrategy {
   address constant usdt = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
   */
   // Kovan
-  address constant lendingPoolAddressProvider =
+  address public constant lendingPoolAddressProvider =
     0x506B0B2CF20FAA8f38a4E2B524EE43e1f4458Cc5;
-  address constant usdc = 0xe22da380ee6B445bb8273C81944ADEB6E8450422;
-  address constant dai = 0xFf795577d9AC8bD7D90Ee22b6C1703490b6512FD;
-  address constant usdt = 0x13512979ADE267AB5100878E2e0f485B568328a4;
+  address public constant usdc = 0xe22da380ee6B445bb8273C81944ADEB6E8450422;
+  address public constant dai = 0xFf795577d9AC8bD7D90Ee22b6C1703490b6512FD;
+  address public constant usdt = 0x13512979ADE267AB5100878E2e0f485B568328a4;
 
   function getId() external pure override returns (bytes32) {
     return keccak256(abi.encodePacked('AaveLender'));

@@ -49,7 +49,7 @@ contract UniV2StakeFarm is IFarm, IStakeFarm, Ownable, ReentrancyGuard {
   // The address of the controller
   IController public controller;
   // The direction of the uniswap pairs
-  uint8 pairDirection;
+  uint8 public pairDirection;
 
   /* ========== CONSTRUCTOR ========== */
 

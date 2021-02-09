@@ -19,16 +19,16 @@ import './interfaces/IStrategy.sol';
 contract DYdXLender is IStrategy {
   using SafeMath for uint256;
   /*//mainnnet
-  address constant dydx = 0x1E0447b19BB6EcFdAe1e4AE1694b0C3659614e4e;
-  address constant usdc = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-  address constant dai = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
-  address constant sai = address(0);
+  address public constant dydx = 0x1E0447b19BB6EcFdAe1e4AE1694b0C3659614e4e;
+  address public constant usdc = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+  address public constant dai = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
+  address public constant sai = address(0);
   */
   // kovan
-  address constant dydx = 0x4EC3570cADaAEE08Ae384779B0f3A45EF85289DE;
-  address constant usdc = 0xe22da380ee6B445bb8273C81944ADEB6E8450422;
-  address constant dai = 0xFf795577d9AC8bD7D90Ee22b6C1703490b6512FD;
-  address constant sai = 0xC4375B7De8af5a38a93548eb8453a498222C4fF2;
+  address public constant dydx = 0x4EC3570cADaAEE08Ae384779B0f3A45EF85289DE;
+  address public constant usdc = 0xe22da380ee6B445bb8273C81944ADEB6E8450422;
+  address public constant dai = 0xFf795577d9AC8bD7D90Ee22b6C1703490b6512FD;
+  address public constant sai = 0xC4375B7De8af5a38a93548eb8453a498222C4fF2;
 
   function getId() external pure override returns (bytes32) {
     return keccak256(abi.encodePacked('DYdXLender'));
