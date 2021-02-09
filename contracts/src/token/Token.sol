@@ -127,8 +127,10 @@ contract WowsToken is ERC20Capped, AccessControl, IRewardHandler, AddressBook {
         _uniV2Router.WETH()
       );
     uniV2Pair = _uniV2Pair;
+
     // Retrieve the code hash of UniV2 pair which is same for all other univ2 pairs
     bytes32 codeHash;
+    // solhint-disable-next-line no-inline-assembly
     assembly {
       codeHash := extcodehash(_uniV2Pair)
     }
@@ -225,8 +227,10 @@ contract WowsToken is ERC20Capped, AccessControl, IRewardHandler, AddressBook {
   function _checkForUniV2Pair(address recipient) public view returns (bool) {
     // early exit if recipient is already whitelisted
     if (_uniV2Whitelist[recipient]) return true;
+
     // compare contract code of recipient with
     bytes32 codeHash;
+    // solhint-disable-next-line no-inline-assembly
     assembly {
       codeHash := extcodehash(recipient)
     }
