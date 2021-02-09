@@ -12,11 +12,11 @@ pragma experimental ABIEncoderV2;
 import '@openzeppelin/contracts/math/SafeMath.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
-import '../../interfaces/dydx/dYdX.sol';
+import '../../interfaces/dydx/DYdX.sol';
 
 import './interfaces/IStrategy.sol';
 
-contract DyDxLender is IStrategy {
+contract DYdXLender is IStrategy {
   using SafeMath for uint256;
   /*//mainnnet
   address constant dydx = 0x1E0447b19BB6EcFdAe1e4AE1694b0C3659614e4e;
@@ -31,7 +31,7 @@ contract DyDxLender is IStrategy {
   address constant sai = 0xC4375B7De8af5a38a93548eb8453a498222C4fF2;
 
   function getId() external pure override returns (bytes32) {
-    return keccak256(abi.encodePacked('DyDxLender'));
+    return keccak256(abi.encodePacked('DYdXLender'));
   }
 
   function approve(address token) external override {
@@ -67,7 +67,7 @@ contract DyDxLender is IStrategy {
     ActionArgs[] memory args = new ActionArgs[](1);
     args[0] = act;
 
-    dYdX(dydx).operate(infos, args);
+    DYdX(dydx).operate(infos, args);
     return assetAmount;
   }
 
@@ -100,7 +100,7 @@ contract DyDxLender is IStrategy {
     ActionArgs[] memory args = new ActionArgs[](1);
     args[0] = act;
 
-    dYdX(dydx).operate(infos, args);
+    DYdX(dydx).operate(infos, args);
     return poolAmount;
   }
 
@@ -111,7 +111,7 @@ contract DyDxLender is IStrategy {
     returns (uint256)
   {
     Wei memory bal =
-      dYdX(dydx).getAccountWei(Info(_owner, 0), _token2dToken(token));
+      DYdX(dydx).getAccountWei(Info(_owner, 0), _token2dToken(token));
     return bal.value;
   }
 
@@ -123,18 +123,18 @@ contract DyDxLender is IStrategy {
     returns (uint256)
   {
     Wei memory bal =
-      dYdX(dydx).getAccountWei(Info(_owner, 0), _token2dToken(token));
+      DYdX(dydx).getAccountWei(Info(_owner, 0), _token2dToken(token));
     return bal.value;
   }
 
   function getApr(address token) external view override returns (uint256) {
     uint256 dToken = _token2dToken(token);
-    uint256 rate = dYdX(dydx).getMarketInterestRate(dToken).value;
+    uint256 rate = DYdX(dydx).getMarketInterestRate(dToken).value;
     uint256 aprBorrow = rate * 31622400;
-    Set memory set = dYdX(dydx).getMarketTotalPar(dToken);
+    Set memory set = DYdX(dydx).getMarketTotalPar(dToken);
     uint256 usage = (set.borrow * 1e18) / set.supply;
     return
-      (((aprBorrow * usage) / 1e18) * dYdX(dydx).getEarningsRate().value) /
+      (((aprBorrow * usage) / 1e18) * DYdX(dydx).getEarningsRate().value) /
       1e18;
   }
 

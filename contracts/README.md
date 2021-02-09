@@ -11,16 +11,16 @@ Steps to setup the WOWS environment.
 
 3.) AddressFactory:: setRegistryEntry for UniswapV2Router02, MarketingWallet, TeamWallet
 
-4.) deploy token.sol\
+4.) deploy Token.sol\
 -> parameter:\
 
 > \- IAddressFactory address\ <- must contain UNISWAP_V2_ROUTER02, MARKETING_WALLET and TEAM_WALLET keys, (AddressBook.sol)\
 
-5.) deploy controller.sol\
+5.) deploy Controller.sol\
 -> parameter:\
 
 > \- IAddressFactory address\
-> \- rewardHandler (right now its token.sol)\
+> \- rewardHandler (right now its Token.sol)\
 > \- previousController: 0 address / only for later updates\
 
 6.) deploy UniV2StakeFarm.sol\
@@ -28,14 +28,14 @@ Steps to setup the WOWS environment.
 
 > \- owner address\
 > \- name: "WETH/WOWS LP Farm\
-> \- stakingToken: token.sol::uniV2Pair()\
-> \- rewardToken: token.sol\
-> \- controller: address controller.sol\
+> \- stakingToken: Token.sol::uniV2Pair()\
+> \- rewardToken: Token.sol\
+> \- controller: address Controller.sol\
 > \- route: address of UniV2 WETH/USDT pool, can be 0 for test
 
 7.) AddressFactory:: setRegistryEntry for WethWowsStakeFarm (6.)
 
-8.) deploy booster.sol\
+8.) deploy Booster.sol\
 -> parameter:\
 
 > \- \_owner address\
@@ -47,7 +47,7 @@ Steps to setup the WOWS environment.
 
 > \- addressRegistry\
 > \- rate: 80\
-> \- token: token.sol address\
+> \- token: Token.sol address\
 > \- cap: 75\*1e18\
 > \- invest_min: 2\*1e17 (0.2 ETH)\
 > \- wallet_cap: 3\*1e18 (3 ETH)\
@@ -60,10 +60,10 @@ Steps to setup the WOWS environment.
 
 <h3>From MultiSig marketing wallet call:</h3>
 
-1.) call token.sol::grantRole(token.sol.REWARD_ROLE(), controller)\
--> This is to allow controller to call into token.sol to distribute rewards
+1.) call Token.sol::grantRole(Token.sol.REWARD_ROLE(), controller)\
+-> This is to allow controller to call into Token.sol to distribute rewards
 
-2.) call controller:: registerFarm\
+2.) call Controller::registerFarm\
 -> parameter:\
 
 > \- farmAddress UniV2StakeFarm address\
@@ -72,10 +72,10 @@ Steps to setup the WOWS environment.
 > \- rewardProvided 0\
 > \- rewardfee 2\*1e4 (0.02)
 
-3.) call token.sol setBooster\
+3.) call Token.sol setBooster\
 -> parameter:\
 
-> \- address of booster.sol
+> \- address of Booster.sol
 
-4.) call token.sol::grantRole(token.sol.MINTER_ROLE(), Crowdsale.sol)\
+4.) call Token.sol::grantRole(Token.sol.MINTER_ROLE(), Crowdsale.sol)\
 \!\!\! ONLY DURING PRESALE \!\!\!

@@ -62,7 +62,7 @@ struct Wei {
   uint256 value;
 }
 
-interface dYdX {
+interface DYdX {
   function getAccountWei(Info calldata account, uint256 marketId)
     external
     view
