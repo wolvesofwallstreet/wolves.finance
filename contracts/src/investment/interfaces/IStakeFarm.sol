@@ -10,22 +10,33 @@ pragma solidity >=0.6.0 <0.8.0;
 
 /**
  * @title IStakeFarm
+ *
  * @dev IStakeFarm is the business logic interface to staking farms.
  */
 
 interface IStakeFarm {
-  // stake amount of ERC20 tokens and earn rewards
+  /**
+   * @dev Stake amount of ERC20 tokens and earn rewards
+   */
   function stake(uint256 amount) external;
 
-  // unstake amount of previous staked tokens, rewards will not be claimed
+  /**
+   * @dev Unstake amount of previous staked tokens, rewards will not be claimed
+   */
   function unstake(uint256 amount) external;
 
-  // claim rewards harvested during stake time
+  /**
+   * @dev Claim rewards harvested during stake time
+   */
   function getReward() external;
 
-  // unstake and getRewards in a single step
+  /**
+   * @dev Unstake and getRewards in a single step
+   */
   function exit() external;
 
-  // transfer amount of stake from msg.sender to recipient.
+  /**
+   * @dev Transfer amount of stake from msg.sender to recipient.
+   */
   function transfer(address recipient, uint256 amount) external;
 }

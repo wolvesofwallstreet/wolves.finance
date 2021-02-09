@@ -9,12 +9,18 @@
 pragma solidity >=0.6.0 <0.8.0;
 
 interface IController {
-  // revert on failure, return deposit fee in 1e-18/fee notation on success
+  /**
+   * @dev Revert on failure, return deposit fee in 1e-18/fee notation on success
+   */
   function onDeposit(uint256 amount) external view returns (uint256 fee);
 
-  // revert on failure, return withdrawal fee in 1e-18/fee notation on success
+  /**
+   * @dev Revert on failure, return withdrawal fee in 1e-18/fee notation on success
+   */
   function onWithdraw(uint256 amount) external view returns (uint256 fee);
 
-  // distribute rewards to sender and fee to internal contracts
+  /**
+   * @dev Distribute rewards to sender and fee to internal contracts
+   */
   function payOutRewards(address recipient, uint256 amount) external;
 }

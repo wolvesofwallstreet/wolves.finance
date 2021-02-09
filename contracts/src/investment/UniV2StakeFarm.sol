@@ -35,7 +35,7 @@ contract UniV2StakeFarm is IFarm, IStakeFarm, Ownable, ReentrancyGuard {
 
   mapping(address => uint256) public userRewardPerTokenPaid;
   mapping(address => uint256) public rewards;
-  // TODO: remove next 2 lines after dapp launch (special reward condition)
+  // TODO: Remove next 2 lines after dapp launch (special reward condition)
   mapping(address => uint256) private firstStakeTime;
   uint256 private constant ETH_LIMIT = 2e17;
 
@@ -67,10 +67,14 @@ contract UniV2StakeFarm is IFarm, IStakeFarm, Ownable, ReentrancyGuard {
     route = IUniswapV2Pair(_route);
 
     address routeLink;
-    /** @dev Calculate the sort order of the keys once to save gas in further steps
+
+    /**
+     * @dev Calculate the sort order of the keys once to save gas in further steps
+     *
      * Our token sort order is:
      * - stakeToken: token0[routeLink], token1[rewardToken]
      * - route:      token0[routeLink], token1[stableCoin]
+     *
      * If the sort order differs, we set one bit for each of both
      */
     if (stakingToken.token0() == _rewardToken) {
@@ -170,7 +174,7 @@ contract UniV2StakeFarm is IFarm, IStakeFarm, Ownable, ReentrancyGuard {
       amount
     );
 
-    // TODO: remove after launch
+    // TODO: Remove after launch
     if (
       firstStakeTime[msg.sender] == 0 &&
       _ethAmount(_balances[msg.sender]) >= ETH_LIMIT
@@ -195,7 +199,7 @@ contract UniV2StakeFarm is IFarm, IStakeFarm, Ownable, ReentrancyGuard {
     _balances[msg.sender] = _balances[msg.sender].sub(amount);
     IERC20(address(stakingToken)).safeTransfer(msg.sender, amount);
 
-    // TODO: remove after launch
+    // TODO: Remove after launch
     if (
       firstStakeTime[msg.sender] > 0 &&
       (_balances[msg.sender] == 0 ||
@@ -262,10 +266,15 @@ contract UniV2StakeFarm is IFarm, IStakeFarm, Ownable, ReentrancyGuard {
     }
     availableRewards = availableRewards.add(reward);
 
-    // Ensure the provided reward amount is not more than the balance in the contract.
-    // This keeps the reward rate in the right range, preventing overflows due to
-    // very high values of rewardRate in the earned and rewardsPerToken functions;
+    // Ensure the provided reward amount is not more than the balance in the
+    // contract.
+    //
+    // This keeps the reward rate in the right range, preventing overflows due
+    // to very high values of rewardRate in the earned and rewardsPerToken
+    // functions.
+    //
     // Reward + leftover must be less than 2^256 / 10^18 to avoid overflow.
+    //
     require(
       rewardRate <= availableRewards.div(rewardsDuration),
       'Provided reward too high'
@@ -279,7 +288,7 @@ contract UniV2StakeFarm is IFarm, IStakeFarm, Ownable, ReentrancyGuard {
     emit RewardAdded(reward);
   }
 
-  // we don't have any rebalancing here
+  // We don't have any rebalancing here
   // solhint-disable-next-line no-empty-blocks
   function rebalance() external override onlyController {}
 
@@ -315,14 +324,15 @@ contract UniV2StakeFarm is IFarm, IStakeFarm, Ownable, ReentrancyGuard {
 
   function _ethAmount(uint256 amountToken) private view returns (uint256) {
     (uint112 reserve0, uint112 reserve1, ) = stakingToken.getReserves();
-    // routeLink is token1, swap
+
+    // RouteLink is token1, swap
     if ((pairDirection & 1) != 0) reserve0 = reserve1;
 
     return (uint256(reserve0).mul(amountToken)).div(stakingToken.totalSupply());
   }
 
   /**
-   * @dev returns the reserves in order: ETH -> Token, ETH/stable
+   * @dev Returns the reserves in order: ETH -> Token, ETH/stable
    */
   function _getTokenUiData()
     internal
@@ -338,18 +348,21 @@ contract UniV2StakeFarm is IFarm, IStakeFarm, Ownable, ReentrancyGuard {
       address(route) != address(0) ? route.getReserves() : (1, 1, 0);
 
     uint112 swap;
-    // routeLink is token1, swap
+
+    // RouteLink is token1, swap
     if ((pairDirection & 1) != 0) {
       swap = reserve0;
       reserve0 = reserve1;
       reserve1 = swap;
     }
-    // routeLink is token1, swap
+
+    // RouteLink is token1, swap
     if ((pairDirection & 2) != 0) {
       swap = reserve0R;
       reserve0R = reserve1R;
       reserve1R = swap;
     }
+
     return (reserve0, reserve1, uint256(reserve0R).mul(1e18).div(reserve1R));
   }
 

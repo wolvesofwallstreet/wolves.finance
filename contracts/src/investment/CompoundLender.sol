@@ -56,12 +56,14 @@ contract CompoundLender is IStrategy {
   {
     address cToken = _token2cToken(token);
     require(cToken != address(0), 'invest(): cToken address is 0');
-    // mint cToken
+
+    // Mint cToken
     uint256 poolTokens = IERC20(cToken).balanceOf(address(this));
     require(
       CTokenInterface(cToken).mint(assetAmount) == 0,
       'COMPOUND: mint failed'
     );
+
     return IERC20(cToken).balanceOf(address(this)).sub(poolTokens);
   }
 
@@ -72,12 +74,14 @@ contract CompoundLender is IStrategy {
   {
     address cToken = _token2cToken(token);
     require(cToken != address(0), 'redeem(): cToken address is 0');
-    // redeem tokens to this contract
+
+    // Redeem tokens to this contract
     uint256 assetTokens = IERC20(token).balanceOf(address(this));
     require(
       CTokenInterface(cToken).redeem(poolAmount) == 0,
       'COMPOUND: redeem failed'
     );
+
     return IERC20(token).balanceOf(address(this)).sub(assetTokens);
   }
 
@@ -92,7 +96,9 @@ contract CompoundLender is IStrategy {
     return IERC20(cToken).balanceOf(_owner);
   }
 
-  // return the amount of the underlying asset
+  /**
+   * @dev Return the amount of the underlying asset
+   */
   function getAssetAmount(address token, address _owner)
     external
     view

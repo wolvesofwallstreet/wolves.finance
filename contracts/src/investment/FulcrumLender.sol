@@ -46,7 +46,7 @@ contract FulcrumLender is IStrategy {
     override
     returns (uint256)
   {
-    // mint iToken
+    // Mint iToken
     uint256 poolTokens =
       Fulcrum(_token2iToken(token)).mint(address(this), assetAmount);
     require(poolTokens > 0, 'Fulcrum: mint failed');
@@ -58,7 +58,7 @@ contract FulcrumLender is IStrategy {
     override
     returns (uint256)
   {
-    // redeem tokens to this contract
+    // Redeem tokens to this contract
     uint256 assetTokens =
       Fulcrum(_token2iToken(token)).burn(address(this), poolAmount);
     require(assetTokens > 0, 'Fulcrum: burn failed');
@@ -74,7 +74,7 @@ contract FulcrumLender is IStrategy {
     return IERC20(_token2iToken(token)).balanceOf(_owner);
   }
 
-  // return the amount of the underlying asset
+  // Return the amount of the underlying asset
   function getAssetAmount(address token, address _owner)
     external
     view

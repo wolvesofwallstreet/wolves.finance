@@ -46,7 +46,7 @@ contract DYdXLender is IStrategy {
     uint256 dToken = _token2dToken(token);
     require(dToken != uint256(-1), 'invest(): dToken address is -1');
 
-    // mint dToken
+    // Mint dToken
     Info[] memory infos = new Info[](1);
     infos[0] = Info(address(this), 0);
 
@@ -79,7 +79,7 @@ contract DYdXLender is IStrategy {
     uint256 dToken = _token2dToken(token);
     require(dToken != uint256(-1), 'redeem(): dToken address is -1');
 
-    // redeem tokens to this contract
+    // Redeem tokens to this contract
     Info[] memory infos = new Info[](1);
     infos[0] = Info(address(this), 0);
 
@@ -115,7 +115,9 @@ contract DYdXLender is IStrategy {
     return bal.value;
   }
 
-  // return the amount of the underlying asset
+  /**
+   * @dev Return the amount of the underlying asset
+   */
   function getAssetAmount(address token, address _owner)
     external
     view

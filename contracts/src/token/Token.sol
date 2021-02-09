@@ -114,7 +114,7 @@ contract WowsToken is ERC20Capped, AccessControl, IRewardHandler, AddressBook {
     // Multi-sig teamwallet has initial admin rights, eg for adding minters
     _setupRole(DEFAULT_ADMIN_ROLE, __marketingWallet);
 
-    // reverts if address is invalid
+    // Reverts if address is invalid
     IUniswapV2Router02 _uniV2Router =
       IUniswapV2Router02(
         _addressRegistry.getRegistryEntry(UNISWAP_V2_ROUTER02)
@@ -219,23 +219,24 @@ contract WowsToken is ERC20Capped, AccessControl, IRewardHandler, AddressBook {
   }
 
   /**
-   * Check if recipient is either on the whitelist, or not an UniV2 pair.
+   * @dev Check if recipient is either on the whitelist, or not an UniV2 pair
+   *
    * Only minter and admin role are allowed to enable initial blacklisted
    * pairs. Goal is to let us initialize uniV2 pairs with a ratio defined
    * from concept.
    */
   function _checkForUniV2Pair(address recipient) public view returns (bool) {
-    // early exit if recipient is already whitelisted
+    // Early exit if recipient is already whitelisted
     if (_uniV2Whitelist[recipient]) return true;
 
-    // compare contract code of recipient with
+    // Compare contract code of recipient with
     bytes32 codeHash;
     // solhint-disable-next-line no-inline-assembly
     assembly {
       codeHash := extcodehash(recipient)
     }
 
-    // return true, if codehash != uniV2PairCodeHash
+    // Return true, if codehash != uniV2PairCodeHash
     return codeHash != _uniV2PairCodeHash;
   }
 
@@ -264,11 +265,11 @@ contract WowsToken is ERC20Capped, AccessControl, IRewardHandler, AddressBook {
 
     if (_amount == 0) return;
 
-    // check how much we have to mint
+    // Check how much we have to mint
     uint256 balance = balanceOf(address(this));
     if (balance < _amount) _mint(address(this), _amount - balance);
 
-    // distribute the fee
+    // Distribute the fee
     uint256 absFee = _amount.mul(_fee).div(1e6);
     _transfer(address(this), _teamWallet, absFee.mul(_toTeam).div(1e6));
     _transfer(
@@ -280,10 +281,10 @@ contract WowsToken is ERC20Capped, AccessControl, IRewardHandler, AddressBook {
     if (booster != address(0))
       _transfer(address(this), booster, absFee.mul(_toBooster).div(1e6));
 
-    // nothing to do with _toRewardPool beause we are rewardPool
+    // Nothing to do with _toRewardPool beause we are rewardPool
     _toRewardPool;
 
-    //Now send rewards to the user
+    // Now send rewards to the user
     _transfer(address(this), _recipient, _amount.sub(absFee));
   }
 }

@@ -23,11 +23,11 @@ contract Controller is IController, Ownable, AddressBook {
 
   /* ========== STATE VARIABLES ========== */
 
-  // we need the previous controller for calculation of pending rewards
+  // We need the previous controller for calculation of pending rewards
   address public previousController;
-  // our rewardHandler which distributes rewards
+  // Our rewardHandler which distributes rewards
   IRewardHandler public rewardHandler;
-  // the address which is alowed to call service functions
+  // The address which is alowed to call service functions
   address public worker;
 
   // The fee is distributed to 4 channels:
@@ -76,9 +76,9 @@ contract Controller is IController, Ownable, AddressBook {
 
   /**
    * @param _rewardHandler handler of reward distribution
-   * @dev rewardHandler is the instance which finally stores
-   * the reward token and distributes them to the different
-   * recipients.
+   *
+   * @dev rewardHandler is the instance which finally stores the reward token
+   * and distributes them to the different recipients
    */
   constructor(
     IAddressRegistry _addressRegistry,
@@ -106,11 +106,14 @@ contract Controller is IController, Ownable, AddressBook {
   /* ========== FARM CALLBACKS ========== */
 
   /**
-   * @param _amount #tokens the user wants to deposit
-   * @return fee returns the deposit fee (1e18 factor)
-   * @dev onDeposit is used to control fees and accessibility
-   * instead having an implementation in each farm contract.
+   * @dev onDeposit() is used to control fees and accessibility instead having an
+   * implementation in each farm contract
+   *
    * Deposit is only allowed, if farm is open and not not paused.
+   *
+   * @param _amount #tokens the user wants to deposit
+   *
+   * @return fee returns the deposit fee (1e18 factor)
    */
   function onDeposit(uint256 _amount)
     external
@@ -127,11 +130,14 @@ contract Controller is IController, Ownable, AddressBook {
   }
 
   /**
-   * @param _amount #tokens the user wants to withdraw
-   * @return fee returns the withdraw fee (1e18 factor)
-   * @dev onWithdraw is used to control fees and accessibility
-   * instead having an implementation in each farm contract.
+   * @dev onWithdraw() is used to control fees and accessibility instead having
+   * an implementation in each farm contract
+   *
    * Withdraw is only allowed, if farm is not paused.
+   *
+   * @param _amount #tokens the user wants to withdraw
+   *
+   * @return fee returns the withdraw fee (1e18 factor)
    */
   function onWithdraw(uint256 _amount)
     external
@@ -168,16 +174,21 @@ contract Controller is IController, Ownable, AddressBook {
   /* ========== FARM MANAGMENT ========== */
 
   /**
+   * @dev registerFarm can be called from outside (for new Farms deployed with
+   * this controller) or from transferFarm() call
+   *
+   * Contracts are active from the time of registering, but to provide rewards,
+   * refuelFarms must be called (for new Farms / due Farms).
+   *
+   * Use this function also for updating reward parameters and / or fee.
+   * _rewardProvided should be left 0, it is mainly used if a farm is
+   * transferred.
+   *
    * @param _farmAddress contract address of farm
    * @param _rewardCap max. amount of tokens rewardable
    * @param _rewardPerDuration refuel amount of tokens, duration is fixed in farm contract
    * @param _rewardProvided already provided rewards for this farm, should be 0 for external calls
    * @param _rewardFee fee we take from the reward and distribute through components (1e6 factor)
-   * @dev registerFarm can be called from outside (for new Farms deployed with this controller)
-   * or from transferFarm() call. Contracts are active from the time of registering, but to
-   * provide rewards, refuelFarms must be called (for new Farms / due Farms).
-   * Use this function also for updating reward parameters and / or fee.
-   * _rewardProvided should be left 0, it is mainly used if a farm is transferred.
    */
   function registerFarm(
     address _farmAddress,
@@ -195,7 +206,7 @@ contract Controller is IController, Ownable, AddressBook {
     // Farm existent, add new reward logic
     Farm storage farm = farms[_farmAddress];
     if (farm.farmStartedAtBlock > 0) {
-      // re-enable farm if disabled
+      // Re-enable farm if disabled
       farm.farmEndedAtBlock = 0;
       farm.paused = false;
       farm.active = true;
@@ -235,10 +246,12 @@ contract Controller is IController, Ownable, AddressBook {
   }
 
   /**
-   * @param _farmAddress contract address of farm to disable
    * @dev note that disabled farm can only be enabled again by calling
-   * registerFarm() with new parameters.
-   * This function is meant to finally end a farm;
+   * registerFarm() with new parameters
+   *
+   * This function is meant to finally end a farm.
+   *
+   * @param _farmAddress contract address of farm to disable
    */
   function disableFarm(address _farmAddress) external onlyOwner {
     Farm storage farm = farms[_farmAddress];
@@ -250,11 +263,13 @@ contract Controller is IController, Ownable, AddressBook {
   }
 
   /**
+   * @dev This is an emergency pause, which should be called in case of serious
+   * issues.
+   *
+   * Deposit / withdraw and rewards are disabled while pause is set to true.
+   *
    * @param _farmAddress contract address of farm to disable
    * @param _pause to enable / disable a farm
-   * @dev This is an emergency pause, which should be called in case
-   * of serious issues. deposit / withdraw and rewards are disabled
-   * while pause is set to true;
    */
   function pauseFarm(address _farmAddress, bool _pause) external onlyOwner {
     Farm storage farm = farms[_farmAddress];
@@ -312,7 +327,7 @@ contract Controller is IController, Ownable, AddressBook {
   function refuelFarms() external onlyWorker {
     address iterAddress = farmHead;
     while (iterAddress != address(0)) {
-      // refuel if farm end is one day ahead
+      // Refuel if farm end is one day ahead
       Farm storage farm = farms[iterAddress];
       if (
         farm.active &&

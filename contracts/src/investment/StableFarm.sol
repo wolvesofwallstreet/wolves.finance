@@ -75,7 +75,7 @@ contract StableCoinFarm is IFarm, ERC20, Ownable, ReentrancyGuard {
     address to,
     uint256 /* amount*/
   ) internal override {
-    // no action required for internal _mint and _burn
+    // No action required for internal _mint() and _burn()
     if (from == address(0) || to == address(0)) return;
 
     _updateReward(from);
@@ -170,6 +170,7 @@ contract StableCoinFarm is IFarm, ERC20, Ownable, ReentrancyGuard {
 
     // Transfer asset from user to this contract
     IERC20(assetToken).safeTransferFrom(msg.sender, address(this), _amount);
+
     // Invest using delegate
     _invest(_amount);
   }
@@ -244,10 +245,15 @@ contract StableCoinFarm is IFarm, ERC20, Ownable, ReentrancyGuard {
     }
     availableRewards = availableRewards.add(reward);
 
-    // Ensure the provided reward amount is not more than the balance in the contract.
-    // This keeps the reward rate in the right range, preventing overflows due to
-    // very high values of rewardRate in the earned and rewardsPerToken functions;
+    // Ensure the provided reward amount is not more than the balance in the
+    // contract.
+    //
+    // This keeps the reward rate in the right range, preventing overflows due
+    // to very high values of rewardRate in the earned and rewardsPerToken
+    // functions.
+    //
     // Reward + leftover must be less than 2^256 / 10^18 to avoid overflow.
+    //
     require(
       rewardRate <= availableRewards.div(rewardsDuration),
       'Provided reward too high'
@@ -261,7 +267,10 @@ contract StableCoinFarm is IFarm, ERC20, Ownable, ReentrancyGuard {
     emit RewardAdded(reward);
   }
 
-  // Added to support recovering LP Rewards from other systems to be distributed to holders
+  /**
+   * @dev This function is added to support recovering LP Rewards from other
+   * systems to be distributed to holders
+   */
   function recoverERC20(address tokenAddress, uint256 tokenAmount)
     external
     onlyOwner
@@ -312,7 +321,7 @@ contract StableCoinFarm is IFarm, ERC20, Ownable, ReentrancyGuard {
 
     if (strategies.length == 1) {
       currentStrategy = strategy;
-      // invest all assets
+      // Invest all assets
       _invest(IERC20(assetToken).balanceOf(address(this)));
     }
   }
@@ -364,12 +373,13 @@ contract StableCoinFarm is IFarm, ERC20, Ownable, ReentrancyGuard {
     // ASSETS
     if (currentStrategy != address(0)) {
       _redeem(IStrategy(currentStrategy).balanceOf(assetToken, address(this)));
-      // tranfer all of them back to holders (/*todo*/)
+      // Tranfer all of them back to holders (/*todo*/)
       IERC20(assetToken).transfer(
         msg.sender,
         IERC20(assetToken).balanceOf(address(this))
       );
     }
+
     // ETH
     address payable payableOwner = payable(owner());
     payableOwner.transfer(address(this).balance);
