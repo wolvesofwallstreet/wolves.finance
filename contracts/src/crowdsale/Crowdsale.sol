@@ -158,7 +158,6 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
 
     // solhint-disable-next-line not-rely-on-time
     require(_openingTime >= block.timestamp, 'opening > now');
-    // solhint-disable-next-line max-line-length
     require(_closingTime > _openingTime, 'open > close');
 
     // reverts if address is invalid
