@@ -55,7 +55,7 @@ contract CompoundLender is IStrategy {
     returns (uint256)
   {
     address cToken = _token2cToken(token);
-    require(cToken != address(0));
+    require(cToken != address(0), 'invest(): cToken address is 0');
     // mint cToken
     uint256 poolTokens = IERC20(cToken).balanceOf(address(this));
     require(
@@ -71,7 +71,7 @@ contract CompoundLender is IStrategy {
     returns (uint256)
   {
     address cToken = _token2cToken(token);
-    require(cToken != address(0));
+    require(cToken != address(0), 'redeem(): cToken address is 0');
     // redeem tokens to this contract
     uint256 assetTokens = IERC20(token).balanceOf(address(this));
     require(
@@ -88,7 +88,7 @@ contract CompoundLender is IStrategy {
     returns (uint256)
   {
     address cToken = _token2cToken(token);
-    require(cToken != address(0));
+    require(cToken != address(0), 'balanceOf(): cToken address is 0');
     return IERC20(cToken).balanceOf(_owner);
   }
 

@@ -324,7 +324,7 @@ contract StableCoinFarm is IFarm, ERC20, Ownable, ReentrancyGuard {
       }
     }
 
-    require(strategies.length > numInserted);
+    require(strategies.length > numInserted, 'Inserted too many strategies');
     strategies.pop();
 
     if (strategy == currentStrategy) {

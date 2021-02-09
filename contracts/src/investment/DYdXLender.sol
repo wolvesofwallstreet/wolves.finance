@@ -44,7 +44,7 @@ contract DYdXLender is IStrategy {
     returns (uint256)
   {
     uint256 dToken = _token2dToken(token);
-    require(dToken != uint256(-1));
+    require(dToken != uint256(-1), 'invest(): dToken address is -1');
 
     // mint dToken
     Info[] memory infos = new Info[](1);
@@ -77,7 +77,7 @@ contract DYdXLender is IStrategy {
     returns (uint256)
   {
     uint256 dToken = _token2dToken(token);
-    require(dToken != uint256(-1));
+    require(dToken != uint256(-1), 'redeem(): dToken address is -1');
 
     // redeem tokens to this contract
     Info[] memory infos = new Info[](1);

@@ -50,7 +50,7 @@ contract AaveLender is IStrategy {
   {
     address lendingPool =
       AaveLPAddressProvider(LENDING_POOL_ADDRESS_PROVIDER).getLendingPool();
-    require(lendingPool != address(0));
+    require(lendingPool != address(0), 'Lending pool address is 0');
     // aave pegs token 1:1
     AaveLP(lendingPool).deposit(token, assetAmount, 0);
     return assetAmount;
@@ -62,7 +62,7 @@ contract AaveLender is IStrategy {
     returns (uint256)
   {
     address aToken = _getPoolToken(token);
-    require(aToken != address(0));
+    require(aToken != address(0), 'Pool token address is 0');
     // redeem tokens to this contract
     AaveToken(aToken).redeem(poolAmount);
     return poolAmount;
