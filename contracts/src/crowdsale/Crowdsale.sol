@@ -244,13 +244,13 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
 
   /**
    * @dev Provide a collection of UI relevant values to reduce # of queries
-   * @return ethRaised : amount eth raised (wei)
-   *         timeOpen: time presale opens (unix timestamp seconds)
-   *         timeClose: time presale closes (unix timestamp seconds)
-   *         timeNow: current time (unix timestamp seconds)
-   *         userEthAmount: amount of ETH in users wallet (wei)
-   *         userEthInvest: amount of ETH users has already spend (wei)
-   *         userTokenAmount: amount of token hold by user (token::decimals)
+   *
+   * @return ethRaised Amount eth raised (wei)
+   * @return timeOpen Time presale opens (unix timestamp seconds)
+   * @return timeClose Time presale closes (unix timestamp seconds)
+   * @return timeNow Current time (unix timestamp seconds)
+   * @return userEthInvested Amount of ETH users has already spend (wei)
+   * @return userTokenAmount Amount of token hold by user (token::decimals)
    */
   function getStates(address beneficiary)
     public
