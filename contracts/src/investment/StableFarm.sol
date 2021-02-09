@@ -303,6 +303,7 @@ contract StableCoinFarm is IFarm, ERC20, Ownable, ReentrancyGuard {
 
     // Approve: allow strategy to withdraw assetTokens owned by this
     (bool success, bytes memory result) =
+      // solhint-disable-next-line avoid-low-level-calls
       strategy.delegatecall(
         abi.encodeWithSelector(IStrategy(strategy).approve.selector, assetToken)
       );
@@ -386,6 +387,7 @@ contract StableCoinFarm is IFarm, ERC20, Ownable, ReentrancyGuard {
   function _invest(uint256 assetAmount) private returns (uint256) {
     if (assetAmount > 0) {
       (bool success, bytes memory result) =
+        // solhint-disable-next-line avoid-low-level-calls
         currentStrategy.delegatecall(
           abi.encodeWithSelector(
             IStrategy(currentStrategy).invest.selector,
@@ -404,6 +406,7 @@ contract StableCoinFarm is IFarm, ERC20, Ownable, ReentrancyGuard {
   function _redeem(uint256 poolAmount) private returns (uint256) {
     if (poolAmount > 0) {
       (bool success, bytes memory result) =
+        // solhint-disable-next-line avoid-low-level-calls
         currentStrategy.delegatecall(
           abi.encodeWithSelector(
             IStrategy(currentStrategy).redeem.selector,
