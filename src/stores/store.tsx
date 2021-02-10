@@ -352,8 +352,12 @@ class Store {
     switch (this.chainId) {
       case 1:
         return addresses[1];
+      case 3:
+        return addresses[3];
       case 4:
         return addresses[4];
+      case 97:
+        return addresses[97];
       case 1337:
         return addresses[1337];
       default:
