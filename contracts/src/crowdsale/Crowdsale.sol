@@ -224,9 +224,9 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
     // it is designed to buy tokens.
     //
     // However, because we call out to uniV2Router from the crowdsale contract,
-    // re-imbursement of ETH from UniswapV2Pair must not by tokens.
+    // re-imbursement of ETH from UniswapV2Pair must not buy tokens.
     //
-    // Instead it must be payed to this contract in a first step and will than
+    // Instead it must be payed to this contract as a first step and will then
     // be transferred to the recipient in _addLiquidity().
     //
     if (_msgSender() != address(uniV2Router)) buyTokens(_msgSender());
@@ -266,8 +266,8 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
    * @return timeOpen Time presale opens (unix timestamp seconds)
    * @return timeClose Time presale closes (unix timestamp seconds)
    * @return timeNow Current time (unix timestamp seconds)
-   * @return userEthInvested Amount of ETH users has already spend (wei)
-   * @return userTokenAmount Amount of token hold by user (token::decimals)
+   * @return userEthInvested Amount of ETH users have already spent (wei)
+   * @return userTokenAmount Amount of token held by user (token::decimals)
    */
   function getStates(address beneficiary)
     public
