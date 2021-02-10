@@ -340,7 +340,7 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
     uint256 buyAmount =
       weiAmount.mul(tokenForLp).div(rate.mul(ethForLp).add(tokenForLp));
 
-    // The ETH amount we for liquidity (ETH + WOLF)
+    // The ETH amount we invest for liquidity (ETH + WOLF)
     uint256 investAmount = weiAmount.sub(buyAmount);
 
     _preValidatePurchase(beneficiary, buyAmount);
