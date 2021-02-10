@@ -205,7 +205,16 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
    * buyTokens directly when purchasing tokens from a contract.
    */
   receive() external payable {
-    buyTokens(_msgSender());
+    // A payable receive() function follows the OpenZeppelin strategy, in which
+    // it is designed to buy tokens.
+    //
+    // However, because we call out to uniV2Router from the crowdsale contract,
+    // re-imbursement of ETH from UniswapV2Pair must not by tokens.
+    //
+    // Instead it must be payed to this contract in a first step and will than
+    // be transferred to the recipient in _addLiquidity().
+    //
+    if (_msgSender() != address(uniV2Router)) buyTokens(_msgSender());
   }
 
   /**
