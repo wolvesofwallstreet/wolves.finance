@@ -21,7 +21,15 @@ import '../investment/interfaces/ITxWorker.sol';
 import '../utils/AddressBook.sol';
 import '../utils/interfaces/IAddressRegistry.sol';
 
-contract WowsToken is ERC20Capped, AccessControl, IRewardHandler, AddressBook {
+import './interfaces/IERC20WolfMintable.sol';
+
+contract WowsToken is
+  IERC20WolfMintable,
+  ERC20Capped,
+  AccessControl,
+  IRewardHandler,
+  AddressBook
+{
   using SafeMath for uint256;
 
   /**
@@ -145,7 +153,11 @@ contract WowsToken is ERC20Capped, AccessControl, IRewardHandler, AddressBook {
    *
    * @return True if successful, reverts on failure
    */
-  function mint(address account, uint256 amount) external returns (bool) {
+  function mint(address account, uint256 amount)
+    external
+    override
+    returns (bool)
+  {
     // Mint is only allowed by addresses with minter role
     require(hasRole(MINTER_ROLE, msg.sender), 'Only minters');
 
@@ -159,7 +171,7 @@ contract WowsToken is ERC20Capped, AccessControl, IRewardHandler, AddressBook {
    *
    * @param enable True to enable the univ2 pair, false to disable
    */
-  function enableUniV2Pair(bool enable) external {
+  function enableUniV2Pair(bool enable) external override {
     require(hasRole(MINTER_ROLE, msg.sender), 'Only minters');
     _uniV2Whitelist[uniV2Pair] = enable;
   }
