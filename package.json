@@ -28,7 +28,7 @@
     "format": "prettier --write . && eslint --fix .",
     "lint": "yarn lint-chain && yarn lint-app",
     "lint-app": "prettier --check . && eslint .",
-    "lint-chain": "solhint 'contracts/interfaces/**/*.sol' 'contracts/src/**/*.sol'",
+    "lint-chain": "solhint 'contracts/interfaces/**/*.sol' 'contracts/src/**/*.sol' --max-warnings 0",
     "start": "react-scripts start",
     "test": "yarn test-chain && yarn test-app",
     "test-app": "react-scripts test --passWithNoTests",
