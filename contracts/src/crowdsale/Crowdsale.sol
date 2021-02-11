@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Wolfpack
+ * Copyright (C) 2020-2021 The Wolfpack
  * This file is part of wolves.finance - https://github.com/wolvesofwallstreet/wolves.finance
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -29,15 +29,19 @@ interface IERC20WolfMintable is IERC20 {
 
 /**
  * @title Crowdsale
- * @dev Crowdsale is a base contract for managing a token crowdsale,
- * allowing investors to purchase tokens with ether. This contract implements
- * such functionality in its most fundamental form and can be extended to provide additional
- * functionality and/or custom behavior.
- * The external interface represents the basic interface for purchasing tokens, and conforms
- * the base architecture for crowdsales. It is *not* intended to be modified / overridden.
- * The internal interface conforms the extensible and modifiable surface of crowdsales. Override
- * the methods to add functionality. Consider using 'super' where appropriate to concatenate
- * behavior.
+ *
+ * @dev Crowdsale is a base contract for managing a token crowdsale, allowing
+ * investors to purchase tokens with ether. This contract implements such
+ * functionality in its most fundamental form and can be extended to provide
+ * additional functionality and/or custom behavior.
+ *
+ * The external interface represents the basic interface for purchasing tokens,
+ * and conforms the base architecture for crowdsales. It is *not* intended to
+ * be modified / overridden.
+ *
+ * The internal interface conforms the extensible and modifiable surface of
+ * crowdsales. Override the methods to add functionality. Consider using 'super'
+ * where appropriate to concatenate behavior.
  */
 contract Crowdsale is Context, ReentrancyGuard, AddressBook {
   using SafeMath for uint256;
@@ -50,9 +54,11 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
   address payable private _wallet;
 
   // How many token units a buyer gets per wei.
-  // The rate is the conversion between wei and the smallest and indivisible token unit.
-  // So, if you are using a rate of 1 with a ERC20Detailed token with 3 decimals called TOK
-  // 1 wei will give you 1 unit, or 0.001 TOK.
+  //
+  // The rate is the conversion between wei and the smallest and indivisible
+  // token unit. So, if you are using a rate of 1 with a ERC20Detailed token
+  // with 3 decimals called TOK 1 wei will give you 1 unit, or 0.001 TOK.
+  //
   uint256 public rate;
 
   // Amount of wei raised
@@ -65,11 +71,12 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
   uint256 public openingTime;
   uint256 public closingTime;
 
-  // per wallet investment (in wei)
+  // Per wallet investment (in wei)
   mapping(address => uint256) private _walletInvest;
 
   /**
    * Event for token purchase logging
+   *
    * @param purchaser who paid for the tokens
    * @param beneficiary who got the tokens
    * @param value weis paid for purchase
@@ -84,6 +91,7 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
 
   /**
    * Event for add liquidity logging
+   *
    * @param beneficiary who got the tokens
    * @param amountToken how many token were added
    * @param amountETH how many ETH were added
@@ -98,6 +106,7 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
 
   /**
    * Event for stake liquidity logging
+   *
    * @param beneficiary who got the tokens
    * @param liquidity how many pool tokens were created
    */
@@ -109,9 +118,11 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
 
   IStakeFarm public immutable stakeFarm;
 
-  // rate of tokens to insert into the UNISwapv2 liquidity pool
+  // Rate of tokens to insert into the UNISwapv2 liquidity pool
+  //
   // Because they will be devided, expanding by multiples of 10
-  // is fine to express decimal values
+  // is fine to express decimal values.
+  //
   uint256 private tokenForLp;
   uint256 private ethForLp;
 
@@ -124,11 +135,15 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
   }
 
   /**
+   * @dev Crowdsale constructor
+   *
    * @param _addressRegistry IAdressRegistry to get wallet and uniV2Router02
    * @param _rate Number of token units a buyer gets per wei
-   * @dev The rate is the conversion between wei and the smallest and indivisible
+   *
+   * The rate is the conversion between wei and the smallest and indivisible
    * token unit. So, if you are using a rate of 1 with a ERC20Detailed token
    * with 3 decimals called TOK, 1 wei will give you 1 unit, or 0.001 TOK.
+   *
    * @param _token Address of the token being sold
    * @param _cap Max amount of wei to be contributed
    * @param _investMin minimum investment in wei
@@ -158,17 +173,16 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
 
     // solhint-disable-next-line not-rely-on-time
     require(_openingTime >= block.timestamp, 'opening > now');
-    // solhint-disable-next-line max-line-length
     require(_closingTime > _openingTime, 'open > close');
 
-    // reverts if address is invalid
+    // Reverts if address is invalid
     IUniswapV2Router02 _uniV2Router =
       IUniswapV2Router02(
         _addressRegistry.getRegistryEntry(UNISWAP_V2_ROUTER02)
       );
     uniV2Router = _uniV2Router;
 
-    // get our liquidity pair
+    // Get our liquidity pair
     address _uniV2Pair =
       IUniswapV2Factory(_uniV2Router.factory()).getPair(
         address(_token),
@@ -177,12 +191,12 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
     require(_uniV2Pair != address(0), 'invalid pair');
     uniV2Pair = IERC20(_uniV2Pair);
 
-    // reverts if address is invalid
+    // Reverts if address is invalid
     address _marketingWallet =
       _addressRegistry.getRegistryEntry(MARKETING_WALLET);
     _wallet = payable(_marketingWallet);
 
-    // reverts if address is invalid
+    // Reverts if address is invalid
     address _stakeFarm =
       _addressRegistry.getRegistryEntry(WETH_WOWS_STAKE_FARM);
     stakeFarm = IStakeFarm(_stakeFarm);
@@ -199,7 +213,8 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
   }
 
   /**
-   * @dev fallback function ***DO NOT OVERRIDE***
+   * @dev Fallback function ***DO NOT OVERRIDE***
+   *
    * Note that other contracts will transfer funds with a base gas stipend
    * of 2300, which is not enough to call buyTokens. Consider calling
    * buyTokens directly when purchasing tokens from a contract.
@@ -209,16 +224,17 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
     // it is designed to buy tokens.
     //
     // However, because we call out to uniV2Router from the crowdsale contract,
-    // re-imbursement of ETH from UniswapV2Pair must not by tokens.
+    // re-imbursement of ETH from UniswapV2Pair must not buy tokens.
     //
-    // Instead it must be payed to this contract in a first step and will than
+    // Instead it must be payed to this contract as a first step and will then
     // be transferred to the recipient in _addLiquidity().
     //
     if (_msgSender() != address(uniV2Router)) buyTokens(_msgSender());
   }
 
   /**
-   * @dev Checks whether the cap has been reached.
+   * @dev Checks whether the cap has been reached
+   *
    * @return Whether the cap was reached
    */
   function capReached() public view returns (bool) {
@@ -226,7 +242,7 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
   }
 
   /**
-   * @return true if the crowdsale is open, false otherwise.
+   * @return True if the crowdsale is open, false otherwise.
    */
   function isOpen() public view returns (bool) {
     // solhint-disable-next-line not-rely-on-time
@@ -235,6 +251,7 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
 
   /**
    * @dev Checks whether the period in which the crowdsale is open has already elapsed.
+   *
    * @return Whether crowdsale period has elapsed
    */
   function hasClosed() public view returns (bool) {
@@ -244,13 +261,13 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
 
   /**
    * @dev Provide a collection of UI relevant values to reduce # of queries
-   * @return ethRaised : amount eth raised (wei)
-   *         timeOpen: time presale opens (unix timestamp seconds)
-   *         timeClose: time presale closes (unix timestamp seconds)
-   *         timeNow: current time (unix timestamp seconds)
-   *         userEthAmount: amount of ETH in users wallet (wei)
-   *         userEthInvest: amount of ETH users has already spend (wei)
-   *         userTokenAmount: amount of token hold by user (token::decimals)
+   *
+   * @return ethRaised Amount eth raised (wei)
+   * @return timeOpen Time presale opens (unix timestamp seconds)
+   * @return timeClose Time presale closes (unix timestamp seconds)
+   * @return timeNow Current time (unix timestamp seconds)
+   * @return userEthInvested Amount of ETH users have already spent (wei)
+   * @return userTokenAmount Amount of token held by user (token::decimals)
    */
   function getStates(address beneficiary)
     public
@@ -272,6 +289,7 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
       weiRaised,
       openingTime,
       closingTime,
+      // solhint-disable-next-line not-rely-on-time
       block.timestamp,
       ethInvest,
       tokenAmount
@@ -279,19 +297,21 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
   }
 
   /**
-   * @dev low level token purchase ***DO NOT OVERRIDE***
+   * @dev Low level token purchase ***DO NOT OVERRIDE***
+   *
    * This function has a non-reentrancy guard, so it shouldn't be called by
    * another `nonReentrant` function.
+   *
    * @param beneficiary Recipient of the token purchase
    */
   function buyTokens(address beneficiary) public payable nonReentrant {
     uint256 weiAmount = msg.value;
     _preValidatePurchase(beneficiary, weiAmount);
 
-    // calculate token amount to be created
+    // Calculate token amount to be created
     uint256 tokens = _getTokenAmount(weiAmount);
 
-    // update state
+    // Update state
     weiRaised = weiRaised.add(weiAmount);
     _walletInvest[beneficiary] = _walletInvest[beneficiary].add(weiAmount);
 
@@ -302,9 +322,11 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
   }
 
   /**
-   * @dev low level token purchase and liquidity staking ***DO NOT OVERRIDE***
+   * @dev Low level token purchase and liquidity staking ***DO NOT OVERRIDE***
+   *
    * This function has a non-reentrancy guard, so it shouldn't be called by
    * another `nonReentrant` function.
+   *
    * @param beneficiary Recipient of the token purchase
    */
   function buyTokensAddLiquidity(address payable beneficiary)
@@ -313,18 +335,20 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
     nonReentrant
   {
     uint256 weiAmount = msg.value;
+
     // The ETH amount we buy WOWS token for
     uint256 buyAmount =
       weiAmount.mul(tokenForLp).div(rate.mul(ethForLp).add(tokenForLp));
-    // The ETH amount we for liquidity (ETH + WOLF)
+
+    // The ETH amount we invest for liquidity (ETH + WOLF)
     uint256 investAmount = weiAmount.sub(buyAmount);
 
     _preValidatePurchase(beneficiary, buyAmount);
 
-    // calculate token amount to be created
+    // Calculate token amount to be created
     uint256 tokens = _getTokenAmount(buyAmount);
 
-    // verify that the ratio is in 0.1% limit
+    // Verify that the ratio is in 0.1% limit
     uint256 tokensReverse = investAmount.mul(tokenForLp).div(ethForLp);
     require(
       tokens < tokensReverse || tokens.sub(tokensReverse) < tokens.div(1000),
@@ -335,7 +359,7 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
       'ratio wrong'
     );
 
-    // update state
+    // Update state
     weiRaised = weiRaised.add(buyAmount);
     _walletInvest[beneficiary] = _walletInvest[beneficiary].add(buyAmount);
 
@@ -345,10 +369,13 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
   }
 
   /**
-   * @dev low level token liquidity staking ***DO NOT OVERRIDE***
+   * @dev Low level token liquidity staking ***DO NOT OVERRIDE***
+   *
    * This function has a non-reentrancy guard, so it shouldn't be called by
    * another `nonReentrant` function.
-   * approve must be called before to let us transfer msgsenders tokens
+   *
+   * approve() must be called before to let us transfer msgsenders tokens.
+   *
    * @param beneficiary Recipient of the token purchase
    */
   function addLiquidity(address payable beneficiary)
@@ -361,11 +388,11 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
     require(beneficiary != address(0), 'beneficiary is the zero address');
     require(weiAmount != 0, 'weiAmount is 0');
 
-    // calculate number of tokens
+    // Calculate number of tokens
     uint256 tokenAmount = weiAmount.mul(tokenForLp).div(ethForLp);
     require(token.balanceOf(_msgSender()) >= tokenAmount, 'insufficient token');
 
-    // get the tokens from msg.sender
+    // Get the tokens from msg.sender
     token.safeTransferFrom(_msgSender(), address(this), tokenAmount);
 
     // Step 1: add liquidity
@@ -383,7 +410,7 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
   }
 
   /**
-   * @dev finalize presale / create liquidity pool
+   * @dev Finalize presale / create liquidity pool
    */
   function finalizePresale() external {
     require(hasClosed(), 'not closed');
@@ -393,6 +420,7 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
 
     // Calculate how many token we add into liquidity pool
     uint256 tokenToLp = (ethBalance.mul(tokenForLp)).div(ethForLp);
+
     // Calculate amount unsold token
     uint256 tokenUnsold = cap.sub(weiRaised).mul(rate);
 
@@ -408,22 +436,30 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
     uint256 tokenInContract = token.balanceOf(address(this));
     if (tokenInContract > 0) token.transfer(_wallet, tokenInContract);
 
-    // finally whitelist uniV2 LP pool on token contract
+    // Finally whitelist uniV2 LP pool on token contract
     token.enableUniV2Pair(true);
   }
 
   function testSetTimes() public {
+    // solhint-disable-next-line not-rely-on-time
     openingTime = block.timestamp + 10;
+
+    // solhint-disable-next-line not-rely-on-time
     closingTime = block.timestamp + 3600;
+
     token.enableUniV2Pair(false);
   }
 
   /**
-   * @dev Validation of an incoming purchase. Use require statements to revert state when conditions are not met.
+   * @dev Validation of an incoming purchase. Use require statements to revert
+   * state when conditions are not met
+   *
    * Use `super` in contracts that inherit from Crowdsale to extend their validations.
+   *
    * Example from CappedCrowdsale.sol's _preValidatePurchase method:
    *     super._preValidatePurchase(beneficiary, weiAmount);
    *     require(weiRaised().add(weiAmount) <= cap);
+   *
    * @param beneficiary Address performing the token purchase
    * @param weiAmount Value in wei involved in the purchase
    */
@@ -441,14 +477,16 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
       'wallet-cap exceeded'
     );
 
-    // silence state mutability warning without generating bytecode - see
+    // Silence state mutability warning without generating bytecode - see
     // https://github.com/ethereum/solidity/issues/2691
     this;
   }
 
   /**
-   * @dev Executed when a purchase has been validated and is ready to be executed. Doesn't necessarily emit/send
-   * tokens.
+   * @dev Executed when a purchase has been validated and is ready to be executed
+   *
+   * Doesn't necessarily emit/send tokens.
+   *
    * @param _beneficiary Address receiving the tokens
    * @param _tokenAmount Number of tokens to be purchased
    */
@@ -460,8 +498,10 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
   }
 
   /**
-   * @dev Executed when a purchase has been validated and is ready to be executed.
-   * This function adds liquidity and stakes the liquidity in our initial farm
+   * @dev Executed when a purchase has been validated and is ready to be executed
+   *
+   * This function adds liquidity and stakes the liquidity in our initial farm.
+   *
    * @param beneficiary Address receiving the tokens
    * @param ethAmount Amount of ETH provided
    * @param tokenAmount Number of tokens to be purchased
@@ -478,7 +518,7 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
       _addLiquidity(address(this), beneficiary, ethAmount, tokenAmount);
 
     // Step 2: we now own the liquidity tokens, stake them
-    // allow stakeFarm to own our tokens
+    // Allow stakeFarm to own our tokens
     uniV2Pair.approve(address(stakeFarm), lpToken);
     stakeFarm.stake(lpToken);
 
@@ -490,7 +530,9 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
 
   /**
    * @dev Override to extend the way in which ether is converted to tokens.
+   *
    * @param weiAmount Value in wei to be converted into tokens
+   *
    * @return Number of tokens that can be purchased with the specified _weiAmount
    */
   function _getTokenAmount(uint256 weiAmount) internal view returns (uint256) {
@@ -512,6 +554,7 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
   ) internal returns (uint256) {
     // Add Liquidity, receiver of pool tokens is _wallet
     token.approve(address(uniV2Router), tokenBalance);
+
     (uint256 amountToken, uint256 amountETH, uint256 liquidity) =
       uniV2Router.addLiquidityETH{ value: ethBalance }(
         address(token),
@@ -519,14 +562,17 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
         tokenBalance.mul(90).div(100),
         ethBalance.mul(90).div(100),
         tokenOwner,
+        // solhint-disable-next-line not-rely-on-time
         block.timestamp + 86400
       );
+
     emit LiquidityAdded(tokenOwner, amountToken, amountETH, liquidity);
 
-    // send remaining ETH to the team wallet
+    // Send remaining ETH to the team wallet
     if (amountETH < ethBalance)
       remainingReceiver.transfer(ethBalance.sub(amountETH));
-    // send remaining WOWS token to team wallet
+
+    // Send remaining WOWS token to team wallet
     if (amountToken < tokenBalance)
       token.transfer(remainingReceiver, tokenBalance.sub(amountToken));
 

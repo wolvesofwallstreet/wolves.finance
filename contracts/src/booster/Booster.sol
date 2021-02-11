@@ -18,7 +18,7 @@ contract Booster is Ownable {
     transferOwnership(_owner);
   }
 
-  // dummy booster implementation, send token to next implementation
+  // Dummy booster implementation, send token to next implementation
   function transferTo(address _token, address _recipient) external onlyOwner {
     require(_recipient != address(0), 'burn not allowed');
     IERC20(_token).safeTransfer(

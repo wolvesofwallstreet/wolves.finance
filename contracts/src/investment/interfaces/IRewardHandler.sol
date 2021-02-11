@@ -9,8 +9,11 @@
 pragma solidity >=0.6.0 <0.8.0;
 
 interface IRewardHandler {
-  // transfer reward and distribute the fee
-  // _to values are in 1e6 factor notation
+  /**
+   * @dev Transfer reward and distribute the fee
+   *
+   * _to values are in 1e6 factor notation.
+   */
   function distribute(
     address _recipient,
     uint256 _amount,

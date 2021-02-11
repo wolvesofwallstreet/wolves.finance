@@ -40,7 +40,7 @@ Since most source files in wolves.finance are `Apache-2.0` licensed, the typical
 
 ```
 /*
- * Copyright (C) 2020 The Wolfpack
+ * Copyright (C) 2020-2021 The Wolfpack
  * This file is part of wolves.finance - https://github.com/wolvesofwallstreet/wolves.finance
  *
  * SPDX-License-Identifier: Apache-2.0

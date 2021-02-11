@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Wolfpack
+ * Copyright (C) 2020-2021 The Wolfpack
  * This file is part of wolves.finance - https://github.com/wolvesofwallstreet/wolves.finance
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -18,20 +18,20 @@ import './interfaces/IStrategy.sol';
 contract FulcrumLender is IStrategy {
   using SafeMath for uint256;
   /*//mainnnet
-  address constant usdc = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-  address constant iusdc = 0x32E4c68B3A4a813b710595AebA7f6B7604Ab9c15;
-  address constant dai = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
-  address constant idai = 0x6b093998D36f2C7F0cc359441FBB24CC629D5FF0;
-  address constant usdt = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
-  address constant iusdt = 0x7e9997a38A439b2be7ed9c9C4628391d3e055D48;
+  address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+  address public constant IUSDC = 0x32E4c68B3A4a813b710595AebA7f6B7604Ab9c15;
+  address public constant DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
+  address public constant IDAI = 0x6b093998D36f2C7F0cc359441FBB24CC629D5FF0;
+  address public constant USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
+  address public constant IUSDT = 0x7e9997a38A439b2be7ed9c9C4628391d3e055D48;
   */
   //Kovan
-  address constant usdc = 0xB443f30CDd6076b1A5269dbc08b774F222d4Db4e;
-  address constant iusdc = 0x021C5923398168311Ff320902BF8c8C725B4F288;
-  address constant dai = address(0);
-  address constant idai = address(0);
-  address constant usdt = address(0);
-  address constant iusdt = address(0);
+  address public constant USDC = 0xB443f30CDd6076b1A5269dbc08b774F222d4Db4e;
+  address public constant IUSDC = 0x021C5923398168311Ff320902BF8c8C725B4F288;
+  address public constant DAI = address(0);
+  address public constant IDAI = address(0);
+  address public constant USDT = address(0);
+  address public constant IUSDT = address(0);
 
   function getId() external pure override returns (bytes32) {
     return keccak256(abi.encodePacked('FulcrumLender'));
@@ -46,7 +46,7 @@ contract FulcrumLender is IStrategy {
     override
     returns (uint256)
   {
-    // mint iToken
+    // Mint iToken
     uint256 poolTokens =
       Fulcrum(_token2iToken(token)).mint(address(this), assetAmount);
     require(poolTokens > 0, 'Fulcrum: mint failed');
@@ -58,7 +58,7 @@ contract FulcrumLender is IStrategy {
     override
     returns (uint256)
   {
-    // redeem tokens to this contract
+    // Redeem tokens to this contract
     uint256 assetTokens =
       Fulcrum(_token2iToken(token)).burn(address(this), poolAmount);
     require(assetTokens > 0, 'Fulcrum: burn failed');
@@ -74,7 +74,7 @@ contract FulcrumLender is IStrategy {
     return IERC20(_token2iToken(token)).balanceOf(_owner);
   }
 
-  // return the amount of the underlying asset
+  // Return the amount of the underlying asset
   function getAssetAmount(address token, address _owner)
     external
     view
@@ -88,12 +88,13 @@ contract FulcrumLender is IStrategy {
     return Fulcrum(_token2iToken(token)).supplyInterestRate().div(100);
   }
 
+  // solhint-disable-next-line no-empty-blocks
   function refresh(address token) external override {}
 
   function _token2iToken(address asset) internal pure returns (address) {
-    if (asset == usdc) return iusdc;
-    if (asset == dai) return idai;
-    if (asset == usdt) return iusdt;
+    if (asset == USDC) return IUSDC;
+    if (asset == DAI) return IDAI;
+    if (asset == USDT) return IUSDT;
     return address(0);
   }
 }
