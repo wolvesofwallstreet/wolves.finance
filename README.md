@@ -73,6 +73,12 @@ Contracts can be deployed on the following networks:
 - `yarn kovan:deploy`
 - `yarn goerli:deploy`
 
+You can also specify tags with `yarn hardhat:deploy --tags <tags>`.
+The following tags are available:
+
+- `Token` - the ERC-20 token and presale launch contracts
+- `TokenSetup` - transactions to setup the token contracts
+
 ### `yarn <network>:verify`
 
 Verifies contracts with Etherscan on the given network.
