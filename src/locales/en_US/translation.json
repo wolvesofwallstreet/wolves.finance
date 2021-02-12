@@ -4,6 +4,13 @@
   "header": {
     "connectWallet": "CONNECT WALLET"
   },
+  "toast": {
+    "walletConnected": "Wallet connected",
+    "walletDisconnected": "Wallet disconnected",
+    "transactionStarted": "Transaction started...",
+    "transactionMined": "Transaction processing...",
+    "transactionFinished": "Transaction succeeded..."
+  },
   "presale": {
     "id": "PRE-SALE",
     "unknown": "THE $t(presale.id)",

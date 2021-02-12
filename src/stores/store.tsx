@@ -27,7 +27,6 @@ import {
   PRESALE_LIQUIDITY,
   PRESALE_STATE,
   STAKE_STATE,
-  TX_HASH,
 } from './constants';
 
 const emitter = new Emitter.EventEmitter();
@@ -46,7 +45,7 @@ type Payload = {
 type ChainAddresses = {
   token: string;
   presale: string;
-  univ2Pool: string;
+  stakeFarm: string;
 };
 
 export type TokenContractResult = {
@@ -73,7 +72,9 @@ export type PresaleResult = {
 };
 
 export type StatusResult = {
-  error: string | undefined;
+  status: 'error' | 'tx' | 'success';
+  errorMessage: string | undefined;
+  tx: string | undefined;
 };
 
 export type StakeResult = {
@@ -375,7 +376,7 @@ class Store {
         provider
       );
       this.stakeContractRO = new ethers.Contract(
-        chainAddresses.univ2Pool,
+        chainAddresses.stakeFarm,
         StakeAbi,
         provider
       );
@@ -512,12 +513,18 @@ class Store {
         this.address,
         investAmount
       );
-      emitter.emit(TX_HASH, tx?.hash);
+      emitter.emit(PRESALE_BUY, { status: 'tx', tx: tx?.hash } as StatusResult);
 
       await tx?.wait();
-      emitter.emit(PRESALE_BUY, {});
+      emitter.emit(PRESALE_BUY, {
+        status: 'success',
+        tx: tx?.hash,
+      } as StatusResult);
     } catch (e) {
-      emitter.emit(PRESALE_BUY, { error: e.message });
+      emitter.emit(PRESALE_BUY, {
+        status: 'error',
+        errorMessage: e.error ? e.error.message : e.message,
+      } as StatusResult);
     }
   };
 
@@ -533,12 +540,21 @@ class Store {
         this.address,
         investAmount
       );
-      emitter.emit(TX_HASH, tx?.hash);
+      emitter.emit(PRESALE_LIQUIDITY, {
+        status: 'tx',
+        tx: tx?.hash,
+      } as StatusResult);
 
       await tx?.wait();
-      emitter.emit(PRESALE_LIQUIDITY, {});
+      emitter.emit(PRESALE_LIQUIDITY, {
+        status: 'success',
+        tx: tx?.hash,
+      } as StatusResult);
     } catch (e) {
-      emitter.emit(PRESALE_LIQUIDITY, { error: e.message });
+      emitter.emit(PRESALE_LIQUIDITY, {
+        status: 'error',
+        errorMessage: e.error ? e.error.message : e.message,
+      } as StatusResult);
     }
   };
 
@@ -552,6 +568,8 @@ class Store {
       return callback(e);
     }
   };
+
+  /******************** Misc *********************/
 
   fromWei(n: ethers.BigNumber, decimals = 18) {
     return parseFloat(ethers.utils.formatUnits(n, decimals));

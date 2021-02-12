@@ -1,0 +1,25 @@
+.Toastify__toast--default {
+  background-color: var(--wolves-orange);
+  color: var(--wolves-blue-dk);
+  min-height: auto;
+  padding: 4px;
+}
+
+.Toastify__progress-bar--default {
+  bottom: 2px;
+  background: var(--wolves-blue-dk);
+}
+
+.wolflogo {
+  margin-right: 8px;
+}
+
+.wolflogo--success {
+  border-radius: 12px;
+  box-shadow: 0 0 6px lime;
+}
+
+.wolflogo--failure {
+  border-radius: 12px;
+  box-shadow: 0 0 6px red;
+}

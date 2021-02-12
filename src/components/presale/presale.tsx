@@ -217,8 +217,8 @@ class Presale extends Component<PRESALEPROPS, PRESALESTATE> {
   }
 
   onPresaleBuy(params: StatusResult): void {
-    this.setState({ waiting: false });
-    if (params['error'] === undefined) {
+    if (params.status !== 'tx') this.setState({ waiting: false });
+    if (params.status === 'success') {
       if (this.inputRef.current) {
         this.inputRef.current.value = Presale.defaultEthValue;
       }
