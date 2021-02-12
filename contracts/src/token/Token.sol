@@ -111,7 +111,7 @@ contract WowsToken is ERC20Capped, AccessControl, IRewardHandler, AddressBook {
     _mint(__teamWallet, 7500 * 1e18);
     _teamWallet = __teamWallet;
 
-    // Multi-sig marketing wallet get admin rights
+    // Multi-sig marketing wallet gets admin rights
     _setupRole(DEFAULT_ADMIN_ROLE, __marketingWallet);
 
     // reverts if address is invalid

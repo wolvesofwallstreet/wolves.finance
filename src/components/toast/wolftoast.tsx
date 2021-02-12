@@ -14,6 +14,7 @@ import { toast, ToastContainer } from 'react-toastify';
 
 import logo from '../../assets/wolves-token_99.png';
 import {
+  ADDRESS_COPIED,
   CONNECTION_CHANGED,
   PRESALE_BUY,
   PRESALE_LIQUIDITY,
@@ -42,11 +43,13 @@ class WolfToast extends Component<TOASTPROPS, TOASTSTATE> {
     super(props);
     this.t = this.props.t;
 
+    this.onAddressCopied = this.onAddressCopied.bind(this);
     this.onConnectionChanged = this.onConnectionChanged.bind(this);
     this.onTransaction = this.onTransaction.bind(this);
   }
 
   componentDidMount(): void {
+    StoreClasses.emitter.on(ADDRESS_COPIED, this.onAddressCopied);
     StoreClasses.emitter.on(CONNECTION_CHANGED, this.onConnectionChanged);
     StoreClasses.emitter.on(PRESALE_BUY, this.onTransaction);
     StoreClasses.emitter.on(PRESALE_LIQUIDITY, this.onTransaction);
@@ -56,6 +59,13 @@ class WolfToast extends Component<TOASTPROPS, TOASTSTATE> {
     StoreClasses.emitter.off(PRESALE_LIQUIDITY, this.onTransaction);
     StoreClasses.emitter.off(PRESALE_BUY, this.onTransaction);
     StoreClasses.emitter.off(CONNECTION_CHANGED, this.onConnectionChanged);
+    StoreClasses.emitter.off(ADDRESS_COPIED, this.onAddressCopied);
+  }
+
+  onAddressCopied(): void {
+    toast(this._formatToast(undefined, this.t('toast.addressCopied')), {
+      autoClose: 2000,
+    });
   }
 
   onConnectionChanged(result: ConnectResult): void {

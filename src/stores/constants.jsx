@@ -7,6 +7,7 @@
  */
 
 // Events (used in dispatcher and emitter)
+export const ADDRESS_COPIED = 'ADDRESS_COPIED';
 export const CONNECTION_CHANGED = 'CONNECTION_CHANGED';
 export const NEW_BLOCK = 'NEW_BLOCK'; // Block ticker
 

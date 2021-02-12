@@ -8,12 +8,12 @@
 import './presale.css';
 
 import React, { Component, createRef, ReactNode } from 'react';
-import { Clipboard } from 'react-bootstrap-icons';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { TFunction, withTranslation } from 'react-i18next';
 
 import WowsToken from '../../assets/wolves-token_233.png';
 import {
+  ADDRESS_COPIED,
   CONNECTION_CHANGED,
   PRESALE_BUY,
   PRESALE_LIQUIDITY,
@@ -416,6 +416,10 @@ class Presale extends Component<PRESALEPROPS, PRESALESTATE> {
     this.forceUpdate();
   }
 
+  onAddressCopied(): void {
+    StoreClasses.emitter.emit(ADDRESS_COPIED);
+  }
+
   render(): ReactNode {
     const disabled =
       !(this.state.isOpen && this.state.connected) ||
@@ -476,52 +480,25 @@ class Presale extends Component<PRESALEPROPS, PRESALESTATE> {
           {/****** LEFT ******/}
           <div className="presale-content presale-content-left">
             <div className="presale-top">
-              <h1>
-                {t('title')} {t('presale.id')}
-              </h1>
-              <h2>1 ETH = 80 WOWS</h2>
+              <h1>{t('presale.event')}</h1>
               <h3>
-                75 ETH {t('presale.target')} - 6000 WOWS{' '}
-                {t('presale.available')}
+                6000 WOWS {t('presale.available')} - 75 ETH{' '}
+                {t('presale.target')}
               </h3>
-              <table>
-                <tbody>
-                  <tr>
-                    <td />
-                    <td>
-                      {t('presale.contract')}
-                      <br />
-                      {this._getPresaleContractAddress()}&nbsp;&nbsp;
-                      <CopyToClipboard text={this._getPresaleContractAddress()}>
-                        <Clipboard
-                          style={{
-                            color: 'var(--wolves-orange)',
-                            cursor: 'pointer',
-                            marginBottom: '2px',
-                          }}
-                        />
-                      </CopyToClipboard>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td />
-                    <td>{t('presale.locked')}</td>
-                  </tr>
-                  <tr>
-                    <td />
-                    <td>{t('presale.wallet')}</td>
-                  </tr>
-                  <tr>
-                    <td />
-                    <td>
-                      {t('presale.purchase', {
-                        min: Presale.EthMin,
-                        max: Presale.EthMax,
-                      })}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+              <h3>{t('presale.h3Min', { num: Presale.EthMin })}</h3>
+              <h3>{t('presale.h3Max', { num: Presale.EthMax })}</h3>
+              <p
+                className="pcr-left"
+                dangerouslySetInnerHTML={{ __html: t('presale.textTop') }}
+              />
+              <h3>{t('presale.or')}</h3>
+              <p
+                className="pcr-left"
+                dangerouslySetInnerHTML={{ __html: t('presale.textBottom') }}
+              />
+              <p className="pcr-left pcr-pointer">
+                <u>{t('presale.fundAllocation')}</u>
+              </p>
               <hr />
             </div>
             <div className="presale-social">
@@ -637,6 +614,15 @@ class Presale extends Component<PRESALEPROPS, PRESALESTATE> {
                 </tbody>
               </table>
             </form>
+            <CopyToClipboard
+              text={this._getPresaleContractAddress()}
+              onCopy={this.onAddressCopied}
+            >
+              <span className="pcr-input-label pcr-pointer">
+                {t('presale.contract')}:{' '}
+                <u>{this._getPresaleContractAddress()}</u>
+              </span>
+            </CopyToClipboard>
           </div>
         </div>
       </div>
