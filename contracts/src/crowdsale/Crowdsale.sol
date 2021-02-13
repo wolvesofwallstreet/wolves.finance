@@ -40,6 +40,7 @@ import '../utils/interfaces/IAddressRegistry.sol';
  */
 contract Crowdsale is Context, ReentrancyGuard, AddressBook {
   using SafeMath for uint256;
+  using SafeERC20 for IERC20;
   using SafeERC20 for IERC20WolfMintable;
 
   // The token being sold
@@ -435,14 +436,27 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
     token.enableUniV2Pair(true);
   }
 
-  function testSetTimes() public {
-    // solhint-disable-next-line not-rely-on-time
-    openingTime = block.timestamp + 10;
+  /**
+   * @dev Added to support recovering LP Rewards from other systems to be distributed to holders
+   */
+  function recoverERC20(address tokenAddress, uint256 tokenAmount) external {
+    require(msg.sender == _wallet, 'restricted to wallet');
+    require(hasClosed(), 'not closed');
+    // Cannot recover the staking token or the rewards token
+    require(tokenAddress != address(token), 'native tokens unrecoverable');
 
-    // solhint-disable-next-line not-rely-on-time
-    closingTime = block.timestamp + 3600;
+    IERC20(tokenAddress).safeTransfer(_wallet, tokenAmount);
+  }
 
-    token.enableUniV2Pair(false);
+  /**
+   * @dev Change the closing time which gives you the possibility
+   * to either shorten or enlarge the presale period
+   */
+  function setClosingTime(uint256 newClosingTime) external {
+    require(msg.sender == _wallet, 'restricted to wallet');
+    require(newClosingTime > openingTime, 'close < open');
+
+    closingTime = newClosingTime;
   }
 
   /**
