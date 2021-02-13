@@ -131,6 +131,7 @@ const config = {
   networks: {
     hardhat: {
       tags: ['test', 'local'],
+      loggingEnabled: false,
     },
     localhost: {
       url: 'http://localhost:8545',
