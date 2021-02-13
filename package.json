@@ -52,7 +52,7 @@
     "start": "react-scripts start",
     "test": "yarn test-chain && yarn test-app",
     "test-app": "react-scripts test --passWithNoTests",
-    "test-chain": "ts-mocha --recursive --extension ts --require esm || ([ $? -eq 139 ] && echo 'Segfault')"
+    "test-chain": "ts-mocha --recursive --extension ts --require esm --require isomorphic-fetch || ([ $? -eq 139 ] && echo 'Segfault')"
   },
   "dependencies": {
     "@testing-library/jest-dom": "^5.11.4",
@@ -106,6 +106,7 @@
     "hardhat-abi-exporter": "^2.0.8",
     "hardhat-deploy": "git+https://github.com/juztamau5/hardhat-deploy.git#0.7.0-beta.44",
     "hardhat-deploy-ethers": "^0.3.0-beta.7",
+    "isomorphic-fetch": "^3.0.0",
     "mocha": "^8.2.1",
     "prettier": "^2.2.1",
     "prettier-plugin-pkg": "^0.8.0",
