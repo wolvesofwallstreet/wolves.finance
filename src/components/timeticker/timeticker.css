@@ -22,8 +22,7 @@
 .ticker-text {
   display: inline-block;
   margin-top: 10px;
-  letter-spacing: 0.02em;
-  font-size: 36px;
+  font-size: 40px;
 }
 
 .ticker-description {

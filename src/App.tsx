@@ -14,6 +14,7 @@ import React from 'react';
 import { Footer } from './components/footer';
 import { Header } from './components/header';
 import Presale from './components/presale';
+import WolfToast from './components/toast/wolftoast';
 import { StoreContainer } from './stores/store';
 
 class App extends React.Component {
@@ -21,6 +22,7 @@ class App extends React.Component {
     return (
       <div className="App">
         <StoreContainer>
+          <WolfToast />
           <Header />
           <Presale />
           <Footer />

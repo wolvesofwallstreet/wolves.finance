@@ -7,8 +7,8 @@
  */
 
 // Events (used in dispatcher and emitter)
+export const ADDRESS_COPIED = 'ADDRESS_COPIED';
 export const CONNECTION_CHANGED = 'CONNECTION_CHANGED';
-export const TX_HASH = 'TX_HASH';
 export const NEW_BLOCK = 'NEW_BLOCK'; // Block ticker
 
 export const ERC20_TOKEN_CONTRACT = 'ERC20_TOKEN_CONTRACT'; // information from token contract

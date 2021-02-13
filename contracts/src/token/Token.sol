@@ -119,7 +119,7 @@ contract WowsToken is
     _mint(__teamWallet, 7500 * 1e18);
     _teamWallet = __teamWallet;
 
-    // Multi-sig teamwallet has initial admin rights, eg for adding minters
+    // Multi-sig marketing wallet gets admin rights
     _setupRole(DEFAULT_ADMIN_ROLE, __marketingWallet);
 
     // Reverts if address is invalid
