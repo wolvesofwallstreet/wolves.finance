@@ -11,7 +11,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 import React from 'react';
 
-import { Footer } from './components/footer';
+import Footer from './components/footer';
 import { Header } from './components/header';
 import Presale from './components/presale';
 import WolfToast from './components/toast/wolftoast';
