@@ -484,20 +484,25 @@ class Presale extends Component<PRESALEPROPS, PRESALESTATE> {
               <h3>
                 6000 WOWS {t('presale.available')} - 75 ETH{' '}
                 {t('presale.target')}
+                <br />
+                {t('presale.h3Min', { num: Presale.EthMin })}
+                <br />
+                {t('presale.h3Max', { num: Presale.EthMax })}
               </h3>
-              <h3>{t('presale.h3Min', { num: Presale.EthMin })}</h3>
-              <h3>{t('presale.h3Max', { num: Presale.EthMax })}</h3>
-              <p
-                className="pcr-left"
-                dangerouslySetInnerHTML={{ __html: t('presale.textTop') }}
-              />
+              <p dangerouslySetInnerHTML={{ __html: t('presale.textTop') }} />
               <h3>{t('presale.or')}</h3>
               <p
-                className="pcr-left"
                 dangerouslySetInnerHTML={{ __html: t('presale.textBottom') }}
               />
-              <p className="pcr-left pcr-pointer">
-                <u>{t('presale.fundAllocation')}</u>
+
+              <p>
+                <a
+                  target="_blank"
+                  rel="noreferrer"
+                  href="https://wolvesofwallstreet.medium.com/the-wolves-of-wall-street-wows-token-presale-b16c988faa42"
+                >
+                  {t('presale.fundAllocation')}
+                </a>
               </p>
               <hr />
             </div>

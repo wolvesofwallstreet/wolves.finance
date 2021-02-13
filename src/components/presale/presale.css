@@ -22,6 +22,7 @@
 }
 
 .info-container {
+  border: 2px groove lightgray;
   margin-top: 10px;
   width: 100%;
   background-color: var(--wolves-blue-dk);
@@ -91,18 +92,23 @@
 }
 
 .presale-content-left h3 {
+  margin-bottom: 6px;
   font-size: 0.6470588235294118em;
-  line-height: 0.75;
 }
 
 .presale-content-left h1,
-h2,
-h3 {
+.presale-content-left h3 {
   font-family: 'vincente', serif;
   font-weight: bold;
 }
 
 .presale-content-left p {
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.presale-content-left a {
+  color: var(--wolves-orange);
   margin-top: 6px;
   font-size: 14px;
 }
@@ -128,6 +134,7 @@ h3 {
   display: flex;
   justify-content: space-evenly;
   width: 180px;
+  margin-bottom: 8px;
 }
 
 .social-menu-btn {

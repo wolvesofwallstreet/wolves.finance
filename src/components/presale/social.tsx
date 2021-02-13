@@ -18,41 +18,56 @@ class Social extends Component {
   render(): ReactNode {
     return (
       <div className="social-menu">
-        <a
-          className="social-menu-btn"
-          target="_blank"
-          rel="noreferrer"
-          href="https://twitter.com/WolvesWallst"
-        >
-          <img src={twitter} alt="Twitter" width="24px" height="24px" />
-        </a>
-        <a className="social-menu-btn" href="#ether">
-          <img src={etherscan} alt="Etherscan" width="24px" height="24px" />
-        </a>
-        <a
-          className="social-menu-btn"
-          target="_blank"
-          rel="noreferrer"
-          href="https://github.com/wolvesofwallstreet"
-        >
-          <img src={github} alt="Github" width="24px" height="24px" />
-        </a>
-        <a
-          className="social-menu-btn"
-          target="_blank"
-          rel="noreferrer"
-          href="https://discord.gg/CCqZtze8kg"
-        >
-          <img src={discord} alt="Discord" width="24px" height="24px" />
-        </a>
-        <a
-          className="social-menu-btn"
-          target="_blank"
-          rel="noreferrer"
-          href="https://t.me/wolveswallstreet"
-        >
-          <img src={telegram} alt="Telegram" width="24px" height="24px" />
-        </a>
+        <p>
+          <a
+            className="social-menu-btn"
+            target="_blank"
+            rel="noreferrer"
+            href="https://twitter.com/WolvesWallst"
+          >
+            <img src={twitter} alt="Twitter" width="24px" height="24px" />
+          </a>
+        </p>
+        <p>
+          <a
+            className="social-menu-btn"
+            target="_blank"
+            rel="noreferrer"
+            href="https://etherscan.io/address/0x672EF7E4Fe230B5cA1466C5fDD40588d30FdF90a"
+          >
+            <img src={etherscan} alt="Etherscan" width="24px" height="24px" />
+          </a>
+        </p>
+        <p>
+          <a
+            className="social-menu-btn"
+            target="_blank"
+            rel="noreferrer"
+            href="https://github.com/wolvesofwallstreet"
+          >
+            <img src={github} alt="Github" width="24px" height="24px" />
+          </a>
+        </p>
+        <p>
+          <a
+            className="social-menu-btn"
+            target="_blank"
+            rel="noreferrer"
+            href="https://discord.gg/CCqZtze8kg"
+          >
+            <img src={discord} alt="Discord" width="24px" height="24px" />
+          </a>
+        </p>
+        <p>
+          <a
+            className="social-menu-btn"
+            target="_blank"
+            rel="noreferrer"
+            href="https://t.me/wolveswallstreet"
+          >
+            <img src={telegram} alt="Telegram" width="24px" height="24px" />
+          </a>
+        </p>
       </div>
     );
   }
