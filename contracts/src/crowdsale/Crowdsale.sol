@@ -449,6 +449,17 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
   }
 
   /**
+   * @dev Change the closing time which gives you the possibility
+   * to either shorten or enlarge the presale period
+   */
+  function setClosingTime(uint256 newClosingTime) external {
+    require(msg.sender == _wallet, 'restricted to wallet');
+    require(newClosingTime > openingTime, 'close < open');
+
+    closingTime = newClosingTime;
+  }
+
+  /**
    * @dev Validation of an incoming purchase. Use require statements to revert
    * state when conditions are not met
    *
