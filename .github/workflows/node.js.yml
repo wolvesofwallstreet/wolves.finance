@@ -6,6 +6,10 @@
 #
 #   https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
 #
+# This workflow uses the following GitHub Actions secrets:
+#
+#   * INFURA_API_KEY: Your API key for Infura. Obtain one at https://infura.io/
+#
 ################################################################################
 
 name: Node.js CI
@@ -57,6 +61,15 @@ jobs:
             node_modules
           key: npm-install-${{ matrix.os }}-${{ matrix.node-version }}-${{ hashFiles('package.json', 'yarn.lock') }}
 
+      - name: Restore smart contract dependencies
+        id: restore-contracts
+        uses: actions/cache@v2
+        with:
+          path: |
+            contracts/depends
+            depends
+          key: restore-contracts-${{ hashFiles('tools/Makefile', 'tools/*.mk', 'tools/depends/native/**') }}
+
       - name: yarn install
         if: steps.restore-node.outputs.cache-hit != 'true'
         run: yarn install
@@ -64,14 +77,23 @@ jobs:
       - name: yarn run audit
         run: yarn run audit
 
+      - name: Build smart contract dependencies
+        if: steps.restore-contracts.outputs.cache-hit != 'true'
+        run: yarn depends
+
       - name: yarn lint
         run: yarn lint
 
       - name: yarn compile
         run: yarn compile
 
+      - name: yarn hardhat:deploy
+        run: yarn hardhat:deploy
+
       - name: yarn test
         run: yarn test
+        env:
+          CI_INFURA_API_KEY: ${{ secrets.INFURA_API_KEY }}
 
       - name: yarn build
         run: yarn build

@@ -1,0 +1,181 @@
+From 8deaadb20d7e915b7a474f11be9957da9deefee6 Mon Sep 17 00:00:00 2001
+From: juztamau5 <juztamau5@gmail.com>
+Date: Sat, 6 Feb 2021 18:02:20 -0800
+Subject: [PATCH 1/2] Remove optimization requiring byte-identical bytecode
+
+Because local filesystem paths are included in the init code
+hash, this function breaks for custom-deployed UniswapV2Factory
+contracts.
+
+To allow for custom UniswapV2Factory deployments, just do the
+unoptimized call.
+
+See commit diff for gas repercussions.
+---
+ contracts/libraries/UniswapV2Library.sol  | 13 ++++---------
+ test/ExampleComputeLiquidityValue.spec.ts | 12 ++++++------
+ test/ExampleSlidingWindowOracle.spec.ts   |  6 +++---
+ test/ExampleSwapToPrice.spec.ts           |  2 +-
+ test/UniswapV2Router01.spec.ts            |  8 ++++----
+ 5 files changed, 18 insertions(+), 23 deletions(-)
+
+diff --git a/contracts/libraries/UniswapV2Library.sol b/contracts/libraries/UniswapV2Library.sol
+index 107fb2e..1634585 100644
+--- a/contracts/libraries/UniswapV2Library.sol
++++ b/contracts/libraries/UniswapV2Library.sol
+@@ -1,5 +1,6 @@
+ pragma solidity >=0.5.0;
+ 
++import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol';
+ import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol';
+ 
+ import "./SafeMath.sol";
+@@ -14,15 +15,9 @@ library UniswapV2Library {
+         require(token0 != address(0), 'UniswapV2Library: ZERO_ADDRESS');
+     }
+ 
+-    // calculates the CREATE2 address for a pair without making any external calls
+-    function pairFor(address factory, address tokenA, address tokenB) internal pure returns (address pair) {
+-        (address token0, address token1) = sortTokens(tokenA, tokenB);
+-        pair = address(uint(keccak256(abi.encodePacked(
+-                hex'ff',
+-                factory,
+-                keccak256(abi.encodePacked(token0, token1)),
+-                hex'96e8ac4277198ff8b6f785478aa9a39f403cb768dd02cbee326c3e7da348845f' // init code hash
+-            ))));
++    // gets the CREATE2 address for a pair using an external call
++    function pairFor(address factory, address tokenA, address tokenB) internal view returns (address pair) {
++        pair = IUniswapV2Factory(factory).getPair(tokenA, tokenB);
+     }
+ 
+     // fetches and sorts the reserves for a pair
+diff --git a/test/ExampleComputeLiquidityValue.spec.ts b/test/ExampleComputeLiquidityValue.spec.ts
+index 26ba182..90d7e64 100644
+--- a/test/ExampleComputeLiquidityValue.spec.ts
++++ b/test/ExampleComputeLiquidityValue.spec.ts
+@@ -249,7 +249,7 @@ describe('ExampleComputeLiquidityValue', () => {
+             100,
+             expandTo18Decimals(5)
+           )
+-        ).to.eq('12705')
++        ).to.eq('17323')
+       })
+ 
+       it('gas higher price', async () => {
+@@ -261,7 +261,7 @@ describe('ExampleComputeLiquidityValue', () => {
+             105,
+             expandTo18Decimals(5)
+           )
+-        ).to.eq('13478')
++        ).to.eq('18096')
+       })
+ 
+       it('gas lower price', async () => {
+@@ -273,7 +273,7 @@ describe('ExampleComputeLiquidityValue', () => {
+             95,
+             expandTo18Decimals(5)
+           )
+-        ).to.eq('13523')
++        ).to.eq('18141')
+       })
+ 
+       describe('after a swap', () => {
+@@ -380,7 +380,7 @@ describe('ExampleComputeLiquidityValue', () => {
+             100,
+             expandTo18Decimals(5)
+           )
+-        ).to.eq('16938')
++        ).to.eq('21556')
+       })
+ 
+       it('gas higher price', async () => {
+@@ -392,7 +392,7 @@ describe('ExampleComputeLiquidityValue', () => {
+             105,
+             expandTo18Decimals(5)
+           )
+-        ).to.eq('18475')
++        ).to.eq('23093')
+       })
+ 
+       it('gas lower price', async () => {
+@@ -404,7 +404,7 @@ describe('ExampleComputeLiquidityValue', () => {
+             95,
+             expandTo18Decimals(5)
+           )
+-        ).to.eq('18406')
++        ).to.eq('23024')
+       })
+ 
+       describe('after a swap', () => {
+diff --git a/test/ExampleSlidingWindowOracle.spec.ts b/test/ExampleSlidingWindowOracle.spec.ts
+index a5b5f65..37ec6ca 100644
+--- a/test/ExampleSlidingWindowOracle.spec.ts
++++ b/test/ExampleSlidingWindowOracle.spec.ts
+@@ -150,14 +150,14 @@ describe('ExampleSlidingWindowOracle', () => {
+     it('gas for first update (allocates empty array)', async () => {
+       const tx = await slidingWindowOracle.update(token0.address, token1.address, overrides)
+       const receipt = await tx.wait()
+-      expect(receipt.gasUsed).to.eq('116816')
++      expect(receipt.gasUsed).to.eq('119125')
+     }).retries(2) // gas test inconsistent
+ 
+     it('gas for second update in the same period (skips)', async () => {
+       await slidingWindowOracle.update(token0.address, token1.address, overrides)
+       const tx = await slidingWindowOracle.update(token0.address, token1.address, overrides)
+       const receipt = await tx.wait()
+-      expect(receipt.gasUsed).to.eq('25574')
++      expect(receipt.gasUsed).to.eq('27892')
+     }).retries(2) // gas test inconsistent
+ 
+     it('gas for second update different period (no allocate, no skip)', async () => {
+@@ -165,7 +165,7 @@ describe('ExampleSlidingWindowOracle', () => {
+       await mineBlock(provider, startTime + 3600)
+       const tx = await slidingWindowOracle.update(token0.address, token1.address, overrides)
+       const receipt = await tx.wait()
+-      expect(receipt.gasUsed).to.eq('94703')
++      expect(receipt.gasUsed).to.eq('97012')
+     }).retries(2) // gas test inconsistent
+ 
+     it('second update in one timeslot does not overwrite', async () => {
+diff --git a/test/ExampleSwapToPrice.spec.ts b/test/ExampleSwapToPrice.spec.ts
+index 51d861a..e838c1a 100644
+--- a/test/ExampleSwapToPrice.spec.ts
++++ b/test/ExampleSwapToPrice.spec.ts
+@@ -192,7 +192,7 @@ describe('ExampleSwapToPrice', () => {
+         overrides
+       )
+       const receipt = await tx.wait()
+-      expect(receipt.gasUsed).to.eq('115129')
++      expect(receipt.gasUsed).to.eq('124335')
+     }).retries(2) // gas test is inconsistent
+   })
+ })
+diff --git a/test/UniswapV2Router01.spec.ts b/test/UniswapV2Router01.spec.ts
+index 651c562..b910e04 100644
+--- a/test/UniswapV2Router01.spec.ts
++++ b/test/UniswapV2Router01.spec.ts
+@@ -368,8 +368,8 @@ describe('UniswapV2Router{01,02}', () => {
+           const receipt = await tx.wait()
+           expect(receipt.gasUsed).to.eq(
+             {
+-              [RouterVersion.UniswapV2Router01]: 101876,
+-              [RouterVersion.UniswapV2Router02]: 101898
++              [RouterVersion.UniswapV2Router01]: 108804,
++              [RouterVersion.UniswapV2Router02]: 108826
+             }[routerVersion as RouterVersion]
+           )
+         }).retries(3)
+@@ -517,8 +517,8 @@ describe('UniswapV2Router{01,02}', () => {
+           const receipt = await tx.wait()
+           expect(receipt.gasUsed).to.eq(
+             {
+-              [RouterVersion.UniswapV2Router01]: 138770,
+-              [RouterVersion.UniswapV2Router02]: 138770
++              [RouterVersion.UniswapV2Router01]: 145668,
++              [RouterVersion.UniswapV2Router02]: 145668
+             }[routerVersion as RouterVersion]
+           )
+         }).retries(3)
+-- 
+2.17.1
+

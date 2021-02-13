@@ -16,7 +16,11 @@
 import * as hardhat from 'hardhat';
 
 // Import plugins
+import '@nomiclabs/hardhat-ethers';
+import '@nomiclabs/hardhat-etherscan';
 import 'hardhat-abi-exporter';
+import 'hardhat-deploy';
+import 'hardhat-deploy-ethers';
 
 // Export fully-initialized interface
 export { hardhat };
