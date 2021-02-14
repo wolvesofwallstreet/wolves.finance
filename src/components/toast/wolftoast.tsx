@@ -38,6 +38,7 @@ type TOASTPROPS = {
 class WolfToast extends Component<TOASTPROPS, TOASTSTATE> {
   t: TFunction;
   txId: React.ReactText | undefined;
+  connectId: React.ReactText | undefined;
 
   constructor(props: TOASTPROPS) {
     super(props);
@@ -70,17 +71,22 @@ class WolfToast extends Component<TOASTPROPS, TOASTSTATE> {
 
   onConnectionChanged(result: ConnectResult): void {
     if (result.type !== 'event') {
-      toast(
-        this._formatToast(
-          undefined,
-          this.t(
-            result.address === ''
-              ? 'toast.walletDisconnected'
-              : 'toast.walletConnected'
-          )
-        ),
-        { autoClose: 2000 }
+      const msg = this.t(
+        result.address === ''
+          ? 'toast.walletDisconnected'
+          : 'toast.walletConnected'
       );
+      if (this.connectId)
+        toast.update(this.connectId, {
+          render: msg,
+          autoClose: 2000,
+          onClose: () => (this.connectId = undefined),
+        });
+      else
+        this.connectId = toast(msg, {
+          autoClose: 2000,
+          onClose: () => (this.connectId = undefined),
+        });
     }
   }
 

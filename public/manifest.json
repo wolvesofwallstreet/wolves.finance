@@ -1,21 +1,11 @@
 {
-  "short_name": "wolves.finance",
-  "name": "wolves.finance",
+  "short_name": "WOWS",
+  "name": "WolvesOfWallstreet.finance",
   "icons": [
     {
       "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
+      "sizes": "32x32",
       "type": "image/x-icon"
-    },
-    {
-      "src": "static/logo192.png",
-      "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "static/logo512.png",
-      "type": "image/png",
-      "sizes": "512x512"
     }
   ],
   "start_url": ".",

@@ -15,7 +15,10 @@
   flex-grow: 1;
 }
 
+/********** Info *********/
+
 .presale-info {
+  position: relative;
   margin-left: auto;
   margin-right: auto;
   width: 100%;
@@ -24,11 +27,58 @@
 .info-container {
   border: 2px groove lightgray;
   margin-top: 10px;
+  padding: 6px 0px;
   width: 100%;
   background-color: var(--wolves-blue-dk);
   color: white;
   opacity: 0.75;
 }
+
+.info-progress {
+  position: absolute;
+  display: block;
+  height: 2px;
+  bottom: 2px;
+  background-color: whitesmoke;
+  animation: progressBar 30s linear;
+  animation-fill-mode: both;
+  animation-iteration-count: infinite;
+  -webkit-animation: progressBar 30s linear;
+  -webkit-animation-fill-mode: both;
+  -webkit-animation-iteration-count: infinite;
+  -moz-animation: progressBar 30s linear;
+  -moz-animation-fill-mode: both;
+  -moz-animation-iteration-count: infinite;
+}
+
+@keyframes progressBar {
+  0% {
+    width: calc(100% - 4px);
+  }
+  100% {
+    width: 0;
+  }
+}
+
+@-webkit-keyframes progressBar {
+  0% {
+    width: calc(100% - 4px);
+  }
+  100% {
+    width: 0;
+  }
+}
+
+@-moz-keyframes progressBar {
+  0% {
+    width: calc(100% - 4px);
+  }
+  100% {
+    width: 0;
+  }
+}
+
+/********** Progress *********/
 
 .progress-form {
   width: 100%;
