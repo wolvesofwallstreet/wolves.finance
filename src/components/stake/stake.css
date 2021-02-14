@@ -1,0 +1,16 @@
+/*
+ * Copyright (C) 2020 wolves.finance developers
+ * This file is part of wolves.finance - https://github.com/peak3d/wolves.finance
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * See the file LICENSES/README.md for more information.
+ */
+
+.stake-main {
+  background-image: url(../../assets/banner_stake.jpg);
+  background-position: center;
+  background-size: cover;
+  padding: 0px 8% 30px 8%;
+  color: var(--wolves-blue-dk);
+  flex-grow: 1;
+}
