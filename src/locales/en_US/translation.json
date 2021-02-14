@@ -20,7 +20,7 @@
     "closed": "THE $t(presale.id) IS OVER",
     "timeUntilOpen": "$t(presale.id) COUNTDOWN TO OPEN",
     "timeUntilClose": "$t(presale.id) COUNTDOWN TO CLOSE",
-    "description": "$t(title) OFFICIAL SALE - SALES.WOLVESOFWALLSTREET.FINANCE",
+    "description": "$t(title) OFFICIAL SALE - PRESALE.WOLVESOFWALLSTREET.FINANCE",
     "event": "$t(title) $t(presale.id)\u00a0&\u00a0LIQUIDITY\u00a0EVENT",
     "available": "AVAILABLE FOR $t(presale.id)",
     "target": "TARGET",
