@@ -33,7 +33,7 @@ class Stake extends Component<STAKEPROPS, STAKESTATE> {
   constructor(props: STAKEPROPS) {
     super(props);
     this.state = INITIALSTATE;
-    
+
     this.onConnectionChanged = this.onConnectionChanged.bind(this);
     this.onStakeAction = this.onStakeAction.bind(this);
   }

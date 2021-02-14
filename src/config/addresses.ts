@@ -9,9 +9,9 @@
 const addresses = {
   1: {
     //mainet
-    token: '0x0000000000000000000000000000000000000000',
-    presale: '0x0000000000000000000000000000000000000000',
-    stakeFarm: '0x0000000000000000000000000000000000000000',
+    token: '0x672EF7E4Fe230B5cA1466C5fDD40588d30FdF90a',
+    presale: '0xeC07f7850A05Eac81a56d17C0B05A55F396b055a',
+    stakeFarm: '0x6D1D6710aC18aFc168fD1637180deee8d203870F',
   },
   3: {
     //ropsten
@@ -21,9 +21,9 @@ const addresses = {
   },
   4: {
     //rinkeby
-    token: '0x58C45d31f613e8D321bA31F605a6caa19ab28502',
-    presale: '0x0d98106ecfae0dF80520C1CCD556f028E038E933',
-    stakeFarm: '0xf6699f92E5a0eeae351130b40a5Cc36ABE85849a',
+    token: '0x048C1ddc142EE156eD40aa7c270371c25323f4Cd',
+    presale: '0xa6b1f32462069ba38b066cE3c6991E8e1aABCf53',
+    stakeFarm: '0x434C19d1da27666A4a0691369F392563F22Ee992',
   },
   97: {
     //Binance SC Test
