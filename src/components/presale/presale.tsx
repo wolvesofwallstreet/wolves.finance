@@ -26,9 +26,9 @@ import {
   StatusResult,
   StoreClasses,
 } from '../../stores/store';
+import { StakeInfo } from '../stakeinfo/stakeInfo';
 import { TimeTicker } from '../timeticker';
 import Social from './social';
-import { StakeInfo } from './stakeInfo';
 
 type PRESALEPROPS = {
   t: TFunction;
@@ -145,6 +145,7 @@ class Presale extends Component<PRESALEPROPS, PRESALESTATE> {
     this.emitter.on(PRESALE_LIQUIDITY, this.onPresaleBuy);
     if (StoreClasses.store.isEventConnected())
       this.dispatcher.dispatch({ type: PRESALE_STATE, content: {} });
+    if (StoreClasses.store.isConnected()) this.setState({ connected: true });
     window.addEventListener('PRESALE_TICKER', this.handleTickEvent);
   }
 

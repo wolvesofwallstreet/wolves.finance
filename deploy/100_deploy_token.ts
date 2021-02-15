@@ -367,6 +367,14 @@ const func = async function (hardhat_re) {
   // 4.) Call Token.sol::grantRole(token.sol.MINTER_ROLE(), Crowdsale.sol)
   //     !!! ONLY DURING PRESALE !!!
   //
+  // 5.) Call Controller.sol::setWorker(teamwallet)
+  //     Until we haven't an automatic process for maintanance
+  //     the current tem wallet is the "worker" (see next)
+  //
+  // 6.) Call Controller.sol::refuelfarms < 1 day before duration ends
+  //     Until we haven't an automatic process for maintanance
+  //     this has to be done every 2 weeks
+  //
 };
 
 module.exports = func;

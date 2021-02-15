@@ -6,18 +6,30 @@
  * See the file LICENSES/README.md for more information.
  */
 
+import './stakeinfo.css';
+
 import React, { Component, ReactNode } from 'react';
 
-import { CONNECTION_CHANGED, STAKE_STATE } from '../../stores/constants';
-import { ConnectResult, StakeResult, StoreClasses } from '../../stores/store';
+import {
+  CONNECTION_CHANGED,
+  STAKE_LP_AVAILABLE,
+  STAKE_STATE,
+} from '../../stores/constants';
+import {
+  ConnectResult,
+  StakeResult,
+  StoreClasses,
+  TokenContractResult,
+} from '../../stores/store';
 
 type STAKEINFOPROPS = {
-  ethAmount: number;
-  wowsAmount: number;
+  ethAmount?: number;
+  wowsAmount?: number;
 };
 
 type STAKEINFOSTATE = {
   connected: boolean;
+  availableLP: number;
   poolSupply: number;
   reserve0: number;
   reserve1: number;
@@ -31,6 +43,7 @@ type STAKEINFOSTATE = {
 
 const INITIALSTATE: STAKEINFOSTATE = {
   connected: false,
+  availableLP: 0,
   poolSupply: 0,
   reserve0: 0,
   reserve1: 0,
@@ -53,16 +66,25 @@ class StakeInfo extends Component<STAKEINFOPROPS, STAKEINFOSTATE> {
     this.state = { ...INITIALSTATE };
     this.onConnectionChanged = this.onConnectionChanged.bind(this);
     this.onStakeState = this.onStakeState.bind(this);
+    this.onLpAmount = this.onLpAmount.bind(this);
   }
 
   componentDidMount(): void {
     this.emitter.on(CONNECTION_CHANGED, this.onConnectionChanged);
     this.emitter.on(STAKE_STATE, this.onStakeState);
-    if (StoreClasses.store.isEventConnected())
+    this.emitter.on(STAKE_LP_AVAILABLE, this.onLpAmount);
+    if (StoreClasses.store.isEventConnected()) {
       this.dispatcher.dispatch({ type: STAKE_STATE, content: {} });
+      if (
+        this.props.ethAmount !== undefined &&
+        StoreClasses.store.isConnected()
+      )
+        this.dispatcher.dispatch({ type: STAKE_LP_AVAILABLE, content: {} });
+    }
   }
 
   componentWillUnmount(): void {
+    this.emitter.off(STAKE_LP_AVAILABLE, this.onLpAmount);
     this.emitter.off(STAKE_STATE, this.onStakeState);
     this.emitter.off(CONNECTION_CHANGED, this.onConnectionChanged);
   }
@@ -79,6 +101,7 @@ class StakeInfo extends Component<STAKEINFOPROPS, STAKEINFOSTATE> {
       return;
     }
     this.dispatcher.dispatch({ type: STAKE_STATE, content: {} });
+    this.dispatcher.dispatch({ type: STAKE_LP_AVAILABLE, content: {} });
   }
 
   onStakeState(params: StakeResult): void {
@@ -89,14 +112,26 @@ class StakeInfo extends Component<STAKEINFOPROPS, STAKEINFOSTATE> {
     }
   }
 
+  onLpAmount(params: TokenContractResult): void {
+    this.setState({
+      availableLP: params.error === undefined ? params.tokenAmount || 0 : 0,
+    });
+  }
+
   render(): ReactNode {
     const { ethAmount, wowsAmount } = this.props;
-    const { stakeSupplyUser, earned } = this.state;
+    const { availableLP, stakeSupplyUser, earned } = this.state;
 
     return (
       <div className="info-container">
-        ETH: {ethAmount.toFixed(2)}, WOWS: {wowsAmount.toFixed(2)}, LPToken:{' '}
-        {stakeSupplyUser.toFixed(2)}, Earned:{earned.toFixed(6)}
+        {ethAmount !== undefined && wowsAmount !== undefined ? (
+          <>
+            ETH: {ethAmount.toFixed(2)}, WOWS: {wowsAmount.toFixed(2)},{' '}
+          </>
+        ) : (
+          <> LPToken: {availableLP.toFixed(2)}, </>
+        )}
+        Staked: {stakeSupplyUser.toFixed(2)}, Earned:{earned.toFixed(6)}
         {stakeSupplyUser > 0 ? (
           <span
             onAnimationIteration={this.onProgressIteration}

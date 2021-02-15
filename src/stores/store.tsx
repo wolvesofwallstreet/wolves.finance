@@ -7,6 +7,7 @@
  */
 
 import WalletConnectProvider from '@walletconnect/web3-provider';
+import IERC20Abi from 'abi/@openzeppelin/contracts/token/ERC20/IERC20.sol/IERC20.json';
 import CrowdsaleAbi from 'abi/contracts/src/crowdsale/Crowdsale.sol/Crowdsale.json';
 import StakeAbi from 'abi/contracts/src/investment/UniV2StakeFarm.sol/UniV2StakeFarm.json';
 import TokenAbi from 'abi/contracts/src/token/Token.sol/WowsToken.json';
@@ -26,6 +27,9 @@ import {
   PRESALE_BUY,
   PRESALE_LIQUIDITY,
   PRESALE_STATE,
+  STAKE_CLAIM,
+  STAKE_EXIT,
+  STAKE_LP_AVAILABLE,
   STAKE_STATE,
 } from './constants';
 
@@ -49,6 +53,7 @@ type ChainAddresses = {
 };
 
 export type TokenContractResult = {
+  error: string | undefined;
   tokenAmount: number | undefined;
 };
 
@@ -96,12 +101,17 @@ type cbf = async.AsyncResultCallback<unknown, Error>;
 
 class Store {
   web3Modal: Web3Modal;
+  /* Provider */
   ethersProvider: ethers.providers.JsonRpcProvider | null = null;
   eventProvider: ethers.providers.WebSocketProvider | null = null;
+  /* Contracts */
   tokenContract: ethers.Contract | null = null;
   presaleContract: ethers.Contract | null = null;
+  stakeContract: ethers.Contract | null = null;
   presaleContractRO: ethers.Contract | null = null;
   stakeContractRO: ethers.Contract | null = null;
+  lPContractRO: ethers.Contract | null = null;
+  /* Misc */
   networkName = 'mainnet';
   chainId = 0;
   address = '';
@@ -135,11 +145,20 @@ class Store {
         case PRESALE_LIQUIDITY:
           this._doPresaleLiquidity(_payload.content);
           break;
+        case STAKE_CLAIM:
+          this._doStakeClaim(_payload.content);
+          break;
+        case STAKE_EXIT:
+          this._doStakeExit(_payload.content);
+          break;
         case PRESALE_STATE:
           this._getPresaleState(_payload.content);
           break;
         case STAKE_STATE:
           this._getStakeState(_payload.content);
+          break;
+        case STAKE_LP_AVAILABLE:
+          this._getPoolTokenAmount(_payload.content);
           break;
         default: {
           return;
@@ -248,6 +267,8 @@ class Store {
 
   close = async () => {
     this.presaleContractRO = null;
+    this.stakeContractRO = null;
+    this.lPContractRO = null;
     await this.disconnect(false);
     if (this.eventProvider) {
       this.eventProvider?.removeAllListeners();
@@ -320,7 +341,7 @@ class Store {
         if (!this.chainId)
           this.chainId = (await eventProvider.getNetwork()).chainId;
 
-        this._setupEventContracts(eventProvider);
+        await this._setupEventContracts(eventProvider);
         eventProvider._websocket.onclose = () => {
           this.close();
         };
@@ -366,7 +387,9 @@ class Store {
     }
   }
 
-  _setupEventContracts(provider: ethers.providers.WebSocketProvider): void {
+  async _setupEventContracts(
+    provider: ethers.providers.WebSocketProvider
+  ): Promise<void> {
     const chainAddresses = this._getChainAddresses();
 
     if (chainAddresses) {
@@ -378,6 +401,11 @@ class Store {
       this.stakeContractRO = new ethers.Contract(
         chainAddresses.stakeFarm,
         StakeAbi,
+        provider
+      );
+      this.lPContractRO = new ethers.Contract(
+        await this.stakeContractRO.stakingToken(),
+        IERC20Abi,
         provider
       );
     }
@@ -395,6 +423,11 @@ class Store {
       this.tokenContract = new ethers.Contract(
         chainAddresses.token,
         TokenAbi,
+        signer
+      );
+      this.stakeContract = new ethers.Contract(
+        chainAddresses.stakeFarm,
+        StakeAbi,
         signer
       );
       return true;
@@ -446,6 +479,23 @@ class Store {
     }
   };
 
+  // Should be from getStakeState() in a next iteration
+  _getPoolTokenAmount = async (payloadContent: PayloadContent | undefined) => {
+    try {
+      const result =
+        this.address === '' || !this.lPContractRO
+          ? 0
+          : await this.lPContractRO?.balanceOf(this.address);
+      emitter.emit(STAKE_LP_AVAILABLE, {
+        tokenAmount: this.fromWei(result),
+      } as TokenContractResult);
+    } catch (e) {
+      emitter.emit(STAKE_LP_AVAILABLE, {
+        error: e.message,
+      } as TokenContractResult);
+    }
+  };
+
   _getStakeState = async (payloadContent: PayloadContent | undefined) => {
     try {
       const result:
@@ -492,7 +542,10 @@ class Store {
           console.log(err);
           emitter.emit(ERC20_TOKEN_CONTRACT, { error: err.toString() });
         } else {
-          const asset: TokenContractResult = { tokenAmount: 0 };
+          const asset: TokenContractResult = {
+            error: undefined,
+            tokenAmount: 0,
+          };
           const numberArray = data as Array<number>;
           asset.tokenAmount = numberArray[0];
           emitter.emit(ERC20_TOKEN_CONTRACT, asset);
@@ -500,6 +553,8 @@ class Store {
       }
     );
   };
+
+  /************** TX ****************/
 
   // Buy tokens for {amount} ETH
   _doPresale = async (payloadContent: PayloadContent) => {
@@ -557,6 +612,54 @@ class Store {
       } as StatusResult);
     }
   };
+
+  _doStakeClaim = async (payloadContent: PayloadContent) => {
+    try {
+      const tx:
+        | ethers.ContractTransaction
+        | undefined = await this.stakeContract?.getReward();
+      emitter.emit(STAKE_CLAIM, {
+        status: 'tx',
+        tx: tx?.hash,
+      } as StatusResult);
+
+      await tx?.wait();
+      emitter.emit(STAKE_CLAIM, {
+        status: 'success',
+        tx: tx?.hash,
+      } as StatusResult);
+    } catch (e) {
+      emitter.emit(STAKE_CLAIM, {
+        status: 'error',
+        errorMessage: e.error ? e.error.message : e.message,
+      } as StatusResult);
+    }
+  };
+
+  _doStakeExit = async (payloadContent: PayloadContent) => {
+    try {
+      const tx:
+        | ethers.ContractTransaction
+        | undefined = await this.stakeContract?.exit();
+      emitter.emit(STAKE_EXIT, {
+        status: 'tx',
+        tx: tx?.hash,
+      } as StatusResult);
+
+      await tx?.wait();
+      emitter.emit(STAKE_EXIT, {
+        status: 'success',
+        tx: tx?.hash,
+      } as StatusResult);
+    } catch (e) {
+      emitter.emit(STAKE_EXIT, {
+        status: 'error',
+        errorMessage: e.error ? e.error.message : e.message,
+      } as StatusResult);
+    }
+  };
+
+  /************** Getter ****************/
 
   _getTokenAmount = async (payloadContent: PayloadContent, callback: cbf) => {
     try {

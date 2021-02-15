@@ -44,6 +44,9 @@
     "checkTerms": "CHECK TERMS & CONDITIONS"
   },
   "stake": {
-    "welcome": "WELCOME\u00a0TO\u00a0THE WOLFPACK\u00a0STAKING"
+    "welcome": "WELCOME\u00a0TO\u00a0THE WOLFPACK\u00a0STAKING",
+    "stake": "STAKE WOWS/ETH LP TOKEN",
+    "claim": "CLAIM WOWS REWARDS",
+    "exit": "CLAIM & UNSTAKE LP TOKEN"
   }
 }

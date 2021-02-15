@@ -21,3 +21,4 @@ export const STAKE_ADD = 'STAKE_ADD'; // stake LP tokens
 export const STAKE_CLAIM = 'STAKE_CLAIM'; // claim stake rewards
 export const STAKE_EXIT = 'STAKE_EXIT'; // unstake and claim rewards
 export const STAKE_STATE = 'STAKE_STATE'; // request Stake information
+export const STAKE_LP_AVAILABLE = 'STAKE_LP_AVAILABLE'; // Available LP token
