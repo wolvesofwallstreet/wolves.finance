@@ -10,6 +10,7 @@ import './stake.css';
 import { Component } from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 
+import logo from '../../assets/wolves_logo_dapp.png';
 import {
   CONNECTION_CHANGED,
   STAKE_ADD,
@@ -61,7 +62,53 @@ class Stake extends Component<STAKEPROPS, STAKESTATE> {
   }
 
   render() {
-    return <div className="stake-main"></div>;
+    const { t } = this.props;
+    const { connected } = this.state;
+
+    return (
+      <div className="stake-main">
+        <div className="stake-container">
+          <h1>{t('stake.welcome')}</h1>
+          <div className="stake-control">
+            <img className="stake-logo stake-opaque" src={logo} alt="logo" />
+            <span className="stake-line" />
+            <div className="stake-input-container stake-opaque">
+              <input
+                type="text"
+                defaultValue="0.25"
+                autoComplete="off"
+                className="stake-input"
+              />
+              <div className="stake-input-currency">WOWS/ETH LP</div>
+            </div>
+            <input
+              className="stake-btn stake-top-margin"
+              type="button"
+              value="STAKE WOWS/ETH LP TOKEN"
+              disabled={!connected}
+            />
+            <div className="stake-btn-container">
+              <div className="stake-btn-grow stake-top-margin">
+                <input
+                  className="stake-btn"
+                  type="button"
+                  value="CLAIM WOWS REWARDS"
+                  disabled={!connected}
+                />
+              </div>
+              <div className="stake-btn-grow stake-top-margin">
+                <input
+                  className="stake-btn"
+                  type="button"
+                  value="CLAIM & UNSTAKE LP TOKEN"
+                  disabled={!connected}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 }
 

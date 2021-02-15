@@ -42,5 +42,8 @@
     "addLiqIn": "STAKE {{num}} WOWS + {{ethnum}} ETH in {{time}}",
     "tokenLocked": "token locked",
     "checkTerms": "CHECK TERMS & CONDITIONS"
+  },
+  "stake": {
+    "welcome": "WELCOME\u00a0TO\u00a0THE WOLFPACK\u00a0STAKING"
   }
 }
