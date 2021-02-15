@@ -76,7 +76,7 @@ class StakeInfo extends Component<STAKEINFOPROPS, STAKEINFOSTATE> {
     if (StoreClasses.store.isEventConnected()) {
       this.dispatcher.dispatch({ type: STAKE_STATE, content: {} });
       if (
-        this.props.ethAmount !== undefined &&
+        this.props.ethAmount === undefined &&
         StoreClasses.store.isConnected()
       )
         this.dispatcher.dispatch({ type: STAKE_LP_AVAILABLE, content: {} });
@@ -101,7 +101,8 @@ class StakeInfo extends Component<STAKEINFOPROPS, STAKEINFOSTATE> {
       return;
     }
     this.dispatcher.dispatch({ type: STAKE_STATE, content: {} });
-    this.dispatcher.dispatch({ type: STAKE_LP_AVAILABLE, content: {} });
+    if (params.type === 'prod')
+      this.dispatcher.dispatch({ type: STAKE_LP_AVAILABLE, content: {} });
   }
 
   onStakeState(params: StakeResult): void {

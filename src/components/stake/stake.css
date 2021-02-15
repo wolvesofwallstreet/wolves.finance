@@ -70,6 +70,7 @@
 }
 
 .stake-input-currency {
+  cursor: pointer;
   position: absolute;
   top: 2px;
   right: 4px;
