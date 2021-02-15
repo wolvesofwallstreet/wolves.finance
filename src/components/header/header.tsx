@@ -9,6 +9,7 @@ import './header.css';
 
 import React, { Component, ReactNode } from 'react';
 import { Form, Image, Navbar } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
 
 import logo from '../../assets/wolves_sft_logo.svg';
 import { CONNECTION_CHANGED } from '../../stores/constants';
@@ -69,10 +70,12 @@ class Header extends Component<unknown, CSTATE> {
     return (
       <Navbar bg="wolf" variant="dark" expand="lg">
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
-        <Navbar.Brand className="navbar-brand mr-auto" href="#home">
+        <Navbar.Brand className="navbar-brand mr-auto" as={Link} to="/">
           <Image src={logo} width="300" className="logo" />
         </Navbar.Brand>
-        <Navbar.Collapse id="basic-navbar-nav"></Navbar.Collapse>
+        <Navbar.Collapse id="basic-navbar-nav">
+          <Link to="/stake">Stake</Link>
+        </Navbar.Collapse>
         <Form className="dp-conn-form" onSubmit={this.handleSubmit} inline>
           <input className="dp-conn-btn" type="submit" value={shortAddress} />
         </Form>
