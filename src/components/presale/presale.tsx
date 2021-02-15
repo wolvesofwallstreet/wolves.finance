@@ -467,7 +467,7 @@ class Presale extends Component<PRESALEPROPS, PRESALESTATE> {
           <div className="progress-outer">
             <div
               className="progress-inner"
-              style={{ width: (this.state.ethRaised * 100) / 150 + '%' }}
+              style={{ width: (this.state.ethRaised * 100) / 75 + '%' }}
             />
           </div>
           <div
