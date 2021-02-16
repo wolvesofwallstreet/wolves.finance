@@ -55,6 +55,8 @@ const INITIALSTATE: STAKEINFOSTATE = {
   earned: 0,
 };
 
+const SECONDS_PER_YEAR = 31536000;
+
 class StakeInfo extends Component<STAKEINFOPROPS, STAKEINFOSTATE> {
   emitter = StoreClasses.emitter;
   dispatcher = StoreClasses.dispatcher;
@@ -121,7 +123,37 @@ class StakeInfo extends Component<STAKEINFOPROPS, STAKEINFOSTATE> {
 
   render(): ReactNode {
     const { ethAmount, wowsAmount } = this.props;
-    const { availableLP, stakeSupplyUser, earned } = this.state;
+    const {
+      availableLP,
+      rewardPerDuration,
+      stakeSupply,
+      stakeSupplyUser,
+      earned,
+    } = this.state;
+
+    let apy = 0;
+    // APY calculation
+    if (stakeSupply > 0 && rewardPerDuration > 0) {
+      const {
+        poolSupply,
+        priceReserve0,
+        reserve0,
+        reserve1,
+        rewardsDuration,
+      } = this.state;
+      // Price of 1 WOWS
+      const wowsPrice = (reserve0 * priceReserve0) / reserve1;
+      // Total price of pool
+      const poolPrice = reserve0 * priceReserve0 + reserve1 * wowsPrice;
+      // Staked share
+      const stakedPrice = (poolPrice * stakeSupply) / poolSupply;
+      // yearly emission
+      const emmission =
+        ((rewardPerDuration * SECONDS_PER_YEAR) / rewardsDuration) * wowsPrice;
+      // APR
+      const apr = emmission / stakedPrice;
+      apy = (Math.pow(1.0 + apr / 52, 52) - 1.0) * 100;
+    }
 
     return (
       <div className="info-container">
@@ -132,7 +164,8 @@ class StakeInfo extends Component<STAKEINFOPROPS, STAKEINFOSTATE> {
         ) : (
           <> LPToken: {availableLP.toFixed(2)}, </>
         )}
-        Staked: {stakeSupplyUser.toFixed(2)}, Earned:{earned.toFixed(6)}
+        Staked: {stakeSupplyUser.toFixed(2)}, Earned:{earned.toFixed(6)}, APY:{' '}
+        {apy.toFixed(2)}%
         {stakeSupplyUser > 0 ? (
           <span
             onAnimationIteration={this.onProgressIteration}
