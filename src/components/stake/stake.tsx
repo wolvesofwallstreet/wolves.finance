@@ -7,7 +7,7 @@
  */
 import './stake.css';
 
-import { Component } from 'react';
+import { Component, createRef } from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 
 import logo from '../../assets/wolves_logo_dapp.png';
@@ -16,9 +16,15 @@ import {
   STAKE_ADD,
   STAKE_CLAIM,
   STAKE_EXIT,
+  STAKE_LP_AVAILABLE,
   STAKE_STATE,
 } from '../../stores/constants';
-import { ConnectResult, StoreClasses } from '../../stores/store';
+import {
+  ConnectResult,
+  StatusResult,
+  StoreClasses,
+  TokenContractResult,
+} from '../../stores/store';
 import { StakeInfo } from '../stakeinfo/stakeInfo';
 
 type STAKEPROPS = {
@@ -27,32 +33,44 @@ type STAKEPROPS = {
 
 type STAKESTATE = {
   connected: boolean;
+  inputValid: boolean;
+  lpToken: number;
 };
 
 const INITIALSTATE: STAKESTATE = {
   connected: false,
+  inputValid: true,
+  lpToken: 0,
 };
 
 class Stake extends Component<STAKEPROPS, STAKESTATE> {
+  inputRef: React.RefObject<HTMLInputElement> = createRef();
+
   constructor(props: STAKEPROPS) {
     super(props);
     this.state = INITIALSTATE;
 
     this.onConnectionChanged = this.onConnectionChanged.bind(this);
-    this.onStakeAction = this.onStakeAction.bind(this);
+    this.onStakeTX = this.onStakeTX.bind(this);
     this.onTransaction = this.onTransaction.bind(this);
+    this.handleOnChange = this.handleOnChange.bind(this);
+    this.onLpAvailable = this.onLpAvailable.bind(this);
   }
 
   componentDidMount(): void {
     StoreClasses.emitter.on(CONNECTION_CHANGED, this.onConnectionChanged);
-    StoreClasses.emitter.off(STAKE_ADD, this.onStakeAction);
-    if (StoreClasses.store.isEventConnected())
-      StoreClasses.dispatcher.dispatch({ type: STAKE_STATE, content: {} });
+    StoreClasses.emitter.on(STAKE_ADD, this.onStakeTX);
+    StoreClasses.emitter.on(STAKE_CLAIM, this.onStakeTX);
+    StoreClasses.emitter.on(STAKE_EXIT, this.onStakeTX);
+    StoreClasses.emitter.on(STAKE_LP_AVAILABLE, this.onLpAvailable);
     if (StoreClasses.store.isConnected()) this.setState({ connected: true });
   }
 
   componentWillUnmount(): void {
-    StoreClasses.emitter.off(STAKE_ADD, this.onStakeAction);
+    StoreClasses.emitter.off(STAKE_LP_AVAILABLE, this.onLpAvailable);
+    StoreClasses.emitter.off(STAKE_EXIT, this.onStakeTX);
+    StoreClasses.emitter.off(STAKE_CLAIM, this.onStakeTX);
+    StoreClasses.emitter.off(STAKE_ADD, this.onStakeTX);
     StoreClasses.emitter.off(CONNECTION_CHANGED, this.onConnectionChanged);
   }
 
@@ -62,21 +80,56 @@ class Stake extends Component<STAKEPROPS, STAKESTATE> {
     }
   }
 
-  onStakeAction() {
-    StoreClasses.dispatcher.dispatch({ type: STAKE_STATE, content: {} });
+  onStakeTX(params: StatusResult) {
+    if (params.status === 'success') {
+      StoreClasses.dispatcher.dispatch({ type: STAKE_STATE, content: {} });
+      if (params.type !== STAKE_CLAIM)
+        StoreClasses.dispatcher.dispatch({
+          type: STAKE_LP_AVAILABLE,
+          content: {},
+        });
+    }
+  }
+
+  onLpAvailable(params: TokenContractResult): void {
+    const newAmount =
+      params.error === undefined && params.tokenAmount !== undefined
+        ? params.tokenAmount
+        : 0;
+    if (newAmount !== this.state.lpToken) this.setState({ lpToken: newAmount });
   }
 
   onTransaction(type: string) {
     const payload = { type: type, content: {} };
     if (type === STAKE_ADD) {
-      payload.content = { amount: 0 };
+      if (!this.state.inputValid || !this.inputRef.current) return;
+      payload.content = { amount: parseFloat(this.inputRef.current.value) };
     }
     StoreClasses.dispatcher.dispatch(payload);
   }
 
+  handleOnChange(event: React.ChangeEvent<HTMLInputElement>): void {
+    event.target.value = event.target.value
+      .replace(/[^0-9,.]/gi, '')
+      .replace(',', '.');
+    const newState = parseFloat(event.target.value) > 0;
+    if (newState !== this.state.inputValid)
+      this.setState({ inputValid: newState });
+  }
+
+  _setMax() {
+    if (this.inputRef.current)
+      this.inputRef.current.value = this.state.lpToken.toString();
+
+    // Validate Input
+    const newState = this.state.lpToken > 0;
+    if (newState !== this.state.inputValid)
+      this.setState({ inputValid: newState });
+  }
+
   render() {
     const { t } = this.props;
-    const { connected } = this.state;
+    const { connected, inputValid } = this.state;
 
     const getButtonText = (s: string): string =>
       connected ? s : t('header.connectWallet').toString();
@@ -95,14 +148,22 @@ class Stake extends Component<STAKEPROPS, STAKESTATE> {
                 defaultValue="0.25"
                 autoComplete="off"
                 className="stake-input"
+                onChange={this.handleOnChange}
+                ref={this.inputRef}
               />
-              <div className="stake-input-currency">WOWS/ETH LP</div>
+              <div
+                className="stake-input-currency"
+                onClick={() => this._setMax()}
+              >
+                WOWS/ETH LP
+              </div>
             </div>
             <input
               className="stake-btn stake-top-margin"
               type="button"
               value={getButtonText(t('stake.stake').toString())}
-              disabled={true || !connected}
+              disabled={!inputValid || !connected}
+              onClick={(e) => this.onTransaction(STAKE_ADD)}
             />
             <div className="stake-btn-container">
               <div className="stake-btn-grow stake-top-margin">

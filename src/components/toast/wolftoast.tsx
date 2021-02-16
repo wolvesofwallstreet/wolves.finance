@@ -10,7 +10,12 @@ import './wolftoast.css';
 
 import React, { Component, ReactNode } from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
-import { toast, ToastContainer } from 'react-toastify';
+import {
+  toast,
+  ToastContainer,
+  ToastOptions,
+  UpdateOptions,
+} from 'react-toastify';
 
 import logo from '../../assets/wolves-token_99.png';
 import {
@@ -85,52 +90,55 @@ class WolfToast extends Component<TOASTPROPS, TOASTSTATE> {
           ? 'toast.walletDisconnected'
           : 'toast.walletConnected'
       );
-      if (this.connectId)
-        toast.update(this.connectId, {
-          render: msg,
-          autoClose: 2000,
-          onClose: () => (this.connectId = undefined),
-        });
-      else
-        this.connectId = toast(msg, {
-          autoClose: 2000,
-          onClose: () => (this.connectId = undefined),
-        });
+      this.connectId = this._updateToast(this.connectId, {
+        render: msg,
+        autoClose: 2000,
+      });
     }
   }
 
   onTransaction(result: StatusResult) {
-    if (result.status === 'tx')
-      this.txId = toast(
-        this._formatToast(undefined, this.t('toast.transactionMined')),
-        { autoClose: false }
-      );
-    else if (this.txId) {
-      if (result.status === 'success')
-        toast.update(this.txId, {
-          render: this._formatToast(
-            'success',
-            this.t('toast.transactionFinished')
-          ),
-          autoClose: 3000,
-        });
-      else
-        toast.update(this.txId, {
-          render: this._formatToast(
-            'failure',
-            result.errorMessage || this.t('toast.undefinedError')
-          ),
-          autoClose: 5000,
-        });
-      this.txId = undefined;
-    } else
-      toast(
-        this._formatToast(
+    if (result.status === 'approve')
+      this.txId = this._updateToast(this.txId, {
+        render: this._formatToast(
+          undefined,
+          this.t('toast.transactionApproving')
+        ),
+        autoClose: false,
+      });
+    else if (result.status === 'tx')
+      this.txId = this._updateToast(this.txId, {
+        render: this._formatToast(undefined, this.t('toast.transactionMined')),
+        autoClose: false,
+      });
+    else if (result.status === 'success')
+      this.txId = this._updateToast(this.txId, {
+        render: this._formatToast(
+          'success',
+          this.t('toast.transactionFinished')
+        ),
+        autoClose: 3000,
+      });
+    else
+      this.txId = this._updateToast(this.txId, {
+        render: this._formatToast(
           'failure',
           result.errorMessage || this.t('toast.undefinedError')
         ),
-        { autoClose: 5000 }
-      );
+        autoClose: 5000,
+      });
+  }
+
+  _updateToast(
+    key: React.ReactText | undefined,
+    options: UpdateOptions
+  ): React.ReactText | undefined {
+    if (key && toast.isActive(key)) {
+      toast.update(key, options);
+    } else {
+      key = toast(options.render, options as ToastOptions);
+    }
+    return key;
   }
 
   _formatToast(type: string | undefined, message: string): ReactNode {
@@ -144,7 +152,7 @@ class WolfToast extends Component<TOASTPROPS, TOASTSTATE> {
   }
 
   render(): ReactNode {
-    return <ToastContainer position="bottom-left" />;
+    return <ToastContainer position="bottom-left" pauseOnFocusLoss={false} />;
   }
 }
 

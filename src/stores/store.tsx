@@ -27,6 +27,7 @@ import {
   PRESALE_BUY,
   PRESALE_LIQUIDITY,
   PRESALE_STATE,
+  STAKE_ADD,
   STAKE_CLAIM,
   STAKE_EXIT,
   STAKE_LP_AVAILABLE,
@@ -77,7 +78,8 @@ export type PresaleResult = {
 };
 
 export type StatusResult = {
-  status: 'error' | 'tx' | 'success';
+  status: 'error' | 'tx' | 'success' | 'approve';
+  type: string;
   errorMessage: string | undefined;
   tx: string | undefined;
 };
@@ -108,9 +110,9 @@ class Store {
   tokenContract: ethers.Contract | null = null;
   presaleContract: ethers.Contract | null = null;
   stakeContract: ethers.Contract | null = null;
+  lPContract: ethers.Contract | null = null;
   presaleContractRO: ethers.Contract | null = null;
   stakeContractRO: ethers.Contract | null = null;
-  lPContractRO: ethers.Contract | null = null;
   /* Misc */
   networkName = 'mainnet';
   chainId = 0;
@@ -144,6 +146,9 @@ class Store {
           break;
         case PRESALE_LIQUIDITY:
           this._doPresaleLiquidity(_payload.content);
+          break;
+        case STAKE_ADD:
+          this._doStakeAdd(_payload.content);
           break;
         case STAKE_CLAIM:
           this._doStakeClaim(_payload.content);
@@ -196,7 +201,7 @@ class Store {
       this.chainId = network.chainId;
       if (this.networkName !== 'private') this.networkName = network.name;
       await this._launchEventProvider();
-      if (this._setupContracts(ethersProvider)) this._emitNetworkChange();
+      if (await this._setupContracts(ethersProvider)) this._emitNetworkChange();
       this.ethersProvider = ethersProvider;
     } catch (e) {
       console.log(e);
@@ -256,6 +261,9 @@ class Store {
     if (this.ethersProvider) {
       localStorage.removeItem('walletconnect');
       this.ethersProvider.removeAllListeners();
+      this.lPContract = null;
+      this.tokenContract = null;
+      this.presaleContract = null;
       this.ethersProvider = null;
     }
     this.address = '';
@@ -268,7 +276,6 @@ class Store {
   close = async () => {
     this.presaleContractRO = null;
     this.stakeContractRO = null;
-    this.lPContractRO = null;
     await this.disconnect(false);
     if (this.eventProvider) {
       this.eventProvider?.removeAllListeners();
@@ -403,15 +410,12 @@ class Store {
         StakeAbi,
         provider
       );
-      this.lPContractRO = new ethers.Contract(
-        await this.stakeContractRO.stakingToken(),
-        IERC20Abi,
-        provider
-      );
     }
   }
 
-  _setupContracts(provider: ethers.providers.JsonRpcProvider): boolean {
+  async _setupContracts(
+    provider: ethers.providers.JsonRpcProvider
+  ): Promise<boolean> {
     const chainAddresses = this._getChainAddresses();
     if (chainAddresses) {
       const signer = provider?.getSigner();
@@ -428,6 +432,11 @@ class Store {
       this.stakeContract = new ethers.Contract(
         chainAddresses.stakeFarm,
         StakeAbi,
+        signer
+      );
+      this.lPContract = new ethers.Contract(
+        await this.stakeContract.stakingToken(),
+        IERC20Abi,
         signer
       );
       return true;
@@ -482,10 +491,9 @@ class Store {
   // Should be from getStakeState() in a next iteration
   _getPoolTokenAmount = async (payloadContent: PayloadContent | undefined) => {
     try {
-      const result =
-        this.address === '' || !this.lPContractRO
-          ? 0
-          : await this.lPContractRO?.balanceOf(this.address);
+      const result = !this.lPContract
+        ? 0
+        : await this.lPContract?.balanceOf(this.address);
       emitter.emit(STAKE_LP_AVAILABLE, {
         tokenAmount: this.fromWei(result),
       } as TokenContractResult);
@@ -613,6 +621,76 @@ class Store {
     }
   };
 
+  _doStakeAdd = async (payloadContent: PayloadContent) => {
+    const { amount } = payloadContent;
+
+    if (!amount) {
+      emitter.emit(STAKE_ADD, {
+        status: 'error',
+        errorMessage: 'Invalid amount',
+      } as StatusResult);
+      return;
+    }
+
+    if (!this.lPContract || !this.stakeContract) {
+      emitter.emit(STAKE_ADD, {
+        status: 'error',
+        errorMessage: 'invalid contract',
+      } as StatusResult);
+      return;
+    }
+
+    let stakeAmount = this.toWei(amount);
+    // Fix math inaccuraties
+    const available: ethers.BigNumber = await this.lPContract.balanceOf(
+      this.address
+    );
+    if (
+      (available > stakeAmount && available.sub(stakeAmount).lt(1000)) ||
+      (available < stakeAmount && stakeAmount.sub(available).lt(1000))
+    )
+      stakeAmount = available;
+
+    try {
+      const allowance = await this.lPContract.allowance(
+        this.address,
+        this.stakeContract.address
+      );
+
+      if (allowance.lt(stakeAmount)) {
+        const tx = await this.lPContract.approve(
+          this.stakeContract.address,
+          stakeAmount
+        );
+        emitter.emit(STAKE_ADD, {
+          status: 'approve',
+          tx: tx?.hash,
+        } as StatusResult);
+
+        await tx.wait();
+      }
+
+      const tx:
+        | ethers.ContractTransaction
+        | undefined = await this.stakeContract?.stake(stakeAmount);
+      emitter.emit(STAKE_ADD, {
+        status: 'tx',
+        tx: tx?.hash,
+      } as StatusResult);
+
+      await tx?.wait();
+      emitter.emit(STAKE_ADD, {
+        status: 'success',
+        tx: tx?.hash,
+      } as StatusResult);
+    } catch (e) {
+      emitter.emit(STAKE_ADD, {
+        status: 'error',
+        errorMessage: e.error ? e.error.message : e.message,
+      } as StatusResult);
+    }
+  };
+
   _doStakeClaim = async (payloadContent: PayloadContent) => {
     try {
       const tx:
@@ -620,17 +698,20 @@ class Store {
         | undefined = await this.stakeContract?.getReward();
       emitter.emit(STAKE_CLAIM, {
         status: 'tx',
+        type: STAKE_CLAIM,
         tx: tx?.hash,
       } as StatusResult);
 
       await tx?.wait();
       emitter.emit(STAKE_CLAIM, {
         status: 'success',
+        type: STAKE_CLAIM,
         tx: tx?.hash,
       } as StatusResult);
     } catch (e) {
       emitter.emit(STAKE_CLAIM, {
         status: 'error',
+        type: STAKE_CLAIM,
         errorMessage: e.error ? e.error.message : e.message,
       } as StatusResult);
     }
