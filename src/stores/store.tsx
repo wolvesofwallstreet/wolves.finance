@@ -646,8 +646,8 @@ class Store {
       this.address
     );
     if (
-      (available > stakeAmount && available.sub(stakeAmount).lt(1000)) ||
-      (available < stakeAmount && stakeAmount.sub(available).lt(1000))
+      (available.gt(stakeAmount) && available.sub(stakeAmount).lt(1000)) ||
+      (available.lt(stakeAmount) && stakeAmount.sub(available).lt(1000))
     )
       stakeAmount = available;
 
