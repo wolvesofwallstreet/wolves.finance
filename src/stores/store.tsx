@@ -8,6 +8,7 @@
 
 import WalletConnectProvider from '@walletconnect/web3-provider';
 import IERC20Abi from 'abi/@openzeppelin/contracts/token/ERC20/IERC20.sol/IERC20.json';
+import UniV2PairAbi from 'abi/contracts/interfaces/uniswap/IUniswapV2Pair.sol/IUniswapV2Pair.json';
 import CrowdsaleAbi from 'abi/contracts/src/crowdsale/Crowdsale.sol/Crowdsale.json';
 import StakeAbi from 'abi/contracts/src/investment/UniV2StakeFarm.sol/UniV2StakeFarm.json';
 import TokenAbi from 'abi/contracts/src/token/Token.sol/WowsToken.json';
@@ -113,6 +114,7 @@ class Store {
   lPContract: ethers.Contract | null = null;
   presaleContractRO: ethers.Contract | null = null;
   stakeContractRO: ethers.Contract | null = null;
+  uniDaiWethPairContractRO: ethers.Contract | null = null;
   /* Misc */
   networkName = 'mainnet';
   chainId = 0;
@@ -410,6 +412,14 @@ class Store {
         StakeAbi,
         provider
       );
+      // Temporary because of missing route in stakefarm
+      if (this.chainId === 1) {
+        this.uniDaiWethPairContractRO = new ethers.Contract(
+          '0xA478c2975Ab1Ea89e8196811F51A7B7Ade33eB11', // UniV2Pair DAI/ETH
+          UniV2PairAbi,
+          provider
+        );
+      }
     }
   }
 
@@ -527,6 +537,12 @@ class Store {
             earned: this.fromWei(result[8]),
           },
         };
+        if (this.uniDaiWethPairContractRO) {
+          const reserves = await this.uniDaiWethPairContractRO.getReserves();
+          stakeInfo.state.priceReserve0 = reserves.reserve0.div(
+            reserves.reserve1
+          );
+        }
         emitter.emit(STAKE_STATE, stakeInfo);
       }
     } catch (e) {
