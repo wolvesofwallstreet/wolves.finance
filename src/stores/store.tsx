@@ -78,7 +78,7 @@ export type PresaleResult = {
 };
 
 export type StatusResult = {
-  status: 'error' | 'tx' | 'success';
+  status: 'error' | 'tx' | 'success' | 'approve';
   type: string;
   errorMessage: string | undefined;
   tx: string | undefined;
@@ -662,6 +662,11 @@ class Store {
           this.stakeContract.address,
           stakeAmount
         );
+        emitter.emit(STAKE_ADD, {
+          status: 'approve',
+          tx: tx?.hash,
+        } as StatusResult);
+
         await tx.wait();
       }
 

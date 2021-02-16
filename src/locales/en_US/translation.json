@@ -8,6 +8,7 @@
     "walletConnected": "Wallet connected",
     "walletDisconnected": "Wallet disconnected",
     "transactionStarted": "Transaction started...",
+    "transactionApproving": "Transaction approving...",
     "transactionMined": "Transaction pending...",
     "transactionFinished": "Transaction succeeded",
     "addressCopied": "Address copied"
