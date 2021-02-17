@@ -115,13 +115,15 @@ class Store {
   presaleContractRO: ethers.Contract | null = null;
   stakeContractRO: ethers.Contract | null = null;
   uniDaiWethPairContractRO: ethers.Contract | null = null;
+
+  static nullAddress = '0x0000000000000000000000000000000000000000';
+
   /* Misc */
   networkName = 'mainnet';
   chainId = 0;
   address = '';
+  tokenContractAddress = Store.nullAddress;
   assets = {};
-
-  static nullAddress = '0x0000000000000000000000000000000000000000';
 
   constructor() {
     this.web3Modal = new Web3Modal({
@@ -402,6 +404,7 @@ class Store {
     const chainAddresses = this._getChainAddresses();
 
     if (chainAddresses) {
+      this.tokenContractAddress = chainAddresses.token;
       this.presaleContractRO = new ethers.Contract(
         chainAddresses.presale,
         CrowdsaleAbi,
@@ -420,6 +423,8 @@ class Store {
           provider
         );
       }
+    } else {
+      this.tokenContractAddress = Store.nullAddress;
     }
   }
 
@@ -550,6 +555,10 @@ class Store {
     }
   };
 
+  _getTokenContractAddress() {
+    return this.tokenContractAddress;
+  }
+
   _getPresaleContractAddress() {
     return this.presaleContractRO?.address;
   }
@@ -666,6 +675,14 @@ class Store {
       (available.lt(stakeAmount) && stakeAmount.sub(available).lt(1000))
     )
       stakeAmount = available;
+
+    if (stakeAmount > available) {
+      emitter.emit(STAKE_ADD, {
+        status: 'error',
+        errorMessage: 'Insufficient LP token.',
+      } as StatusResult);
+      return;
+    }
 
     try {
       const allowance = await this.lPContract.allowance(
