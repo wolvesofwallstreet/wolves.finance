@@ -39,7 +39,7 @@ type STAKESTATE = {
 
 const INITIALSTATE: STAKESTATE = {
   connected: false,
-  inputValid: true,
+  inputValid: false,
   lpToken: 0,
 };
 
@@ -145,7 +145,7 @@ class Stake extends Component<STAKEPROPS, STAKESTATE> {
             <div className="stake-input-container stake-opaque">
               <input
                 type="text"
-                defaultValue="0.25"
+                defaultValue="0"
                 autoComplete="off"
                 className="stake-input"
                 onChange={this.handleOnChange}
@@ -155,7 +155,7 @@ class Stake extends Component<STAKEPROPS, STAKESTATE> {
                 className="stake-input-currency"
                 onClick={() => this._setMax()}
               >
-                WOWS/ETH LP
+                WOWS/ETH LP <span>max</span>
               </div>
             </div>
             <input
