@@ -135,7 +135,7 @@ class Stake extends Component<STAKEPROPS, STAKESTATE> {
       connected ? s : t('header.connectWallet').toString();
 
     return (
-      <div className="stake-main">
+      <div className="stake-main tk-grotesk-lightbold">
         <div className="stake-container">
           <h1>{t('stake.welcome')}</h1>
           <StakeInfo />
@@ -183,6 +183,18 @@ class Stake extends Component<STAKEPROPS, STAKESTATE> {
                   disabled={!connected}
                   onClick={(e) => this.onTransaction(STAKE_EXIT)}
                 />
+              </div>
+              <div className="stake-links">
+                <a
+                  target="_blank"
+                  rel="noreferrer"
+                  href={
+                    'https://app.uniswap.org/#/add/ETH/' +
+                    StoreClasses.store._getTokenContractAddress()
+                  }
+                >
+                  Get liquidity pair token on Uniswap
+                </a>
               </div>
             </div>
           </div>
