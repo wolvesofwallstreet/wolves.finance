@@ -34,12 +34,14 @@ type STAKEPROPS = {
 type STAKESTATE = {
   connected: boolean;
   inputValid: boolean;
+  maxVisible: boolean;
   lpToken: number;
 };
 
 const INITIALSTATE: STAKESTATE = {
   connected: false,
   inputValid: false,
+  maxVisible: true,
   lpToken: 0,
 };
 
@@ -120,6 +122,7 @@ class Stake extends Component<STAKEPROPS, STAKESTATE> {
   _setMax() {
     if (this.inputRef.current)
       this.inputRef.current.value = this.state.lpToken.toString();
+    if (this.state.maxVisible) this.setState({ maxVisible: false });
 
     // Validate Input
     const newState = this.state.lpToken > 0;
@@ -129,7 +132,7 @@ class Stake extends Component<STAKEPROPS, STAKESTATE> {
 
   render() {
     const { t } = this.props;
-    const { connected, inputValid } = this.state;
+    const { connected, inputValid, maxVisible } = this.state;
 
     const getButtonText = (s: string): string =>
       connected ? s : t('header.connectWallet').toString();
@@ -145,18 +148,25 @@ class Stake extends Component<STAKEPROPS, STAKESTATE> {
             <div className="stake-input-container stake-opaque">
               <input
                 type="text"
-                defaultValue="0"
                 autoComplete="off"
                 className="stake-input"
+                onFocus={() => this.setState({ maxVisible: false })}
+                onBlur={() =>
+                  this.setState({
+                    maxVisible: this.inputRef.current?.value === '',
+                  })
+                }
                 onChange={this.handleOnChange}
                 ref={this.inputRef}
               />
               <div
-                className="stake-input-currency"
+                className="stake-input-max"
                 onClick={() => this._setMax()}
+                hidden={!maxVisible}
               >
-                WOWS/ETH LP <span>max</span>
+                max
               </div>
+              <div className="stake-input-currency">WOWS/ETH LP</div>
             </div>
             <input
               className="stake-btn stake-top-margin"
