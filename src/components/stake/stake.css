@@ -71,18 +71,21 @@
 
 .stake-input-currency {
   vertical-align: middle;
-  cursor: pointer;
   position: absolute;
   top: 2px;
   right: 4px;
 }
 
-.stake-input-currency span {
+.stake-input-max {
+  position: absolute;
+  cursor: pointer;
   font-size: 10px;
   border: black 1px solid;
   border-radius: 4px;
   vertical-align: inherit;
   padding: 1px;
+  top: 8px;
+  left: 4px;
 }
 
 .stake-top-margin {
