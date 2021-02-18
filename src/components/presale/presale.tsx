@@ -26,9 +26,9 @@ import {
   StatusResult,
   StoreClasses,
 } from '../../stores/store';
+import Social from '../social/social';
 import { StakeInfo } from '../stakeinfo/stakeInfo';
 import { TimeTicker } from '../timeticker';
-import Social from './social';
 
 type PRESALEPROPS = {
   t: TFunction;

@@ -11,6 +11,8 @@ import React, { Component, ReactNode } from 'react';
 import { Modal } from 'react-bootstrap';
 import { TFunction, withTranslation } from 'react-i18next';
 
+import Social from '../social/social';
+
 type FooterProps = {
   t: TFunction;
 };
@@ -58,12 +60,15 @@ class Footer extends Component<FooterProps, FooterState> {
           <br />
           COPYRIGHT&copy; ALL RIGHTS RESERVED WOLVES OF WALL STREET 2021
         </p>
-        <p
-          className="footer-notes footer-terms tk-grotesk-lightbold"
-          onClick={() => this.setState({ showModal: true })}
-        >
-          PRIVACY TERMS & CONDITIONS
-        </p>
+        <div className="footer-terms-container">
+          <Social />
+          <div
+            className="footer-notes footer-terms tk-grotesk-lightbold"
+            onClick={() => this.setState({ showModal: true })}
+          >
+            PRIVACY TERMS & CONDITIONS
+          </div>
+        </div>
         <Modal
           show={showModal}
           onHide={() => this.setState({ showModal: false })}
