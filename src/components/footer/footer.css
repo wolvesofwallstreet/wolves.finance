@@ -17,6 +17,13 @@
   font-size: 12px;
 }
 
+.footer-terms-container {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 4px 4px 12px 4px;
+}
+
 .footer-terms {
   cursor: pointer;
   text-decoration: underline;
@@ -40,4 +47,15 @@
     max-width: 80%;
     margin: 1.75rem auto;
   }
+}
+
+.social-menu {
+  display: flex;
+  justify-content: space-evenly;
+  width: 200px;
+  margin: 0px;
+}
+
+.social-menu-btn {
+  font-size: initial;
 }

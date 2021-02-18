@@ -18,7 +18,7 @@ class Social extends Component {
   render(): ReactNode {
     return (
       <div className="social-menu">
-        <p>
+        <span>
           <a
             className="social-menu-btn"
             target="_blank"
@@ -27,8 +27,8 @@ class Social extends Component {
           >
             <img src={twitter} alt="Twitter" width="24px" height="24px" />
           </a>
-        </p>
-        <p>
+        </span>
+        <span>
           <a
             className="social-menu-btn"
             target="_blank"
@@ -37,8 +37,8 @@ class Social extends Component {
           >
             <img src={etherscan} alt="Etherscan" width="24px" height="24px" />
           </a>
-        </p>
-        <p>
+        </span>
+        <span>
           <a
             className="social-menu-btn"
             target="_blank"
@@ -47,8 +47,8 @@ class Social extends Component {
           >
             <img src={github} alt="Github" width="24px" height="24px" />
           </a>
-        </p>
-        <p>
+        </span>
+        <span>
           <a
             className="social-menu-btn"
             target="_blank"
@@ -57,8 +57,8 @@ class Social extends Component {
           >
             <img src={discord} alt="Discord" width="24px" height="24px" />
           </a>
-        </p>
-        <p>
+        </span>
+        <span>
           <a
             className="social-menu-btn"
             target="_blank"
@@ -67,7 +67,7 @@ class Social extends Component {
           >
             <img src={telegram} alt="Telegram" width="24px" height="24px" />
           </a>
-        </p>
+        </span>
       </div>
     );
   }

@@ -6,10 +6,6 @@
  * See the file LICENSES/README.md for more information.
  */
 
-.navbar {
-  align-items: flex-end;
-}
-
 .navbar-nav {
   letter-spacing: 0.02em;
   font-family: 'vincente', serif;
@@ -29,13 +25,13 @@
 }
 
 .logo {
-  margin: 0px 20px 0px 20px;
-  width: 250px;
+  margin: 0px 20px;
+  width: 240px;
 }
 
 .bg-wolf {
   background-color: var(--wolves-blue-dk) !important;
-  padding: 16px 8px 16px 8px;
+  padding: 8px;
 }
 
 .dp-conn-form {
