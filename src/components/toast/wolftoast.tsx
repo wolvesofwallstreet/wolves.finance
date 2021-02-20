@@ -21,8 +21,6 @@ import logo from '../../assets/wolves-token_99.png';
 import {
   ADDRESS_COPIED,
   CONNECTION_CHANGED,
-  PRESALE_BUY,
-  PRESALE_LIQUIDITY,
   STAKE_ADD,
   STAKE_CLAIM,
   STAKE_EXIT,
@@ -60,8 +58,6 @@ class WolfToast extends Component<TOASTPROPS, TOASTSTATE> {
   componentDidMount(): void {
     StoreClasses.emitter.on(ADDRESS_COPIED, this.onAddressCopied);
     StoreClasses.emitter.on(CONNECTION_CHANGED, this.onConnectionChanged);
-    StoreClasses.emitter.on(PRESALE_BUY, this.onTransaction);
-    StoreClasses.emitter.on(PRESALE_LIQUIDITY, this.onTransaction);
     StoreClasses.emitter.on(STAKE_ADD, this.onTransaction);
     StoreClasses.emitter.on(STAKE_CLAIM, this.onTransaction);
     StoreClasses.emitter.on(STAKE_EXIT, this.onTransaction);
@@ -71,8 +67,6 @@ class WolfToast extends Component<TOASTPROPS, TOASTSTATE> {
     StoreClasses.emitter.off(STAKE_EXIT, this.onTransaction);
     StoreClasses.emitter.off(STAKE_CLAIM, this.onTransaction);
     StoreClasses.emitter.off(STAKE_ADD, this.onTransaction);
-    StoreClasses.emitter.off(PRESALE_LIQUIDITY, this.onTransaction);
-    StoreClasses.emitter.off(PRESALE_BUY, this.onTransaction);
     StoreClasses.emitter.off(CONNECTION_CHANGED, this.onConnectionChanged);
     StoreClasses.emitter.off(ADDRESS_COPIED, this.onAddressCopied);
   }

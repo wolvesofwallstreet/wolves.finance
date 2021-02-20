@@ -9,12 +9,12 @@
 import { render, screen } from '@testing-library/react';
 
 // Import the withTranslation-less export
-import { Presale } from '../components/presale';
+import { Stake } from '../components/stake';
 
-test('renders presale WOLF', () => {
+test('renders stake WOWS', () => {
   //display key value instead translation for tests
-  render(<Presale t={(key: string) => key} />);
+  render(<Stake {...{ t: (key: string) => key }} />);
 
-  const titleElement = screen.getByText('presale.purchase', { exact: false });
+  const titleElement = screen.getByText('stake.welcome', { exact: false });
   expect(titleElement).toBeInTheDocument();
 });
