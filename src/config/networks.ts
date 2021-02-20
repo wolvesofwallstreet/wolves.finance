@@ -7,4 +7,5 @@
  */
 
 // call dapp with ?network=private to use this URL
-export const privateNetwork = '192.168.178.25:8545';
+export const privateNetworkRPC = 'http://127.0.0.1:8545';
+export const privateNetworkWS = 'ws://127.0.0.1:8546';

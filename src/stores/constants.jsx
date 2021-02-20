@@ -13,10 +13,6 @@ export const NEW_BLOCK = 'NEW_BLOCK'; // Block ticker
 
 export const ERC20_TOKEN_CONTRACT = 'ERC20_TOKEN_CONTRACT'; // information from token contract
 
-export const PRESALE_BUY = 'PRESALE_BUY'; // call for presale / buy tokens
-export const PRESALE_LIQUIDITY = 'PRESALE_LIQUIDITY'; // call for presale / buy and provide liq.
-export const PRESALE_STATE = 'PRESALE_STATE'; // request / receive presale information
-
 export const STAKE_ADD = 'STAKE_ADD'; // stake LP tokens
 export const STAKE_CLAIM = 'STAKE_CLAIM'; // claim stake rewards
 export const STAKE_EXIT = 'STAKE_EXIT'; // unstake and claim rewards

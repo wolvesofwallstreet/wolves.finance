@@ -7,7 +7,7 @@
  */
 import './stake.css';
 
-import { Component, createRef } from 'react';
+import { Component, createRef, ReactNode } from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 
 import logo from '../../assets/wolves_logo_dapp.png';
@@ -76,13 +76,13 @@ class Stake extends Component<STAKEPROPS, STAKESTATE> {
     StoreClasses.emitter.off(CONNECTION_CHANGED, this.onConnectionChanged);
   }
 
-  onConnectionChanged(params: ConnectResult) {
+  onConnectionChanged(params: ConnectResult): void {
     if (params.type === 'prod') {
       this.setState({ connected: params.address !== '' });
     }
   }
 
-  onStakeTX(params: StatusResult) {
+  onStakeTX(params: StatusResult): void {
     if (params.status === 'success') {
       StoreClasses.dispatcher.dispatch({ type: STAKE_STATE, content: {} });
       if (params.type !== STAKE_CLAIM)
@@ -101,7 +101,7 @@ class Stake extends Component<STAKEPROPS, STAKESTATE> {
     if (newAmount !== this.state.lpToken) this.setState({ lpToken: newAmount });
   }
 
-  onTransaction(type: string) {
+  onTransaction(type: string): void {
     const payload = { type: type, content: {} };
     if (type === STAKE_ADD) {
       if (!this.state.inputValid || !this.inputRef.current) return;
@@ -119,7 +119,7 @@ class Stake extends Component<STAKEPROPS, STAKESTATE> {
       this.setState({ inputValid: newState });
   }
 
-  _setMax() {
+  _setMax(): void {
     if (this.inputRef.current)
       this.inputRef.current.value = this.state.lpToken.toString();
     if (this.state.maxVisible) this.setState({ maxVisible: false });
@@ -130,7 +130,7 @@ class Stake extends Component<STAKEPROPS, STAKESTATE> {
       this.setState({ inputValid: newState });
   }
 
-  render() {
+  render(): ReactNode {
     const { t } = this.props;
     const { connected, inputValid, maxVisible } = this.state;
 
@@ -215,3 +215,4 @@ class Stake extends Component<STAKEPROPS, STAKESTATE> {
 }
 
 export default withTranslation()(Stake);
+export { Stake }; // For test suite
