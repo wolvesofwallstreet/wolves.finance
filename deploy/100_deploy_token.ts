@@ -229,7 +229,7 @@ const func = async function (hardhat_re) {
 
   log_step('Deploying controller');
 
-  // Reward handler - right now it's Token.sol
+  // Reward handler - right now it's WOWSErc20.sol
   const REWARD_HANDLER = TOKEN_ADDRESS;
   // Previous controller: 0 address / only for later updates
   const PREVIOUS_CONTROLLER = '0x0000000000000000000000000000000000000000';
@@ -348,8 +348,8 @@ const func = async function (hardhat_re) {
   //////////////////////////////////////////////////////////////////////////////
 
   //
-  // 1.) Call Token.sol::grantRole(token.sol.REWARD_ROLE(), controller)
-  //     This is to allow controller to call into Token.sol to distribute
+  // 1.) Call WOWSErc20.sol::grantRole(WOWSErc20.sol.REWARD_ROLE(), controller)
+  //     This is to allow controller to call into WOWSErc20.sol to distribute
   //     rewards.
   //
   // 2.) Call Controller.sol::registerFarm()
@@ -360,11 +360,11 @@ const func = async function (hardhat_re) {
   //       * rewardProvided      0 Wei
   //       * rewardFee           2 * 1e4 (0.02 == 2%)
   //
-  // 3.) Call Token.sol::setBooster()
+  // 3.) Call WOWSErc20.sol::setBooster()
   //     Parameters:
   //       * booster  The address of Booster.sol
   //
-  // 4.) Call Token.sol::grantRole(token.sol.MINTER_ROLE(), Crowdsale.sol)
+  // 4.) Call WOWSErc20.sol::grantRole(WOWSErc20.sol.MINTER_ROLE(), Crowdsale.sol)
   //     !!! ONLY DURING PRESALE !!!
   //
   // 5.) Call Controller.sol::setWorker(teamwallet)
