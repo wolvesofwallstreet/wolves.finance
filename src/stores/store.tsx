@@ -10,7 +10,7 @@ import WalletConnectProvider from '@walletconnect/web3-provider';
 import IERC20Abi from 'abi/@openzeppelin/contracts/token/ERC20/IERC20.sol/IERC20.json';
 import UniV2PairAbi from 'abi/contracts/interfaces/uniswap/IUniswapV2Pair.sol/IUniswapV2Pair.json';
 import StakeAbi from 'abi/contracts/src/investment/UniV2StakeFarm.sol/UniV2StakeFarm.json';
-import TokenAbi from 'abi/contracts/src/token/Token.sol/WowsToken.json';
+import TokenAbi from 'abi/contracts/src/token/WOWSErc20.sol/WowsToken.json';
 import async from 'async';
 import { ethers } from 'ethers';
 import Emitter from 'events';
