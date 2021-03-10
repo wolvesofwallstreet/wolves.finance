@@ -10,6 +10,16 @@ pragma solidity >=0.7.0 <0.8.0;
 
 interface IERC1155Cryptofolio {
   /**
+   * @dev Triggered if sft receives new tokens from operator
+   */
+  event CryptoFolioAdded(
+    address indexed sft,
+    address indexed operator,
+    uint256[] ids,
+    uint256[] amounts
+  );
+
+  /**
    * @dev called from WOWSErc1155TokenReceiver every time new ERC1155 tokens are transfered.
    * This allows us to build up a collection of cryptofolio items.
    * _msgSender() has to be one of our cryptofoio auto generated contracts
@@ -43,16 +53,6 @@ interface IERC1155Cryptofolio {
    * @dev set the default URI (tokenId = 0) or custom URI (tokenId >= 0xFFFFFFFF)
    */
   function setURI(uint256 tokenId, string memory _uri) external;
-
-  /**
-   * @dev mint a new token at id tokenId (MINTER_ROLE)
-   */
-  function mint(
-    address to,
-    uint256 id,
-    uint256 amount,
-    bytes memory data
-  ) external;
 
   /**
    * @dev evaluate the tokenid from a given address

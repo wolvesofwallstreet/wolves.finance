@@ -145,6 +145,7 @@ contract WOWSERC1155CryptoFolio is
         if (i == currentIds.length) currentIds.push(id);
       }
     }
+    CryptoFolioAdded(_msgSender(), operator, ids, amounts);
   }
 
   /**
@@ -159,19 +160,6 @@ contract WOWSERC1155CryptoFolio is
   {
     require(hasRole(TRADEFLOOR_ROLE, operator), 'Only Tradefloor');
     super.setApprovalForAll(operator, approved);
-  }
-
-  /**
-   * @dev See {ERC1155PresetMinterPauser-mint}.
-   * we need to override to get it into interface.
-   */
-  function mint(
-    address to,
-    uint256 id,
-    uint256 amount,
-    bytes memory data
-  ) public override(ERC1155PresetMinterPauser, IERC1155Cryptofolio) {
-    ERC1155PresetMinterPauser(this).mint(to, id, amount, data);
   }
 
   /*============== GETTER ============= */
@@ -327,13 +315,11 @@ contract WOWSERC1155CryptoFolio is
     returns (bool, uint256)
   {
     uint16 levelCard = ((uint16(level) << 8) | cardId);
-    uint16 cap = _wowsLevelCap[level];
-
     uint256 tokenId = uint32(levelCard) << 16;
-    while (cap > 0) {
+    uint256 tokenIdEnd = tokenId + _wowsLevelCap[level];
+
+    for (; tokenId < tokenIdEnd; ++tokenId)
       if (!_tokenInfos[tokenId].minted) return (true, tokenId);
-      --cap;
-    }
     return (false, uint256(-1));
   }
 
