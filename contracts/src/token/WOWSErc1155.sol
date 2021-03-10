@@ -27,12 +27,11 @@ contract WOWSERC1155CryptoFolio is
 {
   bytes32 public constant TRADEFLOOR_ROLE = keccak256('TRADEFLOOR_ROLE');
 
-  // special state for wows own cards
-  struct WowsCard {
-    uint16 cap;
-    uint16 minted;
-  }
-  mapping(uint16 => WowsCard) private _wowsCards;
+  // cap per card for each level
+  mapping(uint8 => uint16) private _wowsLevelCap;
+
+  // how many cards have been minted
+  mapping(uint16 => uint16) private _wowsCardsMinted;
 
   // card state of custom NFT's
   struct CustomCard {
@@ -66,10 +65,10 @@ contract WOWSERC1155CryptoFolio is
    */
   constructor(string memory _uri) ERC1155PresetMinterPauser(_uri) {
     // Setup wows card definition
-    _wowsCards[(uint16(1) << 8) | 0].cap = 10; // Level 1 / Card 0
-    _wowsCards[(uint16(1) << 8) | 1].cap = 10; // Level 1 / Card 1
-    _wowsCards[(uint16(1) << 8) | 2].cap = 10; // Level 1 / Card 2
-    _wowsCards[(uint16(1) << 8) | 3].cap = 10; // Level 1 / Card 3
+    _wowsLevelCap[0] = 100;
+    _wowsLevelCap[1] = 60;
+    _wowsLevelCap[2] = 40;
+    _wowsLevelCap[3] = 20;
   }
 
   /* ======== STATE MODIFING ======== */
@@ -99,18 +98,18 @@ contract WOWSERC1155CryptoFolio is
   }
 
   /**
-   * @dev set the cap of a specific WOWS card.
+   * @dev set the cap of a specific WOWS level.
    * Note that this function can be used to add a new card
    */
-  function setWowsCardCap(
-    uint8 level,
-    uint8 cardId,
-    uint16 newCap
-  ) public {
+  function setWowsLevelCaps(uint8[] memory levels, uint16[] memory newCaps)
+    public
+  {
     require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admin');
-    WowsCard storage card = _wowsCards[(uint16(level) << 8) | cardId];
-    require(card.cap < newCap, 'Decrement forbidden');
-    card.cap = newCap;
+    require(levels.length == newCaps.length, 'Only admin');
+    for (uint256 i = 0; i < levels.length; ++i) {
+      require(_wowsLevelCap[levels[i]] < newCaps[i], 'Decrement forbidden');
+      _wowsLevelCap[levels[i]] = newCaps[i];
+    }
   }
 
   /**
@@ -143,6 +142,20 @@ contract WOWSERC1155CryptoFolio is
         if (i == currentIds.length) currentIds.push(id);
       }
     }
+  }
+
+  /**
+   * @dev Prevent auctions like OpenSea to sell this thoken
+   * Selling by third party are only allowed for cryptofolios
+   * which are locked in one of our TradingFloor contracts
+   */
+  function setApprovalForAll(address operator, bool approved)
+    public
+    virtual
+    override
+  {
+    require(hasRole(TRADEFLOOR_ROLE, operator), 'Only Tradefloor');
+    super.setApprovalForAll(operator, approved);
   }
 
   /*============== Getter ============= */
@@ -210,8 +223,10 @@ contract WOWSERC1155CryptoFolio is
     view
     returns (uint16 cap, uint16 minted)
   {
-    WowsCard storage card = _wowsCards[uint16(level << 8) | cardId];
-    return (card.cap, card.minted);
+    return (
+      _wowsLevelCap[level],
+      _wowsCardsMinted[uint16(level << 8) | cardId]
+    );
   }
 
   /**
@@ -227,9 +242,8 @@ contract WOWSERC1155CryptoFolio is
   {
     uint16[] memory result = new uint16[](cardIds.length * 2);
     for (uint256 i = 0; i < cardIds.length; ++i) {
-      WowsCard storage card = _wowsCards[uint16(level << 8) | cardIds[i]];
-      result[i * 2] = card.cap;
-      result[i * 2 + 1] = card.minted;
+      result[i * 2] = _wowsLevelCap[level];
+      result[i * 2 + 1] = _wowsCardsMinted[uint16(level << 8) | cardIds[i]];
     }
     return result;
   }
@@ -266,12 +280,20 @@ contract WOWSERC1155CryptoFolio is
     view
     returns (uint256[] memory ids, uint256 idsLength)
   {
-    uint256[] storage current = _cryptofolios[tokenId][operator];
-    uint256[] memory result = new uint256[](current.length);
-    uint256 newLength;
+    uint256[] storage opIds = _cryptofolios[tokenId][operator];
+    uint256[] memory result = new uint256[](opIds.length);
+    uint256 newLength = 0;
 
-    for (uint256 i = 0; i < current.length; ++i)
-      if (current[i] != uint256(-1)) result[newLength++] = current[i];
+    if (opIds.length > 0) {
+      address[] memory accounts = new address[](opIds.length);
+      address tokenAddress = _tokenIdToAddress[tokenId];
+      for (uint256 i = 0; i < opIds.length; ++i) accounts[i] = tokenAddress;
+      uint256[] memory balances =
+        IERC1155(operator).balanceOfBatch(accounts, opIds);
+
+      for (uint256 i = 0; i < opIds.length; ++i)
+        if (balances[i] > 0) result[newLength++] = opIds[i];
+    }
     return (result, newLength);
   }
 
@@ -288,7 +310,7 @@ contract WOWSERC1155CryptoFolio is
     returns (bool, uint256)
   {
     uint16 levelCard = ((uint16(level) << 8) | cardId);
-    uint16 cap = _wowsCards[levelCard].cap;
+    uint16 cap = _wowsLevelCap[level];
 
     uint256 tokenId = uint32(levelCard) << 16;
     while (cap > 0) {
@@ -308,9 +330,29 @@ contract WOWSERC1155CryptoFolio is
 
   /*============== internal ==============*/
 
+  /**
+   * @dev run through all Tradefloor contracts (ERC1155) and check
+   * if we have no balances > 0 left.
+   */
   function _cryptofolioEmpty(uint256 tokenId) internal view returns (bool) {
-    //ToDo
-    return tokenId != 0;
+    uint256 numTradefloors = getRoleMemberCount(TRADEFLOOR_ROLE);
+    address tokenAddress = _tokenIdToAddress[tokenId];
+    for (uint256 i = 0; i < numTradefloors; ++i) {
+      address tradefloor = getRoleMember(TRADEFLOOR_ROLE, i);
+      // Retrieve all tokenIds belonging to tradefloor
+      uint256[] storage tradefloorIds = _cryptofolios[tokenId][tradefloor];
+      // Fill an array of accounts to be able to call batch
+      address[] memory accounts = new address[](tradefloorIds.length);
+      for (uint256 j = 0; j < tradefloorIds.length; ++j)
+        accounts[j] = tokenAddress;
+      // Get all amounts
+      uint256[] memory amounts =
+        IERC1155(tradefloor).balanceOfBatch(accounts, tradefloorIds);
+      // verify that all amounts are 0
+      for (uint256 j = 0; j < amounts.length; ++j)
+        if (amounts[j] > 0) return false;
+    }
+    return true;
   }
 
   /**
@@ -345,8 +387,7 @@ contract WOWSERC1155CryptoFolio is
           _tokenIdToAddress[tokenId] = address(new WOWSErc1155TokenReceiver());
         _addressToTokenId[_tokenIdToAddress[tokenId]] = tokenId;
         // increment the minted count for this card
-        if (tokenId <= 0xFFFFFFFF)
-          _wowsCards[uint16(tokenId >> 16)].minted += 1;
+        if (tokenId <= 0xFFFFFFFF) _wowsCardsMinted[uint16(tokenId >> 16)] += 1;
         else ++_customCardCount;
       } else if (to == address(0)) {
         // burn
@@ -355,8 +396,7 @@ contract WOWSERC1155CryptoFolio is
         // make token mintable again
         tokenInfo.minted = false;
         // decrement the minted count for this card
-        if (tokenId <= 0xFFFFFFFF)
-          _wowsCards[uint16(tokenId >> 16)].minted -= 1;
+        if (tokenId <= 0xFFFFFFFF) _wowsCardsMinted[uint16(tokenId >> 16)] -= 1;
       }
     }
   }
