@@ -10,15 +10,14 @@ pragma solidity >=0.7.0 <0.8.0;
 
 interface IERC1155Cryptofolio {
   /**
-   * @dev call this function if cryptofolio tokens are transfered from or to the Cryptofolio NFT
-   * specified by address.
-   * msgSender() needs to have TRADEFLOOR_ROLE
+   * @dev called from WOWSErc1155TokenReceiver every time new ERC1155 tokens are transfered.
+   * This allows us to build up a collection of cryptofolio items.
+   * _msgSender() has to be one of our cryptofoio auto generated contracts
    */
-  function tradeableItemsTransfered(
+  function onTokensReceived(
     address operator,
-    address tokenAddress,
     uint256[] memory ids,
-    bool[] memory hasAmounts
+    uint256[] memory amounts
   ) external;
 
   /**

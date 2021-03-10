@@ -46,7 +46,6 @@ contract WOWSERC1155CryptoFolio is
   struct TokenInfo {
     bool minted; // make sure we only mint 1
     uint64 timestamp;
-    uint256 cryptofolioCount;
   }
   mapping(uint256 => TokenInfo) private _tokenInfos;
 
@@ -115,46 +114,33 @@ contract WOWSERC1155CryptoFolio is
   }
 
   /**
-   * @dev update which tradeable tokens from tradefloor are part of the cryptofolio defined by tokenAddress
+   * @dev update our collection of tradeable cryptofolio items
+   * This function is only allowed to be called from one if our pseudo TokenReceiver contracts
    */
-  function tradeableItemsTransfered(
+  function onTokensReceived(
     address operator,
-    address tokenAddress,
     uint256[] memory ids,
-    bool[] memory hasAmounts
-  ) public override {
-    require(hasRole(TRADEFLOOR_ROLE, _msgSender()), 'Only tradefloor');
-    require(ids.length == hasAmounts.length, 'Input lengths differ');
-    uint256 tokenId = _addressToTokenId[tokenAddress];
-    require(_tokenIdToAddress[tokenId] != address(0), 'Invalid address');
+    uint256[] memory amounts
+  ) external override {
+    require(hasRole(TRADEFLOOR_ROLE, operator), 'Only traders');
+    uint256 tokenId = _addressToTokenId[_msgSender()];
+    require(_tokenIdToAddress[tokenId] == _msgSender(), 'Invalid caller');
+    require(ids.length == amounts.length, 'Input lengths differ');
 
     uint256[] storage currentIds = _cryptofolios[tokenId][operator];
+    // Check for first-time insert from this operator
+    if (currentIds.length == 0)
+      // Allow operator to withraw items on behalf of cryptofolio
+      WOWSErc1155TokenReceiver(_msgSender()).setApproval(IERC1155(operator));
 
     for (uint256 iIds = 0; iIds < ids.length; ++iIds) {
-      uint256 id = ids[iIds];
-      (int256 foundPos, int256 insertPos) = _search(currentIds, id);
-      if (hasAmounts[iIds] && foundPos == -1) {
-        // Check for first-time insert from this operator
-        if (currentIds.length == 0)
-          // Allow operator to withraw items on behalf of cryptofolio
-          WOWSErc1155TokenReceiver(tokenAddress).setApproval(
-            IERC1155(operator)
-          );
-        // either insert new or replace in free slot
-        if (insertPos == -1) currentIds.push(id);
-        else currentIds[uint256(insertPos)] = id;
-        // increment per token cryptofolio counter
-        _tokenInfos[tokenId].cryptofolioCount += 1;
-      } else if (!hasAmounts[iIds] && foundPos >= 0) {
-        require(
-          _tokenInfos[tokenId].cryptofolioCount > 0,
-          'CryptoCount must be > 0'
-        );
-        // removing elements from array is expensive
-        // we avoid it by setting unused slots to -1
-        currentIds[uint256(foundPos)] = uint256(-1);
-        // decrement per token cryptofolio counter
-        _tokenInfos[tokenId].cryptofolioCount -= 1;
+      if (amounts[iIds] > 0) {
+        uint256 id = ids[iIds];
+        // search tokenId
+        uint256 i = 0;
+        for (; i < currentIds.length && currentIds[i] != id; ++i) i;
+        // if token was not found, insert it
+        if (i == currentIds.length) currentIds.push(id);
       }
     }
   }
@@ -322,22 +308,9 @@ contract WOWSERC1155CryptoFolio is
 
   /*============== internal ==============*/
 
-  /**
-   * @dev search uint256 value srch in input[]
-   * @return tuple(found, nextFree)
-   */
-  function _search(uint256[] storage input, uint256 srch)
-    internal
-    view
-    returns (int256, int256)
-  {
-    uint256 length = input.length;
-    int256 foundPos = -1;
-    for (uint256 i = 0; i < length; ++i) {
-      if (input[i] == srch) return (int256(i), int256(-1));
-      if (foundPos < 0 && input[i] == uint256(-1)) foundPos = int256(i);
-    }
-    return (int256(-1), foundPos);
+  function _cryptofolioEmpty(uint256 tokenId) internal view returns (bool) {
+    //ToDo
+    return tokenId != 0;
   }
 
   /**
@@ -359,7 +332,8 @@ contract WOWSERC1155CryptoFolio is
     for (uint256 i = 0; i < ids.length; ++i) {
       // we have only NFT's in this contract
       require(amounts[i] == 1, 'Amount != 1');
-      TokenInfo storage tokenInfo = _tokenInfos[ids[i]];
+      uint256 tokenId = ids[i];
+      TokenInfo storage tokenInfo = _tokenInfos[tokenId];
       if (from == address(0)) {
         // minting
         require(!tokenInfo.minted, 'Already minted');
@@ -367,20 +341,22 @@ contract WOWSERC1155CryptoFolio is
         // solhint-disable-next-line not-rely-on-time
         tokenInfo.timestamp = uint64(block.timestamp);
         // create a new ERC1155TokenReceiver
-        if (_tokenIdToAddress[ids[i]] == address(0))
-          _tokenIdToAddress[ids[i]] = address(new WOWSErc1155TokenReceiver());
-        _addressToTokenId[_tokenIdToAddress[ids[i]]] = ids[i];
+        if (_tokenIdToAddress[tokenId] == address(0))
+          _tokenIdToAddress[tokenId] = address(new WOWSErc1155TokenReceiver());
+        _addressToTokenId[_tokenIdToAddress[tokenId]] = tokenId;
         // increment the minted count for this card
-        if (ids[i] <= 0xFFFFFFFF) _wowsCards[uint16(ids[i] >> 16)].minted += 1;
+        if (tokenId <= 0xFFFFFFFF)
+          _wowsCards[uint16(tokenId >> 16)].minted += 1;
         else ++_customCardCount;
       } else if (to == address(0)) {
         // burn
         // We don't allow burn of non-empty cryptofolios
-        require(tokenInfo.cryptofolioCount == 0, 'Cryptofolio not empty');
+        require(_cryptofolioEmpty(tokenId), 'Cryptofolio not empty');
         // make token mintable again
         tokenInfo.minted = false;
         // decrement the minted count for this card
-        if (ids[i] <= 0xFFFFFFFF) _wowsCards[uint16(ids[i] >> 16)].minted -= 1;
+        if (tokenId <= 0xFFFFFFFF)
+          _wowsCards[uint16(tokenId >> 16)].minted -= 1;
       }
     }
   }
