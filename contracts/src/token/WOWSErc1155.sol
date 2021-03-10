@@ -79,7 +79,7 @@ contract WOWSERC1155CryptoFolio is
    * Custom tokenId's (> 32 Bit range) get their own URI per tokenId.
    */
 
-  function setURI(uint256 tokenId, string memory _uri) public {
+  function setURI(uint256 tokenId, string memory _uri) public override {
     require(hasRole(MINTER_ROLE, _msgSender()), 'Only minter');
     require(tokenId == 0 || tokenId & 0xFFFFFFFF == 0, 'invalid tokenId');
 
@@ -91,7 +91,10 @@ contract WOWSERC1155CryptoFolio is
    * @dev each custom card has an own level. Level will be used when
    * calculating rewards and raiding power.
    */
-  function setCustomCardLevel(uint256 tokenId, uint8 cardLevel) public {
+  function setCustomCardLevel(uint256 tokenId, uint8 cardLevel)
+    public
+    override
+  {
     require(hasRole(MINTER_ROLE, _msgSender()), 'Only minter');
     require(tokenId & 0xFFFFFFFF == 0, 'only for custom cards');
     _customCards[tokenId].level = cardLevel;
@@ -158,7 +161,20 @@ contract WOWSERC1155CryptoFolio is
     super.setApprovalForAll(operator, approved);
   }
 
-  /*============== Getter ============= */
+  /**
+   * @dev See {ERC1155PresetMinterPauser-mint}.
+   * we need to override to get it into interface.
+   */
+  function mint(
+    address to,
+    uint256 id,
+    uint256 amount,
+    bytes memory data
+  ) public override(ERC1155PresetMinterPauser, IERC1155Cryptofolio) {
+    ERC1155PresetMinterPauser(this).mint(to, id, amount, data);
+  }
+
+  /*============== GETTER ============= */
 
   /**
    * @dev See {IERC1155MetadataURI-uri}.
@@ -307,6 +323,7 @@ contract WOWSERC1155CryptoFolio is
   function getNextMintableTokenId(uint8 level, uint8 cardId)
     external
     view
+    override
     returns (bool, uint256)
   {
     uint16 levelCard = ((uint16(level) << 8) | cardId);
@@ -323,7 +340,12 @@ contract WOWSERC1155CryptoFolio is
   /**
    * @dev return the next mintable custon card id
    */
-  function getNextMintableCustomToken() external view returns (uint256) {
+  function getNextMintableCustomToken()
+    external
+    view
+    override
+    returns (uint256)
+  {
     require(_customCardCount + 0x100000000 > _customCardCount, 'math overflow');
     return _customCardCount + 0x100000000;
   }
