@@ -75,7 +75,7 @@ class Footer extends Component<FooterProps, FooterState> {
         >
           <Modal.Header closeButton>
             <Modal.Title>
-              <h1>Privacy Policy</h1>
+              <h1>Terms & Conditions</h1>
             </Modal.Title>
           </Modal.Header>
           <Modal.Body dangerouslySetInnerHTML={{ __html: this.privacyTerms }} />
