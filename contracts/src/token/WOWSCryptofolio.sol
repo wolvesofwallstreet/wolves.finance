@@ -20,7 +20,7 @@ contract WOWSCryptofolio is IWOWSCryptofolio {
   // mapping of cryptofolio items owned by this
   mapping(address => uint256[]) private _cryptofolios;
   // list of all known tradefloors
-  address[] private _tradefloors;
+  address[] public _tradefloors;
 
   /*=========== EVENTS ==========*/
 
@@ -84,7 +84,9 @@ contract WOWSCryptofolio is IWOWSCryptofolio {
         uint256[] memory balances = tradefloor.balanceOfBatch(accounts, opIds);
         tradefloor.burnBatch(address(this), opIds, balances);
       }
+      delete _cryptofolios[address(tradefloor)];
     }
+    delete _tradefloors;
   }
 
   /*============ GETTER ===============*/
