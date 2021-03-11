@@ -2,7 +2,7 @@
   "name": "wolves.finance",
   "version": "1.0.0",
   "description": "DeFi meets gamification",
-  "homepage": "https://wfdaniel.github.io",
+  "homepage": "https://daniel7777cohen.github.io",
   "license": "Apache-2.0",
   "engines": {
     "node": ">=14.0.0",
@@ -26,7 +26,7 @@
     "clean": "rimraf artifacts build cache contracts/depends depends deployments node_modules src/abi",
     "compile": "hardhat compile",
     "depends": "make -C tools clean && make -C tools -j 4",
-    "deploy": "gh-pages -b master -r https://github.com/daniel7777cohen/wfdaniel.github.io.git -d build",
+    "deploy": "gh-pages -b master -r https://github.com/daniel7777cohen/daniel7777cohen.github.io.git -d build",
     "format": "prettier --write . && eslint --fix .",
     "goerli:deploy": "hardhat --network goerli deploy",
     "goerli:export": "hardhat --network goerli export",
