@@ -39,10 +39,15 @@ contract WOWSERC1155 is ERC1155PresetMinterPauser, IWOWSERC1155 {
   mapping(uint256 => CustomCard) private _customCards;
   uint256 private _customCardCount;
 
+  struct ListKey {
+    uint256 index;
+  }
+
   // per token data
   struct TokenInfo {
     bool minted; // make sure we only mint 1
     uint64 timestamp;
+    ListKey listKey; // next tokenId in the owner linkedList
   }
   mapping(uint256 => TokenInfo) private _tokenInfos;
 
@@ -51,6 +56,15 @@ contract WOWSERC1155 is ERC1155PresetMinterPauser, IWOWSERC1155 {
 
   // mapping generated address -> tokenId
   mapping(address => uint256) private _addressToTokenId;
+
+  // mapping owner -> first owned token
+  // note that we work 1 based here because of initialization
+  // e.g. firstId == 1 links to tokenId 0;
+  struct Owned {
+    uint256 count;
+    ListKey listKey; // first tokenId in linked list
+  }
+  mapping(address => Owned) private _owned;
 
   // our master blueprint tokenreceiver class
   address private _masterTokenReceiver;
@@ -280,7 +294,62 @@ contract WOWSERC1155 is ERC1155PresetMinterPauser, IWOWSERC1155 {
     return _customCardCount + 0x100000000;
   }
 
+  /**
+   * @dev return list of tokenIds owned by account
+   */
+  function gettTokenIds(address account)
+    external
+    view
+    returns (uint256[] memory)
+  {
+    Owned storage list = _owned[account];
+    uint256[] memory result = new uint256[](list.count);
+    ListKey storage key = list.listKey;
+    for (uint256 i = 0; i < list.count; ++i) {
+      result[i] = key.index;
+      key = _tokenInfos[key.index].listKey;
+    }
+    return result;
+  }
+
   /*============== internal ==============*/
+
+  /**
+   * @dev ownership change -> update linked list owner -> tokenId
+   * linkKeys are 1 based where tokenIds are 0-based
+   */
+  function _relinkOwner(
+    address from,
+    address to,
+    uint256 tokenId
+  ) internal {
+    TokenInfo storage tokenInfo = _tokenInfos[tokenId];
+
+    // remove tokenId from List
+    if (from != address(0)) {
+      Owned storage fromList = _owned[from];
+      require(fromList.count > 0, 'Count mismatch');
+      ListKey storage key = fromList.listKey;
+      uint256 count = fromList.count;
+      // search the token which links to tokenId
+      for (; count > 0 && key.index != tokenId; --count)
+        key = _tokenInfos[key.index].listKey;
+      require(key.index == tokenId, 'key mismatch');
+      // unlink prev -> tokenId
+      key.index = tokenInfo.listKey.index;
+      // unlink tokenId -> next
+      tokenInfo.listKey.index = 0;
+      // decrement count
+      fromList.count--;
+    }
+
+    if (to != address(0)) {
+      Owned storage toList = _owned[to];
+      tokenInfo.listKey.index = toList.listKey.index;
+      toList.listKey.index = tokenId;
+      toList.count++;
+    }
+  }
 
   /**
    * @dev hook overwrite of ERC1155PresetMinterPauser::_beforeTokenTransfer;
@@ -310,7 +379,8 @@ contract WOWSERC1155 is ERC1155PresetMinterPauser, IWOWSERC1155 {
         tokenInfo.minted = true;
         // solhint-disable-next-line not-rely-on-time
         tokenInfo.timestamp = uint64(block.timestamp);
-        // create a new ERC1155TokenReceiver
+        // create a new WOWSCryptofolio by cloning masterTokenReciver
+        // the clone itself is a minimal delegate proxy.
         if (tokenAddress == address(0)) {
           tokenAddress = Clones.clone(_masterTokenReceiver);
           _tokenIdToAddress[tokenId] = tokenAddress;
@@ -331,6 +401,8 @@ contract WOWSERC1155 is ERC1155PresetMinterPauser, IWOWSERC1155 {
       }
       // Signal ownership change in Cryptofolio
       WOWSCryptofolio(tokenAddress).setOwner(to);
+      // Reflect ownership change in our linked list
+      _relinkOwner(from, to, tokenId);
     }
   }
 }
