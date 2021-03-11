@@ -37,19 +37,19 @@ contract WOWSCryptofolio is IWOWSCryptofolio {
   /*=========== INITIALIZER ==========*/
 
   function initialize() external {
-    require(address(_deployer) == address(0), 'Already initialized');
+    require(address(_deployer) == address(0), 'CF: Already initialized');
     _deployer = IWOWSERC1155(msg.sender);
   }
 
   /*============ STATE MODIFIER ===============*/
 
   /**
-   * @dev setOwner is called if ownership of the underlying NFT has changed
+   * @dev setOwner is called if ownership of the parent NFT has changed
    * the newOwner is allowed to transfer / burn cryptofolio items.
    * Make sure, that allowance is removed from previous owner
    */
   function setOwner(address newOwner) external override {
-    require(msg.sender == address(_deployer), 'Only deployer');
+    require(msg.sender == address(_deployer), 'CF: Only deployer');
     for (uint256 i = 0; i < _tradefloors.length; ++i) {
       if (_owner != address(0))
         IERC1155(_tradefloors[i]).setApprovalForAll(_owner, false);
@@ -60,10 +60,21 @@ contract WOWSCryptofolio is IWOWSCryptofolio {
   }
 
   /**
+   * @dev allow owner (of parent NFT) to approve external operators
+   * to transfer our cryptofolio items
+   */
+  function setApprovalForAll(address operator, bool allow) external override {
+    require(msg.sender == _owner, 'CF: Only owner');
+    for (uint256 i = 0; i < _tradefloors.length; ++i) {
+      IERC1155(_tradefloors[i]).setApprovalForAll(operator, allow);
+    }
+  }
+
+  /**
    * @dev in case underlying NFT is burned, we also burn cryptofolio
    */
   function burn() external override {
-    require(msg.sender == address(_deployer), 'Only deployer');
+    require(msg.sender == address(_deployer), 'CF: Only deployer');
     for (uint256 i = 0; i < _tradefloors.length; ++i) {
       IERC1155BurnMintable tradefloor = IERC1155BurnMintable(_tradefloors[i]);
       uint256[] storage opIds = _cryptofolios[address(tradefloor)];
@@ -145,8 +156,8 @@ contract WOWSCryptofolio is IWOWSCryptofolio {
     internal
   {
     address tradefloor = msg.sender;
-    require(_deployer.isTradeFloor(tradefloor), 'Only tradefloor');
-    require(ids.length == amounts.length, 'Input lengths differ');
+    require(_deployer.isTradeFloor(tradefloor), 'CF: Only tradefloor');
+    require(ids.length == amounts.length, 'CF: Input lengths differ');
 
     uint256[] storage currentIds = _cryptofolios[tradefloor];
     if (currentIds.length == 0) {

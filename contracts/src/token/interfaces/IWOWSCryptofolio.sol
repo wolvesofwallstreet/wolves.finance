@@ -27,4 +27,9 @@ interface IWOWSCryptofolio {
    * @dev burn all cryptofolio items
    */
   function burn() external;
+
+  /**
+   * @dev NFT owner is allowed to approve operator to handle cryptofolios
+   */
+  function setApprovalForAll(address operator, bool allow) external;
 }
