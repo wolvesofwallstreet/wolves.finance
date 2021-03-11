@@ -13,8 +13,8 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 
 import '../investment/interfaces/IRewardHandler.sol';
-import '../token/interfaces/IERC1155Cryptofolio.sol';
-import '../token/interfaces/IERC1155Mintable.sol';
+import '../token/interfaces/IWOWSERC1155.sol';
+import '../token/interfaces/IERC1155BurnMintable.sol';
 
 contract WOWSSftMinter is Ownable {
   using SafeERC20 for IERC20;
@@ -23,13 +23,13 @@ contract WOWSSftMinter is Ownable {
   mapping(uint16 => uint256) public _pricePerLevel;
 
   // The ERC1155 contract we are minting from
-  IERC1155Cryptofolio private immutable _sftContract;
+  IWOWSERC1155 private immutable _sftContract;
 
   // WOWS token contract
   IERC20 private immutable _wowsToken;
 
   // rewardhandler which distributes Wows
-  IRewardHandler private immutable _rewardHandler;
+  IRewardHandler private _rewardHandler;
 
   // The fee is distributed to 4 channels:
   // 0.15 team
@@ -57,7 +57,7 @@ contract WOWSSftMinter is Ownable {
     address owner,
     IERC20 wowsToken,
     IRewardHandler rewardHandler,
-    IERC1155Cryptofolio sftContract
+    IWOWSERC1155 sftContract
   ) {
     _sftContract = sftContract;
     _rewardHandler = rewardHandler;
@@ -77,6 +77,17 @@ contract WOWSSftMinter is Ownable {
     require(levels.length == prices.length, 'Length mismatch');
     for (uint256 i = 0; i < levels.length; ++i)
       _pricePerLevel[levels[i]] = prices[i];
+  }
+
+  /**
+   * @dev Set new rewardhandler. RewardHandler is from concept
+   * upgradeable / see investment::Controller.sol
+   */
+  function setRewardHandler(IRewardHandler newRewardHandler)
+    external
+    onlyOwner
+  {
+    _rewardHandler = newRewardHandler;
   }
 
   /**
@@ -147,7 +158,7 @@ contract WOWSSftMinter is Ownable {
     _wowsToken.safeTransferFrom(msg.sender, address(_rewardHandler), price);
 
     // mint the token
-    IERC1155Mintable(address(_sftContract)).mint(recipient, tokenId, 1, '');
+    IERC1155BurnMintable(address(_sftContract)).mint(recipient, tokenId, 1, '');
 
     // distribute the rewards
     _rewardHandler.distribute(

@@ -8,27 +8,11 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
-interface IERC1155Cryptofolio {
+interface IWOWSERC1155 {
   /**
-   * @dev Triggered if sft receives new tokens from operator
+   * @dev return the level and the mint timestamp of tokenId
    */
-  event CryptoFolioAdded(
-    address indexed sft,
-    address indexed operator,
-    uint256[] ids,
-    uint256[] amounts
-  );
-
-  /**
-   * @dev called from WOWSErc1155TokenReceiver every time new ERC1155 tokens are transfered.
-   * This allows us to build up a collection of cryptofolio items.
-   * _msgSender() has to be one of our cryptofoio auto generated contracts
-   */
-  function onTokensReceived(
-    address operator,
-    uint256[] memory ids,
-    uint256[] memory amounts
-  ) external;
+  function isTradeFloor(address account) external view returns (bool);
 
   /**
    * @dev get the next tokenId for the specified card

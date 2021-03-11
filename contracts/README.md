@@ -79,3 +79,24 @@ Steps to setup the WOWS environment.
 
 4.) call Token.sol::grantRole(Token.sol.MINTER_ROLE(), Crowdsale.sol)\
 \!\!\! ONLY DURING PRESALE \!\!\!
+
+<h2>****** SFT CONTRACT ******</h2>
+
+1.) deploy WOWSERC1155.sol\
+-> parameter:\
+
+> \- uri the uri to the location where metadata lives
+
+2.) deploy WOWSSftMinter.sol
+-> parameter:\
+
+> \- address owner (multisig marketing)
+> \- wowsToken address
+> \- rewardhandler (currently wowstoken address)
+> \- sftContract address (see 1)
+
+Setup:
+
+> \- WowsToken:: grantRole (REWARD_ROLE, WOWSSftMinter.sol)
+> \- WOWSSftMinter:: setPrices (for test: ["0", "1", "2", "3"],["500000000000000000", "1000000000000000000", "2000000000000000000", "4000000000000000000"])
+> \- WowsERC1155:: grantRole (MINTER_ROLE, WOWSSftMinter.sol)

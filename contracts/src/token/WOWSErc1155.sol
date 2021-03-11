@@ -9,23 +9,21 @@
 pragma solidity >=0.7.0 <0.8.0;
 
 import '@openzeppelin/contracts/presets/ERC1155PresetMinterPauser.sol';
+import '@openzeppelin/contracts/proxy/Clones.sol';
 
-import './interfaces/IERC1155Cryptofolio.sol';
-import './WOWSErc1155TokenReceiver.sol';
+import './interfaces/IWOWSERC1155.sol';
+import './WOWSCryptofolio.sol';
 
 /**
  * TODO's:
- * - generate unique address for token when first time minted.
- * - getter for the cryptofolio
- * - getter for token level / timestamp.
- * - check for mintable amount for wows cards.
+ * implement transfer and burn helpers for cryptofolio items
  */
 
-contract WOWSERC1155CryptoFolio is
-  ERC1155PresetMinterPauser,
-  IERC1155Cryptofolio
-{
+contract WOWSERC1155 is ERC1155PresetMinterPauser, IWOWSERC1155 {
+  // Used to restict calls to TRADEFLOOR but also to collect all TRADEFLOORS
   bytes32 public constant TRADEFLOOR_ROLE = keccak256('TRADEFLOOR_ROLE');
+  // Used to restict calls to TRADEFLOOR but also to collect all TRADEFLOORS
+  bytes32 public constant OPERATOR_ROLE = keccak256('OPERATOR_ROLE');
 
   // cap per card for each level
   mapping(uint8 => uint16) private _wowsLevelCap;
@@ -48,14 +46,14 @@ contract WOWSERC1155CryptoFolio is
   }
   mapping(uint256 => TokenInfo) private _tokenInfos;
 
-  // mapping to store cryptofolio nft items
-  mapping(uint256 => mapping(address => uint256[])) private _cryptofolios;
-
   // mapping tokenId -> generated address
   mapping(uint256 => address) private _tokenIdToAddress;
 
   // mapping generated address -> tokenId
   mapping(address => uint256) private _addressToTokenId;
+
+  // our master blueprint tokenreceiver class
+  address private _masterTokenReceiver;
 
   /* ======== CONSTRUCTOR ======== */
 
@@ -69,6 +67,9 @@ contract WOWSERC1155CryptoFolio is
     _wowsLevelCap[1] = 60;
     _wowsLevelCap[2] = 40;
     _wowsLevelCap[3] = 20;
+
+    // create our mastercopy for all minimal per token proxy contracts.
+    _masterTokenReceiver = address(new WOWSCryptofolio{ salt: 0x0 }());
   }
 
   /* ======== STATE MODIFING ======== */
@@ -116,39 +117,6 @@ contract WOWSERC1155CryptoFolio is
   }
 
   /**
-   * @dev update our collection of tradeable cryptofolio items
-   * This function is only allowed to be called from one if our pseudo TokenReceiver contracts
-   */
-  function onTokensReceived(
-    address operator,
-    uint256[] memory ids,
-    uint256[] memory amounts
-  ) external override {
-    require(hasRole(TRADEFLOOR_ROLE, operator), 'Only traders');
-    uint256 tokenId = _addressToTokenId[_msgSender()];
-    require(_tokenIdToAddress[tokenId] == _msgSender(), 'Invalid caller');
-    require(ids.length == amounts.length, 'Input lengths differ');
-
-    uint256[] storage currentIds = _cryptofolios[tokenId][operator];
-    // Check for first-time insert from this operator
-    if (currentIds.length == 0)
-      // Allow operator to withraw items on behalf of cryptofolio
-      WOWSErc1155TokenReceiver(_msgSender()).setApproval(IERC1155(operator));
-
-    for (uint256 iIds = 0; iIds < ids.length; ++iIds) {
-      if (amounts[iIds] > 0) {
-        uint256 id = ids[iIds];
-        // search tokenId
-        uint256 i = 0;
-        for (; i < currentIds.length && currentIds[i] != id; ++i) i;
-        // if token was not found, insert it
-        if (i == currentIds.length) currentIds.push(id);
-      }
-    }
-    CryptoFolioAdded(_msgSender(), operator, ids, amounts);
-  }
-
-  /**
    * @dev Prevent auctions like OpenSea to sell this thoken
    * Selling by third party are only allowed for cryptofolios
    * which are locked in one of our TradingFloor contracts
@@ -158,7 +126,7 @@ contract WOWSERC1155CryptoFolio is
     virtual
     override
   {
-    require(hasRole(TRADEFLOOR_ROLE, operator), 'Only Tradefloor');
+    require(hasRole(OPERATOR_ROLE, operator), 'Only Operators');
     super.setApprovalForAll(operator, approved);
   }
 
@@ -271,34 +239,10 @@ contract WOWSERC1155CryptoFolio is
   }
 
   /**
-   * @dev return array of cryptofolio tokenIds
-   * the tokenIds belong to the contract operator
-   * a list of all known operators can be queried
-   * by enumerating TRADER_ROLE addresses
-   * @param tokenId the tokenId to query
-   * @return ids tokenids in scope of operator
-   * @return idsLength number of valid tokenids
+   * @dev return the level and the mint timestamp of tokenId
    */
-  function getCryptofolio(uint256 tokenId, address operator)
-    external
-    view
-    returns (uint256[] memory ids, uint256 idsLength)
-  {
-    uint256[] storage opIds = _cryptofolios[tokenId][operator];
-    uint256[] memory result = new uint256[](opIds.length);
-    uint256 newLength = 0;
-
-    if (opIds.length > 0) {
-      address[] memory accounts = new address[](opIds.length);
-      address tokenAddress = _tokenIdToAddress[tokenId];
-      for (uint256 i = 0; i < opIds.length; ++i) accounts[i] = tokenAddress;
-      uint256[] memory balances =
-        IERC1155(operator).balanceOfBatch(accounts, opIds);
-
-      for (uint256 i = 0; i < opIds.length; ++i)
-        if (balances[i] > 0) result[newLength++] = opIds[i];
-    }
-    return (result, newLength);
+  function isTradeFloor(address account) external view override returns (bool) {
+    return hasRole(TRADEFLOOR_ROLE, account);
   }
 
   /**
@@ -339,31 +283,6 @@ contract WOWSERC1155CryptoFolio is
   /*============== internal ==============*/
 
   /**
-   * @dev run through all Tradefloor contracts (ERC1155) and check
-   * if we have no balances > 0 left.
-   */
-  function _cryptofolioEmpty(uint256 tokenId) internal view returns (bool) {
-    uint256 numTradefloors = getRoleMemberCount(TRADEFLOOR_ROLE);
-    address tokenAddress = _tokenIdToAddress[tokenId];
-    for (uint256 i = 0; i < numTradefloors; ++i) {
-      address tradefloor = getRoleMember(TRADEFLOOR_ROLE, i);
-      // Retrieve all tokenIds belonging to tradefloor
-      uint256[] storage tradefloorIds = _cryptofolios[tokenId][tradefloor];
-      // Fill an array of accounts to be able to call batch
-      address[] memory accounts = new address[](tradefloorIds.length);
-      for (uint256 j = 0; j < tradefloorIds.length; ++j)
-        accounts[j] = tokenAddress;
-      // Get all amounts
-      uint256[] memory amounts =
-        IERC1155(tradefloor).balanceOfBatch(accounts, tradefloorIds);
-      // verify that all amounts are 0
-      for (uint256 j = 0; j < amounts.length; ++j)
-        if (amounts[j] > 0) return false;
-    }
-    return true;
-  }
-
-  /**
    * @dev hook overwrite of ERC1155PresetMinterPauser::_beforeTokenTransfer;
    * will be called on all mint / burn / transfer [batch] functions
    */
@@ -383,6 +302,7 @@ contract WOWSERC1155CryptoFolio is
       // we have only NFT's in this contract
       require(amounts[i] == 1, 'Amount != 1');
       uint256 tokenId = ids[i];
+      address tokenAddress = _tokenIdToAddress[tokenId];
       TokenInfo storage tokenInfo = _tokenInfos[tokenId];
       if (from == address(0)) {
         // minting
@@ -391,21 +311,26 @@ contract WOWSERC1155CryptoFolio is
         // solhint-disable-next-line not-rely-on-time
         tokenInfo.timestamp = uint64(block.timestamp);
         // create a new ERC1155TokenReceiver
-        if (_tokenIdToAddress[tokenId] == address(0))
-          _tokenIdToAddress[tokenId] = address(new WOWSErc1155TokenReceiver());
-        _addressToTokenId[_tokenIdToAddress[tokenId]] = tokenId;
+        if (tokenAddress == address(0)) {
+          tokenAddress = Clones.clone(_masterTokenReceiver);
+          _tokenIdToAddress[tokenId] = tokenAddress;
+          WOWSCryptofolio(tokenAddress).initialize();
+        }
+        _addressToTokenId[tokenAddress] = tokenId;
         // increment the minted count for this card
         if (tokenId <= 0xFFFFFFFF) _wowsCardsMinted[uint16(tokenId >> 16)] += 1;
         else ++_customCardCount;
       } else if (to == address(0)) {
         // burn
-        // We don't allow burn of non-empty cryptofolios
-        require(_cryptofolioEmpty(tokenId), 'Cryptofolio not empty');
+        // make sure underlying assets gets burned
+        WOWSCryptofolio(tokenAddress).burn();
         // make token mintable again
         tokenInfo.minted = false;
         // decrement the minted count for this card
         if (tokenId <= 0xFFFFFFFF) _wowsCardsMinted[uint16(tokenId >> 16)] -= 1;
       }
+      // Signal ownership change in Cryptofolio
+      WOWSCryptofolio(tokenAddress).setOwner(to);
     }
   }
 }
