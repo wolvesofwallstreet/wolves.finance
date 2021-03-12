@@ -14,6 +14,8 @@ import '@openzeppelin/contracts/proxy/Clones.sol';
 import './interfaces/IWOWSERC1155.sol';
 import './WOWSCryptofolio.sol';
 
+bytes16 constant HEX = '0123456789ABCDEF';
+
 /**
  * TODO's:
  * implement transfer and burn helpers for cryptofolio items
@@ -164,7 +166,17 @@ contract WOWSERC1155 is ERC1155PresetMinterPauser, IWOWSERC1155 {
       // custom token
       return _customCards[tokenId].uri;
     // super currently not working because of OZ external definition
-    return ERC1155(this).uri(0);
+    return
+      string(
+        abi.encodePacked(
+          ERC1155(this).uri(0),
+          HEX[(tokenId >> 28) & 0xF],
+          HEX[(tokenId >> 24) & 0xF],
+          HEX[(tokenId >> 20) & 0xF],
+          HEX[(tokenId >> 16) & 0xF],
+          '.json'
+        )
+      );
   }
 
   /**
@@ -217,19 +229,22 @@ contract WOWSERC1155 is ERC1155PresetMinterPauser, IWOWSERC1155 {
 
   /**
    * @dev return information about a wows card
-   * @param level the level of the card
+   * @param levels the levels of the card to query
    * @param cardIds a list of card ids to query
    * @return capMintedPair array of 16 Bit, cap,minted,...
    */
-  function getCardDataBatch(uint8 level, uint8[] memory cardIds)
+  function getCardDataBatch(uint8[] memory levels, uint8[] memory cardIds)
     external
     view
     returns (uint16[] memory capMintedPair)
   {
+    require(levels.length == cardIds.length, 'Length mismatch');
     uint16[] memory result = new uint16[](cardIds.length * 2);
     for (uint256 i = 0; i < cardIds.length; ++i) {
-      result[i * 2] = _wowsLevelCap[level];
-      result[i * 2 + 1] = _wowsCardsMinted[uint16(level << 8) | cardIds[i]];
+      result[i * 2] = _wowsLevelCap[levels[i]];
+      result[i * 2 + 1] = _wowsCardsMinted[
+        (uint16(levels[i]) << 8) | cardIds[i]
+      ];
     }
     return result;
   }
