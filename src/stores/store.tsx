@@ -103,7 +103,11 @@ export type StakeResult = {
 type cbf = async.AsyncResultCallback<unknown, Error>;
 
 type ASSETS = {
-  cards: CARDS;
+  cards: {
+    bois: CARD_LEVEL[];
+    wolves: CARD_LEVEL[];
+    yourPack: CARD_LEVEL[];
+  };
 };
 
 class Store {
@@ -130,7 +134,11 @@ class Store {
   tokenContractAddress = Store.nullAddress;
 
   assets = {
-    cards: { levelNames: [], cards: [] },
+    cards: {
+      bois: [],
+      wolves: [],
+      yourPack: [],
+    },
   } as ASSETS;
 
   constructor() {
@@ -179,6 +187,10 @@ class Store {
       this.assets.cards.levelNames = content.default.levelNames;
       this.assets.cards.cards = content.default.levels as CARD_LEVEL[];
       emitter.emit(ASSETS_LOADED);
+    });
+    import('locales/en_US/yourPack_cards.json').then((content) => {
+      this.assets.cards.yourPack = content.default as CARD_LEVEL[];
+      emitter.emit(ASSETS_LOADED, 'yourPack');
     });
   }
 

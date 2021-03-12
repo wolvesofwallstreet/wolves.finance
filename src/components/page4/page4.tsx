@@ -22,10 +22,12 @@ type PAGE4_PROPS = {
   history: RouteComponentProps['history'];
 };
 
+type QueryType = 'wolves' | 'bois' | 'yourPack';
+
 type PAGE4_STATE = {
   cardId: string;
   contentLoaded: boolean;
-  type: 'wolves' | 'bois';
+  type: QueryType;
 };
 
 const INITIAL_PAGE4_STATE: PAGE4_STATE = {
@@ -68,9 +70,10 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     let { cardId, contentLoaded } = this.state;
 
     const query = new URLSearchParams(location.search);
-    const newType = query.get('type') === 'bois' ? 'bois' : 'wolves';
+    const newType = query.get('type') as QueryType;
 
     const cards = StoreClasses.store.getAssets().cards;
+    const sections = cards[newType];
 
     if (newType !== type) {
       this.setState({ type: newType });
@@ -119,13 +122,16 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     const currentCard =
       cardlength > 0 ? this.content?.cards[this.cardIndex] : undefined;
 
+    const isNextCardAvailable =
+      this.content?.cards && this.content?.cards.length > 1;
+
     return (
       <div className={'wolves-container bg-' + type}>
         <img src={Logo} alt="WOWS" width="50px" height="50px" />
         <h2 className="tk-vincente-lightbold no-margin">
           {t('page4.welcome-' + type)}
         </h2>
-        <h3 className="tk-grotesk-lightbold wolves-orange no-margin">
+        <h3 className="tk-grotesk-lightbold no-margin">
           {t('page4.header-' + type)}
         </h3>
         {contentLoaded && (
@@ -155,7 +161,9 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
             {contentLoaded && (
               <>
                 <span
-                  className="tk-vincente-lightbold font-24 single-line link"
+                  className={`tk-vincente-lightbold font-24 single-line link ${
+                    !isNextCardAvailable && 'disabled-link'
+                  } `}
                   onClick={() =>
                     history.replace(
                       '?type=' +
@@ -208,12 +216,10 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                     {currentCard.name}
                   </h1>
                   <h2 className="tk-vincente-lightbold font-24">
-                    <span className="wolves-orange">{t('page.motto')}: </span>
+                    <span>{t('page.motto')}: </span>
                     {currentCard.motto}
                   </h2>
-                  <span className="font-16 wolves-orange">
-                    {currentCard.description}
-                  </span>
+                  <span className="font-16">{currentCard.description}</span>
                   <ul className="tk-vincente-lightbold font-24 rarity-box">
                     <li>
                       <h2>RARITY: 0/200</h2>

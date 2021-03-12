@@ -7,7 +7,8 @@
  */
 import './progress_status.css';
 
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
+import Ticker from 'react-ticker';
 
 type PROGRESS_STATUS_PROPS = {
   progressCallback?: () => void;
@@ -16,10 +17,29 @@ type PROGRESS_STATUS_PROPS = {
 
 function ProgressStatus(props: PROGRESS_STATUS_PROPS): JSX.Element {
   const { progressCallback, children } = props;
+  const [isHover, setIsHover] = useState(false);
+  
+  const handleMouseHover = (
+    event: React.MouseEvent<HTMLDivElement, MouseEvent>
+  ) => {
+    event.preventDefault();
+    setIsHover(true);
+  };
+
+  const handleMouseLeave = (
+    event: React.MouseEvent<HTMLDivElement, MouseEvent>
+  ) => {
+    event.preventDefault();
+    setIsHover(false);
+  };
 
   return (
-    <div className="progress-status-container">
-      <div className="progress-status-progress">{children}</div>
+    <div
+      className="progress-status-container"
+      onMouseOver={handleMouseHover}
+      onMouseLeave={handleMouseLeave}
+    >
+      <Ticker move={!isHover}>{({ index }) => <div>{children}</div>}</Ticker>
       {progressCallback ? (
         <span
           onAnimationIteration={progressCallback}

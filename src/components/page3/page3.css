@@ -53,7 +53,12 @@
 }
 
 .rotate {
-  transform: rotate(180deg); /* Equal to rotateZ(45deg) */
+  transform: rotate(180deg);
+}
+
+.fixed-pos {
+  width: 110px;
+  text-align: left;
 }
 
 @media all and (max-width: 800px) {

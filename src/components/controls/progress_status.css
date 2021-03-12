@@ -13,7 +13,8 @@
   padding: 6px 0px;
   width: 100%;
   background-color: var(--wolves-blue-dk);
-  color: #2bec33;
+  color: #ffffff;
+  border: 1px solid var(--wolves-orange);
 }
 
 .progress-status-progress {

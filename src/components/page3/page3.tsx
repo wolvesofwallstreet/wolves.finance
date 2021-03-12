@@ -23,9 +23,11 @@ type PAGE3_PROPS = {
   display: 'shop' | 'auction';
 };
 
+type QueryType = 'wolves' | 'bois' | 'yourPack';
+
 type PAGE3_STATE = {
   contentLoaded: boolean;
-  type: 'wolves' | 'bois';
+  type: QueryType;
   levelId: number;
 };
 
@@ -69,17 +71,23 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
     let { contentLoaded, levelId } = this.state;
 
     const query = new URLSearchParams((location as Location).search);
-    const newType = query.get('type') === 'bois' ? 'bois' : 'wolves';
+    const newType = query.get('type') as QueryType;
+    let hasContent = this.content.length > 0;
 
     if (newType !== type) {
+      hasContent = false;
       this.setState({ type: newType });
       contentLoaded = false;
     }
 
     if (!contentLoaded) {
-      this.content = StoreClasses.store.getAssets().cards;
+      const { cards } = StoreClasses.store.getAssets();
+      this.content = cards[newType];
+      if (this.content.length > 0) {
+        hasContent = true;
+      }
     }
-    if (this.content.levelNames.length > 0) {
+    if (hasContent) {
       if (!contentLoaded) {
         this.setState({ contentLoaded: true });
         levelId = 0;
@@ -102,6 +110,9 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
     const { t } = this.props;
     const { contentLoaded, levelId, type } = this.state;
     const levelPosition = this._getLevelPosition(levelId);
+    const hasMoreLevels = levelPosition < this.content.length - 1;
+    const hasContent = this.content.length > 0;
+    const startPosition = 0;
     return (
       <div className={'wolves-container bg-' + type}>
         <img
@@ -109,7 +120,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
           alt="WOWS"
           width="50px"
           height="50px"
-          className="rotate"
+          className={`${type === 'bois' ? 'rotate' : ''}`}
         />
         <h2 className="tk-vincente-lightbold no-margin">
           {t('page3.welcome-' + type)}
@@ -121,13 +132,13 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
           <span id="right" className="dot" />
         </span>
         <div id="page3-section-header">
-          <span className="tk-vincente-lightbold font-24 single-line wolves-orange">
+          <span className="tk-vincente-lightbold font-24 single-line wolves-orange fixed-pos">
             &lt;
-            {levelPosition <= 0 || type === 'bois' ? (
+            {levelPosition <= startPosition ? (
               <Link to="/">{t('page.home')}</Link>
             ) : (
               <Link to={'?type=' + type + '&levelId=' + (levelId - 1)}>
-                {t('page.back')}
+                {t('page.previous')}
               </Link>
             )}
           </span>
@@ -154,75 +165,38 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
               })}
           </span>
           <span className="tk-vincente-lightbold font-24 single-line wolves-orange">
-            {type === 'bois' ? (
-              <Link to={'?type=wolves'}>{t('page.wolves')}</Link>
-            ) : (
-              levelPosition < 2 && (
-                <Link to={'?type=' + type + '&levelId=' + (levelId + 1)}>
-                  {t('page.nextLevel')}
-                </Link>
-              )
-            )}
+            <Link
+              to={'?type=' + type + '&levelId=' + (levelId + 1)}
+              className={`${!hasMoreLevels ? 'disabled-link' : ''}`}
+            >
+              {t('page.nextLevel')}
+            </Link>
             &gt;
           </span>
         </div>
         {contentLoaded && (
-          <h3 className="tk-grotesk-lightbold wolves-orange">
-            {this.levelDescription}
+          <h3 className="tk-grotesk-lightbold">
+            {hasContent && this.content[levelPosition].header}
           </h3>
         )}
         {contentLoaded && (
           <div id="page3-content-container">
-            {this.content.cards
-              .filter(
-                (level) => level.levelId === levelId && level.type === type
-              )
-              .map((level) =>
-                level.cards.map((card, index) => {
+            {hasContent &&
+              this.content[levelPosition].cards.map(
+                (card: CARD, index: number) => {
                   return (
                     <CardBox
                       key={'card_' + index}
                       type={type}
                       levelId={levelId}
                       content={card}
-                      quantity={level.quantity}
-                      price={level.price}
                       t={t}
                     />
                   );
-                })
+                }
               )}
           </div>
         )}
-        {
-          //HARD CODED DATA FOR DEVELOPMENT ONLY !
-          contentLoaded && levelPosition === 0 && type === 'wolves' && (
-            <div id="page3-content-container">
-              {this.content[1].cards.map((card: CARD, index: number) => {
-                return (
-                  <CardBox
-                    key={'card_' + index}
-                    type={type}
-                    levelId={2}
-                    content={card}
-                    t={t}
-                  />
-                );
-              })}
-              {this.content[1].cards.map((card: CARD, index: number) => {
-                return (
-                  <CardBox
-                    key={'card_' + index}
-                    type={type}
-                    levelId={2}
-                    content={card}
-                    t={t}
-                  />
-                );
-              })}
-            </div>
-          )
-        }
       </div>
     );
   }

@@ -7,7 +7,8 @@
     "shop": "SHOP",
     "detail": "DETAILS",
     "wolvesSft": "WOLVES SFT",
-    "boisSft": "BOIS SFT"
+    "boisSft": "BOIS SFT",
+    "yourPack": "YOUR PACK"
   },
   "toast": {
     "walletConnected": "Wallet connected",
@@ -31,6 +32,7 @@
     "wolves": "WOLVES",
     "bois": "BOIS",
     "back": "BACK",
+    "previous": "PREVIOUS LEVEL",
     "home": "HOME",
     "shop": "SHOP",
     "next": "NEXT CARD",
@@ -40,11 +42,11 @@
     "head1": "CHOOSE YOUR CRYPTOFOLIO - TRADER\u00a0WOLVES\u00a0OR\u00a0BUSINESS\u00a0BOIS",
     "head2": "IN ORDER TO STAKE WITH WOLVES OR YIELD FARM WITH THE BOIS YOU NEED TO PURCHASE YOUR SFT CHARACTER CRYPTO LICENSE",
     "wolves1": "HOLDERS & LIQUIDITY POOL STAKERS",
-    "wolves2": "WOLVES",
+    "wolves2": "WOLVES SFTs",
     "wolves3": "ARE YOU PART OF THE PACK?",
     "wolves4": "EACH WOLF TRADER CHARACTER HAS A DIFFERENT LICENSE LEVEL AND PROFIT MAKING POTENTIAL.",
     "bois1": "STABLE COIN YIELD FARMERS",
-    "bois2": "BOIS",
+    "bois2": "BOIS SFTs",
     "bois3": "OR ARE YOU ONE OF THE BOIS?",
     "bois4": "EACH BUSINESS BOIS CHARACTER HAS A DIFFERENT YIELD LICENSE LEVEL AND PROFIT MAKING POTENTIAL.",
     "click": "CLICK ABOVE TO VIEW YOUR CHOICE"
@@ -53,13 +55,17 @@
     "welcome-wolves": "WELCOME TO THE WOLFPACK",
     "newCrypto-wolves": "NEW WOLF CRYPTOFOLIOS FOR HOLDING STAKING & RAIDING",
     "welcome-bois": "WELCOME TO THE BOIS",
-    "newCrypto-bois": "NEW BOIS CRYPTOFOLIOS FOR STABLE COIN LENDING"
+    "newCrypto-bois": "NEW BOIS CRYPTOFOLIOS FOR STABLE COIN LENDING",
+    "welcome-yourPack": "WELCOME TO YOUR PACK",
+    "newCrypto-yourPack": "YOUR PACK"
   },
   "page4": {
     "welcome-wolves": "$t(page3.welcome-wolves)",
     "header-wolves": "IN ORDER TO STAKE WITH WOLVES YOU NEED TO PURCHASE YOUR SFT CHARACTER CRYPTO LICENSE",
     "welcome-bois": "$t(page3.welcome-bois)",
     "header-bois": "IN ORDER TO YIELD FARM WITH THE BOIS YOU NEED TO PURCHASE YOUR SFT CHARACTER CRYPTO LICENSE",
+    "header-yourPack": "",
+    "welcome-yourPack": "$t(page3.welcome-yourPack)",
     "buy": "BUY {{name}}"
   }
 }

@@ -34,6 +34,10 @@
   background-image: url(./assets/background_bois.jpg);
 }
 
+.wolves-container.bg-yourPack {
+  background-image: url(./assets/background_bois.jpg);
+}
+
 .wolves-container h2 {
   font-size: 30px;
   font-weight: 500;

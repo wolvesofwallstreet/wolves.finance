@@ -94,6 +94,11 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
         to: '/shop?type=bois',
         disabled: type === 'bois',
       },
+      {
+        id: t('header.yourPack'),
+        to: '/shop?type=yourPack',
+        disabled: type === 'yourPack',
+      },
     ];
 
     return result;

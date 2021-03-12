@@ -53,3 +53,17 @@ hr.wolves {
   margin: 4px 0px;
   align-self: stretch;
 }
+
+a:hover {
+  text-decoration: none !important;
+  border: 0 !important;
+  color: var(--wolves-orange) !important;
+}
+
+.disabled-link {
+  pointer-events: none;
+}
+
+.ticker-text {
+  margin: 0 5px;
+}
