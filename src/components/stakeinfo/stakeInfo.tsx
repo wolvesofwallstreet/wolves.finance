@@ -8,7 +8,7 @@
 
 import './stakeinfo.css';
 
-import React, { Component, ReactNode } from 'react';
+import { Component, ReactNode } from 'react';
 
 import {
   CONNECTION_CHANGED,
@@ -21,6 +21,7 @@ import {
   StoreClasses,
   TokenContractResult,
 } from '../../stores/store';
+import { ProgressStatus } from '../controls/progress_status';
 
 type STAKEINFOPROPS = {
   ethAmount?: number;
@@ -156,7 +157,11 @@ class StakeInfo extends Component<STAKEINFOPROPS, STAKEINFOSTATE> {
     }
 
     return (
-      <div className="info-container">
+      <ProgressStatus
+        progressCallback={
+          stakeSupplyUser > 0 ? this.onProgressIteration : undefined
+        }
+      >
         {ethAmount !== undefined && wowsAmount !== undefined ? (
           <>
             ETH: {ethAmount.toFixed(2)}, WOWS: {wowsAmount.toFixed(2)},{' '}
@@ -166,15 +171,7 @@ class StakeInfo extends Component<STAKEINFOPROPS, STAKEINFOSTATE> {
         )}
         Staked: {stakeSupplyUser.toFixed(2)}, Earned:{earned.toFixed(6)}, APY:{' '}
         {apy.toFixed(2)}%
-        {stakeSupplyUser > 0 ? (
-          <span
-            onAnimationIteration={this.onProgressIteration}
-            className="info-progress"
-          />
-        ) : (
-          ''
-        )}
-      </div>
+      </ProgressStatus>
     );
   }
 }

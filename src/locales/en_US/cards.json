@@ -1,0 +1,151 @@
+{
+  "levelNames": ["Level 1", "Level 2", "Level 3", "Level 4"],
+  "levels": [
+    {
+      "levelId": 0,
+      "chainRef": 0,
+      "type": "bois",
+      "quantity": 100,
+      "price": 0.5,
+      "header": "1/X RARITY - X% PROFIT REWARD - X% RAIDING POTENTIAL",
+      "cards": []
+    },
+    {
+      "levelId": 1,
+      "chainRef": 1,
+      "type": "bois",
+      "quantity": 80,
+      "price": 1,
+      "header": "1/X RARITY - X% PROFIT REWARD - X% RAIDING POTENTIAL",
+      "cards": [
+        {
+          "id": "barkley",
+          "chainRef": 0,
+          "name": "BRYANT BARKLEY",
+          "motto": "NEVER DRINK THE COOL AID",
+          "description": "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam",
+          "type": "movie",
+          "url": "https://github.com/videvago/wolves.assets.low/raw/main/cards/bois/level2/BRYANT-{res}.mp4"
+        },
+        {
+          "id": "dasch",
+          "chainRef": 1,
+          "name": "JOHNNY DASCH",
+          "motto": "THE FIRST ONE GETS THE OYSTER, THE SECOND GETS THE SHELL",
+          "description": "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam",
+          "type": "image",
+          "url": "https://github.com/videvago/wolves.assets.low/raw/main/cards/bois/level2/JOHNNY-{res}.jpg"
+        },
+        {
+          "id": "hound",
+          "chainRef": 2,
+          "name": "ETHAN T-HOUND",
+          "motto": "DONT DEVELOP PERFECTION, DEVELOP FIRST",
+          "description": "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam",
+          "type": "image",
+          "url": "https://github.com/videvago/wolves.assets.low/raw/main/cards/bois/level2/ETHAN-{res}.jpg"
+        },
+        {
+          "id": "nole",
+          "chainRef": 3,
+          "name": "KSUM NOLE",
+          "motto": "I AM INEVITABLE",
+          "description": "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam",
+          "type": "image",
+          "url": "https://github.com/videvago/wolves.assets.low/raw/main/cards/bois/level2/NOLE-{res}.jpg"
+        }
+      ]
+    },
+    {
+      "levelId": 2,
+      "chainRef": 2,
+      "type": "bois",
+      "quantity": 50,
+      "price": 2,
+      "header": "1/X RARITY - X% PROFIT REWARD - X% RAIDING POTENTIAL",
+      "cards": []
+    },
+    {
+      "levelId": 3,
+      "chainRef": 3,
+      "type": "bois",
+      "quantity": 10,
+      "price": 3,
+      "header": "1/X RARITY - X% PROFIT REWARD - X% RAIDING POTENTIAL",
+      "cards": []
+    },
+    {
+      "levelId": 0,
+      "chainRef": 4,
+      "type": "wolves",
+      "quantity": 100,
+      "price": 0.5,
+      "header": "1/X RARITY - X% PROFIT REWARD - X% RAIDING POTENTIAL",
+      "cards": []
+    },
+    {
+      "levelId": 1,
+      "chainRef": 5,
+      "type": "wolves",
+      "quantity": 80,
+      "price": 1,
+      "header": "1/80 RARITY - 50% PROFIT REWARD - 50% RAIDING POTENTIAL",
+      "cards": [
+        {
+          "id": "decko",
+          "chainRef": 0,
+          "name": "GORGAN DECKO",
+          "motto": "DEFI NEVER SLEEPS",
+          "description": "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam",
+          "type": "image",
+          "url": "https://github.com/videvago/wolves.assets.low/raw/main/cards/wolves/level2/GORGAN-{res}.jpg"
+        },
+        {
+          "id": "knight",
+          "chainRef": 1,
+          "name": "LAYLA KNIGHT",
+          "motto": "WE HUNT FOR THE MOON",
+          "description": "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam",
+          "type": "image",
+          "url": "https://github.com/videvago/wolves.assets.low/raw/main/cards/wolves/level2/LAYLA-{res}.jpg"
+        },
+        {
+          "id": "fang",
+          "chainRef": 2,
+          "name": "MAX FANG",
+          "motto": "BUY WHEN THERE IS BLOOD ON THE STREET",
+          "description": "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam",
+          "type": "image",
+          "url": "https://github.com/videvago/wolves.assets.low/raw/main/cards/wolves/level2/MAX-{res}.jpg"
+        },
+        {
+          "id": "watcher",
+          "chainRef": 3,
+          "name": "WARG THE WATCHER",
+          "motto": "FILL IT OR KILL IT",
+          "description": "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam",
+          "type": "image",
+          "url": "https://github.com/videvago/wolves.assets.low/raw/main/cards/wolves/level2/WARG-{res}.jpg"
+        }
+      ]
+    },
+    {
+      "levelId": 2,
+      "chainRef": 6,
+      "type": "wolves",
+      "quantity": 50,
+      "price": 2,
+      "header": "1/X RARITY - X% PROFIT REWARD - X% RAIDING POTENTIAL",
+      "cards": []
+    },
+    {
+      "levelId": 3,
+      "chainRef": 7,
+      "type": "wolves",
+      "quantity": 10,
+      "price": 3,
+      "header": "1/X RARITY - X% PROFIT REWARD - X% RAIDING POTENTIAL",
+      "cards": []
+    }
+  ]
+}

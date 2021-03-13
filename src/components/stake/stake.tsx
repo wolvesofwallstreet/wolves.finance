@@ -169,7 +169,7 @@ class Stake extends Component<STAKEPROPS, STAKESTATE> {
               <div className="stake-input-currency">WOWS/ETH LP</div>
             </div>
             <input
-              className="stake-btn stake-top-margin"
+              className="wolves-btn stake-btn stake-top-margin"
               type="button"
               value={getButtonText(t('stake.stake').toString())}
               disabled={!inputValid || !connected}
@@ -178,7 +178,7 @@ class Stake extends Component<STAKEPROPS, STAKESTATE> {
             <div className="stake-btn-container">
               <div className="stake-btn-grow stake-top-margin">
                 <input
-                  className="stake-btn"
+                  className="wolves-btn stake-btn"
                   type="button"
                   value={getButtonText(t('stake.claim').toString())}
                   disabled={!connected}
@@ -187,7 +187,7 @@ class Stake extends Component<STAKEPROPS, STAKESTATE> {
               </div>
               <div className="stake-btn-grow stake-top-margin">
                 <input
-                  className="stake-btn"
+                  className="wolves-btn stake-btn"
                   type="button"
                   value={getButtonText(t('stake.exit').toString())}
                   disabled={!connected}

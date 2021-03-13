@@ -9,22 +9,34 @@ import './header.css';
 
 import React, { Component, ReactNode } from 'react';
 import { Form, Image, Navbar } from 'react-bootstrap';
+import { TFunction, withTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
 import logo from '../../assets/wolves_sft_logo.svg';
 import { CONNECTION_CHANGED } from '../../stores/constants';
 import { ConnectResult, StoreClasses } from '../../stores/store';
 
-interface CSTATE {
+interface HEADER_PROPS {
+  location: Location;
+  t: TFunction;
+}
+
+interface HEADER_STATE {
   address: string;
   networkName: string;
 }
 
-class Header extends Component<unknown, CSTATE> {
+type NAVITEM = {
+  id: string;
+  to: string;
+  disabled: boolean;
+};
+
+class Header extends Component<HEADER_PROPS, HEADER_STATE> {
   store = StoreClasses.store;
   emitter = StoreClasses.emitter;
 
-  constructor(props: unknown) {
+  constructor(props: HEADER_PROPS) {
     super(props);
     this.state = { address: '', networkName: '' };
 
@@ -65,8 +77,33 @@ class Header extends Component<unknown, CSTATE> {
       : 'CONNECT WALLET';
   }
 
+  _getNavItems(): NAVITEM[] {
+    const { location, t } = this.props;
+    const pathItems = location.pathname.split('/').filter((e) => e.length > 0);
+    const result = [
+      { id: t('header.home'), to: '/', disabled: pathItems.length === 0 },
+    ];
+    if (pathItems.length === 1) {
+      if (pathItems[0] === 'detail') {
+        const query = new URLSearchParams(location.search);
+        result.push({
+          id: t('header.shop'),
+          to:
+            '/shop?type=' +
+            query.get('type') +
+            '&levelId=' +
+            query.get('levelId'),
+          disabled: false,
+        });
+        result.push({ id: t('header.detail'), to: '', disabled: true });
+      } else result.push({ id: t('header.shop'), to: '', disabled: true });
+    }
+    return result;
+  }
+
   render(): ReactNode {
     const shortAddress = this._shortAddress();
+    const navItems = this._getNavItems();
     return (
       <Navbar bg="wolf" variant="dark" expand="lg">
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
@@ -74,10 +111,22 @@ class Header extends Component<unknown, CSTATE> {
           <Image src={logo} width="300" className="logo" />
         </Navbar.Brand>
         <Navbar.Collapse id="basic-navbar-nav">
-          {/*<Link to="/stake">Stake</Link>*/}
+          {navItems.map((item: NAVITEM, index: number) => {
+            return item.disabled ? (
+              <span key={index}>{item.id}</span>
+            ) : (
+              <Link key={index} to={item.to}>
+                {item.id}
+              </Link>
+            );
+          })}
         </Navbar.Collapse>
         <Form className="dp-conn-form" onSubmit={this.handleSubmit} inline>
-          <input className="dp-conn-btn" type="submit" value={shortAddress} />
+          <input
+            className="wolves-btn dp-conn-btn"
+            type="submit"
+            value={shortAddress}
+          />
         </Form>
       </Navbar>
     );
@@ -88,4 +137,4 @@ class Header extends Component<unknown, CSTATE> {
   }
 }
 
-export { Header };
+export default withTranslation()(Header);

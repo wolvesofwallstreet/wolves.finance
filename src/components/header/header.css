@@ -12,20 +12,28 @@
   font-weight: bold;
 }
 
-.navbar-collapse a {
+.navbar-collapse a,
+.navbar-collapse span {
   letter-spacing: 0.02em;
   font-family: 'vincente', serif;
-  font-weight: bold;
-  font-size: 30px;
-  color: white !important;
+  font-weight: 500;
+  font-size: 28px;
+  line-height: 1em;
+  color: white;
+  margin-right: 10px;
 }
 
-.navbar-nav a:hover {
-  text-decoration: underline !important;
+.navbar-collapse a:hover {
+  text-decoration: none;
+  border-bottom: white 2px solid;
+}
+
+.navbar-collapse span {
+  color: var(--wolves-orange);
 }
 
 .logo {
-  margin: 0px 20px;
+  margin: 0px 10px;
   width: 240px;
 }
 
@@ -40,10 +48,6 @@
 }
 
 .dp-conn-btn {
-  border: white 1px solid;
-  background-color: var(--wolves-orange);
-  color: var(--wolves-blue-dk);
-  margin: 8px 0px 8px 0px;
-  height: 40px;
   width: 200px;
+  margin: 8px 0px 8px 0px;
 }

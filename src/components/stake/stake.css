@@ -92,19 +92,6 @@
   margin-top: 6px;
 }
 
-.stake-btn {
-  border: black 1px solid;
-  background-color: var(--wolves-orange);
-  height: 32px;
-  width: 100%;
-}
-
-.stake-btn:disabled {
-  color: var(--wolves-orange);
-  background-color: var(--wolves-blue-dk);
-  opacity: 0.5;
-}
-
 .stake-btn-container {
   display: flex;
   flex-wrap: wrap;
