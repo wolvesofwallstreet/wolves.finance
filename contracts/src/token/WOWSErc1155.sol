@@ -359,7 +359,7 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
   /**
    * @dev return list of tokenIds owned by account
    */
-  function gettTokenIds(address account)
+  function getTokenIds(address account)
     external
     view
     returns (uint256[] memory)
