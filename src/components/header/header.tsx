@@ -96,7 +96,7 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
       },
       {
         id: t('header.yourPack'),
-        to: '/shop?type=yourPack',
+        to: '/my?type=yourPack',
         disabled: type === 'yourPack',
       },
     ];

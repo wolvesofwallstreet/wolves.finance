@@ -78,7 +78,6 @@
     "react-i18next": "^11.8.5",
     "react-router-dom": "^5.2.0",
     "react-scripts": "^4.0.2",
-    "react-ticker": "^1.2.2",
     "react-toastify": "^7.0.3",
     "web-vitals": "^0.2.4",
     "web3modal": "^1.9.2"

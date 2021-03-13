@@ -23,6 +23,7 @@ type CARDBOX_PROPS = {
 
 export function CardBox(props: CARDBOX_PROPS): JSX.Element {
   const { content, levelId, price, quantity, t, type } = props;
+
   return (
     <div className="card-container">
       <Link
@@ -62,10 +63,10 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
       </span>
       <hr className="wolves" />
       <span className="tk-grotesk-lightbold font-14 ellipsis">
-        {t('page.available')}: {content.quantity}/{content.quantity}
+        {t('page.available')}: {quantity}/{quantity}
       </span>
       <span className="tk-grotesk-lightbold font-14 ellipsis line-h">
-        {t('page.price')}: {content.price} WOWS
+        {t('page.price')}: {price} WOWS{' '}
       </span>
     </div>
   );

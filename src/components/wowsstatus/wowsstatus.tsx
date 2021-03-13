@@ -17,7 +17,6 @@ class WowsStatus extends Component {
       <ProgressStatus>
         <span className="ticker-text">WOWS CURRENT PRICE: $34.45</span>
         <span className="ticker-text">CIRCULATING MC: $450,000</span>
-        <span className="ticker-text">SOME MORE HARD CODED DATA</span>
       </ProgressStatus>
     );
   }

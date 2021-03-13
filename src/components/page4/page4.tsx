@@ -73,7 +73,6 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     const newType = query.get('type') as QueryType;
 
     const cards = StoreClasses.store.getAssets().cards;
-    const sections = cards[newType];
 
     if (newType !== type) {
       this.setState({ type: newType });
@@ -122,7 +121,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     const currentCard =
       cardlength > 0 ? this.content?.cards[this.cardIndex] : undefined;
 
-    const isNextCardAvailable =
+    const isNextCardButtonAvailable =
       this.content?.cards && this.content?.cards.length > 1;
 
     return (
@@ -136,7 +135,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         </h3>
         {contentLoaded && (
           <span className="tk-vincente-lightbold font-20 content-margin">
-            {this.content?.name}
+            {this.levelName}
           </span>
         )}
         <span className="line-container">
@@ -162,7 +161,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
               <>
                 <span
                   className={`tk-vincente-lightbold font-24 single-line link ${
-                    !isNextCardAvailable && 'disabled-link'
+                    !isNextCardButtonAvailable && 'disabled-link'
                   } `}
                   onClick={() =>
                     history.replace(

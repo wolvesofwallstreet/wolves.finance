@@ -16,20 +16,3 @@
   color: #ffffff;
   border: 1px solid var(--wolves-orange);
 }
-
-.progress-status-progress {
-  display: inline-block;
-  white-space: nowrap;
-  animation: floatText 30s infinite linear;
-  padding-left: 100%; /*Initial offset, which places the text off-screen*/
-}
-
-@keyframes floatText {
-  to {
-    transform: translateX(-100%);
-  }
-}
-
-.progress-status-progress:hover {
-  animation-play-state: paused;
-}

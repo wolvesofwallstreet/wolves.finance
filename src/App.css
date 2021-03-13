@@ -60,7 +60,7 @@ a:hover {
   color: var(--wolves-orange) !important;
 }
 
-.disabled-link {
+.disabled-link:active {
   pointer-events: none;
 }
 

@@ -20,7 +20,7 @@ import { CardBox } from './cardbox';
 type PAGE3_PROPS = {
   t: TFunction;
   location: unknown;
-  display: 'shop' | 'auction';
+  display: 'shop' | 'auction' | 'my';
 };
 
 type QueryType = 'wolves' | 'bois' | 'yourPack';
@@ -40,7 +40,7 @@ const INITIAL_PAGE3_STATE: PAGE3_STATE = {
 class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
   content: CARDS = { levelNames: [], cards: [] };
   levelDescription = '';
-
+  tokenIds: number[] = [];
   constructor(props: PAGE3_PROPS) {
     super(props);
     this.state = INITIAL_PAGE3_STATE;
@@ -66,53 +66,56 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
   }
 
   _checkContent(): boolean {
-    const { location } = this.props;
+    const { display, location } = this.props;
     const { type } = this.state;
-    let { contentLoaded, levelId } = this.state;
+    let { contentLoaded } = this.state;
+    const { levelId } = this.state;
 
     const query = new URLSearchParams((location as Location).search);
     const newType = query.get('type') as QueryType;
-    let hasContent = this.content.length > 0;
 
     if (newType !== type) {
-      hasContent = false;
       this.setState({ type: newType });
       contentLoaded = false;
     }
-
     if (!contentLoaded) {
-      const { cards } = StoreClasses.store.getAssets();
-      this.content = cards[newType];
-      if (this.content.length > 0) {
-        hasContent = true;
-      }
+      this.content = StoreClasses.store.getAssets().cards;
     }
-    if (hasContent) {
+    if (this.content.levelNames.length > 0) {
       if (!contentLoaded) {
-        this.setState({ contentLoaded: true });
-        levelId = 0;
+        this.setState({ contentLoaded: true, levelId: 0 });
       }
       const newLevelId = parseInt(query.get('levelId') || '0');
       if (levelId !== newLevelId) {
         // retrieve level description
-        this.levelDescription = this.content.cards[
-          this.content.cards.findIndex(
+        if (display !== 'my') {
+          const idx = this.content.cards.findIndex(
             (level) => level.levelId === newLevelId && level.type === newType
-          )
-        ].header;
+          );
+          this.levelDescription = this.content.cards[idx].header;
+          this.tokenIds = this.content.cards[idx].cards.map(
+            (card) =>
+              (this.content.cards[idx].chainRef << 24) | (card.chainRef << 16)
+          );
+        } else {
+          this.tokenIds = [0x01000000, 0x01010000, 0x05000000, 0x05000001];
+          this.levelDescription = 'Hi, this is the My Wolfpack site (TODO)';
+        }
         this.setState({ levelId: newLevelId });
       }
     }
+
     return query.get('scroll') !== 'false';
   }
 
   render(): JSX.Element {
-    const { t } = this.props;
+    const { display, t } = this.props;
     const { contentLoaded, levelId, type } = this.state;
-    const levelPosition = this._getLevelPosition(levelId);
-    const hasMoreLevels = levelPosition < this.content.length - 1;
-    const hasContent = this.content.length > 0;
+    const levelPosition = levelId;
+    const hasMoreLevels = levelPosition < this.content.levelNames.length - 1;
     const startPosition = 0;
+    let tokenIdx = 0;
+
     return (
       <div className={'wolves-container bg-' + type}>
         <img
@@ -144,7 +147,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
           </span>
           <span className="page3-section-container tk-vincente-lightbold">
             {contentLoaded &&
-              this.content.levelNames.map((name, index: number) => {
+              this.content.levelNames.map((name: string, index: number) => {
                 return levelId === index ? (
                   <span
                     key={'sec_' + index}
@@ -175,25 +178,43 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
           </span>
         </div>
         {contentLoaded && (
-          <h3 className="tk-grotesk-lightbold">
-            {hasContent && this.content[levelPosition].header}
-          </h3>
+          <h3 className="tk-grotesk-lightbold">{this.levelDescription}</h3>
         )}
         {contentLoaded && (
           <div id="page3-content-container">
-            {hasContent &&
-              this.content[levelPosition].cards.map(
-                (card: CARD, index: number) => {
-                  return (
-                    <CardBox
-                      key={'card_' + index}
-                      type={type}
-                      levelId={levelId}
-                      content={card}
-                      t={t}
-                    />
-                  );
-                }
+            {this.content.cards
+              .filter(
+                (level) =>
+                  level.levelId === levelId &&
+                  (display === 'my' || type === level.type)
+              )
+              .map((level) =>
+                level.cards.map((card, index) => {
+                  const collection: JSX.Element[] = [];
+                  while (
+                    tokenIdx < this.tokenIds.length &&
+                    this.tokenIds[tokenIdx] >> 24 <= level.chainRef &&
+                    (this.tokenIds[tokenIdx] >> 24 < level.chainRef ||
+                      ((this.tokenIds[tokenIdx] >> 16) & 0xff) <= card.chainRef)
+                  ) {
+                    this.tokenIds[tokenIdx] >> 24 === level.chainRef &&
+                      ((this.tokenIds[tokenIdx] >> 16) & 0xff) ===
+                        card.chainRef &&
+                      collection.push(
+                        <CardBox
+                          key={'card_' + tokenIdx}
+                          type={type}
+                          levelId={levelId}
+                          content={card}
+                          quantity={level.quantity}
+                          price={level.price}
+                          t={t}
+                        />
+                      );
+                    ++tokenIdx;
+                  }
+                  return collection;
+                })
               )}
           </div>
         )}
@@ -201,5 +222,4 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
     );
   }
 }
-
 export default withTranslation()(Page3);
