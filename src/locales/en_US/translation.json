@@ -2,7 +2,10 @@
   "title": "WOLVES OF WALLSTREET",
   "token": "TOKEN",
   "header": {
-    "connectWallet": "CONNECT WALLET"
+    "connectWallet": "CONNECT WALLET",
+    "home": "HOME",
+    "shop": "SHOP",
+    "detail": "DETAILS"
   },
   "toast": {
     "walletConnected": "Wallet connected",
@@ -13,41 +16,47 @@
     "transactionFinished": "Transaction succeeded",
     "addressCopied": "Address copied"
   },
-  "presale": {
-    "id": "PRE\u2011SALE",
-    "unknown": "THE $t(presale.id)",
-    "notOpen": "THE $t(presale.id) WILL START SOON",
-    "live": "THE $t(presale.id) IS LIVE NOW",
-    "closed": "THE $t(presale.id) IS OVER",
-    "timeUntilOpen": "$t(presale.id) COUNTDOWN TO OPEN",
-    "timeUntilClose": "$t(presale.id) COUNTDOWN TO CLOSE",
-    "description": "$t(title) OFFICIAL SALE - PRESALE.WOLVESOFWALLSTREET.FINANCE",
-    "event": "$t(title) $t(presale.id)\u00a0&\u00a0LIQUIDITY\u00a0EVENT",
-    "available": "AVAILABLE FOR $t(presale.id)",
-    "target": "TARGET",
-    "h3Min": "MINIMUM PURCHASE OF WOWS TOKEN: {{num}} ETH",
-    "h3Max": "MAXIMUM PURCHASE OF WOWS TOKEN: {{num}} ETH",
-    "textTop": "For the purchase, you have two options:<br>Buy WOWS token and have it send directly to your wallet",
-    "or": "OR",
-    "textBottom": "BUY WOWS token and provide them with additional ETH into the UniswapV2 liquidity pool in a single step.<br>You'll be earning WOWS rewards right away during presale.",
-    "fundAllocation": "CLICK HERE TO READ MORE ABOUT FUND ALLOCATION",
-    "followUs": "FOLLOW US HERE",
-    "terms": "PLEASE ACKNOWLEDGE YOU HAVE READ TERMS & CONDITIONS AND ARE IN AGREEMENT. ALL LIABILITY RESIDES WITH THE USER. RISK ONLY WHAT YOU ARE WILLING TO LOOSE",
-    "purchase": "Purchase: Min {{min}} ETH - Max {{max}} ETH",
-    "liquidity": "Purchase and add liquidity: Min {{min}} ETH - Max {{max}} ETH",
-    "contract": "Contract",
-    "copy": "COPY",
-    "buy": "BUY {{num}} WOWS",
-    "buyIn": "BUY {{num}} WOWS in {{time}}",
-    "addLiq": "STAKE {{num}} WOWS + {{ethnum}} ETH",
-    "addLiqIn": "STAKE {{num}} WOWS + {{ethnum}} ETH in {{time}}",
-    "tokenLocked": "token locked",
-    "checkTerms": "CHECK TERMS & CONDITIONS"
-  },
   "stake": {
     "welcome": "WELCOME\u00a0TO\u00a0THE WOLFPACK\u00a0STAKING",
     "stake": "STAKE WOWS/ETH LP TOKEN",
     "claim": "CLAIM WOWS REWARDS",
     "exit": "CLAIM & UNSTAKE LP TOKEN"
+  },
+  "page": {
+    "motto": "MOTTO",
+    "available": "AVAILABLE",
+    "price": "PRICE",
+    "wolves": "WOLVES",
+    "bois": "BOIS",
+    "back": "BACK",
+    "home": "HOME",
+    "shop": "SHOP",
+    "next": "NEXT CARD"
+  },
+  "page1": {
+    "head1": "CHOOSE YOUR CRYPTOFOLIO - TRADER\u00a0WOLVES\u00a0OR\u00a0BUSINESS\u00a0BOIS",
+    "head2": "IN ORDER TO STAKE WITH WOLVES OR YIELD FARM WITH THE BOIS YOU NEED TO PURCHASE YOUR SFT CHARACTER CRYPTO LICENSE",
+    "wolves1": "HOLDERS & LIQUIDITY POOL STAKERS",
+    "wolves2": "WOLVES",
+    "wolves3": "ARE YOU PART OF THE PACK?",
+    "wolves4": "EACH WOLF TRADER CHARACTER HAS A DIFFERENT LICENSE LEVEL AND PROFIT MAKING POTENTIAL.",
+    "bois1": "STABLE COIN YIELD FARMERS",
+    "bois2": "BOIS",
+    "bois3": "OR ARE YOU ONE OF THE BOIS?",
+    "bois4": "EACH BUSINESS BOIS CHARACTER HAS A DIFFERENT YIELD LICENSE LEVEL AND PROFIT MAKING POTENTIAL.",
+    "click": "CLICK ABOVE TO VIEW YOUR CHOICE"
+  },
+  "page3": {
+    "welcome-wolves": "WELCOME TO THE WOLFPACK",
+    "newCrypto-wolves": "NEW WOLF CRYPTOFOLIOS FOR HOLDING STAKING & RAIDING",
+    "welcome-bois": "WELCOME TO THE BOIS",
+    "newCrypto-bois": "NEW BOIS CRYPTOFOLIOS FOR STABLE COIN LENDING"
+  },
+  "page4": {
+    "welcome-wolves": "$t(page3.welcome-wolves)",
+    "header-wolves": "IN ORDER TO STAKE WITH WOLVES YOU NEED TO PURCHASE YOUR SFT CHARACTER CRYPTO LICENSE",
+    "welcome-bois": "$t(page3.welcome-bois)",
+    "header-bois": "IN ORDER TO YIELD FARM WITH THE BOIS YOU NEED TO PURCHASE YOUR SFT CHARACTER CRYPTO LICENSE",
+    "buy": "BUY {{name}}"
   }
 }

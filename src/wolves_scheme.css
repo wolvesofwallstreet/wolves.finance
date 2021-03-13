@@ -1,0 +1,64 @@
+.wolves-btn {
+  border: black 1px solid;
+  background-color: var(--wolves-orange);
+  height: 32px;
+  width: 100%;
+}
+
+.wolves-btn:disabled {
+  color: var(--wolves-orange);
+  background-color: var(--wolves-blue-dk);
+  opacity: 0.5;
+}
+
+.wolves-container {
+  background-position-x: center;
+  background-position-y: 0px;
+  background-size: cover contain;
+  background-repeat: auto repeat-y;
+  position: relative;
+  display: flex;
+  flex-grow: 1;
+  color: white;
+  align-items: center;
+  flex-direction: column;
+  padding: 15px;
+}
+
+.wolves-container.bg-wolves {
+  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkVjDaBAABjAEJJUIRVQAAAABJRU5ErkJggg==),
+    url(./assets/page1_left.jpg);
+}
+
+.wolves-container.bg-bois {
+  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkVjDaBAABjAEJJUIRVQAAAABJRU5ErkJggg==),
+    url(./assets/page1_right.jpg);
+}
+
+.wolves-container h3 {
+  font-size: 14px;
+}
+
+.wolves-container .line-container {
+  height: 8px;
+  width: 85%;
+  display: flex;
+  align-items: center;
+}
+
+.line-container .line {
+  height: 1px;
+  width: calc(100% - 16px);
+  background-color: var(--wolves-orange);
+}
+
+.line-container .dot {
+  width: 8px;
+  height: 8px;
+  background-color: var(--wolves-orange);
+  border-radius: 50%;
+}
+
+.wolves-border {
+  border: var(--wolves-orange) 1px solid;
+}

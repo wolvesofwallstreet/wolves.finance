@@ -10,7 +10,7 @@ import WalletConnectProvider from '@walletconnect/web3-provider';
 import IERC20Abi from 'abi/@openzeppelin/contracts/token/ERC20/IERC20.sol/IERC20.json';
 import UniV2PairAbi from 'abi/contracts/interfaces/uniswap/IUniswapV2Pair.sol/IUniswapV2Pair.json';
 import StakeAbi from 'abi/contracts/src/investment/UniV2StakeFarm.sol/UniV2StakeFarm.json';
-import TokenAbi from 'abi/contracts/src/token/Token.sol/WowsToken.json';
+import TokenAbi from 'abi/contracts/src/token/WOWSErc20.sol/WowsToken.json';
 import async from 'async';
 import { ethers } from 'ethers';
 import Emitter from 'events';
@@ -18,9 +18,11 @@ import Dispatcher from 'flux';
 import React from 'react';
 import Web3Modal from 'web3modal';
 
+import { CARD_LEVEL, CARDS } from '../components/types/cards';
 import { addresses } from '../config/addresses';
 import { privateNetworkRPC, privateNetworkWS } from '../config/networks';
 import {
+  ASSETS_LOADED,
   CONNECTION_CHANGED,
   ERC20_TOKEN_CONTRACT,
   NEW_BLOCK,
@@ -100,6 +102,10 @@ export type StakeResult = {
 
 type cbf = async.AsyncResultCallback<unknown, Error>;
 
+type ASSETS = {
+  cards: CARDS;
+};
+
 class Store {
   web3Modal: Web3Modal;
   /* Provider */
@@ -122,7 +128,10 @@ class Store {
   chainId = 0;
   address = '';
   tokenContractAddress = Store.nullAddress;
-  assets = {};
+
+  assets = {
+    cards: { levelNames: [], cards: [] },
+  } as ASSETS;
 
   constructor() {
     this.web3Modal = new Web3Modal({
@@ -164,6 +173,21 @@ class Store {
         }
       }
     });
+
+    /** Load assets **/
+    import('locales/en_US/cards.json').then((content) => {
+      this.assets.cards.levelNames = content.default.levelNames;
+      this.assets.cards.cards = content.default.levels as CARD_LEVEL[];
+      emitter.emit(ASSETS_LOADED);
+    });
+  }
+
+  mount() {
+    this.autoconnect();
+  }
+
+  unmount() {
+    this.close();
   }
 
   getAssets = () => {
@@ -656,11 +680,11 @@ const StoreClasses = {
 
 export class StoreContainer extends React.Component<unknown> {
   componentDidMount(): void {
-    StoreClasses.store.autoconnect();
+    StoreClasses.store.mount();
   }
 
   componentWillUnmount(): void {
-    StoreClasses.store.close();
+    StoreClasses.store.unmount();
   }
 
   render(): React.ReactNode {

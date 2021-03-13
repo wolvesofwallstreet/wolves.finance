@@ -1,0 +1,161 @@
+/*
+ * Copyright (C) 2020-2021 The Wolfpack
+ * This file is part of wolves.finance - https://github.com/wolvesofwallstreet/wolves.finance
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * See LICENSE.txt for more information.
+ */
+
+.page1-container {
+  position: relative;
+  display: flex;
+  flex-grow: 1;
+  color: white;
+}
+
+.page1-bg {
+  width: 50%;
+  min-width: 350px;
+  background-position: center;
+  background-size: cover;
+  flex-grow: 1;
+  display: flex;
+  padding-top: 150px;
+  flex-direction: column;
+}
+
+.page1-left {
+  position: relative;
+  background-image: url(../../assets/page1_left.jpg),
+    url(../../assets/page1_left_low.jpg);
+}
+
+.page1-right {
+  background-image: url(../../assets/page1_right.jpg),
+    url(../../assets/page1_right_low.jpg);
+}
+
+.page1-line-v {
+  display: block;
+  position: absolute;
+  top: 25%;
+  left: calc(100% - 1px);
+  width: 2px;
+  height: 75%;
+  background-color: white;
+  opacity: 0.25;
+}
+
+.page1-dot {
+  display: block;
+  position: absolute;
+  top: calc(50% - 19px);
+  left: calc(100% - 4px);
+  width: 8px;
+  height: 8px;
+  background-color: var(--wolves-orange);
+  border-radius: 50%;
+}
+
+.page1-line-h {
+  display: block;
+  position: absolute;
+  top: calc(50% - 15px);
+  left: 50%;
+  width: 100%;
+  height: 1px;
+  background-color: var(--wolves-orange);
+  opacity: 0.5;
+}
+
+.page1-title-box {
+  position: absolute;
+  padding: 0px 8px;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.page1-title-box .progress-status-container {
+  width: 70%;
+  margin: 8px auto 8px auto;
+}
+
+.page1-title-box-text {
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.page1-container h1 {
+  font-size: 52px;
+  font-weight: bold;
+  line-height: 1em;
+}
+
+.page1-container h2 {
+  font-size: 28px;
+  font-weight: 500;
+}
+
+.page1-container h3 {
+  font-size: 12px;
+}
+
+.page1-img-box {
+  position: relative;
+  padding-left: 30px;
+  top: -30px;
+  width: 100%;
+}
+
+.page1-img-box img {
+  position: relative;
+  z-index: 1;
+}
+
+.page1-content-box-bottom {
+  position: relative;
+  padding: 0px 12px;
+  top: -45px;
+}
+
+@media (max-width: 720px) {
+  .page1-container {
+    flex-direction: column;
+  }
+
+  .page1-bg {
+    width: 100%;
+  }
+
+  .page1-title-box {
+    position: relative;
+    background-position: center;
+    background-size: cover;
+    background-image: url(../../assets/page1_right.jpg);
+  }
+
+  .page1-bg {
+    padding-top: 8px;
+  }
+
+  .page1-title-box .progress-status-container {
+    width: 90%;
+  }
+
+  .page1-line-v {
+    top: calc(100% - 1px);
+    left: 12.5%;
+    width: 75%;
+    height: 2px;
+  }
+
+  .page1-line-h {
+    display: none;
+  }
+
+  .page1-dot {
+    display: none;
+  }
+}

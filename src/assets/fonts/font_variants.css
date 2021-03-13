@@ -11,6 +11,11 @@
   font-weight: bold;
 }
 
+.tk-vincente-lightbold {
+  font-family: 'vincente', serif;
+  font-weight: 500;
+}
+
 .tk-grotesk-bold {
   font-family: 'aktiv-grotesk-condensed';
   font-weight: bold;
