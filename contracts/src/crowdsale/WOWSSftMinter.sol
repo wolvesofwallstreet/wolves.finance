@@ -45,7 +45,9 @@ contract WOWSSftMinter is Ownable {
 
   event Mint(address indexed recipient, uint256 tokenId, uint256 price);
 
-  /* ======== CONSTRUCTOR ======== */
+  //////////////////////////////////////////////////////////////////////////////
+  // Constructor
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
    * @dev contruct WOWSSftMinter
@@ -59,13 +61,18 @@ contract WOWSSftMinter is Ownable {
     IRewardHandler rewardHandler,
     IWOWSERC1155 sftContract
   ) {
-    _sftContract = sftContract;
-    _rewardHandler = rewardHandler;
-    _wowsToken = wowsToken;
+    // Initialize {Ownable}
     transferOwnership(owner);
+
+    // Initialize {WOWSSftMinter}
+    _sftContract = sftContract;
+    _wowsToken = wowsToken;
+    _rewardHandler = rewardHandler;
   }
 
-  /* ======== STATE MODIFING ======== */
+  //////////////////////////////////////////////////////////////////////////////
+  // State modifiers
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
    * @dev Set prices for the given levels
@@ -103,11 +110,11 @@ contract WOWSSftMinter is Ownable {
     require(price > 0, 'No price available');
 
     // get the next free mintable token for level / cardId
-    (bool success, uint256 id) =
+    (bool success, uint256 tokenId) =
       _sftContract.getNextMintableTokenId(level, cardId);
     require(success, 'Unsufficient cards');
 
-    _mint(recipient, id, price);
+    _mint(recipient, tokenId, price);
   }
 
   /**
@@ -123,15 +130,17 @@ contract WOWSSftMinter is Ownable {
     require(price > 0, 'No price available');
 
     // get the next free mintable token for level / cardId
-    uint256 id = _sftContract.getNextMintableCustomToken();
+    uint256 tokenId = _sftContract.getNextMintableCustomToken();
     // set card level and uri
-    _sftContract.setCustomCardLevel(id, level);
-    _sftContract.setURI(id, uri);
+    _sftContract.setCustomCardLevel(tokenId, level);
+    _sftContract.setURI(tokenId, uri);
 
-    _mint(recipient, id, price);
+    _mint(recipient, tokenId, price);
   }
 
-  /*============== GETTER ============= */
+  //////////////////////////////////////////////////////////////////////////////
+  // Getters
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
    * @dev query prices for given levels
@@ -147,7 +156,9 @@ contract WOWSSftMinter is Ownable {
     return result;
   }
 
-  /*============ INTERNAL ===============*/
+  //////////////////////////////////////////////////////////////////////////////
+  // Internal functionality
+  //////////////////////////////////////////////////////////////////////////////
 
   function _mint(
     address recipient,

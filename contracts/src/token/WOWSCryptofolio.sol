@@ -22,7 +22,9 @@ contract WOWSCryptofolio is IWOWSCryptofolio {
   // list of all known tradefloors
   address[] public _tradefloors;
 
-  /*=========== EVENTS ==========*/
+  //////////////////////////////////////////////////////////////////////////////
+  // Events
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
    * @dev Triggered if sft receives new tokens from operator
@@ -30,79 +32,31 @@ contract WOWSCryptofolio is IWOWSCryptofolio {
   event CryptoFolioAdded(
     address indexed sft,
     address indexed operator,
-    uint256[] ids,
+    uint256[] tokenIds,
     uint256[] amounts
   );
 
-  /*=========== INITIALIZER ==========*/
+  //////////////////////////////////////////////////////////////////////////////
+  // Initialization
+  //////////////////////////////////////////////////////////////////////////////
 
   function initialize() external {
     require(address(_deployer) == address(0), 'CF: Already initialized');
     _deployer = IWOWSERC1155(msg.sender);
   }
 
-  /*============ STATE MODIFIER ===============*/
+  //////////////////////////////////////////////////////////////////////////////
+  // Implementation of {IWOWSCryptofolio}
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev setOwner is called if ownership of the parent NFT has changed
-   * the newOwner is allowed to transfer / burn cryptofolio items.
-   * Make sure, that allowance is removed from previous owner
-   */
-  function setOwner(address newOwner) external override {
-    require(msg.sender == address(_deployer), 'CF: Only deployer');
-    for (uint256 i = 0; i < _tradefloors.length; ++i) {
-      if (_owner != address(0))
-        IERC1155(_tradefloors[i]).setApprovalForAll(_owner, false);
-      if (newOwner != address(0))
-        IERC1155(_tradefloors[i]).setApprovalForAll(newOwner, true);
-    }
-    _owner = newOwner;
-  }
-
-  /**
-   * @dev allow owner (of parent NFT) to approve external operators
-   * to transfer our cryptofolio items
-   */
-  function setApprovalForAll(address operator, bool allow) external override {
-    require(msg.sender == _owner, 'CF: Only owner');
-    for (uint256 i = 0; i < _tradefloors.length; ++i) {
-      IERC1155(_tradefloors[i]).setApprovalForAll(operator, allow);
-    }
-  }
-
-  /**
-   * @dev in case underlying NFT is burned, we also burn cryptofolio
-   */
-  function burn() external override {
-    require(msg.sender == address(_deployer), 'CF: Only deployer');
-    for (uint256 i = 0; i < _tradefloors.length; ++i) {
-      IERC1155BurnMintable tradefloor = IERC1155BurnMintable(_tradefloors[i]);
-      uint256[] storage opIds = _cryptofolios[address(tradefloor)];
-      if (opIds.length > 0) {
-        address[] memory accounts = new address[](opIds.length);
-        for (uint256 j = 0; j < opIds.length; ++j) accounts[j] = address(this);
-        uint256[] memory balances = tradefloor.balanceOfBatch(accounts, opIds);
-        tradefloor.burnBatch(address(this), opIds, balances);
-      }
-      delete _cryptofolios[address(tradefloor)];
-    }
-    delete _tradefloors;
-  }
-
-  /*============ GETTER ===============*/
-
-  /**
-   * @dev return array of cryptofolio tokenIds
-   * the tokenIds belong to the contract tradefloor
-   * @param tradefloor the tradefloor items belong to
-   * @return ids tokenids in scope of operator
-   * @return idsLength number of valid tokenids
+   * @dev See {IWOWSCryptofolio-getCryptofolio}.
    */
   function getCryptofolio(address tradefloor)
     external
     view
     override
-    returns (uint256[] memory ids, uint256 idsLength)
+    returns (uint256[] memory tokenIds, uint256 idsLength)
   {
     uint256[] storage opIds = _cryptofolios[tradefloor];
     uint256[] memory result = new uint256[](opIds.length);
@@ -120,46 +74,94 @@ contract WOWSCryptofolio is IWOWSCryptofolio {
     return (result, newLength);
   }
 
-  /*============ HOOKS ===============*/
+  /**
+   * @dev See {IWOWSCryptofolio-setOwner}.
+   */
+  function setOwner(address newOwner) external override {
+    require(msg.sender == address(_deployer), 'CF: Only deployer');
+    for (uint256 i = 0; i < _tradefloors.length; ++i) {
+      if (_owner != address(0))
+        IERC1155(_tradefloors[i]).setApprovalForAll(_owner, false);
+      if (newOwner != address(0))
+        IERC1155(_tradefloors[i]).setApprovalForAll(newOwner, true);
+    }
+    _owner = newOwner;
+  }
+
+  /**
+   * @dev See {IWOWSCryptofolio-setApprovalForAll}.
+   */
+  function setApprovalForAll(address operator, bool allow) external override {
+    require(msg.sender == _owner, 'CF: Only owner');
+    for (uint256 i = 0; i < _tradefloors.length; ++i) {
+      IERC1155(_tradefloors[i]).setApprovalForAll(operator, allow);
+    }
+  }
+
+  /**
+   * @dev See {IWOWSCryptofolio-burn}.
+   */
+  function burn() external override {
+    require(msg.sender == address(_deployer), 'CF: Only deployer');
+    for (uint256 i = 0; i < _tradefloors.length; ++i) {
+      IERC1155BurnMintable tradefloor = IERC1155BurnMintable(_tradefloors[i]);
+      uint256[] storage opIds = _cryptofolios[address(tradefloor)];
+      if (opIds.length > 0) {
+        address[] memory accounts = new address[](opIds.length);
+        for (uint256 j = 0; j < opIds.length; ++j) accounts[j] = address(this);
+        uint256[] memory balances = tradefloor.balanceOfBatch(accounts, opIds);
+        tradefloor.burnBatch(address(this), opIds, balances);
+      }
+      delete _cryptofolios[address(tradefloor)];
+    }
+    delete _tradefloors;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Hooks
+  //////////////////////////////////////////////////////////////////////////////
 
   function onERC1155Received(
     address,
     address,
-    uint256 id,
+    uint256 tokenId,
     uint256 amount,
     bytes memory
   ) external returns (bytes4) {
-    uint256[] memory ids = new uint256[](1);
-    ids[0] = id;
+    uint256[] memory tokenIds = new uint256[](1);
+    tokenIds[0] = tokenId;
     uint256[] memory amounts = new uint256[](1);
     amounts[0] = amount;
-    _onTokensReceived(ids, amounts);
+    _onTokensReceived(tokenIds, amounts);
     return this.onERC1155Received.selector;
   }
 
   function onERC1155BatchReceived(
     address,
     address,
-    uint256[] memory ids,
+    uint256[] memory tokenIds,
     uint256[] memory amounts,
     bytes memory
   ) external returns (bytes4) {
-    _onTokensReceived(ids, amounts);
+    _onTokensReceived(tokenIds, amounts);
     return this.onERC1155BatchReceived.selector;
   }
 
-  /*=============== INTERNAL ============*/
+  //////////////////////////////////////////////////////////////////////////////
+  // Internal functionality
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
    * @dev update our collection of tradeable cryptofolio items
    * This function is only allowed to be called from one if our pseudo TokenReceiver contracts
    */
-  function _onTokensReceived(uint256[] memory ids, uint256[] memory amounts)
-    internal
-  {
+  function _onTokensReceived(
+    uint256[] memory tokenIds,
+    uint256[] memory amounts
+  ) internal {
     address tradefloor = msg.sender;
     require(_deployer.isTradeFloor(tradefloor), 'CF: Only tradefloor');
-    require(ids.length == amounts.length, 'CF: Input lengths differ');
+    require(tokenIds.length == amounts.length, 'CF: Input lengths differ');
 
     uint256[] storage currentIds = _cryptofolios[tradefloor];
     if (currentIds.length == 0) {
@@ -167,16 +169,16 @@ contract WOWSCryptofolio is IWOWSCryptofolio {
       _tradefloors.push(tradefloor);
     }
 
-    for (uint256 iIds = 0; iIds < ids.length; ++iIds) {
+    for (uint256 iIds = 0; iIds < tokenIds.length; ++iIds) {
       if (amounts[iIds] > 0) {
-        uint256 id = ids[iIds];
+        uint256 tokenId = tokenIds[iIds];
         // search tokenId
         uint256 i = 0;
-        for (; i < currentIds.length && currentIds[i] != id; ++i) i;
+        for (; i < currentIds.length && currentIds[i] != tokenId; ++i) i;
         // if token was not found, insert it
-        if (i == currentIds.length) currentIds.push(id);
+        if (i == currentIds.length) currentIds.push(tokenId);
       }
     }
-    emit CryptoFolioAdded(address(this), tradefloor, ids, amounts);
+    emit CryptoFolioAdded(address(this), tradefloor, tokenIds, amounts);
   }
 }

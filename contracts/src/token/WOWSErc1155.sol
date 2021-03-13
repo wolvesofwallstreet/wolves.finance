@@ -21,7 +21,7 @@ bytes16 constant HEX = '0123456789ABCDEF';
  * implement transfer and burn helpers for cryptofolio items
  */
 
-contract WOWSERC1155 is ERC1155PresetMinterPauser, IWOWSERC1155 {
+contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
   // Used to restict calls to TRADEFLOOR but also to collect all TRADEFLOORS
   bytes32 public constant TRADEFLOOR_ROLE = keccak256('TRADEFLOOR_ROLE');
   // Used to restict calls to TRADEFLOOR but also to collect all TRADEFLOORS
@@ -71,7 +71,9 @@ contract WOWSERC1155 is ERC1155PresetMinterPauser, IWOWSERC1155 {
   // our master blueprint tokenreceiver class
   address private _masterTokenReceiver;
 
-  /* ======== CONSTRUCTOR ======== */
+  //////////////////////////////////////////////////////////////////////////////
+  // Constructor
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
    * @dev uri is for WOWS predefined NFT's
@@ -88,14 +90,76 @@ contract WOWSERC1155 is ERC1155PresetMinterPauser, IWOWSERC1155 {
     _masterTokenReceiver = address(new WOWSCryptofolio{ salt: 0x0 }());
   }
 
-  /* ======== STATE MODIFING ======== */
+  //////////////////////////////////////////////////////////////////////////////
+  // Implementation of {IWOWSERC1155}
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev set the URI for either predefined cards or custom cards.
-   * For changing the URI for predefined cards, tokenId 0 must be passed
-   * Custom tokenId's (> 32 Bit range) get their own URI per tokenId.
+   * @dev See {IWOWSERC1155-isTradeFloor}.
    */
+  function isTradeFloor(address account) external view override returns (bool) {
+    return hasRole(TRADEFLOOR_ROLE, account);
+  }
 
+  /**
+   * @dev See {IWOWSERC1155-addressToTokenId}.
+   */
+  function addressToTokenId(address tokenAddress)
+    external
+    view
+    override
+    returns (uint256)
+  {
+    uint256 tokenId = _addressToTokenId[tokenAddress];
+    return _tokenIdToAddress[tokenId] == tokenAddress ? tokenId : uint256(-1);
+  }
+
+  /**
+   * @dev See {IWOWSERC1155-tokenIdToAddress}.
+   */
+  function tokenIdToAddress(uint256 tokenId)
+    external
+    view
+    override
+    returns (address)
+  {
+    return _tokenIdToAddress[tokenId];
+  }
+
+  /**
+   * @dev See {IWOWSERC1155-getNextMintableTokenId}.
+   */
+  function getNextMintableTokenId(uint8 level, uint8 cardId)
+    external
+    view
+    override
+    returns (bool, uint256)
+  {
+    uint16 levelCard = ((uint16(level) << 8) | cardId);
+    uint256 tokenId = uint32(levelCard) << 16;
+    uint256 tokenIdEnd = tokenId + _wowsLevelCap[level];
+
+    for (; tokenId < tokenIdEnd; ++tokenId)
+      if (!_tokenInfos[tokenId].minted) return (true, tokenId);
+    return (false, uint256(-1));
+  }
+
+  /**
+   * @dev See {IWOWSERC1155-getNextMintableCustomToken}.
+   */
+  function getNextMintableCustomToken()
+    external
+    view
+    override
+    returns (uint256)
+  {
+    require(_customCardCount + 0x100000000 > _customCardCount, 'math overflow');
+    return _customCardCount + 0x100000000;
+  }
+
+  /**
+   * @dev See {IWOWSERC1155-setURI}.
+   */
   function setURI(uint256 tokenId, string memory _uri) public override {
     require(hasRole(MINTER_ROLE, _msgSender()), 'Only minter');
     require(tokenId == 0 || tokenId & 0xFFFFFFFF == 0, 'invalid tokenId');
@@ -105,8 +169,7 @@ contract WOWSERC1155 is ERC1155PresetMinterPauser, IWOWSERC1155 {
   }
 
   /**
-   * @dev each custom card has an own level. Level will be used when
-   * calculating rewards and raiding power.
+   * @dev See {IWOWSERC1155-setCustomCardLevel}.
    */
   function setCustomCardLevel(uint256 tokenId, uint8 cardLevel)
     public
@@ -117,43 +180,37 @@ contract WOWSERC1155 is ERC1155PresetMinterPauser, IWOWSERC1155 {
     _customCards[tokenId].level = cardLevel;
   }
 
-  /**
-   * @dev set the cap of a specific WOWS level.
-   * Note that this function can be used to add a new card
-   */
-  function setWowsLevelCaps(uint8[] memory levels, uint16[] memory newCaps)
-    public
-  {
-    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admin');
-    require(levels.length == newCaps.length, 'Only admin');
-    for (uint256 i = 0; i < levels.length; ++i) {
-      require(_wowsLevelCap[levels[i]] < newCaps[i], 'Decrement forbidden');
-      _wowsLevelCap[levels[i]] = newCaps[i];
-    }
-  }
+  //////////////////////////////////////////////////////////////////////////////
+  // Implementation of {IERC1155} via {ERC1155PresetMinterPauser}
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev Prevent auctions like OpenSea to sell this thoken
-   * Selling by third party are only allowed for cryptofolios
-   * which are locked in one of our TradingFloor contracts
+   * @dev See {IERC1155-setApprovalForAll}.
    */
   function setApprovalForAll(address operator, bool approved)
     public
     virtual
     override
   {
+    // Prevent auctions like OpenSea from selling this token. Selling by third
+    // parties is only allowed for cryptofolios which are locked in one of our
+    // TradeFloor contracts.
     require(hasRole(OPERATOR_ROLE, operator), 'Only Operators');
+
     super.setApprovalForAll(operator, approved);
   }
 
-  /*============== GETTER ============= */
+  //////////////////////////////////////////////////////////////////////////////
+  // Implementation of {IERC1155MetadataURI} via {ERC1155PresetMinterPauser}
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
    * @dev See {IERC1155MetadataURI-uri}.
-   * @return url to metadata json file
-   * For custom token the uri is thought to be a full url without placeholders.
-   * For our wows token a tokenid placeholder is expected, and the id
-   * is of the metadata is tokenId >> 16 because 16Bit tken share the same metadata / image.
+   *
+   * For custom tokens the URI is thought to be a full URL without
+   * placeholders. For our WOWS token a tokenid placeholder is expected, and
+   * the id is of the metadata is tokenId >> 16 because 16Bit tken share the
+   * same metadata / image.
    */
   function uri(uint256 tokenId)
     external
@@ -179,35 +236,67 @@ contract WOWSERC1155 is ERC1155PresetMinterPauser, IWOWSERC1155 {
       );
   }
 
-  /**
-   * @dev Evaluate the tokenId from reference address
-   * a cross check is required because tokenid 0 is valid.
-   * @param tokenAddress address to convert
-   * @return tokenId in case of success, uint256(-1) in case of error
-   */
-  function addressToTokenId(address tokenAddress)
-    external
-    view
-    override
-    returns (uint256)
-  {
-    uint256 tokenId = _addressToTokenId[tokenAddress];
-    return _tokenIdToAddress[tokenId] == tokenAddress ? tokenId : uint256(-1);
-  }
+  //////////////////////////////////////////////////////////////////////////////
+  // Implementation of {ERC1155PresetMinterPauser}
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev Evaluate address from given tokenId
-   * @param tokenId tokenId to convert
-   * @return address. address(0) must be interpreted as not existing
+   * @dev See {ERC1155-_beforeTokenTransfer}.
    */
-  function tokenIdToAddress(uint256 tokenId)
-    external
-    view
-    override
-    returns (address)
-  {
-    return _tokenIdToAddress[tokenId];
+  function _beforeTokenTransfer(
+    address operator,
+    address from,
+    address to,
+    uint256[] memory tokenIds,
+    uint256[] memory amounts,
+    bytes memory data
+  ) internal virtual override(ERC1155PresetMinterPauser) {
+    super._beforeTokenTransfer(operator, from, to, tokenIds, amounts, data);
+
+    require(tokenIds.length == amounts.length, 'Length mismatch');
+
+    for (uint256 i = 0; i < tokenIds.length; ++i) {
+      // we have only NFT's in this contract
+      require(amounts[i] == 1, 'Amount != 1');
+      uint256 tokenId = tokenIds[i];
+      address tokenAddress = _tokenIdToAddress[tokenId];
+      TokenInfo storage tokenInfo = _tokenInfos[tokenId];
+      if (from == address(0)) {
+        // minting
+        require(!tokenInfo.minted, 'Already minted');
+        tokenInfo.minted = true;
+        // solhint-disable-next-line not-rely-on-time
+        tokenInfo.timestamp = uint64(block.timestamp);
+        // create a new WOWSCryptofolio by cloning masterTokenReciver
+        // the clone itself is a minimal delegate proxy.
+        if (tokenAddress == address(0)) {
+          tokenAddress = Clones.clone(_masterTokenReceiver);
+          _tokenIdToAddress[tokenId] = tokenAddress;
+          WOWSCryptofolio(tokenAddress).initialize();
+        }
+        _addressToTokenId[tokenAddress] = tokenId;
+        // increment the minted count for this card
+        if (tokenId <= 0xFFFFFFFF) _wowsCardsMinted[uint16(tokenId >> 16)] += 1;
+        else ++_customCardCount;
+      } else if (to == address(0)) {
+        // burn
+        // make sure underlying assets gets burned
+        WOWSCryptofolio(tokenAddress).burn();
+        // make token mintable again
+        tokenInfo.minted = false;
+        // decrement the minted count for this card
+        if (tokenId <= 0xFFFFFFFF) _wowsCardsMinted[uint16(tokenId >> 16)] -= 1;
+      }
+      // Signal ownership change in Cryptofolio
+      WOWSCryptofolio(tokenAddress).setOwner(to);
+      // Reflect ownership change in our linked list
+      _relinkOwner(from, to, tokenId);
+    }
   }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Getters
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
    * @dev return information about a wows card
@@ -268,48 +357,6 @@ contract WOWSERC1155 is ERC1155PresetMinterPauser, IWOWSERC1155 {
   }
 
   /**
-   * @dev return the level and the mint timestamp of tokenId
-   */
-  function isTradeFloor(address account) external view override returns (bool) {
-    return hasRole(TRADEFLOOR_ROLE, account);
-  }
-
-  /**
-   * @dev return the next mintable tokenId of a card
-   * @param level the level of the card
-   * @param cardId the id of the card
-   * @return bool true if a free tokenId was found
-   * @return uint256 the first free tokenId
-   */
-  function getNextMintableTokenId(uint8 level, uint8 cardId)
-    external
-    view
-    override
-    returns (bool, uint256)
-  {
-    uint16 levelCard = ((uint16(level) << 8) | cardId);
-    uint256 tokenId = uint32(levelCard) << 16;
-    uint256 tokenIdEnd = tokenId + _wowsLevelCap[level];
-
-    for (; tokenId < tokenIdEnd; ++tokenId)
-      if (!_tokenInfos[tokenId].minted) return (true, tokenId);
-    return (false, uint256(-1));
-  }
-
-  /**
-   * @dev return the next mintable custon card id
-   */
-  function getNextMintableCustomToken()
-    external
-    view
-    override
-    returns (uint256)
-  {
-    require(_customCardCount + 0x100000000 > _customCardCount, 'math overflow');
-    return _customCardCount + 0x100000000;
-  }
-
-  /**
    * @dev return list of tokenIds owned by account
    */
   function gettTokenIds(address account)
@@ -327,7 +374,28 @@ contract WOWSERC1155 is ERC1155PresetMinterPauser, IWOWSERC1155 {
     return result;
   }
 
-  /*============== internal ==============*/
+  //////////////////////////////////////////////////////////////////////////////
+  // State modifiers
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * @dev set the cap of a specific WOWS level.
+   * Note that this function can be used to add a new card
+   */
+  function setWowsLevelCaps(uint8[] memory levels, uint16[] memory newCaps)
+    public
+  {
+    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admin');
+    require(levels.length == newCaps.length, 'Only admin');
+    for (uint256 i = 0; i < levels.length; ++i) {
+      require(_wowsLevelCap[levels[i]] < newCaps[i], 'Decrement forbidden');
+      _wowsLevelCap[levels[i]] = newCaps[i];
+    }
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Internal functionality
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
    * @dev ownership change -> update linked list owner -> tokenId
@@ -363,61 +431,6 @@ contract WOWSERC1155 is ERC1155PresetMinterPauser, IWOWSERC1155 {
       tokenInfo.listKey.index = toList.listKey.index;
       toList.listKey.index = tokenId;
       toList.count++;
-    }
-  }
-
-  /**
-   * @dev hook overwrite of ERC1155PresetMinterPauser::_beforeTokenTransfer;
-   * will be called on all mint / burn / transfer [batch] functions
-   */
-  function _beforeTokenTransfer(
-    address operator,
-    address from,
-    address to,
-    uint256[] memory ids,
-    uint256[] memory amounts,
-    bytes memory data
-  ) internal virtual override(ERC1155PresetMinterPauser) {
-    super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
-
-    require(ids.length == amounts.length, 'Length mismatch');
-
-    for (uint256 i = 0; i < ids.length; ++i) {
-      // we have only NFT's in this contract
-      require(amounts[i] == 1, 'Amount != 1');
-      uint256 tokenId = ids[i];
-      address tokenAddress = _tokenIdToAddress[tokenId];
-      TokenInfo storage tokenInfo = _tokenInfos[tokenId];
-      if (from == address(0)) {
-        // minting
-        require(!tokenInfo.minted, 'Already minted');
-        tokenInfo.minted = true;
-        // solhint-disable-next-line not-rely-on-time
-        tokenInfo.timestamp = uint64(block.timestamp);
-        // create a new WOWSCryptofolio by cloning masterTokenReciver
-        // the clone itself is a minimal delegate proxy.
-        if (tokenAddress == address(0)) {
-          tokenAddress = Clones.clone(_masterTokenReceiver);
-          _tokenIdToAddress[tokenId] = tokenAddress;
-          WOWSCryptofolio(tokenAddress).initialize();
-        }
-        _addressToTokenId[tokenAddress] = tokenId;
-        // increment the minted count for this card
-        if (tokenId <= 0xFFFFFFFF) _wowsCardsMinted[uint16(tokenId >> 16)] += 1;
-        else ++_customCardCount;
-      } else if (to == address(0)) {
-        // burn
-        // make sure underlying assets gets burned
-        WOWSCryptofolio(tokenAddress).burn();
-        // make token mintable again
-        tokenInfo.minted = false;
-        // decrement the minted count for this card
-        if (tokenId <= 0xFFFFFFFF) _wowsCardsMinted[uint16(tokenId >> 16)] -= 1;
-      }
-      // Signal ownership change in Cryptofolio
-      WOWSCryptofolio(tokenAddress).setOwner(to);
-      // Reflect ownership change in our linked list
-      _relinkOwner(from, to, tokenId);
     }
   }
 }
