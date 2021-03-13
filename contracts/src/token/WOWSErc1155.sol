@@ -176,7 +176,7 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
     override
   {
     require(hasRole(MINTER_ROLE, _msgSender()), 'Only minter');
-    require(tokenId & 0xFFFFFFFF == 0, 'only for custom cards');
+    require(tokenId > 0xFFFFFFFF, 'only for custom cards');
     _customCards[tokenId].level = cardLevel;
   }
 
