@@ -71,6 +71,9 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
   // our master blueprint tokenreceiver class
   address private _masterTokenReceiver;
 
+  // URI used for custom tokenIds without specific URI
+  string private _customDefaultUri;
+
   //////////////////////////////////////////////////////////////////////////////
   // Constructor
   //////////////////////////////////////////////////////////////////////////////
@@ -166,11 +169,22 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
    * @dev See {IWOWSERC1155-setURI}.
    */
   function setURI(uint256 tokenId, string memory _uri) public override {
-    require(hasRole(MINTER_ROLE, _msgSender()), 'Only minter');
-    require(tokenId == 0 || tokenId & 0xFFFFFFFF == 0, 'invalid tokenId');
+    require(
+      hasRole((tokenId == 0) ? DEFAULT_ADMIN_ROLE : MINTER_ROLE, _msgSender()),
+      'Access denied'
+    );
+    require(tokenId == 0 || tokenId > 0xFFFFFFFF, 'invalid tokenId');
 
     if (tokenId == 0) _setURI(_uri);
     else _customCards[tokenId].uri = _uri;
+  }
+
+  /**
+   * @dev See {IWOWSERC1155-setCustomDefaultURI}.
+   */
+  function setCustomDefaultURI(string memory _uri) public override {
+    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admin');
+    _customDefaultUri = _uri;
   }
 
   /**
@@ -226,7 +240,10 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
   {
     if (tokenId > 0xFFFFFFFF)
       // custom token
-      return _customCards[tokenId].uri;
+      return
+        bytes(_customCards[tokenId].uri).length == 0
+          ? _customDefaultUri
+          : _customCards[tokenId].uri;
     // super currently not working because of OZ external definition
     return
       string(

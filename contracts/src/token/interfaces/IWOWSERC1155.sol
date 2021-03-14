@@ -88,6 +88,13 @@ interface IWOWSERC1155 {
   function setURI(uint256 tokenId, string memory _uri) external;
 
   /**
+   * @dev Set the URI which is returned for custom cards without specific URI
+   *
+   * @param _uri The URI, also allowing for the ERC-1155 {id} mechanism.
+   */
+  function setCustomDefaultURI(string memory _uri) external;
+
+  /**
    * @dev Each custom card has its own level. Level will be used when
    * calculating rewards and raiding power.
    *
