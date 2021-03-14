@@ -79,7 +79,12 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
    * @dev uri is for WOWS predefined NFT's
    * The other token uri's must set separately
    */
-  constructor(string memory _uri) ERC1155PresetMinterPauser(_uri) {
+  constructor(address _owner, string memory _uri)
+    ERC1155PresetMinterPauser(_uri)
+  {
+    // grant _owner initial admin role
+    _setupRole(DEFAULT_ADMIN_ROLE, _owner);
+
     // Setup wows card definition
     _wowsLevelCap[0] = 100;
     _wowsLevelCap[1] = 60;
