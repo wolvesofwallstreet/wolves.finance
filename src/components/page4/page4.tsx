@@ -22,7 +22,7 @@ type PAGE4_PROPS = {
   history: RouteComponentProps['history'];
 };
 
-type QueryType = 'wolves' | 'bois' | 'yourPack';
+type QueryType = 'wolves' | 'bois' | 'myPack';
 
 type PAGE4_STATE = {
   cardId: string;
@@ -39,8 +39,9 @@ const INITIAL_PAGE4_STATE: PAGE4_STATE = {
 class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
   content: CARD_LEVEL | undefined = undefined;
   cardIndex = 0;
+  tokenId: number | undefined;
   levelName = '';
-
+  nextUrl = '';
   constructor(props: PAGE4_PROPS) {
     super(props);
     this.state = INITIAL_PAGE4_STATE;
@@ -68,11 +69,42 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     const { location } = this.props;
     const { type } = this.state;
     let { cardId, contentLoaded } = this.state;
+    const tokenIds = [0x01000000, 0x01010000, 0x05000000, 0x05000001];
 
-    const query = new URLSearchParams(location.search);
-    const newType = query.get('type') as QueryType;
+    let newType: QueryType = 'wolves';
+    let newLevelId = 0;
+    let newCardId = '';
 
     const cards = StoreClasses.store.getAssets().cards;
+    const query = new URLSearchParams(location.search);
+
+    // check if we have tokenId given
+    const tokenId = parseInt(query.get('tokenId') || '-1');
+    const oldTokenId = this.tokenId;
+    this.tokenId = undefined;
+    if (tokenId >= 0 && tokenIds.indexOf(tokenId) !== undefined) {
+      // retrieve levelId and cardId from tokenId
+      newLevelId = cards.cards.findIndex(
+        (level) => level.chainRef === tokenId >> 24
+      );
+      if (newLevelId >= 0) {
+        newType = cards.cards[newLevelId].type === 'wolves' ? 'wolves' : 'bois';
+        const newCardIndex = cards.cards[newLevelId].cards.findIndex(
+          (card) => card.chainRef === ((tokenId >> 16) & 0xff)
+        );
+        if (newCardIndex >= 0) {
+          newCardId = cards.cards[newLevelId].cards[newCardIndex].id;
+          newLevelId = cards.cards[newLevelId].levelId;
+          this.tokenId = tokenId;
+          if (oldTokenId !== tokenId) cardId = '';
+        }
+      }
+    }
+    if (this.tokenId === undefined) {
+      newType = query.get('type') === 'bois' ? 'bois' : 'wolves';
+      newLevelId = parseInt(query.get('levelId') || '0');
+      newCardId = query.get('cardId') || '';
+    }
 
     if (newType !== type) {
       this.setState({ type: newType });
@@ -84,10 +116,9 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         this.setState({ contentLoaded: true });
       }
 
-      const levelId = parseInt(query.get('levelId') || '0');
-      if (levelId !== this.content?.levelId) {
+      if (newLevelId !== this.content?.levelId || !contentLoaded) {
         let sectionIndex = cards.cards.findIndex(
-          (level) => level.levelId === levelId && level.type === newType
+          (level) => level.levelId === newLevelId && level.type === newType
         );
         if (sectionIndex < 0) sectionIndex = 0;
         this.content = cards.cards[sectionIndex];
@@ -95,7 +126,6 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         cardId = '';
       }
 
-      let newCardId = query.get('cardId') || '';
       this.cardIndex = this.content.cards.findIndex(
         (card) => card.id === newCardId
       );
@@ -104,6 +134,36 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         newCardId = this.content.cards[0]?.id || '';
       }
       if (newCardId !== cardId) {
+        this.nextUrl = '';
+        if (this.tokenId !== undefined) {
+          if (tokenIds.length > 1) {
+            const nextTokenId = (tokenIds.indexOf(this.tokenId) || 0) + 1;
+            if (nextTokenId >= tokenIds.length) {
+              this.nextUrl = '';
+            } else {
+              this.nextUrl =
+                'detail?type=myPack&tokenId=' +
+                tokenIds[nextTokenId] +
+                '&scroll=false';
+            }
+          }
+        } else {
+          const cardlength = this.content?.cards.length || 0;
+          if (cardlength > 1) {
+            const nextCardIndex =
+              this.cardIndex + 1 >= cardlength ? 0 : this.cardIndex + 1;
+            this.nextUrl =
+              nextCardIndex === 0
+                ? ''
+                : '?type=' +
+                  newType +
+                  '&levelId=' +
+                  newLevelId +
+                  '&cardId=' +
+                  this.content?.cards[nextCardIndex].id +
+                  '&scroll=false';
+          }
+        }
         this.setState({ cardId: newCardId });
       }
     }
@@ -116,13 +176,8 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     const { contentLoaded } = this.state;
 
     const cardlength = this.content?.cards.length || 0;
-    const nextCardIndex =
-      this.cardIndex + 1 >= cardlength ? 0 : this.cardIndex + 1;
     const currentCard =
       cardlength > 0 ? this.content?.cards[this.cardIndex] : undefined;
-
-    const isNextCardButtonAvailable =
-      this.content?.cards && this.content?.cards.length > 1;
 
     return (
       <div className={'wolves-container bg-' + type}>
@@ -149,33 +204,29 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         >
           <span>
             &lt;
-            <span
-              className="tk-vincente-lightbold font-24 single-line link"
-              onClick={() => history.goBack()}
-            >
-              {t('page.back')}
-            </span>
+            {
+              <span
+                className="tk-vincente-lightbold font-24 single-line link"
+                onClick={() =>
+                  history.push(
+                    this.tokenId ? `my?type=myPack` : `/shop?type=${type})`
+                  )
+                }
+              >
+                {t('page.back')}
+              </span>
+            }
           </span>
           <span>
             {contentLoaded && (
               <>
                 <span
                   className={`tk-vincente-lightbold font-24 single-line link ${
-                    !isNextCardButtonAvailable && 'disabled-link'
+                    !this.nextUrl && 'disabled-link'
                   } `}
-                  onClick={() =>
-                    history.replace(
-                      '?type=' +
-                        type +
-                        '&levelId=' +
-                        this.content?.levelId +
-                        '&cardId=' +
-                        this.content?.cards[nextCardIndex].id +
-                        '&scroll=false'
-                    )
-                  }
+                  onClick={() => history.replace(this.nextUrl)}
                 >
-                  {t('page.next')}
+                  {t('page.nextCard')}
                 </span>
                 &gt;
               </>
@@ -218,6 +269,12 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                     <span>{t('page.motto')}: </span>
                     {currentCard.motto}
                   </h2>
+                  {this.tokenId && (
+                    <h2 className="tk-vincente-lightbold font-24">
+                      <span>{t('page4.tokenId')}: </span>
+                      {this.tokenId}
+                    </h2>
+                  )}
                   <span className="font-16">{currentCard.description}</span>
                   <ul className="tk-vincente-lightbold font-24 rarity-box">
                     <li>

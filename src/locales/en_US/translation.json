@@ -8,7 +8,7 @@
     "detail": "DETAILS",
     "wolvesSft": "WOLVES SFT",
     "boisSft": "BOIS SFT",
-    "yourPack": "YOUR PACK"
+    "myPack": "MY PACK"
   },
   "toast": {
     "walletConnected": "Wallet connected",
@@ -35,7 +35,8 @@
     "previous": "PREVIOUS LEVEL",
     "home": "HOME",
     "shop": "SHOP",
-    "next": "NEXT CARD",
+    "nextCard": "NEXT CARD",
+    "previousCard":"PREVIOUS CARD",
     "nextLevel": "NEXT LEVEL"
   },
   "page1": {
@@ -56,16 +57,17 @@
     "newCrypto-wolves": "NEW WOLF CRYPTOFOLIOS FOR HOLDING STAKING & RAIDING",
     "welcome-bois": "WELCOME TO THE BOIS",
     "newCrypto-bois": "NEW BOIS CRYPTOFOLIOS FOR STABLE COIN LENDING",
-    "welcome-yourPack": "WELCOME TO YOUR PACK",
-    "newCrypto-yourPack": "YOUR PACK"
+    "welcome-myPack": "WELCOME TO YOUR PACK",
+    "newCrypto-myPack": "YOUR PACK"
   },
   "page4": {
     "welcome-wolves": "$t(page3.welcome-wolves)",
     "header-wolves": "IN ORDER TO STAKE WITH WOLVES YOU NEED TO PURCHASE YOUR SFT CHARACTER CRYPTO LICENSE",
     "welcome-bois": "$t(page3.welcome-bois)",
     "header-bois": "IN ORDER TO YIELD FARM WITH THE BOIS YOU NEED TO PURCHASE YOUR SFT CHARACTER CRYPTO LICENSE",
-    "header-yourPack": "",
-    "welcome-yourPack": "$t(page3.welcome-yourPack)",
-    "buy": "BUY {{name}}"
+    "header-myPack": "",
+    "welcome-myPack": "$t(page3.welcome-myPack)",
+    "buy": "BUY {{name}}",
+    "tokenId":"TOKEN ID"
   }
 }

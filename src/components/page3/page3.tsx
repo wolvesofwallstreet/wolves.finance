@@ -23,7 +23,7 @@ type PAGE3_PROPS = {
   display: 'shop' | 'auction' | 'my';
 };
 
-type QueryType = 'wolves' | 'bois' | 'yourPack';
+type QueryType = 'wolves' | 'bois' | 'myPack';
 
 type PAGE3_STATE = {
   contentLoaded: boolean;
@@ -191,23 +191,25 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
               .map((level) =>
                 level.cards.map((card, index) => {
                   const collection: JSX.Element[] = [];
+                  const tokenId = (level.chainRef << 8) | card.chainRef;
                   while (
                     tokenIdx < this.tokenIds.length &&
-                    this.tokenIds[tokenIdx] >> 24 <= level.chainRef &&
-                    (this.tokenIds[tokenIdx] >> 24 < level.chainRef ||
-                      ((this.tokenIds[tokenIdx] >> 16) & 0xff) <= card.chainRef)
+                    this.tokenIds[tokenIdx] >> 16 <= tokenId
                   ) {
-                    this.tokenIds[tokenIdx] >> 24 === level.chainRef &&
-                      ((this.tokenIds[tokenIdx] >> 16) & 0xff) ===
-                        card.chainRef &&
+                    this.tokenIds[tokenIdx] >> 16 === tokenId &&
                       collection.push(
                         <CardBox
-                          key={'card_' + tokenIdx}
-                          type={type}
+                        key={'card_' + tokenIdx}
+                        type={level.type}
                           levelId={levelId}
                           content={card}
                           quantity={level.quantity}
                           price={level.price}
+                          tokenId={
+                            display === 'my'
+                              ? this.tokenIds[tokenIdx]
+                              : undefined
+                          }
                           t={t}
                         />
                       );

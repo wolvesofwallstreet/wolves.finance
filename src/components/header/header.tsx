@@ -95,9 +95,9 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
         disabled: type === 'bois',
       },
       {
-        id: t('header.yourPack'),
-        to: '/my?type=yourPack',
-        disabled: type === 'yourPack',
+        id: t('header.myPack'),
+        to: '/my?type=myPack',
+        disabled: type === 'myPack',
       },
     ];
 

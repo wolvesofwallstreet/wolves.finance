@@ -19,21 +19,23 @@ type CARDBOX_PROPS = {
   price: number;
   t: TFunction;
   type: string;
+  tokenId?: number;
 };
 
 export function CardBox(props: CARDBOX_PROPS): JSX.Element {
-  const { content, levelId, price, quantity, t, type } = props;
+  const { content, levelId, price, quantity, t, tokenId, type } = props;
 
   return (
     <div className="card-container">
       <Link
         to={
           '/detail?type=' +
-          type +
+          (tokenId ? 'myPack' : type) +
           '&levelId=' +
           levelId +
           '&cardId=' +
-          content.id
+          content.id +
+          (tokenId ? '&tokenId=' + tokenId : '')
         }
       >
         {content.type === 'movie' ? (
