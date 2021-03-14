@@ -15,8 +15,9 @@ class WowsStatus extends Component {
   render(): ReactNode {
     return (
       <ProgressStatus>
-        <span className="ticker-text">WOWS CURRENT PRICE: $34.45</span>
-        <span className="ticker-text">CIRCULATING MC: $450,000</span>
+        <span className="ticker-text">
+          WOWS CURRENT PRICE: $34.45 CIRCULATING MC: $450,000
+        </span>
       </ProgressStatus>
     );
   }

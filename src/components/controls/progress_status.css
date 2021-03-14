@@ -7,11 +7,6 @@
  */
 
 .progress-status-container {
-  overflow: hidden;
-  position: relative;
-  margin-top: 10px;
-  width: 100%;
   background-color: var(--wolves-blue-dk);
-  color: #ffffff;
-  border: 1px solid var(--wolves-orange);
+  top: -28px;
 }

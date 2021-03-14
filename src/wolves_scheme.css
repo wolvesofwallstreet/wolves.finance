@@ -74,24 +74,12 @@
 .page1-title-box .progress-status-container {
   background-image: url(./assets/infoborder.svg);
   background-repeat: no-repeat;
-  border: none !important;
-  padding: 15px 0px !important;
-  display: flex;
-  align-items: center;
+  padding: 12px 15px;
   justify-content: center;
   background-position: center;
 }
 
 .page1-title-box .progress-status-container {
-  width: 32% !important;
   margin: 8px auto 8px auto;
   position: relative;
-  top: -33px;
 }
-
-@media only screen and (max-width: 1950px) {
-  .page1-title-box .progress-status-container {
-    width: 25% !important;
-}
-}
-
