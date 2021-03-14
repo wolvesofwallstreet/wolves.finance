@@ -141,9 +141,14 @@
   }
 
   .page1-title-box .progress-status-container {
-    width: 90%;
+    padding: 13px 0px 12px 0px !important;
   }
 
+  .page1-title-box .progress-status-container {
+    width: 100% !important;
+    font-size: 10px !important;
+    top: -19px;
+  }
   .page1-line-v {
     top: calc(100% - 1px);
     left: 12.5%;
@@ -157,5 +162,39 @@
 
   .page1-dot {
     display: none;
+  }
+}
+
+@media all and (device-width: 768px) and (device-height: 1024px) and (orientation: portrait) {
+  .progress-status-container {
+    padding: 15px 0px !important;
+  }
+  .page1-title-box .progress-status-container {
+    width: 70% !important;
+    top: -19px;
+    font-size: 16px;
+  }
+}
+
+@media only screen and (min-width: 1024px) and (max-height: 1366px) and (orientation: portrait) and (-webkit-min-device-pixel-ratio: 1.5) {
+  .progress-status-container {
+    padding: 22px 0px !important;
+    font-size: 18px !important;
+  }
+  .page1-title-box .progress-status-container {
+    width: 70% !important;
+    top: -19px;
+  }
+}
+
+@media only screen and (max-width: 360px) {
+  .page1-title-box .progress-status-container {
+    padding: 13px 0px 8px 0px !important;
+  }
+}
+
+@media only screen and (max-width: 375px) {
+  .page1-title-box .progress-status-container {
+    padding: 13px 0px 9px 0px !important;
   }
 }
