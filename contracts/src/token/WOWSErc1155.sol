@@ -213,7 +213,7 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
    * same metadata / image.
    */
   function uri(uint256 tokenId)
-    external
+    public
     view
     virtual
     override(ERC1155)
@@ -226,7 +226,7 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
     return
       string(
         abi.encodePacked(
-          ERC1155(this).uri(0),
+          super.uri(0),
           HEX[(tokenId >> 28) & 0xF],
           HEX[(tokenId >> 24) & 0xF],
           HEX[(tokenId >> 20) & 0xF],

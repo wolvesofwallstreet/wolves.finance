@@ -42,6 +42,7 @@
     "local-node": "hardhat node --network hardhat",
     "local:deploy": "hardhat --network localhost deploy",
     "local:export": "hardhat --network localhost export",
+    "postinstall": "bash tools/patch-depends.sh",
     "rinkeby:deploy": "hardhat --network rinkeby deploy",
     "rinkeby:export": "hardhat --network rinkeby export",
     "rinkeby:verify": "hardhat --network rinkeby etherscan-verify --solc-input",
@@ -84,7 +85,7 @@
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.1",
     "@nomiclabs/hardhat-etherscan": "^2.1.0",
-    "@openzeppelin/contracts": "^3.3.0",
+    "@openzeppelin/contracts": "^3.4.1",
     "@types/async": "^3.2.5",
     "@types/chai": "^4.2.14",
     "@types/flux": "^3.1.9",

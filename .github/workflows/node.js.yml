@@ -59,7 +59,7 @@ jobs:
         with:
           path: |
             node_modules
-          key: npm-install-${{ matrix.os }}-${{ matrix.node-version }}-${{ hashFiles('package.json', 'yarn.lock') }}
+          key: npm-install-${{ matrix.os }}-${{ matrix.node-version }}-${{ hashFiles('package.json', 'yarn.lock', 'tools/patch-depends.sh', 'tools/depends/npm/**') }}
 
       - name: Restore smart contract dependencies
         id: restore-contracts
