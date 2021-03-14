@@ -42,6 +42,8 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
   tokenId: number | undefined;
   levelName = '';
   nextUrl = '';
+  prevUrl = '';
+
   constructor(props: PAGE4_PROPS) {
     super(props);
     this.state = INITIAL_PAGE4_STATE;
@@ -134,34 +136,46 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         newCardId = this.content.cards[0]?.id || '';
       }
       if (newCardId !== cardId) {
+        this.prevUrl = '';
         this.nextUrl = '';
         if (this.tokenId !== undefined) {
           if (tokenIds.length > 1) {
             const nextTokenId = (tokenIds.indexOf(this.tokenId) || 0) + 1;
-            if (nextTokenId >= tokenIds.length) {
-              this.nextUrl = '';
-            } else {
+            const prevTokenId = nextTokenId - 2;
+            if (prevTokenId >= 0)
+              this.prevUrl =
+                'detail?type=myPack&tokenId=' +
+                tokenIds[prevTokenId] +
+                '&scroll=false';
+            if (nextTokenId < tokenIds.length)
               this.nextUrl =
                 'detail?type=myPack&tokenId=' +
                 tokenIds[nextTokenId] +
                 '&scroll=false';
-            }
           }
         } else {
           const cardlength = this.content?.cards.length || 0;
           if (cardlength > 1) {
-            const nextCardIndex =
-              this.cardIndex + 1 >= cardlength ? 0 : this.cardIndex + 1;
-            this.nextUrl =
-              nextCardIndex === 0
-                ? ''
-                : '?type=' +
-                  newType +
-                  '&levelId=' +
-                  newLevelId +
-                  '&cardId=' +
-                  this.content?.cards[nextCardIndex].id +
-                  '&scroll=false';
+            const nextCardIndex = this.cardIndex + 1;
+            const prevCardIndex = this.cardIndex - 1;
+            if (prevCardIndex >= 0)
+              this.prevUrl =
+                '?type=' +
+                newType +
+                '&levelId=' +
+                newLevelId +
+                '&cardId=' +
+                this.content?.cards[prevCardIndex].id +
+                '&scroll=false';
+            if (nextCardIndex < cardlength)
+              this.nextUrl =
+                '?type=' +
+                newType +
+                '&levelId=' +
+                newLevelId +
+                '&cardId=' +
+                this.content?.cards[nextCardIndex].id +
+                '&scroll=false';
           }
         }
         this.setState({ cardId: newCardId });
@@ -204,18 +218,27 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         >
           <span>
             &lt;
-            {
+            {this.prevUrl ? (
+              <span
+                className="tk-vincente-lightbold font-24 single-line link"
+                onClick={() => history.push(this.prevUrl)}
+              >
+                {t('page.previousCard')}
+              </span>
+            ) : (
               <span
                 className="tk-vincente-lightbold font-24 single-line link"
                 onClick={() =>
                   history.push(
-                    this.tokenId ? `my?type=myPack` : `/shop?type=${type})`
+                    this.tokenId
+                      ? `my?type=myPack&levelId=${this.content?.levelId}`
+                      : `/shop?type=${type}&levelId=${this.content?.levelId}`
                   )
                 }
               >
                 {t('page.back')}
               </span>
-            }
+            )}
           </span>
           <span>
             {contentLoaded && (
@@ -271,8 +294,11 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                   </h2>
                   {this.tokenId && (
                     <h2 className="tk-vincente-lightbold font-24">
-                      <span>{t('page4.tokenId')}: </span>
-                      {this.tokenId}
+                      <span>
+                        {` ${t('page4.tokenId')}: 0x${this.tokenId.toString(
+                          16
+                        )}`}
+                      </span>
                     </h2>
                   )}
                   <span className="font-16">{currentCard.description}</span>

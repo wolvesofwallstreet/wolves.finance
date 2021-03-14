@@ -36,7 +36,7 @@
     "home": "HOME",
     "shop": "SHOP",
     "nextCard": "NEXT CARD",
-    "previousCard":"PREVIOUS CARD",
+    "previousCard": "PREVIOUS CARD",
     "nextLevel": "NEXT LEVEL"
   },
   "page1": {
@@ -68,6 +68,6 @@
     "header-myPack": "",
     "welcome-myPack": "$t(page3.welcome-myPack)",
     "buy": "BUY {{name}}",
-    "tokenId":"TOKEN ID"
+    "tokenId": "TOKEN ID"
   }
 }

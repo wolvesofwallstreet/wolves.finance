@@ -199,8 +199,8 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
                     this.tokenIds[tokenIdx] >> 16 === tokenId &&
                       collection.push(
                         <CardBox
-                        key={'card_' + tokenIdx}
-                        type={level.type}
+                          key={'card_' + tokenIdx}
+                          type={level.type}
                           levelId={levelId}
                           content={card}
                           quantity={level.quantity}

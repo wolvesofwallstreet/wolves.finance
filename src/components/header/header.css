@@ -53,3 +53,17 @@
   width: 200px;
   margin: 8px 0px 8px 0px;
 }
+
+@media screen and (max-width: 450px) {
+  .navbar-collapse a,
+  .navbar-collapse span {
+    margin: 0px 8px !important;
+  }
+
+  .dp-conn-form {
+    margin: 8px auto;
+  }
+  .navbar-dark .navbar-brand {
+    margin: 0 auto 8px auto;
+  }
+}

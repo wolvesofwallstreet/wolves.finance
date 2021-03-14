@@ -27,6 +27,7 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
 
   return (
     <div className="card-container">
+      <span className="tk-vincente-lightbold font-32">{content.name}</span>
       <Link
         to={
           '/detail?type=' +
@@ -59,7 +60,11 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
         )}
       </Link>
       <span id="triangle-up" />
-      <span className="tk-vincente-lightbold font-32">{content.name}</span>
+      {tokenId && (
+        <span className="tk-vincente-lightbold font-28">
+          {`TOKEN ID: 0x${tokenId.toString(16)}`}
+        </span>
+      )}
       <span className="tk-grotesk-lightbold font-14 ellipsis">
         {t('page.motto')}: {content.motto}
       </span>
