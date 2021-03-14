@@ -244,8 +244,8 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
             {contentLoaded && (
               <>
                 <span
-                  className={`tk-vincente-lightbold font-24 single-line link ${
-                    !this.nextUrl && 'disabled-link'
+                  className={`tk-vincente-lightbold font-24 single-line ${
+                    this.nextUrl ? 'link' : 'disabled-link'
                   } `}
                   onClick={() => history.replace(this.nextUrl)}
                 >
