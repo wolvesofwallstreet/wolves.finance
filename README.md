@@ -78,6 +78,10 @@ The following tags are available:
 
 - `Token` - the ERC-20 token and presale launch contracts
 - `TokenSetup` - transactions to setup the token contracts
+- `SFT` - the WOWS SFT contract and minter
+- `SFTSetup` - additional steps for setting up SFT contracts
+- `SFTTest` - additional contracts for testing SFTs
+- `SFTTestSetup` - additional steps for setting up SFT test contracts
 
 ### `yarn <network>:verify`
 
@@ -100,6 +104,7 @@ Deployment scripts are executed by Hardhat in lexicographic order. Number
 prefixes are used to control deployment order, with the following ranges
 defined here:
 
-- 000-099: Dependency contracts
 - 100: Token contract
-- 101-199: Dapp contracts
+- 101: SFT contract
+- 102: SFT test contracts
+- 103-199: Dapp contracts

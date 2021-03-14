@@ -38,7 +38,7 @@
     "kovan:verify": "hardhat --network kovan etherscan-verify --solc-input",
     "lint": "yarn lint-chain && yarn lint-app",
     "lint-app": "prettier --check . && eslint .",
-    "lint-chain": "solhint 'contracts/interfaces/**/*.sol' 'contracts/src/**/*.sol' --max-warnings 0",
+    "lint-chain": "solhint 'contracts/interfaces/**/*.sol' 'contracts/src/**/*.sol' 'contracts/test/**/*.sol' --max-warnings 0",
     "local-node": "hardhat node --network hardhat",
     "local:deploy": "hardhat --network localhost deploy",
     "local:export": "hardhat --network localhost export",
