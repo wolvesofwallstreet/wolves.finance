@@ -64,8 +64,8 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
       <span className="tk-vincente-lightbold font-24">
         {t('page.available')}: {quantity}/{quantity}
       </span>
-      <span className="tk-vincente-lightbold font-24">
-        {t('page.price')}: {price} WOWS
+      <span className="tk-vincente-lightbold font-24 line-h">
+        {t('page.price')}: {content.price} WOWS
       </span>
     </div>
   );

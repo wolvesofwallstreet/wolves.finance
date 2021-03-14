@@ -19,7 +19,7 @@ function ProgressStatus(props: PROGRESS_STATUS_PROPS): JSX.Element {
 
   return (
     <div className="progress-status-container">
-      {children}
+      <div className="progress-status-progress">{children}</div>
       {progressCallback ? (
         <span
           onAnimationIteration={progressCallback}

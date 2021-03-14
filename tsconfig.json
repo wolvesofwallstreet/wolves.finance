@@ -1,5 +1,5 @@
 {
-  "include": ["src"],
+  "include": ["src", "./src/ts/**/*"],
   "exclude": ["node_modules", "web_modules"],
   "compilerOptions": {
     "allowJs": true,

@@ -7,56 +7,28 @@
  */
 
 .progress-status-container {
+  overflow: hidden;
   position: relative;
-  border: 1px gray solid;
   margin-top: 10px;
   padding: 6px 0px;
   width: 100%;
   background-color: var(--wolves-blue-dk);
-  color: white;
-  opacity: 0.75;
+  color: #2bec33;
 }
 
 .progress-status-progress {
-  position: absolute;
-  display: block;
-  height: 2px;
-  bottom: 2px;
-  background-color: whitesmoke;
-  animation: progressBar 30s linear;
-  animation-fill-mode: both;
-  animation-iteration-count: infinite;
-  -webkit-animation: progressBar 30s linear;
-  -webkit-animation-fill-mode: both;
-  -webkit-animation-iteration-count: infinite;
-  -moz-animation: progressBar 30s linear;
-  -moz-animation-fill-mode: both;
-  -moz-animation-iteration-count: infinite;
+  display: inline-block;
+  white-space: nowrap;
+  animation: floatText 30s infinite linear;
+  padding-left: 100%; /*Initial offset, which places the text off-screen*/
 }
 
-@keyframes progressBar {
-  0% {
-    width: calc(100% - 4px);
-  }
-  100% {
-    width: 0;
+@keyframes floatText {
+  to {
+    transform: translateX(-100%);
   }
 }
 
-@-webkit-keyframes progressBar {
-  0% {
-    width: calc(100% - 4px);
-  }
-  100% {
-    width: 0;
-  }
-}
-
-@-moz-keyframes progressBar {
-  0% {
-    width: calc(100% - 4px);
-  }
-  100% {
-    width: 0;
-  }
+.progress-status-progress:hover {
+  animation-play-state: paused;
 }

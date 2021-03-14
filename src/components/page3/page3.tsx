@@ -101,11 +101,16 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
   render(): JSX.Element {
     const { t } = this.props;
     const { contentLoaded, levelId, type } = this.state;
-    const nextLink = type === 'bois' ? 'wolves' : 'bois';
-
+    const levelPosition = this._getLevelPosition(levelId);
     return (
       <div className={'wolves-container bg-' + type}>
-        <img src={Logo} alt="WOWS" width="50px" height="50px" />
+        <img
+          src={Logo}
+          alt="WOWS"
+          width="50px"
+          height="50px"
+          className="rotate"
+        />
         <h2 className="tk-vincente-lightbold no-margin">
           {t('page3.welcome-' + type)}
         </h2>
@@ -116,8 +121,15 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
           <span id="right" className="dot" />
         </span>
         <div id="page3-section-header">
-          <span className="tk-vincente-lightbold font-20 single-line wolves-orange">
-            &lt;<Link to="/">{t('page.home')}</Link>
+          <span className="tk-vincente-lightbold font-24 single-line wolves-orange">
+            &lt;
+            {levelPosition <= 0 || type === 'bois' ? (
+              <Link to="/">{t('page.home')}</Link>
+            ) : (
+              <Link to={'?type=' + type + '&levelId=' + (levelId - 1)}>
+                {t('page.back')}
+              </Link>
+            )}
           </span>
           <span className="page3-section-container tk-vincente-lightbold">
             {contentLoaded &&
@@ -141,10 +153,16 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
                 );
               })}
           </span>
-          <span className="tk-vincente-lightbold font-20 single-line wolves-orange">
-            <Link to={'?type=' + nextLink + '&levelId=' + levelId}>
-              {t('page.' + nextLink)}
-            </Link>
+          <span className="tk-vincente-lightbold font-24 single-line wolves-orange">
+            {type === 'bois' ? (
+              <Link to={'?type=wolves'}>{t('page.wolves')}</Link>
+            ) : (
+              levelPosition < 2 && (
+                <Link to={'?type=' + type + '&levelId=' + (levelId + 1)}>
+                  {t('page.nextLevel')}
+                </Link>
+              )
+            )}
             &gt;
           </span>
         </div>
@@ -176,6 +194,35 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
               )}
           </div>
         )}
+        {
+          //HARD CODED DATA FOR DEVELOPMENT ONLY !
+          contentLoaded && levelPosition === 0 && type === 'wolves' && (
+            <div id="page3-content-container">
+              {this.content[1].cards.map((card: CARD, index: number) => {
+                return (
+                  <CardBox
+                    key={'card_' + index}
+                    type={type}
+                    levelId={2}
+                    content={card}
+                    t={t}
+                  />
+                );
+              })}
+              {this.content[1].cards.map((card: CARD, index: number) => {
+                return (
+                  <CardBox
+                    key={'card_' + index}
+                    type={type}
+                    levelId={2}
+                    content={card}
+                    t={t}
+                  />
+                );
+              })}
+            </div>
+          )
+        }
       </div>
     );
   }

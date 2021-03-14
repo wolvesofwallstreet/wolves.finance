@@ -47,10 +47,13 @@
 }
 
 #page3-content-container {
-  flex-grow: 1;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
+}
+
+.rotate {
+  transform: rotate(180deg); /* Equal to rotateZ(45deg) */
 }
 
 @media all and (max-width: 800px) {

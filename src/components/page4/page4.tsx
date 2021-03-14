@@ -129,8 +129,8 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
           {t('page4.header-' + type)}
         </h3>
         {contentLoaded && (
-          <span className="tk-vincente-lightbold font-20">
-            {this.levelName}
+          <span className="tk-vincente-lightbold font-20 content-margin">
+            {this.content?.name}
           </span>
         )}
         <span className="line-container">
@@ -140,11 +140,14 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         </span>
         <div
           id="page4-section-header"
-          className="tk-vincente-lightbold font-20 single-line wolves-orange"
+          className="tk-vincente-lightbold font-20 single-line"
         >
           <span>
             &lt;
-            <span className="link" onClick={() => history.goBack()}>
+            <span
+              className="tk-vincente-lightbold font-24 single-line link"
+              onClick={() => history.goBack()}
+            >
               {t('page.back')}
             </span>
           </span>
@@ -152,7 +155,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
             {contentLoaded && (
               <>
                 <span
-                  className="link"
+                  className="tk-vincente-lightbold font-24 single-line link"
                   onClick={() =>
                     history.replace(
                       '?type=' +
@@ -208,9 +211,29 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                     <span className="wolves-orange">{t('page.motto')}: </span>
                     {currentCard.motto}
                   </h2>
-                  <h3 className="tk-grotesk-lightbold">
+                  <span className="font-16 wolves-orange">
                     {currentCard.description}
-                  </h3>
+                  </span>
+                  <ul className="tk-vincente-lightbold font-24 rarity-box">
+                    <li>
+                      <h2>RARITY: 0/200</h2>
+                    </li>
+                    <li>
+                      <h2>PROFIT REWARD: 50% </h2>
+                    </li>
+                    <li>
+                      <h2>RAIDING POTENTIAL: 50%</h2>
+                    </li>
+                    <li>
+                      <h2>APY: 430%</h2>
+                    </li>
+                    <li>
+                      <h2>AUTO UPGRADES: 2 MONTHS</h2>
+                    </li>
+                    <li>
+                      <h2>COST: 5 WOWS</h2>
+                    </li>
+                  </ul>
                 </div>
                 <input
                   className="wolves-btn buy-btn"

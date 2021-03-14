@@ -26,12 +26,12 @@
 
 .page1-left {
   position: relative;
-  background-image: url(../../assets/page1_left.jpg),
+  background-image: url(../../assets/home_wolves.jpg),
     url(../../assets/page1_left_low.jpg);
 }
 
 .page1-right {
-  background-image: url(../../assets/page1_right.jpg),
+  background-image: url(../../assets/home_bois.jpg),
     url(../../assets/page1_right_low.jpg);
 }
 
@@ -88,18 +88,18 @@
 }
 
 .page1-container h1 {
-  font-size: 52px;
+  font-size: 54px;
   font-weight: bold;
   line-height: 1em;
 }
 
 .page1-container h2 {
-  font-size: 28px;
+  font-size: 30px;
   font-weight: 500;
 }
 
 .page1-container h3 {
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .page1-img-box {

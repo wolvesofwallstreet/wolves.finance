@@ -5,7 +5,9 @@
     "connectWallet": "CONNECT WALLET",
     "home": "HOME",
     "shop": "SHOP",
-    "detail": "DETAILS"
+    "detail": "DETAILS",
+    "wolvesSft": "WOLVES SFT",
+    "boisSft": "BOIS SFT"
   },
   "toast": {
     "walletConnected": "Wallet connected",
@@ -31,7 +33,8 @@
     "back": "BACK",
     "home": "HOME",
     "shop": "SHOP",
-    "next": "NEXT CARD"
+    "next": "NEXT CARD",
+    "nextLevel": "NEXT LEVEL"
   },
   "page1": {
     "head1": "CHOOSE YOUR CRYPTOFOLIO - TRADER\u00a0WOLVES\u00a0OR\u00a0BUSINESS\u00a0BOIS",

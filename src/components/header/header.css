@@ -20,7 +20,7 @@
   font-size: 28px;
   line-height: 1em;
   color: white;
-  margin-right: 10px;
+  margin: 0 15px;
 }
 
 .navbar-collapse a:hover {
@@ -30,6 +30,9 @@
 
 .navbar-collapse span {
   color: var(--wolves-orange);
+}
+.navbar-collapse {
+  justify-content: center;
 }
 
 .logo {
