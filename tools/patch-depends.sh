@@ -60,3 +60,4 @@ function patch_package() {
 # Patch pacakges
 #
 patch_package "@openzeppelin/contracts" "0001-Make-ERC1155.uri-public-2576.patch"
+patch_package "@openzeppelin/contracts" "0002-Remove-excessive-role-granting-in-preset-constructor.patch"

@@ -1,0 +1,32 @@
+From 609d8388ba183b575465a2739847925b937e3e6d Mon Sep 17 00:00:00 2001
+From: juztamau5 <juztamau5@gmail.com>
+Date: Sun, 14 Mar 2021 00:39:00 -0800
+Subject: [PATCH 2/2] Remove excessive role granting in preset constructor
+
+---
+ presets/ERC1155PresetMinterPauser.sol | 8 --------
+ 1 file changed, 8 deletions(-)
+
+diff --git a/presets/ERC1155PresetMinterPauser.sol b/presets/ERC1155PresetMinterPauser.sol
+index adb1332..f877e0c 100644
+--- a/presets/ERC1155PresetMinterPauser.sol
++++ b/presets/ERC1155PresetMinterPauser.sol
+@@ -26,15 +26,7 @@ contract ERC1155PresetMinterPauser is Context, AccessControl, ERC1155Burnable, E
+     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+ 
+-    /**
+-     * @dev Grants `DEFAULT_ADMIN_ROLE`, `MINTER_ROLE`, and `PAUSER_ROLE` to the account that
+-     * deploys the contract.
+-     */
+     constructor(string memory uri) public ERC1155(uri) {
+-        _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
+-
+-        _setupRole(MINTER_ROLE, _msgSender());
+-        _setupRole(PAUSER_ROLE, _msgSender());
+     }
+ 
+     /**
+-- 
+2.17.1
+
