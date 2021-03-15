@@ -6,57 +6,57 @@
  * See the file LICENSES/README.md for more information.
  */
 
- .info-container {
-    position: relative;
-    border: 1px gray solid;
-    margin-top: 10px;
-    padding: 6px 0px;
-    width: 100%;
-    background-color: var(--wolves-blue-dk);
-    color: white;
-    opacity: 0.75;
+.info-container {
+  position: relative;
+  border: 1px gray solid;
+  margin-top: 10px;
+  padding: 6px 0px;
+  width: 100%;
+  background-color: var(--wolves-blue-dk);
+  color: white;
+  opacity: 0.75;
+}
+
+.info-progress {
+  position: absolute;
+  display: block;
+  height: 2px;
+  bottom: 2px;
+  background-color: whitesmoke;
+  animation: progressBar 30s linear;
+  animation-fill-mode: both;
+  animation-iteration-count: infinite;
+  -webkit-animation: progressBar 30s linear;
+  -webkit-animation-fill-mode: both;
+  -webkit-animation-iteration-count: infinite;
+  -moz-animation: progressBar 30s linear;
+  -moz-animation-fill-mode: both;
+  -moz-animation-iteration-count: infinite;
+}
+
+@keyframes progressBar {
+  0% {
+    width: calc(100% - 4px);
   }
-  
-  .info-progress {
-    position: absolute;
-    display: block;
-    height: 2px;
-    bottom: 2px;
-    background-color: whitesmoke;
-    animation: progressBar 30s linear;
-    animation-fill-mode: both;
-    animation-iteration-count: infinite;
-    -webkit-animation: progressBar 30s linear;
-    -webkit-animation-fill-mode: both;
-    -webkit-animation-iteration-count: infinite;
-    -moz-animation: progressBar 30s linear;
-    -moz-animation-fill-mode: both;
-    -moz-animation-iteration-count: infinite;
+  100% {
+    width: 0;
   }
-  
-  @keyframes progressBar {
-    0% {
-      width: calc(100% - 4px);
-    }
-    100% {
-      width: 0;
-    }
+}
+
+@-webkit-keyframes progressBar {
+  0% {
+    width: calc(100% - 4px);
   }
-  
-  @-webkit-keyframes progressBar {
-    0% {
-      width: calc(100% - 4px);
-    }
-    100% {
-      width: 0;
-    }
+  100% {
+    width: 0;
   }
-  
-  @-moz-keyframes progressBar {
-    0% {
-      width: calc(100% - 4px);
-    }
-    100% {
-      width: 0;
-    }
+}
+
+@-moz-keyframes progressBar {
+  0% {
+    width: calc(100% - 4px);
   }
+  100% {
+    width: 0;
+  }
+}
