@@ -153,7 +153,7 @@ contract WOWSCryptofolio is IWOWSCryptofolio {
 
   /**
    * @dev update our collection of tradeable cryptofolio items
-   * This function is only allowed to be called from one if our pseudo TokenReceiver contracts
+   * This function is only allowed to be called from one of our pseudo TokenReceiver contracts
    */
   function _onTokensReceived(
     uint256[] memory tokenIds,
