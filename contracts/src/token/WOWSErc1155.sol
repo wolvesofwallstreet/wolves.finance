@@ -409,7 +409,7 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
     public
   {
     require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admin');
-    require(levels.length == newCaps.length, 'Only admin');
+    require(levels.length == newCaps.length, "Lengths don't match");
     for (uint256 i = 0; i < levels.length; ++i) {
       require(_wowsLevelCap[levels[i]] < newCaps[i], 'Decrement forbidden');
       _wowsLevelCap[levels[i]] = newCaps[i];
