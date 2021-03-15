@@ -40,7 +40,10 @@ contract WOWSCryptofolio is IWOWSCryptofolio {
   // Initialization
   //////////////////////////////////////////////////////////////////////////////
 
-  function initialize() external {
+  /**
+   * @dev See {IWOWSCryptofolio-initialize}.
+   */
+  function initialize() external override {
     require(address(_deployer) == address(0), 'CF: Already initialized');
     _deployer = IWOWSERC1155(msg.sender);
   }

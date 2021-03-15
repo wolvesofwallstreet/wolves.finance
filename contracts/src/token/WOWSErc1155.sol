@@ -11,8 +11,8 @@ pragma solidity >=0.7.0 <0.8.0;
 import '@openzeppelin/contracts/presets/ERC1155PresetMinterPauser.sol';
 import '@openzeppelin/contracts/proxy/Clones.sol';
 
+import './interfaces/IWOWSCryptofolio.sol';
 import './interfaces/IWOWSERC1155.sol';
-import './WOWSCryptofolio.sol';
 
 bytes16 constant HEX = '0123456789ABCDEF';
 
@@ -68,8 +68,8 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
   }
   mapping(address => Owned) private _owned;
 
-  // our master blueprint tokenreceiver class
-  address private _masterTokenReceiver;
+  // our master cryptofolio used for clones
+  address private _cryptofolio;
 
   // URI used for custom tokenIds without specific URI
   string private _customDefaultUri;
@@ -82,9 +82,11 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
    * @dev uri is for WOWS predefined NFT's
    * The other token uri's must set separately
    */
-  constructor(address _owner, string memory _uri)
-    ERC1155PresetMinterPauser(_uri)
-  {
+  constructor(
+    address _owner,
+    address __cryptofolio,
+    string memory _uri
+  ) ERC1155PresetMinterPauser(_uri) {
     // grant _owner initial admin role
     _setupRole(DEFAULT_ADMIN_ROLE, _owner);
 
@@ -95,7 +97,7 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
     _wowsLevelCap[3] = 20;
 
     // create our mastercopy for all minimal per token proxy contracts.
-    _masterTokenReceiver = address(new WOWSCryptofolio{ salt: 0x0 }());
+    _cryptofolio = __cryptofolio;
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -293,9 +295,9 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
         // create a new WOWSCryptofolio by cloning masterTokenReciver
         // the clone itself is a minimal delegate proxy.
         if (tokenAddress == address(0)) {
-          tokenAddress = Clones.clone(_masterTokenReceiver);
+          tokenAddress = Clones.clone(_cryptofolio);
           _tokenIdToAddress[tokenId] = tokenAddress;
-          WOWSCryptofolio(tokenAddress).initialize();
+          IWOWSCryptofolio(tokenAddress).initialize();
         }
         _addressToTokenId[tokenAddress] = tokenId;
         // increment the minted count for this card
@@ -304,14 +306,14 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
       } else if (to == address(0)) {
         // burn
         // make sure underlying assets gets burned
-        WOWSCryptofolio(tokenAddress).burn();
+        IWOWSCryptofolio(tokenAddress).burn();
         // make token mintable again
         tokenInfo.minted = false;
         // decrement the minted count for this card
         if (tokenId <= 0xFFFFFFFF) _wowsCardsMinted[uint16(tokenId >> 16)] -= 1;
       }
       // Signal ownership change in Cryptofolio
-      WOWSCryptofolio(tokenAddress).setOwner(to);
+      IWOWSCryptofolio(tokenAddress).setOwner(to);
       // Reflect ownership change in our linked list
       _relinkOwner(from, to, tokenId);
     }
