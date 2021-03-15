@@ -52,6 +52,7 @@ contract WOWSSftMinter is Ownable {
   /**
    * @dev contruct WOWSSftMinter
    * @param owner owner of this contract
+   * @param wowsToken the WOWS ERC-20 token contract
    * @param rewardHandler handler which distributes
    * @param sftContract Cryptofolio SFT source
    */

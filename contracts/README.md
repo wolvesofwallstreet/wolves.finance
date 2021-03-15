@@ -11,7 +11,7 @@ Steps to setup the WOWS environment.
 
 3.) AddressFactory:: setRegistryEntry for UniswapV2Router02, MarketingWallet, TeamWallet
 
-4.) deploy Token.sol\
+4.) deploy WOWSErc20.sol\
 -> parameter:\
 
 > \- IAddressFactory address\ <- must contain UNISWAP_V2_ROUTER02, MARKETING_WALLET and TEAM_WALLET keys, (AddressBook.sol)\
@@ -20,7 +20,7 @@ Steps to setup the WOWS environment.
 -> parameter:\
 
 > \- IAddressFactory address\
-> \- rewardHandler (right now its Token.sol)\
+> \- rewardHandler (right now its WOWSErc20.sol)\
 > \- previousController: 0 address / only for later updates\
 
 6.) deploy UniV2StakeFarm.sol\
@@ -28,8 +28,8 @@ Steps to setup the WOWS environment.
 
 > \- owner address\
 > \- name: "WETH/WOWS LP Farm\
-> \- stakingToken: Token.sol::uniV2Pair()\
-> \- rewardToken: Token.sol\
+> \- stakingToken: WOWSErc20.sol::uniV2Pair()\
+> \- rewardToken: WOWSErc20.sol\
 > \- controller: address Controller.sol\
 > \- route: address of UniV2 WETH/USDT pool, can be 0 for test
 
@@ -47,7 +47,7 @@ Steps to setup the WOWS environment.
 
 > \- addressRegistry\
 > \- rate: 80\
-> \- token: Token.sol address\
+> \- token: WOWSErc20.sol address\
 > \- cap: 75\*1e18\
 > \- invest_min: 2\*1e17 (0.2 ETH)\
 > \- wallet_cap: 3\*1e18 (3 ETH)\
@@ -60,8 +60,8 @@ Steps to setup the WOWS environment.
 
 <h3>From MultiSig marketing wallet call:</h3>
 
-1.) call Token.sol::grantRole(Token.sol.REWARD_ROLE(), controller)\
--> This is to allow controller to call into Token.sol to distribute rewards
+1.) call WOWSErc20.sol::grantRole(WOWSErc20.sol.REWARD_ROLE(), controller)\
+-> This is to allow controller to call into WOWSErc20.sol to distribute rewards
 
 2.) call Controller::registerFarm\
 -> parameter:\
@@ -72,12 +72,12 @@ Steps to setup the WOWS environment.
 > \- rewardProvided 0\
 > \- rewardfee 2\*1e4 (0.02)
 
-3.) call Token.sol setBooster\
+3.) call WOWSErc20.sol setBooster\
 -> parameter:\
 
 > \- address of Booster.sol
 
-4.) call Token.sol::grantRole(Token.sol.MINTER_ROLE(), Crowdsale.sol)\
+4.) call WOWSErc20.sol::grantRole(WOWSErc20.sol.MINTER_ROLE(), Crowdsale.sol)\
 \!\!\! ONLY DURING PRESALE \!\!\!
 
 <h2>****** SFT CONTRACT ******</h2>

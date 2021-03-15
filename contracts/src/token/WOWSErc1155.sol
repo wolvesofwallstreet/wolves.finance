@@ -244,7 +244,8 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
         bytes(_customCards[tokenId].uri).length == 0
           ? _customDefaultUri
           : _customCards[tokenId].uri;
-    // super currently not working because of OZ external definition
+
+    // WOWS token
     return
       string(
         abi.encodePacked(
@@ -408,7 +409,7 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
     public
   {
     require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admin');
-    require(levels.length == newCaps.length, 'Only admin');
+    require(levels.length == newCaps.length, "Lengths don't match");
     for (uint256 i = 0; i < levels.length; ++i) {
       require(_wowsLevelCap[levels[i]] < newCaps[i], 'Decrement forbidden');
       _wowsLevelCap[levels[i]] = newCaps[i];
