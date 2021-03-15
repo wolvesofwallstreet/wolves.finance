@@ -16,6 +16,7 @@ require('hardhat-deploy-ethers');
 
 // TODO: Fully qualified contract names
 const SFT_CONTRACT = 'WOWSERC1155';
+const SFT_CRYPTOFOLIO = 'WOWSCryptofolio';
 const SFT_MINTER_CONTRACT = 'WOWSSftMinter';
 
 // ERC-1155 metadata URI
@@ -46,6 +47,23 @@ const sft_func = async function (hardhat_re) {
 
   //////////////////////////////////////////////////////////////////////////////
   //
+  // Deploy SFT cryptofolio
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  log_step('Deploying SFT cryptofolio');
+
+  const sftCryptofolioReceipt = await deploy(SFT_CRYPTOFOLIO, {
+    from: deployer,
+    args: [],
+    log: true,
+    deterministicDeployment: true,
+  });
+
+  const SFT_CRYPTOFOLIO_ADDRESS = sftCryptofolioReceipt.address;
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
   // Deploy SFT contract
   //
   //////////////////////////////////////////////////////////////////////////////
@@ -54,7 +72,7 @@ const sft_func = async function (hardhat_re) {
 
   const sftReceipt = await deploy(SFT_CONTRACT, {
     from: deployer,
-    args: [marketingWallet, METADATA_URI],
+    args: [marketingWallet, SFT_CRYPTOFOLIO_ADDRESS, METADATA_URI],
     log: true,
     deterministicDeployment: true,
   });
