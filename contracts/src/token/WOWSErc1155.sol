@@ -244,7 +244,8 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
         bytes(_customCards[tokenId].uri).length == 0
           ? _customDefaultUri
           : _customCards[tokenId].uri;
-    // super currently not working because of OZ external definition
+
+    // WOWS token
     return
       string(
         abi.encodePacked(
