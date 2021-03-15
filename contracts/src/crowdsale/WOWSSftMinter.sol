@@ -28,7 +28,7 @@ contract WOWSSftMinter is Ownable {
   // WOWS token contract
   IERC20 private immutable _wowsToken;
 
-  // rewardhandler which distributes Wows
+  // Reward handler which distributes WOWS
   IRewardHandler private _rewardHandler;
 
   // The fee is distributed to 4 channels:
@@ -50,10 +50,11 @@ contract WOWSSftMinter is Ownable {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev contruct WOWSSftMinter
-   * @param owner owner of this contract
-   * @param wowsToken the WOWS ERC-20 token contract
-   * @param rewardHandler handler which distributes
+   * @dev Contruct WOWSSftMinter
+   *
+   * @param owner Owner of this contract
+   * @param wowsToken The WOWS ERC-20 token contract
+   * @param rewardHandler Handler which distributes
    * @param sftContract Cryptofolio SFT source
    */
   constructor(
@@ -88,8 +89,9 @@ contract WOWSSftMinter is Ownable {
   }
 
   /**
-   * @dev Set new rewardhandler. RewardHandler is from concept
-   * upgradeable / see investment::Controller.sol
+   * @dev Set new rewardhandler
+   *
+   * RewardHandler is from concept upgradeable / see investment::Controller.sol.
    */
   function setRewardHandler(IRewardHandler newRewardHandler)
     external
@@ -99,8 +101,9 @@ contract WOWSSftMinter is Ownable {
   }
 
   /**
-   * @dev mint one of our stock card SFT's
-   * approval of wows token required before the call
+   * @dev Mint one of our stock card SFT's
+   *
+   * Approval of WOWS token required before the call.
    */
   function mintWowsSFT(
     address recipient,
@@ -119,8 +122,9 @@ contract WOWSSftMinter is Ownable {
   }
 
   /**
-   * @dev mint a custom token
-   * approval of wows token required before the call
+   * @dev Mint a custom token
+   *
+   * Approval of WOWS token required before the call.
    */
   function mintCustomSFT(
     address recipient,
@@ -130,9 +134,10 @@ contract WOWSSftMinter is Ownable {
     uint256 price = _pricePerLevel[0x100 + level];
     require(price > 0, 'No price available');
 
-    // get the next free mintable token for level / cardId
+    // Get the next free mintable token for level / cardId
     uint256 tokenId = _sftContract.getNextMintableCustomToken();
-    // set card level and uri
+
+    // Set card level and uri
     _sftContract.setCustomCardLevel(tokenId, level);
     _sftContract.setURI(tokenId, uri);
 
@@ -144,7 +149,7 @@ contract WOWSSftMinter is Ownable {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev query prices for given levels
+   * @dev Query prices for given levels
    */
   function getPrices(uint16[] memory levels)
     external
@@ -166,13 +171,13 @@ contract WOWSSftMinter is Ownable {
     uint256 tokenId,
     uint256 price
   ) internal {
-    // transfer WOWS from user to rewardhandler.
+    // Transfer WOWS from user to rewardhandler
     _wowsToken.safeTransferFrom(msg.sender, address(_rewardHandler), price);
 
-    // mint the token
+    // Mint the token
     IERC1155BurnMintable(address(_sftContract)).mint(recipient, tokenId, 1, '');
 
-    // distribute the rewards
+    // Distribute the rewards
     _rewardHandler.distribute(
       recipient,
       price,
