@@ -73,6 +73,6 @@ a:hover {
   pointer-events: none;
 }
 
-.disabled-link :hover{
+.disabled-link :hover {
   color: var(--wolves-orange);
 }
