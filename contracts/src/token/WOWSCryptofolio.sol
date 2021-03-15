@@ -17,9 +17,9 @@ contract WOWSCryptofolio is IWOWSCryptofolio {
   IWOWSERC1155 private _deployer;
   // The owner of the NFT token parent
   address private _owner;
-  // mapping of cryptofolio items owned by this
+  // Mapping of cryptofolio items owned by this
   mapping(address => uint256[]) private _cryptofolios;
-  // list of all known tradefloors
+  // List of all known tradefloors
   address[] public _tradefloors;
 
   //////////////////////////////////////////////////////////////////////////////
@@ -155,8 +155,10 @@ contract WOWSCryptofolio is IWOWSCryptofolio {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev update our collection of tradeable cryptofolio items
-   * This function is only allowed to be called from one of our pseudo TokenReceiver contracts
+   * @dev Update our collection of tradeable cryptofolio items
+   *
+   * This function is only allowed to be called from one of our pseudo
+   * TokenReceiver contracts.
    */
   function _onTokensReceived(
     uint256[] memory tokenIds,
@@ -175,10 +177,10 @@ contract WOWSCryptofolio is IWOWSCryptofolio {
     for (uint256 iIds = 0; iIds < tokenIds.length; ++iIds) {
       if (amounts[iIds] > 0) {
         uint256 tokenId = tokenIds[iIds];
-        // search tokenId
+        // Search tokenId
         uint256 i = 0;
         for (; i < currentIds.length && currentIds[i] != tokenId; ++i) i;
-        // if token was not found, insert it
+        // If token was not found, insert it
         if (i == currentIds.length) currentIds.push(tokenId);
       }
     }

@@ -12,42 +12,44 @@ import '@openzeppelin/contracts/token/ERC1155/IERC1155.sol';
 
 interface IERC1155BurnMintable is IERC1155 {
   /**
-   * @dev mint amount new tokens at id tokenId (MINTER_ROLE required)
+   * @dev Mint amount new tokens at ID `tokenId` (MINTER_ROLE required)
    */
   function mint(
     address to,
-    uint256 id,
+    uint256 tokenId,
     uint256 amount,
     bytes memory data
   ) external;
 
   /**
-   * @dev mint amounts new tokens at ids tokenIds (MINTER_ROLE required)
+   * @dev Mint new token amounts at IDs `tokenIds` (MINTER_ROLE required)
    */
   function mintBatch(
     address to,
-    uint256[] memory ids,
+    uint256[] memory tokenIds,
     uint256[] memory amounts,
     bytes memory data
   ) external;
 
   /**
-   * @dev burn value amount tokens with id.
-   * caller must be approvedForAll;
+   * @dev Burn value amount of tokens with ID `tokenId`.
+   *
+   * Caller must be approvedForAll.
    */
   function burn(
     address account,
-    uint256 id,
+    uint256 tokenId,
     uint256 value
   ) external;
 
   /**
-   * @dev burn values amount[] tokens with ids[]
-   * caller must be approvedForAll;
+   * @dev Burn `values` amounts of tokens with IDs `tokenIds`.
+   *
+   * Caller must be approvedForAll.
    */
   function burnBatch(
     address account,
-    uint256[] memory ids,
+    uint256[] memory tokenIds,
     uint256[] memory values
   ) external;
 }

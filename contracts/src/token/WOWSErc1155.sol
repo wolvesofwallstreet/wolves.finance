@@ -27,13 +27,13 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
   // Used to restict calls to TRADEFLOOR but also to collect all TRADEFLOORS
   bytes32 public constant OPERATOR_ROLE = keccak256('OPERATOR_ROLE');
 
-  // cap per card for each level
+  // Cap per card for each level
   mapping(uint8 => uint16) private _wowsLevelCap;
 
-  // how many cards have been minted
+  // How many cards have been minted
   mapping(uint16 => uint16) private _wowsCardsMinted;
 
-  // card state of custom NFT's
+  // Card state of custom NFT's
   struct CustomCard {
     string uri;
     uint8 level;
@@ -45,30 +45,31 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
     uint256 index;
   }
 
-  // per token data
+  // Per-token data
   struct TokenInfo {
-    bool minted; // make sure we only mint 1
+    bool minted; // Make sure we only mint 1
     uint64 timestamp;
-    ListKey listKey; // next tokenId in the owner linkedList
+    ListKey listKey; // Next tokenId in the owner linkedList
   }
   mapping(uint256 => TokenInfo) private _tokenInfos;
 
-  // mapping tokenId -> generated address
+  // Mapping tokenId -> generated address
   mapping(uint256 => address) private _tokenIdToAddress;
 
-  // mapping generated address -> tokenId
+  // Mapping generated address -> tokenId
   mapping(address => uint256) private _addressToTokenId;
 
-  // mapping owner -> first owned token
-  // note that we work 1 based here because of initialization
+  // Mapping owner -> first owned token
+  //
+  // Note that we work 1 based here because of initialization
   // e.g. firstId == 1 links to tokenId 0;
   struct Owned {
     uint256 count;
-    ListKey listKey; // first tokenId in linked list
+    ListKey listKey; // First tokenId in linked list
   }
   mapping(address => Owned) private _owned;
 
-  // our master cryptofolio used for clones
+  // Our master cryptofolio used for clones
   address private _cryptofolio;
 
   // URI used for custom tokenIds without specific URI
@@ -79,15 +80,16 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev uri is for WOWS predefined NFT's
-   * The other token uri's must set separately
+   * @dev URI is for WOWS predefined NFT's
+   *
+   * The other token URI's must be set separately.
    */
   constructor(
     address _owner,
     address __cryptofolio,
     string memory _uri
   ) ERC1155PresetMinterPauser(_uri) {
-    // grant _owner initial admin role
+    // Grant _owner initial admin role
     _setupRole(DEFAULT_ADMIN_ROLE, _owner);
 
     // Setup wows card definition
@@ -96,7 +98,7 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
     _wowsLevelCap[2] = 40;
     _wowsLevelCap[3] = 20;
 
-    // create our mastercopy for all minimal per token proxy contracts.
+    // Our clone blueprint cryptofolio.
     _cryptofolio = __cryptofolio;
   }
 
@@ -197,7 +199,7 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
     override
   {
     require(hasRole(MINTER_ROLE, _msgSender()), 'Only minter');
-    require(tokenId > 0xFFFFFFFF, 'only for custom cards');
+    require(tokenId > 0xFFFFFFFF, 'Only for custom cards');
     _customCards[tokenId].level = cardLevel;
   }
 
@@ -241,7 +243,7 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
     returns (string memory)
   {
     if (tokenId > 0xFFFFFFFF)
-      // custom token
+      // Custom token
       return
         bytes(_customCards[tokenId].uri).length == 0
           ? _customDefaultUri
@@ -281,39 +283,43 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
     require(tokenIds.length == amounts.length, 'Length mismatch');
 
     for (uint256 i = 0; i < tokenIds.length; ++i) {
-      // we have only NFT's in this contract
+      // We have only NFT's in this contract
       require(amounts[i] == 1, 'Amount != 1');
+
       uint256 tokenId = tokenIds[i];
       address tokenAddress = _tokenIdToAddress[tokenId];
       TokenInfo storage tokenInfo = _tokenInfos[tokenId];
+
       if (from == address(0)) {
-        // minting
+        // Minting
         require(!tokenInfo.minted, 'Already minted');
         tokenInfo.minted = true;
         // solhint-disable-next-line not-rely-on-time
         tokenInfo.timestamp = uint64(block.timestamp);
-        // create a new WOWSCryptofolio by cloning masterTokenReciver
-        // the clone itself is a minimal delegate proxy.
+        // Create a new WOWSCryptofolio by cloning masterTokenReciver
+        // The clone itself is a minimal delegate proxy.
         if (tokenAddress == address(0)) {
           tokenAddress = Clones.clone(_cryptofolio);
           _tokenIdToAddress[tokenId] = tokenAddress;
           IWOWSCryptofolio(tokenAddress).initialize();
         }
         _addressToTokenId[tokenAddress] = tokenId;
-        // increment the minted count for this card
+        // Increment the minted count for this card
         if (tokenId <= 0xFFFFFFFF) _wowsCardsMinted[uint16(tokenId >> 16)] += 1;
         else ++_customCardCount;
       } else if (to == address(0)) {
-        // burn
-        // make sure underlying assets gets burned
+        // Burning
+        // Make sure underlying assets gets burned
         IWOWSCryptofolio(tokenAddress).burn();
-        // make token mintable again
+        // Make token mintable again
         tokenInfo.minted = false;
-        // decrement the minted count for this card
+        // Decrement the minted count for this card
         if (tokenId <= 0xFFFFFFFF) _wowsCardsMinted[uint16(tokenId >> 16)] -= 1;
       }
+
       // Signal ownership change in Cryptofolio
       IWOWSCryptofolio(tokenAddress).setOwner(to);
+
       // Reflect ownership change in our linked list
       _relinkOwner(from, to, tokenId);
     }
@@ -324,11 +330,13 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev return information about a wows card
-   * @param level the level of the card
-   * @param cardId the id of the card
-   * @return cap max mintable cards
-   * @return minted already minted cards
+   * @dev Return information about a wows card
+   *
+   * @param level The level of the card
+   * @param cardId The id of the card
+   *
+   * @return cap Max mintable cards
+   * @return minted Already minted cards
    */
   function getCardData(uint8 level, uint8 cardId)
     external
@@ -342,10 +350,12 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
   }
 
   /**
-   * @dev return information about a wows card
-   * @param levels the levels of the card to query
-   * @param cardIds a list of card ids to query
-   * @return capMintedPair array of 16 Bit, cap,minted,...
+   * @dev Return information about a wows card
+   *
+   * @param levels The levels of the card to query
+   * @param cardIds A list of card ids to query
+   *
+   * @return capMintedPair Array of 16 Bit, cap,minted,...
    */
   function getCardDataBatch(uint8[] memory levels, uint8[] memory cardIds)
     external
@@ -364,10 +374,12 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
   }
 
   /**
-   * @dev return the level and the mint timestamp of tokenId
-   * @param tokenId the tokenId to query
-   * @return mintTimestamp the timestamp token was minted
-   * @return level the level token belongs to
+   * @dev Return the level and the mint timestamp of tokenId
+   *
+   * @param tokenId The tokenId to query
+   *
+   * @return mintTimestamp The timestamp token was minted
+   * @return level The level token belongs to
    */
   function getTokenData(uint256 tokenId)
     external
@@ -382,7 +394,7 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
   }
 
   /**
-   * @dev return list of tokenIds owned by account
+   * @dev Return list of tokenIds owned by `account`
    */
   function getTokenIds(address account)
     external
@@ -404,14 +416,16 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev set the cap of a specific WOWS level.
-   * Note that this function can be used to add a new card
+   * @dev Set the cap of a specific WOWS level
+   *
+   * Note that this function can be used to add a new card.
    */
   function setWowsLevelCaps(uint8[] memory levels, uint16[] memory newCaps)
     public
   {
     require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admin');
     require(levels.length == newCaps.length, "Lengths don't match");
+
     for (uint256 i = 0; i < levels.length; ++i) {
       require(_wowsLevelCap[levels[i]] < newCaps[i], 'Decrement forbidden');
       _wowsLevelCap[levels[i]] = newCaps[i];
@@ -423,8 +437,9 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev ownership change -> update linked list owner -> tokenId
-   * linkKeys are 1 based where tokenIds are 0-based
+   * @dev Ownership change -> update linked list owner -> tokenId
+   *
+   * linkKeys are 1 based where tokenIds are 0-based.
    */
   function _relinkOwner(
     address from,
@@ -433,21 +448,23 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
   ) internal {
     TokenInfo storage tokenInfo = _tokenInfos[tokenId];
 
-    // remove tokenId from List
+    // Remove tokenId from List
     if (from != address(0)) {
       Owned storage fromList = _owned[from];
       require(fromList.count > 0, 'Count mismatch');
       ListKey storage key = fromList.listKey;
       uint256 count = fromList.count;
-      // search the token which links to tokenId
+
+      // Search the token which links to tokenId
       for (; count > 0 && key.index != tokenId; --count)
         key = _tokenInfos[key.index].listKey;
-      require(key.index == tokenId, 'key mismatch');
-      // unlink prev -> tokenId
+      require(key.index == tokenId, 'Key mismatch');
+
+      // Unlink prev -> tokenId
       key.index = tokenInfo.listKey.index;
-      // unlink tokenId -> next
+      // Unlink tokenId -> next
       tokenInfo.listKey.index = 0;
-      // decrement count
+      // Decrement count
       fromList.count--;
     }
 
