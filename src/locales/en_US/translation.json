@@ -8,7 +8,8 @@
     "detail": "DETAILS",
     "wolvesSft": "WOLVES SFT",
     "boisSft": "BOIS SFT",
-    "myPack": "MY PACK"
+    "myPack": "MY PACK",
+    "stake": "STAKE"
   },
   "toast": {
     "walletConnected": "Wallet connected",

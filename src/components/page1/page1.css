@@ -6,7 +6,7 @@
  * See LICENSE.txt for more information.
  */
 
-.page1-container {
+ .page1-container {
   position: relative;
   display: flex;
   flex-grow: 1;
@@ -77,6 +77,11 @@
   width: 100%;
 }
 
+.page1-title-box .progress-status-container {
+  width: 40%;
+  margin: 8px auto;
+}
+
 .page1-title-box-text {
   margin-top: auto;
   margin-bottom: auto;
@@ -133,6 +138,10 @@
 
   .page1-bg {
     padding-top: 8px;
+  }
+
+  .page1-title-box .progress-status-container {
+    width: 90%;
   }
 
   .page1-line-v {

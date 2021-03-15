@@ -158,6 +158,7 @@ class StakeInfo extends Component<STAKEINFOPROPS, STAKEINFOSTATE> {
 
     return (
       <ProgressStatus
+        route="stake"
         progressCallback={
           stakeSupplyUser > 0 ? this.onProgressIteration : undefined
         }

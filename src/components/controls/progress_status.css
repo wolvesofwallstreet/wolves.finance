@@ -7,14 +7,71 @@
  */
 
 .progress-status-container {
-  background-color: var(--wolves-blue-dk);
-  top: -28px;
-  background-image: url(../../assets/infoborder.svg);
-  background-repeat: no-repeat;
-  padding: 12px 15px;
-  justify-content: center;
-  background-position: center;
-  margin: 8px auto 8px auto;
   position: relative;
-  font-size: 10px;
+  margin-top: 10px;
+  padding: 6px 0px;
+  background-color: var(--wolves-blue-dk);
+  color: white;
+  font-size: 14px;
+  border: 1px solid var(--wolves-orange);
+}
+.home {
+  top: -28px;
+}
+
+@media screen and (max-width: 450px) {
+  .progress-status-container {
+    width: 80%;
+    padding: 12px 5px;
+    font-size: 16px;
+    margin: auto;
+  }
+
+  .home {
+    top: -16px;
+  }
+}
+
+.progress-status-progress {
+  position: absolute;
+  display: block;
+  height: 2px;
+  bottom: 2px;
+  background-color: whitesmoke;
+  animation: progressBar 30s linear;
+  animation-fill-mode: both;
+  animation-iteration-count: infinite;
+  -webkit-animation: progressBar 30s linear;
+  -webkit-animation-fill-mode: both;
+  -webkit-animation-iteration-count: infinite;
+  -moz-animation: progressBar 30s linear;
+  -moz-animation-fill-mode: both;
+  -moz-animation-iteration-count: infinite;
+}
+
+@keyframes progressBar {
+  0% {
+    width: calc(100% - 4px);
+  }
+  100% {
+    width: 0;
+  }
+}
+
+@-webkit-keyframes progressBar {
+  0% {
+    width: calc(100% - 4px);
+  }
+  100% {
+    width: 0;
+  }
+}
+
+@-moz-keyframes progressBar {
+  0% {
+    width: calc(100% - 4px);
+  }
+  100% {
+    width: 0;
+  }
 }

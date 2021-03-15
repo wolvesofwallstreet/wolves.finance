@@ -14,10 +14,8 @@ import { ProgressStatus } from '../controls/progress_status';
 class WowsStatus extends Component {
   render(): ReactNode {
     return (
-      <ProgressStatus>
-        <span className="ticker-text">
-          WOWS CURRENT PRICE: $34.45 CIRCULATING MC: $450,000
-        </span>
+      <ProgressStatus route="home">
+        <span>WOWS CURRENT PRICE: $34.45 CIRCULATING MC: $450,000</span>
       </ProgressStatus>
     );
   }
