@@ -25,6 +25,7 @@
     "build": "react-scripts build",
     "clean": "rimraf artifacts build cache contracts/depends depends deployments node_modules src/abi",
     "compile": "hardhat compile",
+    "create-metadata": "cd metadata && node create_metadata.ts",
     "depends": "make -C tools clean && make -C tools -j 4",
     "deploy": "gh-pages -b master -r https://github.com/wolvesofwallstreet/wolvesofwallstreet.github.io.git -d build",
     "format": "prettier --write . && eslint --fix .",
