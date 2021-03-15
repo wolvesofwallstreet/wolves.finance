@@ -24,6 +24,10 @@ Omit `TEST=0` to also run the test cases for depends.
 
 Compiles the smart contracts. Required for test cases.
 
+### `yarn create-metadata`
+
+Creates metadata files from src/locales/[lang]/cards.json files.
+
 ### `yarn start`
 
 Runs the app in the development mode.\

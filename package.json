@@ -24,6 +24,7 @@
     "audit": "audit-ci --moderate --package-manager yarn",
     "build": "react-scripts build",
     "compile": "hardhat compile",
+    "create-metadata": "cd metadata && node create_metadata.ts",
     "depends": "make -C tools clean && make -C tools -j 4",
     "deploy": "gh-pages -b master -r https://github.com/wolvesofwallstreet/wolvesofwallstreet.github.io.git -d build",
     "format": "prettier --write . && eslint --fix .",
