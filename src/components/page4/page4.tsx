@@ -240,17 +240,15 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
               </span>
             )}
           </span>
-          <span>
+          <span
+            className={`tk-vincente-lightbold font-24 single-line ${
+              this.nextUrl ? 'link' : 'disabled-link'
+            } `}
+            onClick={() => history.replace(this.nextUrl)}
+          >
             {contentLoaded && (
               <>
-                <span
-                  className={`tk-vincente-lightbold font-24 single-line ${
-                    this.nextUrl ? 'link' : 'disabled-link'
-                  } `}
-                  onClick={() => history.replace(this.nextUrl)}
-                >
-                  {t('page.nextCard')}
-                </span>
+                <span>{t('page.nextCard')}</span>
                 &gt;
               </>
             )}

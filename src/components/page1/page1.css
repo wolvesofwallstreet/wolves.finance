@@ -135,9 +135,6 @@
     padding-top: 8px;
   }
 
-  .page1-title-box .progress-status-container {
-    font-size: 10px !important;
-  }
   .page1-line-v {
     top: calc(100% - 1px);
     left: 12.5%;

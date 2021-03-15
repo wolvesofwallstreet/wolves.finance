@@ -9,4 +9,12 @@
 .progress-status-container {
   background-color: var(--wolves-blue-dk);
   top: -28px;
+  background-image: url(../../assets/infoborder.svg);
+  background-repeat: no-repeat;
+  padding: 12px 15px;
+  justify-content: center;
+  background-position: center;
+  margin: 8px auto 8px auto;
+  position: relative;
+  font-size: 10px;
 }

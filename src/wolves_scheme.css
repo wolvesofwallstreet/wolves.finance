@@ -70,16 +70,3 @@
 .wolves-border {
   border: var(--wolves-orange) 1px solid;
 }
-
-.page1-title-box .progress-status-container {
-  background-image: url(./assets/infoborder.svg);
-  background-repeat: no-repeat;
-  padding: 12px 15px;
-  justify-content: center;
-  background-position: center;
-}
-
-.page1-title-box .progress-status-container {
-  margin: 8px auto 8px auto;
-  position: relative;
-}

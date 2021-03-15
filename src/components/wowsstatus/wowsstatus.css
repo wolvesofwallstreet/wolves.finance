@@ -6,6 +6,7 @@
  * See LICENSE.txt for more information.
  */
 
-.progress-status-container {
-  font-size: 12px;
+.ticker-text {
+  margin: 0 5px;
 }
+

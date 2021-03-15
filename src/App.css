@@ -73,6 +73,6 @@ a:hover {
   pointer-events: none;
 }
 
-.ticker-text {
-  margin: 0 5px;
+.disabled-link :hover{
+  color: var(--wolves-orange);
 }
