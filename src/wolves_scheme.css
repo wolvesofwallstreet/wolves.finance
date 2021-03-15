@@ -12,6 +12,7 @@
 }
 
 .wolves-container {
+  background-attachment: fixed;
   background-position-x: center;
   background-position-y: 0px;
   background-size: cover contain;
@@ -26,13 +27,20 @@
 }
 
 .wolves-container.bg-wolves {
-  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkVjDaBAABjAEJJUIRVQAAAABJRU5ErkJggg==),
-    url(./assets/page1_left.jpg);
+  background-image: url(./assets/background_wolves.png);
 }
 
 .wolves-container.bg-bois {
-  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkVjDaBAABjAEJJUIRVQAAAABJRU5ErkJggg==),
-    url(./assets/page1_right.jpg);
+  background-image: url(./assets/background_bois.jpg);
+}
+
+.wolves-container.bg-myPack {
+  background-image: url(./assets/background_bois.jpg);
+}
+
+.wolves-container h2 {
+  font-size: 30px;
+  font-weight: 500;
 }
 
 .wolves-container h3 {

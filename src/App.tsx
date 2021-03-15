@@ -36,6 +36,10 @@ class App extends React.Component {
                 path="/shop"
                 render={(props) => <Page3 {...props} display={'shop'} />}
               />
+              <Route
+                path="/my"
+                render={(props) => <Page3 {...props} display={'my'} />}
+              />
               <Route path="/detail" component={Page4} />
               <Route component={Page1} />
             </Switch>

@@ -79,25 +79,33 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
 
   _getNavItems(): NAVITEM[] {
     const { location, t } = this.props;
-    const pathItems = location.pathname.split('/').filter((e) => e.length > 0);
+    const query = new URLSearchParams(location.search);
+    const type = query.get('type');
+
     const result = [
-      { id: t('header.home'), to: '/', disabled: pathItems.length === 0 },
+      { id: t('header.home'), to: '/', disabled: location.pathname === '/' },
+      {
+        id: t('header.wolvesSft'),
+        to: '/shop?type=wolves',
+        disabled: type === 'wolves',
+      },
+      {
+        id: t('header.boisSft'),
+        to: '/shop?type=bois',
+        disabled: type === 'bois',
+      },
+      {
+        id: t('header.stake'),
+        to: '/stake',
+        disabled: location.pathname === '/stake',
+      },
+      {
+        id: t('header.myPack'),
+        to: '/my?type=myPack',
+        disabled: type === 'myPack',
+      },
     ];
-    if (pathItems.length === 1) {
-      if (pathItems[0] === 'detail') {
-        const query = new URLSearchParams(location.search);
-        result.push({
-          id: t('header.shop'),
-          to:
-            '/shop?type=' +
-            query.get('type') +
-            '&levelId=' +
-            query.get('levelId'),
-          disabled: false,
-        });
-        result.push({ id: t('header.detail'), to: '', disabled: true });
-      } else result.push({ id: t('header.shop'), to: '', disabled: true });
-    }
+
     return result;
   }
 

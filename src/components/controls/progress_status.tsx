@@ -12,13 +12,14 @@ import { ReactNode } from 'react';
 type PROGRESS_STATUS_PROPS = {
   progressCallback?: () => void;
   children?: ReactNode;
+  route: string;
 };
 
 function ProgressStatus(props: PROGRESS_STATUS_PROPS): JSX.Element {
-  const { progressCallback, children } = props;
+  const { progressCallback, children, route } = props;
 
   return (
-    <div className="progress-status-container">
+    <div className={`progress-status-container ${route}`}>
       {children}
       {progressCallback ? (
         <span

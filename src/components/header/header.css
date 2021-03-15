@@ -18,23 +18,25 @@
   font-family: 'vincente', serif;
   font-weight: 500;
   font-size: 28px;
-  line-height: 1em;
+  line-height: 1.2em;
   color: white;
-  margin-right: 10px;
+  margin: 0 15px;
 }
 
 .navbar-collapse a:hover {
   text-decoration: none;
-  border-bottom: white 2px solid;
+  color: var(--wolves-orange);
 }
 
 .navbar-collapse span {
   color: var(--wolves-orange);
 }
+.navbar-collapse {
+  justify-content: space-evenly;
+}
 
 .logo {
   margin: 0px 10px;
-  width: 240px;
 }
 
 .bg-wolf {
@@ -50,4 +52,23 @@
 .dp-conn-btn {
   width: 200px;
   margin: 8px 0px 8px 0px;
+}
+
+@media screen and (max-width: 450px) {
+  .navbar-collapse a,
+  .navbar-collapse span {
+    margin: 2px 8px;
+  }
+  .navbar-collapse {
+    display: flex;
+    flex-direction: column;
+    justify-content: unset;
+  }
+}
+
+.dp-conn-form {
+  margin: 8px auto;
+}
+.navbar-dark .navbar-brand {
+  margin: 0 auto 8px auto;
 }

@@ -12,6 +12,11 @@
   text-align: center;
   min-height: 100vh;
 }
+@media screen and (max-width: 450px) {
+  .App {
+    min-height: auto;
+  }
+}
 
 .no-margin {
   margin: 0px;
@@ -33,6 +38,10 @@
   font-size: 24px;
 }
 
+.font-28 {
+  font-size: 28px;
+}
+
 .font-32 {
   font-size: 32px;
 }
@@ -52,4 +61,17 @@ hr.wolves {
   border-top: var(--wolves-orange) 1px solid;
   margin: 4px 0px;
   align-self: stretch;
+}
+
+span a:hover {
+  text-decoration: none;
+  color: var(--wolves-orange) !important;
+}
+
+.disabled-link:active {
+  pointer-events: none;
+}
+
+.disabled-link :hover {
+  color: var(--wolves-orange);
 }

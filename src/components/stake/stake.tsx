@@ -140,8 +140,9 @@ class Stake extends Component<STAKEPROPS, STAKESTATE> {
     return (
       <div className="stake-main tk-grotesk-lightbold">
         <div className="stake-container">
-          <h1>{t('stake.welcome')}</h1>
           <StakeInfo />
+          <h1>{t('stake.welcome')}</h1>
+
           <div className="stake-control">
             <img className="stake-logo stake-opaque" src={logo} alt="logo" />
             <span className="stake-line" />

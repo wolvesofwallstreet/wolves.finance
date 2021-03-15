@@ -19,20 +19,24 @@ type CARDBOX_PROPS = {
   price: number;
   t: TFunction;
   type: string;
+  tokenId?: number;
 };
 
 export function CardBox(props: CARDBOX_PROPS): JSX.Element {
-  const { content, levelId, price, quantity, t, type } = props;
+  const { content, levelId, price, quantity, t, tokenId, type } = props;
+
   return (
     <div className="card-container">
+      <span className="tk-vincente-lightbold font-32">{content.name}</span>
       <Link
         to={
           '/detail?type=' +
-          type +
+          (tokenId ? 'myPack' : type) +
           '&levelId=' +
           levelId +
           '&cardId=' +
-          content.id
+          content.id +
+          (tokenId ? '&tokenId=' + tokenId : '')
         }
       >
         {content.type === 'movie' ? (
@@ -56,16 +60,20 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
         )}
       </Link>
       <span id="triangle-up" />
-      <span className="tk-vincente-lightbold font-32">{content.name}</span>
+      {tokenId && (
+        <span className="tk-vincente-lightbold font-28">
+          {`TOKEN ID: 0x${tokenId.toString(16)}`}
+        </span>
+      )}
       <span className="tk-grotesk-lightbold font-14 ellipsis">
         {t('page.motto')}: {content.motto}
       </span>
       <hr className="wolves" />
-      <span className="tk-vincente-lightbold font-24">
+      <span className="tk-grotesk-lightbold font-14 ellipsis">
         {t('page.available')}: {quantity}/{quantity}
       </span>
-      <span className="tk-vincente-lightbold font-24">
-        {t('page.price')}: {price} WOWS
+      <span className="tk-grotesk-lightbold font-14 ellipsis line-h">
+        {t('page.price')}: {price} WOWS{' '}
       </span>
     </div>
   );
