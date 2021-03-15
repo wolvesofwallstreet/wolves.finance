@@ -102,7 +102,7 @@ describe('SFT contracts', function () {
   let marketingWallet: SignerWithAddress;
 
   before(async function () {
-    this.timeout(20 * 1000);
+    this.timeout(30 * 1000);
 
     // Get the Signers
     [signer, marketingWallet] = await hardhat.ethers.getSigners();
