@@ -17,13 +17,9 @@
   flex-basis: 21%;
 }
 
-.card-container a {
-  max-height: 300px;
-}
-
 .card-container .card-visual {
   width: 300px;
-  height: 300px;
+  min-height: 300px;
   margin-bottom: 4px;
   border: grey 1px solid;
   background-image: url(../../assets/loading_animated.gif);

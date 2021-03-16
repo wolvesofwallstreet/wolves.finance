@@ -20,3 +20,7 @@ export const STAKE_CLAIM = 'STAKE_CLAIM'; // claim stake rewards
 export const STAKE_EXIT = 'STAKE_EXIT'; // unstake and claim rewards
 export const STAKE_STATE = 'STAKE_STATE'; // request Stake information
 export const STAKE_LP_AVAILABLE = 'STAKE_LP_AVAILABLE'; // Available LP token
+
+export const SFT_BUY = 'SFT_BUY'; // Buy (mint) an SFT with given level / class
+export const SFT_STATE = 'SFT_STATE'; // SFT cap and minted asset state changed
+export const SFT_USER = 'SFT_USER'; // List of SFT owned by address

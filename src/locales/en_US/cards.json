@@ -7,8 +7,49 @@
       "type": "bois",
       "quantity": 100,
       "price": 0.5,
-      "header": "1/X RARITY - X% PROFIT REWARD - X% RAIDING POTENTIAL",
-      "cards": []
+      "header": "1/{Q} RARITY - X% PROFIT REWARD - X% RAIDING POTENTIAL",
+      "cards": [
+        {
+          "id": "bugsey",
+          "chainRef": 0,
+          "minted": 0,
+          "name": "BUGSEY SIZZLE",
+          "motto": "I'M ABOUT TO SELL YOU A SAUSAGE WITH JUST THE SIZZLE",
+          "description": "This Cryptofolio will in time allow you Stake, Yield farm contain NFT upgrades contain other NFTs and bundle them together to sell and much more. Your Wolves of Wallstreet journey starts here.",
+          "type": "image",
+          "url": "https://github.com/wolvesofwallstreet/wolves.assets.low/raw/main/cards/bois/level1/BUGSEY-{res}.jpg"
+        },
+        {
+          "id": "dobey",
+          "chainRef": 1,
+          "minted": 0,
+          "name": "DREW DOBEY",
+          "motto": "HE'LL RUN YOU AND YOUR IDEA UP THE FLAGPOLE",
+          "description": "This Cryptofolio will in time allow you Stake, Yield farm contain NFT upgrades contain other NFTs and bundle them together to sell and much more. Your Wolves of Wallstreet journey starts here.",
+          "type": "image",
+          "url": "https://github.com/wolvesofwallstreet/wolves.assets.low/raw/main/cards/bois/level1/DOBEY-{res}.jpg"
+        },
+        {
+          "id": "kwai",
+          "chainRef": 2,
+          "minted": 0,
+          "name": "KWAI PUGLEY",
+          "motto": "HE PULLED AN ALL NIGHTER AND IS READY TO POW WOW YOUR PROJECT IDEA OF PISTE",
+          "description": "This Cryptofolio will in time allow you Stake, Yield farm contain NFT upgrades contain other NFTs and bundle them together to sell and much more. Your Wolves of Wallstreet journey starts here.",
+          "type": "image",
+          "url": "https://github.com/wolvesofwallstreet/wolves.assets.low/raw/main/cards/bois/level1/KWAI-{res}.jpg"
+        },
+        {
+          "id": "lucy",
+          "chainRef": 3,
+          "minted": 0,
+          "name": "LUCY LAPPLEY",
+          "motto": "TO FIND THE SECRET SAUCE FIRST YOU NEED TO STIR THE POT",
+          "description": "This Cryptofolio will in time allow you Stake, Yield farm contain NFT upgrades contain other NFTs and bundle them together to sell and much more. Your Wolves of Wallstreet journey starts here.",
+          "type": "image",
+          "url": "https://github.com/wolvesofwallstreet/wolves.assets.low/raw/main/cards/bois/level1/LUCY-{res}.jpg"
+        }
+      ]
     },
     {
       "levelId": 1,
@@ -16,43 +57,47 @@
       "type": "bois",
       "quantity": 80,
       "price": 1,
-      "header": "1/X RARITY - X% PROFIT REWARD - X% RAIDING POTENTIAL",
+      "header": "1/{Q} RARITY - X% PROFIT REWARD - X% RAIDING POTENTIAL",
       "cards": [
         {
           "id": "barkley",
           "chainRef": 0,
+          "minted": 0,
           "name": "BRYANT BARKLEY",
           "motto": "NEVER DRINK THE COOL AID",
           "description": "This Cryptofolio will in time allow you Stake, Yield farm contain NFT upgrades contain other NFTs and bundle them together to sell and much more. Your Wolves of Wallstreet journey starts here.",
           "type": "movie",
-          "url": "https://github.com/videvago/wolves.assets.low/raw/main/cards/bois/level2/BRYANT-{res}.mp4"
+          "url": "https://github.com/wolvesofwallstreet/wolves.assets.low/raw/main/cards/bois/level2/BRYANT-{res}.mp4"
         },
         {
           "id": "dasch",
           "chainRef": 1,
+          "minted": 0,
           "name": "JOHNNY DASCH",
           "motto": "THE FIRST ONE GETS THE OYSTER, THE SECOND GETS THE SHELL",
           "description": "This Cryptofolio will in time allow you Stake, Yield farm contain NFT upgrades contain other NFTs and bundle them together to sell and much more. Your Wolves of Wallstreet journey starts here.",
-          "type": "image",
-          "url": "https://github.com/videvago/wolves.assets.low/raw/main/cards/bois/level2/JOHNNY-{res}.jpg"
+          "type": "movie",
+          "url": "https://github.com/wolvesofwallstreet/wolves.assets.low/raw/main/cards/bois/level2/JOHNNY-{res}.mp4"
         },
         {
           "id": "hound",
           "chainRef": 2,
+          "minted": 0,
           "name": "ETHAN T-HOUND",
           "motto": "DONT DEVELOP PERFECTION, DEVELOP FIRST",
           "description": "This Cryptofolio will in time allow you Stake, Yield farm contain NFT upgrades contain other NFTs and bundle them together to sell and much more. Your Wolves of Wallstreet journey starts here.",
-          "type": "image",
-          "url": "https://github.com/videvago/wolves.assets.low/raw/main/cards/bois/level2/ETHAN-{res}.jpg"
+          "type": "movie",
+          "url": "https://github.com/wolvesofwallstreet/wolves.assets.low/raw/main/cards/bois/level2/ETHAN-{res}.mp4"
         },
         {
           "id": "nole",
           "chainRef": 3,
+          "minted": 0,
           "name": "KSUM NOLE",
           "motto": "I AM INEVITABLE",
           "description": "This Cryptofolio will in time allow you Stake, Yield farm contain NFT upgrades contain other NFTs and bundle them together to sell and much more. Your Wolves of Wallstreet journey starts here.",
-          "type": "image",
-          "url": "https://github.com/videvago/wolves.assets.low/raw/main/cards/bois/level2/NOLE-{res}.jpg"
+          "type": "movie",
+          "url": "https://github.com/wolvesofwallstreet/wolves.assets.low/raw/main/cards/bois/level2/NOLE-{res}.mp4"
         }
       ]
     },
@@ -60,9 +105,9 @@
       "levelId": 2,
       "chainRef": 2,
       "type": "bois",
-      "quantity": 50,
+      "quantity": 60,
       "price": 2,
-      "header": "1/X RARITY - X% PROFIT REWARD - X% RAIDING POTENTIAL",
+      "header": "1/{Q} RARITY - X% PROFIT REWARD - X% RAIDING POTENTIAL",
       "cards": []
     },
     {
@@ -71,7 +116,7 @@
       "type": "bois",
       "quantity": 10,
       "price": 3,
-      "header": "1/X RARITY - X% PROFIT REWARD - X% RAIDING POTENTIAL",
+      "header": "1/{Q} RARITY - X% PROFIT REWARD - X% RAIDING POTENTIAL",
       "cards": []
     },
     {
@@ -80,7 +125,7 @@
       "type": "wolves",
       "quantity": 100,
       "price": 0.5,
-      "header": "1/X RARITY - X% PROFIT REWARD - X% RAIDING POTENTIAL",
+      "header": "1/{Q} RARITY - X% PROFIT REWARD - X% RAIDING POTENTIAL",
       "cards": []
     },
     {
@@ -89,43 +134,47 @@
       "type": "wolves",
       "quantity": 80,
       "price": 1,
-      "header": "1/80 RARITY - 50% PROFIT REWARD - 50% RAIDING POTENTIAL",
+      "header": "1/{Q} RARITY - 50% PROFIT REWARD - 50% RAIDING POTENTIAL",
       "cards": [
         {
           "id": "decko",
           "chainRef": 0,
+          "minted": 0,
           "name": "GORGAN DECKO",
           "motto": "DEFI NEVER SLEEPS",
           "description": "This Cryptofolio will in time allow you Stake, Yield farm contain NFT upgrades contain other NFTs and bundle them together to sell and much more. Your Wolves of Wallstreet journey starts here.",
-          "type": "image",
-          "url": "https://github.com/videvago/wolves.assets.low/raw/main/cards/wolves/level2/GORGAN-{res}.jpg"
+          "type": "movie",
+          "url": "https://github.com/wolvesofwallstreet/wolves.assets.low/raw/main/cards/wolves/level2/GORGAN-{res}.mp4"
         },
         {
           "id": "knight",
           "chainRef": 1,
+          "minted": 0,
           "name": "LAYLA KNIGHT",
           "motto": "WE HUNT FOR THE MOON",
           "description": "This Cryptofolio will in time allow you Stake, Yield farm contain NFT upgrades contain other NFTs and bundle them together to sell and much more. Your Wolves of Wallstreet journey starts here.",
-          "type": "image",
-          "url": "https://github.com/videvago/wolves.assets.low/raw/main/cards/wolves/level2/LAYLA-{res}.jpg"
+          "type": "movie",
+          "url": "https://github.com/wolvesofwallstreet/wolves.assets.low/raw/main/cards/wolves/level2/LAYLA-{res}.mp4"
         },
         {
           "id": "fang",
           "chainRef": 2,
+          "minted": 0,
           "name": "MAX FANG",
           "motto": "BUY WHEN THERE IS BLOOD ON THE STREET",
           "description": "This Cryptofolio will in time allow you Stake, Yield farm contain NFT upgrades contain other NFTs and bundle them together to sell and much more. Your Wolves of Wallstreet journey starts here.",
-          "type": "image",
-          "url": "https://github.com/videvago/wolves.assets.low/raw/main/cards/wolves/level2/MAX-{res}.jpg"
+          "type": "movie",
+          "url": "https://github.com/wolvesofwallstreet/wolves.assets.low/raw/main/cards/wolves/level2/MAX-{res}.mp4"
         },
         {
           "id": "watcher",
           "chainRef": 3,
+          "minted": 0,
           "name": "WARG THE WATCHER",
           "motto": "FILL IT OR KILL IT",
           "description": "This Cryptofolio will in time allow you Stake, Yield farm contain NFT upgrades contain other NFTs and bundle them together to sell and much more. Your Wolves of Wallstreet journey starts here.",
-          "type": "image",
-          "url": "https://github.com/videvago/wolves.assets.low/raw/main/cards/wolves/level2/WARG-{res}.jpg"
+          "type": "movie",
+          "url": "https://github.com/wolvesofwallstreet/wolves.assets.low/raw/main/cards/wolves/level2/WARG-{res}.mp4"
         }
       ]
     },
@@ -135,7 +184,7 @@
       "type": "wolves",
       "quantity": 50,
       "price": 2,
-      "header": "1/X RARITY - X% PROFIT REWARD - X% RAIDING POTENTIAL",
+      "header": "1/{Q} RARITY - X% PROFIT REWARD - X% RAIDING POTENTIAL",
       "cards": []
     },
     {
@@ -144,7 +193,7 @@
       "type": "wolves",
       "quantity": 10,
       "price": 3,
-      "header": "1/X RARITY - X% PROFIT REWARD - X% RAIDING POTENTIAL",
+      "header": "1/{Q} RARITY - X% PROFIT REWARD - X% RAIDING POTENTIAL",
       "cards": []
     }
   ]

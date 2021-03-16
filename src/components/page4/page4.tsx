@@ -12,7 +12,7 @@ import { TFunction, withTranslation } from 'react-i18next';
 import { RouteComponentProps } from 'react-router-dom';
 
 import Logo from '../../assets/logo.png';
-import { ASSETS_LOADED } from '../../stores/constants';
+import { ASSETS_LOADED, SFT_BUY } from '../../stores/constants';
 import { StoreClasses } from '../../stores/store';
 import { CARD_LEVEL } from '../types/cards';
 
@@ -71,13 +71,13 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     const { location } = this.props;
     const { type } = this.state;
     let { cardId, contentLoaded } = this.state;
-    const tokenIds = [0x01000000, 0x01010000, 0x05000000, 0x05000001];
 
     let newType: QueryType = 'wolves';
     let newLevelId = 0;
     let newCardId = '';
 
     const cards = StoreClasses.store.getAssets().cards;
+    const tokenIds = StoreClasses.store.getAssets().userSFT;
     const query = new URLSearchParams(location.search);
 
     // check if we have tokenId given
@@ -184,6 +184,19 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     return query.get('scroll') !== 'false';
   }
 
+  _onBuy(): void {
+    if (this.content) {
+      const payload = { type: SFT_BUY, content: {} };
+      payload.content = {
+        amount: this.content.price,
+        id:
+          (this.content.chainRef << 8) |
+          this.content.cards[this.cardIndex].chainRef,
+      };
+      StoreClasses.dispatcher.dispatch(payload);
+    }
+  }
+
   render(): JSX.Element {
     const { history, t } = this.props;
     const { type } = this.state;
@@ -244,7 +257,9 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
             className={`tk-vincente-lightbold font-24 single-line ${
               this.nextUrl ? 'link' : 'disabled-link'
             } `}
-            onClick={() => history.replace(this.nextUrl)}
+            onClick={() =>
+              this.nextUrl ? history.replace(this.nextUrl) : undefined
+            }
           >
             {contentLoaded && (
               <>
@@ -264,12 +279,8 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                     className="card-visual"
                     autoPlay={true}
                     loop={true}
-                  >
-                    <source
-                      src={currentCard.url.replace('{res}', '500')}
-                      type="video/mp4"
-                    />
-                  </video>
+                    src={currentCard.url.replace('{res}', '500')}
+                  />
                 ) : (
                   <img
                     className="card-visual"
@@ -326,6 +337,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                   type="button"
                   value={t('page4.buy', { name: currentCard.name }).toString()}
                   disabled={false}
+                  onClick={() => this._onBuy()}
                 />
               </>
             )}

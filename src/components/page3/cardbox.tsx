@@ -45,12 +45,8 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
             className="card-visual"
             autoPlay={true}
             loop={true}
-          >
-            <source
-              src={content.url.replace('{res}', '300')}
-              type="video/mp4"
-            />
-          </video>
+            src={content.url.replace('{res}', '300')}
+          />
         ) : (
           <img
             className="card-visual"
@@ -70,7 +66,7 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
       </span>
       <hr className="wolves" />
       <span className="tk-grotesk-lightbold font-14 ellipsis">
-        {t('page.available')}: {quantity}/{quantity}
+        {t('page.available')}: {quantity - content.minted}/{quantity}
       </span>
       <span className="tk-grotesk-lightbold font-14 ellipsis line-h">
         {t('page.price')}: {price} WOWS{' '}

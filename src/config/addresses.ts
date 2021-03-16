@@ -11,31 +11,43 @@ const addresses = {
     //mainet
     token: '0x672EF7E4Fe230B5cA1466C5fDD40588d30FdF90a',
     stakeFarm: '0x6D1D6710aC18aFc168fD1637180deee8d203870F',
+    sftMinter: '',
+    sftHolder: '',
   },
   3: {
     //ropsten
     token: '0x2AEeaEaC18aD6814b1e95F09f55080dDa942B6b9',
     stakeFarm: '0xbA81D1f3a909697eE82054b82F5975a25d0aB9e4',
+    sftMinter: '',
+    sftHolder: '',
   },
   4: {
     //rinkeby
     token: '0x048C1ddc142EE156eD40aa7c270371c25323f4Cd',
     stakeFarm: '0x434C19d1da27666A4a0691369F392563F22Ee992',
+    sftMinter: '0xE6a6a09779Ab5834aCc172eC698174BeBCC98eF2',
+    sftHolder: '0x02A15E2F3CF6Eec72bE7aBF3ff3a3c9cA2079218',
   },
   97: {
     //Binance SC Test
     token: '0x2AEeaEaC18aD6814b1e95F09f55080dDa942B6b9',
     stakeFarm: '0xF65501Cc604a719F85EfAc1Be39f6E32472CFEc9',
+    sftMinter: '',
+    sftHolder: '',
   },
   1337: {
     //private
-    token: '0x6fF3b07366E30E1722409742756eC1aAD4a451Ba',
-    stakeFarm: '0xfb85456E1f6aec7C4024beb26C3a9f3F6eFB2B0a',
+    token: '0x169e969921e1564Ca862E6c764ac4fd4552A6665',
+    stakeFarm: '0xb659e1Aa07FEf1e430078Ba71eE7CCa51aC881DC',
+    sftMinter: '0xc16451DB227B751043516426e12B899ABb3d1a46',
+    sftHolder: '0xAf7512f2B2a4e0Df6BcCCbBDee802E5D5b88683a',
   },
   4003: {
     //Fantom Contabo
     token: '0x048C1ddc142EE156eD40aa7c270371c25323f4Cd',
     stakeFarm: '0xBEDdF8EA233DdC801a4F31D6C33ee756B47876e1',
+    sftMinter: '',
+    sftHolder: '',
   },
 };
 

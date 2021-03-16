@@ -9,6 +9,7 @@
 export type CARD = {
   id: string;
   chainRef: number;
+  minted: number;
   name: string;
   motto: string;
   description: string;
