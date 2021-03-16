@@ -83,7 +83,7 @@
 }
 
 .page1-title-box-text {
-  margin-top: auto;
+  margin-top: 20px; /* ticker is currently hidden */
   margin-bottom: auto;
 }
 

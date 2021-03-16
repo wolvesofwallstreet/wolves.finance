@@ -6,10 +6,10 @@
     "home": "HOME",
     "shop": "SHOP",
     "detail": "DETAILS",
-    "wolvesSft": "WOLVES SFT",
-    "boisSft": "BOIS SFT",
+    "wolvesCf": "WOLVES C-FOLIOS",
+    "boisCf": "BOIS C-FOLIOS",
     "myPack": "MY PACK",
-    "stake": "STAKE"
+    "stake": "STAKE V.1"
   },
   "toast": {
     "walletConnected": "Wallet connected",
@@ -42,20 +42,18 @@
   },
   "page1": {
     "head1": "CHOOSE YOUR CRYPTOFOLIO - TRADER\u00a0WOLVES\u00a0OR\u00a0BUSINESS\u00a0BOIS",
-    "head2": "IN ORDER TO STAKE WITH WOLVES OR YIELD FARM WITH THE BOIS YOU NEED TO PURCHASE YOUR SFT CHARACTER CRYPTO LICENSE",
+    "head2": "IN ORDER TO STAKE WITH WOLVES OR YIELD FARM WITH THE BOIS YOU NEED TO PURCHASE YOUR TEAM CHARACTER CRYPTOFOLIO",
     "wolves1": "HOLDERS & LIQUIDITY POOL STAKERS",
-    "wolves2": "WOLVES SFTs",
+    "wolves2": "WOLVES CRYPTOFOLIOS",
     "wolves3": "ARE YOU PART OF THE PACK?",
-    "wolves4": "EACH WOLF TRADER CHARACTER HAS A DIFFERENT LICENSE LEVEL AND PROFIT MAKING POTENTIAL.",
     "bois1": "STABLE COIN YIELD FARMERS",
-    "bois2": "BOIS SFTs",
+    "bois2": "BOIS CRYPTOFOLIOS",
     "bois3": "OR ARE YOU ONE OF THE BOIS?",
-    "bois4": "EACH BUSINESS BOIS CHARACTER HAS A DIFFERENT YIELD LICENSE LEVEL AND PROFIT MAKING POTENTIAL.",
-    "click": "CLICK ABOVE TO VIEW YOUR CHOICE"
+    "click": "CLICK ABOVE TO VIEW YOUR CHOICES"
   },
   "page3": {
     "welcome-wolves": "WELCOME TO THE WOLFPACK",
-    "newCrypto-wolves": "NEW WOLF CRYPTOFOLIOS FOR HOLDING STAKING & RAIDING",
+    "newCrypto-wolves": "NEW LEVEL1 WOLF CRYPTOFOLIOS FOR HOLDING STAKING & RAIDING",
     "welcome-bois": "WELCOME TO THE BOIS",
     "newCrypto-bois": "NEW BOIS CRYPTOFOLIOS FOR STABLE COIN LENDING",
     "welcome-myPack": "WELCOME TO YOUR PACK",

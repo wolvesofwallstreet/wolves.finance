@@ -61,6 +61,10 @@
   text-align: left;
 }
 
+.wallet-warning {
+  margin: auto;
+}
+
 @media all and (max-width: 800px) {
   .page3-section-container {
     order: 3;

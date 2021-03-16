@@ -41,6 +41,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
   content: CARDS = { levelNames: [], cards: [] };
   levelDescription = '';
   tokenIds: number[] = [];
+  isWalletConnected = true;
   constructor(props: PAGE3_PROPS) {
     super(props);
     this.state = INITIAL_PAGE3_STATE;
@@ -122,108 +123,119 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
 
     return (
       <div className={'wolves-container bg-' + type}>
-        <img
-          src={Logo}
-          alt="WOWS"
-          width="50px"
-          height="50px"
-          className={`${type === 'bois' ? 'rotate' : ''}`}
-        />
-        <h2 className="tk-vincente-lightbold no-margin">
-          {t('page3.welcome-' + type)}
-        </h2>
-        <h3 className="tk-grotesk-lightbold">{t('page3.newCrypto-' + type)}</h3>
-        <span className="line-container">
-          <span id="left" className="dot" />
-          <span className="line" />
-          <span id="right" className="dot" />
-        </span>
-        <div id="page3-section-header">
-          <span className="tk-vincente-lightbold font-24 single-line wolves-orange fixed-pos">
-            &lt;
-            {levelPosition <= startPosition ? (
-              <Link to="/">{t('page.home')}</Link>
-            ) : (
-              <Link to={'?type=' + type + '&levelId=' + (levelId - 1)}>
-                {t('page.previous')}
-              </Link>
-            )}
+        {!this.isWalletConnected ? (
+          <span className="font-32 tk-vincente-lightbold wallet-warning">
+            Wallet is not connected.
+            <br /> Please connect your wallet.
           </span>
-          <span className="page3-section-container tk-vincente-lightbold">
-            {contentLoaded &&
-              this.content.levelNames.map((name: string, index: number) => {
-                return levelId === index ? (
-                  <span
-                    key={'sec_' + index}
-                    className="page3-section page3-section-selected"
-                  >
-                    {name}
-                    <div id="triangle-down" />
-                  </span>
+        ) : (
+          <>
+            <img
+              src={Logo}
+              alt="WOWS"
+              width="50px"
+              height="50px"
+              className={`${type === 'bois' ? 'rotate' : ''}`}
+            />
+            <h2 className="tk-vincente-lightbold no-margin">
+              {t('page3.welcome-' + type)}
+            </h2>
+            <h3 className="tk-grotesk-lightbold">
+              {t('page3.newCrypto-' + type)}
+            </h3>
+            <span className="line-container">
+              <span id="left" className="dot" />
+              <span className="line" />
+              <span id="right" className="dot" />
+            </span>
+            <div id="page3-section-header">
+              <span className="tk-vincente-lightbold font-24 single-line wolves-orange fixed-pos">
+                &lt;
+                {levelPosition <= startPosition ? (
+                  <Link to="/">{t('page.home')}</Link>
                 ) : (
-                  <Link
-                    key={'sec_' + index}
-                    className="page3-section"
-                    to={'?type=' + type + '&levelId=' + index}
-                  >
-                    {name}
+                  <Link to={'?type=' + type + '&levelId=' + (levelId - 1)}>
+                    {t('page.previous')}
                   </Link>
-                );
-              })}
-          </span>
-          <span className="tk-vincente-lightbold font-24 single-line wolves-orange">
-            {hasMoreLevels ? (
-              <Link to={'?type=' + type + '&levelId=' + (levelId + 1)}>
-                {t('page.nextLevel')}
-              </Link>
-            ) : (
-              t('page.nextLevel')
+                )}
+              </span>
+              <span className="page3-section-container tk-vincente-lightbold">
+                {contentLoaded &&
+                  this.content.levelNames.map((name: string, index: number) => {
+                    return levelId === index ? (
+                      <span
+                        key={'sec_' + index}
+                        className="page3-section page3-section-selected"
+                      >
+                        {name}
+                        <div id="triangle-down" />
+                      </span>
+                    ) : (
+                      <Link
+                        key={'sec_' + index}
+                        className="page3-section"
+                        to={'?type=' + type + '&levelId=' + index}
+                      >
+                        {name}
+                      </Link>
+                    );
+                  })}
+              </span>
+              <span className="tk-vincente-lightbold font-24 single-line wolves-orange">
+                {hasMoreLevels ? (
+                  <Link to={'?type=' + type + '&levelId=' + (levelId + 1)}>
+                    {t('page.nextLevel')}
+                  </Link>
+                ) : (
+                  t('page.nextLevel')
+                )}
+                &gt;
+              </span>
+            </div>
+            {contentLoaded && (
+              <h3 className="tk-grotesk-lightbold">{this.levelDescription}</h3>
             )}
-            &gt;
-          </span>
-        </div>
-        {contentLoaded && (
-          <h3 className="tk-grotesk-lightbold">{this.levelDescription}</h3>
-        )}
-        {contentLoaded && (
-          <div id="page3-content-container">
-            {this.content.cards
-              .filter(
-                (level) =>
-                  level.levelId === levelId &&
-                  (display === 'my' || type === level.type)
-              )
-              .map((level) =>
-                level.cards.map((card, index) => {
-                  const collection: JSX.Element[] = [];
-                  const tokenId = (level.chainRef << 8) | card.chainRef;
-                  while (
-                    tokenIdx < this.tokenIds.length &&
-                    this.tokenIds[tokenIdx] >> 16 <= tokenId
-                  ) {
-                    this.tokenIds[tokenIdx] >> 16 === tokenId &&
-                      collection.push(
-                        <CardBox
-                          key={'card_' + tokenIdx}
-                          type={level.type}
-                          levelId={levelId}
-                          content={card}
-                          quantity={level.quantity}
-                          price={level.price}
-                          tokenId={
-                            display === 'my'
-                              ? this.tokenIds[tokenIdx]
-                              : undefined
-                          }
-                          t={t}
-                        />
-                      );
-                    ++tokenIdx;
-                  }
-                  return collection;
-                })
-              )}
-          </div>
+            {contentLoaded && (
+              <div id="page3-content-container">
+                {this.content.cards
+                  .filter(
+                    (level) =>
+                      level.levelId === levelId &&
+                      (display === 'my' || type === level.type)
+                  )
+                  .map((level) =>
+                    level.cards.map((card, index) => {
+                      const collection: JSX.Element[] = [];
+                      const tokenId = (level.chainRef << 8) | card.chainRef;
+                      while (
+                        tokenIdx < this.tokenIds.length &&
+                        this.tokenIds[tokenIdx] >> 16 <= tokenId
+                      ) {
+                        this.tokenIds[tokenIdx] >> 16 === tokenId &&
+                          collection.push(
+                            <CardBox
+                              key={'card_' + tokenIdx}
+                              type={level.type}
+                              levelId={levelId}
+                              content={card}
+                              quantity={level.quantity}
+                              price={level.price}
+                              tokenId={
+                                display === 'my'
+                                  ? this.tokenIds[tokenIdx]
+                                  : undefined
+                              }
+                              t={t}
+                            />
+                          );
+                        ++tokenIdx;
+                      }
+                      return collection;
+                    })
+                  )}
+              </div>
+            )}
+          </>
         )}
       </div>
     );
