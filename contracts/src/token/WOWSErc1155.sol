@@ -93,10 +93,10 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
     _setupRole(DEFAULT_ADMIN_ROLE, _owner);
 
     // Setup wows card definition
-    _wowsLevelCap[0] = 100;
-    _wowsLevelCap[1] = 60;
-    _wowsLevelCap[2] = 40;
-    _wowsLevelCap[3] = 20;
+    _wowsLevelCap[0] = 20;
+    _wowsLevelCap[1] = 20;
+    _wowsLevelCap[4] = 20;
+    _wowsLevelCap[5] = 20;
 
     // Our clone blueprint cryptofolio.
     _cryptofolio = __cryptofolio;

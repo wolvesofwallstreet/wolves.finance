@@ -403,7 +403,7 @@ describe('SFT contracts', function () {
 
     // Check card data
     const [cap, minted] = await sftContract.getCardData(level, cardId);
-    chai.expect(cap).to.equal(60);
+    chai.expect(cap).to.equal(20);
     chai.expect(minted).to.equal(0);
   });
 
@@ -421,9 +421,9 @@ describe('SFT contracts', function () {
       level,
       cardId
     );
-    chai.expect(cap).to.equal(60);
+    chai.expect(cap).to.equal(20);
     chai.expect(minted).to.equal(0);
-    chai.expect(cap2).to.equal(40);
+    chai.expect(cap2).to.equal(0);
     chai.expect(minted2).to.equal(0);
   });
 
