@@ -14,6 +14,10 @@ function toHex(d) {
   return ('0' + Number(d).toString(16)).slice(-2).toUpperCase();
 }
 
+if (!fs.existsSync('./generated')) {
+  fs.mkdirSync('./generated');
+}
+
 cards.levels.forEach((level) =>
   level.cards.forEach((card) => {
     const lc = toHex(level.chainRef) + toHex(card.chainRef);

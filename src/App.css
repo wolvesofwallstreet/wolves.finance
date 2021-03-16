@@ -68,10 +68,6 @@ span a:hover {
   color: var(--wolves-orange) !important;
 }
 
-.disabled-link:active {
-  pointer-events: none;
-}
-
-.disabled-link :hover {
+.disabled-link {
   color: var(--wolves-orange);
 }

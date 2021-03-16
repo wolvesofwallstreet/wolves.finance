@@ -81,17 +81,18 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
     const { location, t } = this.props;
     const query = new URLSearchParams(location.search);
     const type = query.get('type');
+    const levelId = query.get('levelId') || 0;
 
     const result = [
       { id: t('header.home'), to: '/', disabled: location.pathname === '/' },
       {
         id: t('header.wolvesSft'),
-        to: '/shop?type=wolves',
+        to: '/shop?type=wolves&levelId=' + levelId,
         disabled: type === 'wolves',
       },
       {
         id: t('header.boisSft'),
-        to: '/shop?type=bois',
+        to: '/shop?type=bois&levelId=' + levelId,
         disabled: type === 'bois',
       },
       {
@@ -101,7 +102,7 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
       },
       {
         id: t('header.myPack'),
-        to: '/my?type=myPack',
+        to: '/my?type=myPack&levelId=' + levelId,
         disabled: type === 'myPack',
       },
     ];

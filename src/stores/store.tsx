@@ -9,8 +9,10 @@
 import WalletConnectProvider from '@walletconnect/web3-provider';
 import IERC20Abi from 'abi/@openzeppelin/contracts/token/ERC20/IERC20.sol/IERC20.json';
 import UniV2PairAbi from 'abi/contracts/interfaces/uniswap/IUniswapV2Pair.sol/IUniswapV2Pair.json';
+import SFTMinterAbi from 'abi/contracts/src/crowdsale/WOWSSftMinter.sol/WOWSSftMinter.json';
 import StakeAbi from 'abi/contracts/src/investment/UniV2StakeFarm.sol/UniV2StakeFarm.json';
 import TokenAbi from 'abi/contracts/src/token/WOWSErc20.sol/WowsToken.json';
+import SFTHolderAbi from 'abi/contracts/src/token/WOWSErc1155.sol/WOWSERC1155.json';
 import async from 'async';
 import { ethers } from 'ethers';
 import Emitter from 'events';
@@ -26,6 +28,9 @@ import {
   CONNECTION_CHANGED,
   ERC20_TOKEN_CONTRACT,
   NEW_BLOCK,
+  SFT_BUY,
+  SFT_STATE,
+  SFT_USER,
   STAKE_ADD,
   STAKE_CLAIM,
   STAKE_EXIT,
@@ -37,8 +42,9 @@ const emitter = new Emitter.EventEmitter();
 const dispatcher = new Dispatcher.Dispatcher();
 
 type PayloadContent = {
-  amount: number | undefined;
-  filter: Array<string> | undefined;
+  amount?: number;
+  id?: number;
+  filter?: Array<string>;
 };
 
 type Payload = {
@@ -49,10 +55,16 @@ type Payload = {
 type ChainAddresses = {
   token: string;
   stakeFarm: string;
+  sftMinter: string;
+  sftHolder: string;
 };
 interface IIndexable {
   [key: number]: ChainAddresses;
 }
+
+export type SFTStateresult = {
+  status: 'error' | 'caps' | 'user';
+};
 
 export type TokenContractResult = {
   error: string | undefined;
@@ -63,19 +75,6 @@ export type ConnectResult = {
   type: 'event' | 'prod';
   address: string;
   networkName: string;
-};
-
-export type PresaleResult = {
-  error: string | undefined;
-  state: {
-    ethRaised: number;
-    hasClosed: boolean;
-    isOpen: boolean;
-    timeToNextEvent: number;
-    ethUser: number;
-    ethInvested: number;
-    tokenUser: number;
-  };
 };
 
 export type StatusResult = {
@@ -103,6 +102,7 @@ export type StakeResult = {
 type cbf = async.AsyncResultCallback<unknown, Error>;
 
 type ASSETS = {
+  userSFT: number[];
   cards: CARDS;
 };
 
@@ -113,10 +113,10 @@ class Store {
   eventProvider: ethers.providers.WebSocketProvider | null = null;
   /* Contracts */
   tokenContract: ethers.Contract | null = null;
-  presaleContract: ethers.Contract | null = null;
   stakeContract: ethers.Contract | null = null;
   lPContract: ethers.Contract | null = null;
-  presaleContractRO: ethers.Contract | null = null;
+  sftMintContract: ethers.Contract | null = null;
+  sftHolderContractRO: ethers.Contract | null = null;
   stakeContractRO: ethers.Contract | null = null;
   uniDaiWethPairContractRO: ethers.Contract | null = null;
 
@@ -130,6 +130,7 @@ class Store {
   tokenContractAddress = Store.nullAddress;
 
   assets = {
+    userSFT: [],
     cards: { levelNames: [], cards: [] },
   } as ASSETS;
 
@@ -153,6 +154,7 @@ class Store {
         case ERC20_TOKEN_CONTRACT:
           this._getTokenContractData(_payload.content);
           break;
+        /** Staking */
         case STAKE_ADD:
           this._doStakeAdd(_payload.content);
           break;
@@ -167,6 +169,16 @@ class Store {
           break;
         case STAKE_LP_AVAILABLE:
           this._getPoolTokenAmount(_payload.content);
+          break;
+        /** SFT */
+        case SFT_BUY:
+          this._doSftBuy(_payload.content);
+          break;
+        case SFT_STATE:
+          this._getSftState(_payload.content);
+          break;
+        case SFT_USER:
+          this._getUserSft(_payload.content);
           break;
         default: {
           return;
@@ -269,10 +281,7 @@ class Store {
     provider.on('networkChanged', async (networkId: number) => {
       if (this.ethersProvider !== null) {
         const network = await this.ethersProvider.getNetwork();
-        if (network.chainId !== this.chainId) {
-          await this.connect();
-          this._emitNetworkChange();
-        }
+        if (network.chainId !== this.chainId) await this.connect();
       }
     });
   };
@@ -283,7 +292,7 @@ class Store {
       this.ethersProvider.removeAllListeners();
       this.lPContract = null;
       this.tokenContract = null;
-      this.presaleContract = null;
+      this.sftMintContract = null;
       this.ethersProvider = null;
     }
     this.address = '';
@@ -294,8 +303,8 @@ class Store {
   };
 
   close = async () => {
-    this.presaleContractRO = null;
     this.stakeContractRO = null;
+    this.sftHolderContractRO = null;
     await this.disconnect(false);
     if (this.eventProvider) {
       this.eventProvider?.removeAllListeners();
@@ -315,9 +324,20 @@ class Store {
 
   _setupEvents(): boolean {
     this.eventProvider?.removeAllListeners();
+    this.sftHolderContractRO?.removeAllListeners();
     // Our Block ticker
     this.eventProvider?.on('block', (blockNumber) => {
       emitter.emit(NEW_BLOCK, { blockNumber: blockNumber });
+    });
+    this.sftHolderContractRO?.on('TransferSingle', (operator, from, to) => {
+      dispatcher.dispatch({ type: SFT_STATE } as Payload);
+      if (from === this.address || to === this.address)
+        dispatcher.dispatch({ type: SFT_USER } as Payload);
+    });
+    this.sftHolderContractRO?.on('TransferBatch', (operator, from, to) => {
+      dispatcher.dispatch({ type: SFT_STATE } as Payload);
+      if (from === this.address || to === this.address)
+        dispatcher.dispatch({ type: SFT_USER } as Payload);
     });
     return true;
   }
@@ -328,6 +348,8 @@ class Store {
       address: this.address,
       networkName: this.networkName,
     } as ConnectResult);
+    // Request new SFT List
+    if (this.address !== '') dispatcher.dispatch({ type: SFT_USER } as Payload);
   }
 
   _launchEventProvider = async () => {
@@ -368,6 +390,7 @@ class Store {
           networkName: this.networkName,
         } as ConnectResult);
       }
+      dispatcher.dispatch({ type: SFT_STATE } as Payload);
       this._setupEvents();
     } catch (e) {
       console.log(e);
@@ -393,6 +416,11 @@ class Store {
       this.stakeContractRO = new ethers.Contract(
         chainAddresses.stakeFarm,
         StakeAbi,
+        provider
+      );
+      this.sftHolderContractRO = new ethers.Contract(
+        chainAddresses.sftHolder,
+        SFTHolderAbi,
         provider
       );
       // Temporary because of missing route in stakefarm
@@ -427,6 +455,11 @@ class Store {
       this.lPContract = new ethers.Contract(
         await this.stakeContract.stakingToken(),
         IERC20Abi,
+        signer
+      );
+      this.sftMintContract = new ethers.Contract(
+        chainAddresses.sftMinter,
+        SFTMinterAbi,
         signer
       );
       return true;
@@ -486,12 +519,61 @@ class Store {
     }
   };
 
+  _getSftState = async (payloadContent: PayloadContent | undefined) => {
+    // Loop through the assets and build up level / cardIds to query
+    const levels: number[] = [];
+    const cardIds: number[] = [];
+
+    this.assets.cards.cards.forEach((level) =>
+      level.cards.forEach((card) => {
+        levels.push(level.chainRef);
+        cardIds.push(card.chainRef);
+      })
+    );
+
+    try {
+      const result:
+        | number[]
+        | undefined = await this.sftHolderContractRO?.getCardDataBatch(
+        levels,
+        cardIds
+      );
+
+      if (result) {
+        let index = 0;
+        this.assets.cards.cards.forEach((level) =>
+          level.cards.forEach((card) => {
+            level.quantity = result[index++];
+            card.minted = result[index++];
+          })
+        );
+        emitter.emit(SFT_STATE, { status: 'caps' } as SFTStateresult);
+      }
+    } catch (e) {
+      console.log(e.message);
+    }
+  };
+
+  _getUserSft = async (payloadContent: PayloadContent | undefined) => {
+    if (this.address === '' || !this.sftHolderContractRO) return;
+
+    try {
+      const result:
+        | ethers.BigNumber[]
+        | undefined = await this.sftHolderContractRO.getTokenIds(this.address);
+
+      if (result) {
+        this.assets.userSFT = result.map((bn) => bn.toNumber());
+        this.assets.userSFT.sort((a: number, b: number) => a - b);
+        emitter.emit(SFT_STATE, { status: 'user' } as SFTStateresult);
+      }
+    } catch (e) {
+      console.log(e.message);
+    }
+  };
+
   _getTokenContractAddress() {
     return this.tokenContractAddress;
-  }
-
-  _getPresaleContractAddress() {
-    return this.presaleContractRO?.address;
   }
 
   _getTokenContractData = async (payloadContent: PayloadContent) => {
@@ -641,6 +723,71 @@ class Store {
       } as StatusResult);
     } catch (e) {
       emitter.emit(STAKE_EXIT, {
+        status: 'error',
+        errorMessage: e.error ? e.error.message : e.message,
+      } as StatusResult);
+    }
+  };
+
+  _doSftBuy = async (payloadContent: PayloadContent) => {
+    const { amount, id } = payloadContent;
+
+    if (!amount || !id) {
+      emitter.emit(SFT_BUY, {
+        status: 'error',
+        errorMessage: 'Invalid input',
+      } as StatusResult);
+      return;
+    }
+
+    if (!this.sftMintContract || !this.tokenContract) {
+      emitter.emit(SFT_BUY, {
+        status: 'error',
+        errorMessage: 'Invalid contract',
+      } as StatusResult);
+      return;
+    }
+
+    try {
+      const sftAmount = this.toWei(amount);
+
+      const allowance = await this.tokenContract.allowance(
+        this.address,
+        this.sftMintContract.address
+      );
+
+      if (allowance.lt(sftAmount)) {
+        const tx = await this.tokenContract.approve(
+          this.sftMintContract.address,
+          sftAmount
+        );
+        emitter.emit(SFT_BUY, {
+          status: 'approve',
+          tx: tx?.hash,
+        } as StatusResult);
+
+        await tx.wait();
+      }
+
+      const tx:
+        | ethers.ContractTransaction
+        | undefined = await this.sftMintContract?.mintWowsSFT(
+        this.address,
+        id >> 8,
+        id & 0xff
+      );
+      emitter.emit(SFT_BUY, {
+        status: 'tx',
+        tx: tx?.hash,
+      } as StatusResult);
+
+      await tx?.wait();
+      emitter.emit(SFT_BUY, {
+        status: 'success',
+        tx: tx?.hash,
+      } as StatusResult);
+    } catch (e) {
+      emitter.emit(SFT_BUY, {
         status: 'error',
         errorMessage: e.error ? e.error.message : e.message,
       } as StatusResult);

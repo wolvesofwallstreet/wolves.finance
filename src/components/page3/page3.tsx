@@ -69,13 +69,14 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
     const { display, location } = this.props;
     const { type } = this.state;
     let { contentLoaded } = this.state;
-    const { levelId } = this.state;
+    let { levelId } = this.state;
 
     const query = new URLSearchParams((location as Location).search);
     const newType = query.get('type') as QueryType;
 
     if (newType !== type) {
       this.setState({ type: newType });
+      levelId = -1;
       contentLoaded = false;
     }
     if (!contentLoaded) {
@@ -85,20 +86,23 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
       if (!contentLoaded) {
         this.setState({ contentLoaded: true, levelId: 0 });
       }
-      const newLevelId = parseInt(query.get('levelId') || '0');
+      const newLevelId = parseInt(query.get('levelId') || '0') | 0;
       if (levelId !== newLevelId) {
         // retrieve level description
         if (display !== 'my') {
           const idx = this.content.cards.findIndex(
             (level) => level.levelId === newLevelId && level.type === newType
           );
-          this.levelDescription = this.content.cards[idx].header;
+          this.levelDescription = this.content.cards[idx].header.replace(
+            '{Q}',
+            this.content.cards[idx].quantity.toString()
+          );
           this.tokenIds = this.content.cards[idx].cards.map(
             (card) =>
               (this.content.cards[idx].chainRef << 24) | (card.chainRef << 16)
           );
         } else {
-          this.tokenIds = [0x01000000, 0x01010000, 0x05000000, 0x05000001];
+          this.tokenIds = StoreClasses.store.getAssets().userSFT;
           this.levelDescription = 'Hi, this is the My Wolfpack site (TODO)';
         }
         this.setState({ levelId: newLevelId });
@@ -168,12 +172,13 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
               })}
           </span>
           <span className="tk-vincente-lightbold font-24 single-line wolves-orange">
-            <Link
-              to={'?type=' + type + '&levelId=' + (levelId + 1)}
-              className={`${!hasMoreLevels ? 'disabled-link' : ''}`}
-            >
-              {t('page.nextLevel')}
-            </Link>
+            {hasMoreLevels ? (
+              <Link to={'?type=' + type + '&levelId=' + (levelId + 1)}>
+                {t('page.nextLevel')}
+              </Link>
+            ) : (
+              t('page.nextLevel')
+            )}
             &gt;
           </span>
         </div>
