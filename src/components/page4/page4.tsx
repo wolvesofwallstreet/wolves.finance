@@ -313,22 +313,22 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                   <span className="font-16">{currentCard.description}</span>
                   <ul className="tk-vincente-lightbold font-24 rarity-box">
                     <li>
-                      <h2>RARITY: 0/200</h2>
+                      <h2>RARITY: 1/{this.content?.quantity}</h2>
                     </li>
                     <li>
-                      <h2>PROFIT REWARD: 50% </h2>
+                      <h2>PROFIT REWARD: {this.content?.profitReward}% </h2>
                     </li>
-                    <li>
+                    {/*<li>
                       <h2>RAIDING POTENTIAL: 50%</h2>
                     </li>
                     <li>
                       <h2>APY: 430%</h2>
+                    </li>*/}
+                    <li>
+                      <h2>AUTO UPGRADES: {this.content?.autoUpgrade}</h2>
                     </li>
                     <li>
-                      <h2>AUTO UPGRADES: 2 MONTHS</h2>
-                    </li>
-                    <li>
-                      <h2>COST: 5 WOWS</h2>
+                      <h2>COST: {this.content?.price} WOWS</h2>
                     </li>
                   </ul>
                 </div>

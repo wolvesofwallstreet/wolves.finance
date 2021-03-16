@@ -23,6 +23,8 @@ export type CARD_LEVEL = {
   type: string;
   quantity: number;
   price: number;
+  autoUpgrade: string;
+  profitReward: number;
   header: string;
   cards: CARD[];
 };
