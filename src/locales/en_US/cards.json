@@ -113,7 +113,7 @@
       "price": 2,
       "autoUpgrade": "2 MONTHS",
       "profitReward": 75,
-      "header": "1/0 RARITY - 75% PROFIT REWARD",
+      "header": "1/{Q} RARITY - 75% PROFIT REWARD",
       "cards": []
     },
     {
@@ -124,7 +124,7 @@
       "price": 3,
       "autoUpgrade": "2 MONTHS",
       "profitReward": 100,
-      "header": "1/0 RARITY - 100% PROFIT REWARD",
+      "header": "1/{Q} RARITY - 100% PROFIT REWARD",
       "cards": []
     },
     {

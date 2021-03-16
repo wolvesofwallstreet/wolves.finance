@@ -222,7 +222,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         {contentLoaded && (
           <div className="back-level-container">
             <span
-              className="tk-vincente-lightbold font-20 content-margin link"
+              className="tk-vincente-lightbold font-24 content-margin link"
               onClick={() =>
                 history.push(
                   this.tokenId
@@ -233,7 +233,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
             >
               {t('page.back')}
             </span>
-            <span className="tk-vincente-lightbold font-20 content-margin">
+            <span className="tk-vincente-lightbold font-24 content-margin">
               {this.levelName}
             </span>
           </div>

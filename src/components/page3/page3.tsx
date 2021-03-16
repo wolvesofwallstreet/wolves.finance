@@ -9,7 +9,7 @@ import './page3.css';
 
 import { Component } from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link, RouteComponentProps } from 'react-router-dom';
 
 import Logo from '../../assets/logo.png';
 import { ASSETS_LOADED } from '../../stores/constants';
@@ -19,7 +19,8 @@ import { CardBox } from './cardbox';
 
 type PAGE3_PROPS = {
   t: TFunction;
-  location: unknown;
+  location: RouteComponentProps['location'];
+  history: RouteComponentProps['history'];
   display: 'shop' | 'auction' | 'my';
 };
 
@@ -41,6 +42,9 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
   content: CARDS = { levelNames: [], cards: [] };
   levelDescription = '';
   tokenIds: number[] = [];
+  levelFilter = 0;
+  nextLevel = -1;
+  prevLevel = -1;
   isWalletConnected = true;
   constructor(props: PAGE3_PROPS) {
     super(props);
@@ -67,12 +71,12 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
   }
 
   _checkContent(): boolean {
-    const { display, location } = this.props;
+    const { display, history, location } = this.props;
     const { type } = this.state;
     let { contentLoaded } = this.state;
     let { levelId } = this.state;
 
-    const query = new URLSearchParams((location as Location).search);
+    const query = new URLSearchParams(location.search);
     const newType = query.get('type') as QueryType;
 
     if (newType !== type) {
@@ -90,7 +94,13 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
       const newLevelId = parseInt(query.get('levelId') || '0') | 0;
       if (levelId !== newLevelId) {
         // retrieve level description
+        // reset level filter
+        this.levelFilter = 0;
         if (display !== 'my') {
+          this.content.cards.forEach((level) => {
+            if (level.type === newType && level.cards.length > 0)
+              this.levelFilter |= 1 << level.levelId;
+          });
           const idx = this.content.cards.findIndex(
             (level) => level.levelId === newLevelId && level.type === newType
           );
@@ -104,15 +114,46 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
           );
         } else {
           this.tokenIds = StoreClasses.store.getAssets().userSFT;
+          // collect tokenId bitbask
+          let tokenIdBits = 0;
+          this.tokenIds.forEach((n) => (tokenIdBits |= 1 << (n >> 24)));
+          this.content.cards.forEach((level) => {
+            if (tokenIdBits & (1 << level.chainRef))
+              this.levelFilter |= 1 << level.levelId;
+          });
           this.levelDescription =
-            levelId === 0
-              ? '1/60 RARITY - 50% PROFIT SHARE'
-              : '1/60 RARITY - 25% PROFIT SHARE';
+            newLevelId === 0
+              ? '1/60 RARITY - 25% PROFIT SHARE'
+              : '1/60 RARITY - 50% PROFIT SHARE';
+        }
+
+        if (this.levelFilter && (this.levelFilter & (1 << newLevelId)) === 0) {
+          let defaultLevelId = 3;
+          if (this.levelFilter & 1) defaultLevelId = 0;
+          else if (this.levelFilter & 2) defaultLevelId = 1;
+          else if (this.levelFilter & 4) defaultLevelId = 2;
+          query.set('levelId', defaultLevelId.toString());
+          history.replace(location.pathname + '?' + query.toString());
+        }
+        this.prevLevel = -1;
+        this.nextLevel = -1;
+        // check for next level
+        const levelLength = this.content.levelNames.length;
+        for (
+          let i = newLevelId + 1;
+          this.nextLevel < 0 && i < levelLength;
+          ++i
+        ) {
+          if (this.levelFilter & (1 << i)) this.nextLevel = i;
+        }
+
+        // check for next level
+        for (let i = newLevelId - 1; this.prevLevel < 0 && i >= 0; --i) {
+          if (this.levelFilter & (1 << i)) this.prevLevel = i;
         }
         this.setState({ levelId: newLevelId });
       }
     }
-
     return query.get('scroll') !== 'false';
   }
 
@@ -120,7 +161,8 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
     const { display, t } = this.props;
     const { contentLoaded, levelId, type } = this.state;
     const levelPosition = levelId;
-    const hasMoreLevels = levelPosition < this.content.levelNames.length - 1;
+    const hasMoreLevels = (this.levelFilter & (1 << (levelId + 1))) !== 0;
+
     const startPosition = 0;
     let tokenIdx = 0;
 
@@ -168,23 +210,25 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
               <span className="page3-section-container tk-vincente-lightbold">
                 {contentLoaded &&
                   this.content.levelNames.map((name: string, index: number) => {
-                    return levelId === index ? (
-                      <span
-                        key={'sec_' + index}
-                        className="page3-section page3-section-selected"
-                      >
-                        {name}
-                        <div id="triangle-down" />
-                      </span>
-                    ) : (
-                      <Link
-                        key={'sec_' + index}
-                        className="page3-section"
-                        to={'?type=' + type + '&levelId=' + index}
-                      >
-                        {name}
-                      </Link>
-                    );
+                    if ((1 << index) & this.levelFilter) {
+                      return levelId === index ? (
+                        <span
+                          key={`sec_` + index}
+                          className="page3-section page3-section-selected"
+                        >
+                          {name}
+                          <div id="triangle-down" />
+                        </span>
+                      ) : (
+                        <Link
+                          key={'sec_' + index}
+                          className="page3-section"
+                          to={'?type=' + type + '&levelId=' + index}
+                        >
+                          {name}
+                        </Link>
+                      );
+                    } else return null;
                   })}
               </span>
               <span className="tk-vincente-lightbold font-24 single-line wolves-orange">
