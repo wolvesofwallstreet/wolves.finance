@@ -350,6 +350,7 @@ class Store {
     } as ConnectResult);
     // Request new SFT List
     if (this.address !== '') dispatcher.dispatch({ type: SFT_USER } as Payload);
+    else this.assets.userSFT = [];
   }
 
   _launchEventProvider = async () => {

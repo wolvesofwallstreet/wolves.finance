@@ -81,7 +81,15 @@
   line-height: 1;
 }
 .content-margin {
+  margin: 0 8px;
+}
+
+.back-level-container {
   margin-top: 25px;
+}
+
+.back-level-container .link:hover {
+  color: var(--wolves-orange);
 }
 
 @media all and (max-width: 800px) {

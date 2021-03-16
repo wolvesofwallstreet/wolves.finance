@@ -53,17 +53,17 @@
   },
   "page3": {
     "welcome-wolves": "WELCOME TO THE WOLFPACK",
-    "newCrypto-wolves": "NEW LEVEL1 WOLF CRYPTOFOLIOS FOR HOLDING STAKING & RAIDING",
+    "newCrypto-wolves": "NEW LEVEL{Q} WOLF CRYPTOFOLIOS FOR HOLDING STAKING & RAIDING",
     "welcome-bois": "WELCOME TO THE BOIS",
-    "newCrypto-bois": "NEW BOIS CRYPTOFOLIOS FOR STABLE COIN LENDING",
+    "newCrypto-bois": "NEW LEVEL{Q} BOIS CRYPTOFOLIOS FOR STABLE COIN LENDING",
     "welcome-myPack": "WELCOME TO YOUR PACK",
-    "newCrypto-myPack": "YOUR PACK"
+    "newCrypto-myPack": "YOUR PACK FOR BOIS, WOLVES, UPGRADES AND LP NFTs"
   },
   "page4": {
     "welcome-wolves": "$t(page3.welcome-wolves)",
-    "header-wolves": "IN ORDER TO STAKE WITH WOLVES YOU NEED TO PURCHASE YOUR SFT CHARACTER CRYPTO LICENSE",
+    "header-wolves": "This Wolves Cryptofolio, will in time, allow you to Stake, Raid, hold NFT upgrades, hold other NFTs and bundle them together to sell, and much more. Your Wolves of Wallstreet journey starts here.",
     "welcome-bois": "$t(page3.welcome-bois)",
-    "header-bois": "IN ORDER TO YIELD FARM WITH THE BOIS YOU NEED TO PURCHASE YOUR SFT CHARACTER CRYPTO LICENSE",
+    "header-bois": "This Bois Cryptofolio, will in time, allow you to Yield farm, defend the booster pool, hold NFT upgrades, hold other NFTs and bundle them together to sell, and much more. Your Wolves of Wallstreet journey starts here.",
     "header-myPack": "",
     "welcome-myPack": "$t(page3.welcome-myPack)",
     "buy": "BUY {{name}}",

@@ -96,14 +96,14 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
         disabled: type === 'bois',
       },
       {
-        id: t('header.stake'),
-        to: '/stake',
-        disabled: location.pathname === '/stake',
-      },
-      {
         id: t('header.myPack'),
         to: '/my?type=myPack&levelId=' + levelId,
         disabled: type === 'myPack',
+      },
+      {
+        id: t('header.stake'),
+        to: '/stake',
+        disabled: location.pathname === '/stake',
       },
     ];
 

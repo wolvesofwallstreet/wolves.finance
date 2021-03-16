@@ -104,7 +104,10 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
           );
         } else {
           this.tokenIds = StoreClasses.store.getAssets().userSFT;
-          this.levelDescription = 'Hi, this is the My Wolfpack site (TODO)';
+          this.levelDescription =
+            levelId === 0
+              ? '1/60 RARITY - 50% PROFIT SHARE'
+              : '1/60 RARITY - 25% PROFIT SHARE';
         }
         this.setState({ levelId: newLevelId });
       }
@@ -141,7 +144,10 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
               {t('page3.welcome-' + type)}
             </h2>
             <h3 className="tk-grotesk-lightbold">
-              {t('page3.newCrypto-' + type)}
+              {t('page3.newCrypto-' + type).replace(
+                '{Q}',
+                (levelId + 1).toString()
+              )}
             </h3>
             <span className="line-container">
               <span id="left" className="dot" />
