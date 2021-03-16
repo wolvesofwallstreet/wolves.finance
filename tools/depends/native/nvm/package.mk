@@ -18,7 +18,7 @@
 
 # Dependency name and version
 NVM_REPO_NAME = nvm
-NVM_VERSION = 0.37.0
+NVM_VERSION = 0.37.2
 NVM_INSTALL_SCRIPT = https://raw.githubusercontent.com/nvm-sh/$(NVM_REPO_NAME)/v$(NVM_VERSION)/install.sh
 NVM_BIN = nvm-exec
 
