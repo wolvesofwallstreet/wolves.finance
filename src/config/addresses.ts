@@ -11,8 +11,8 @@ const addresses = {
     //mainet
     token: '0x672EF7E4Fe230B5cA1466C5fDD40588d30FdF90a',
     stakeFarm: '0x6D1D6710aC18aFc168fD1637180deee8d203870F',
-    sftMinter: '',
-    sftHolder: '',
+    sftMinter: '0xD065184F181275C4572e67f901fD3772EeDFdF37',
+    sftHolder: '0x64B3342dB643f3Fb4da5781b6D09B44Ab4668dE4',
   },
   3: {
     //ropsten

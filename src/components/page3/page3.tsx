@@ -12,8 +12,16 @@ import { TFunction, withTranslation } from 'react-i18next';
 import { Link, RouteComponentProps } from 'react-router-dom';
 
 import Logo from '../../assets/logo.png';
-import { ASSETS_LOADED } from '../../stores/constants';
-import { StoreClasses } from '../../stores/store';
+import {
+  ASSETS_LOADED,
+  CONNECTION_CHANGED,
+  SFT_STATE,
+} from '../../stores/constants';
+import {
+  ConnectResult,
+  SFTStateresult,
+  StoreClasses,
+} from '../../stores/store';
 import { CARDS } from '../types/cards';
 import { CardBox } from './cardbox';
 
@@ -30,12 +38,14 @@ type PAGE3_STATE = {
   contentLoaded: boolean;
   type: QueryType;
   levelId: number;
+  isWalletConnected: boolean;
 };
 
 const INITIAL_PAGE3_STATE: PAGE3_STATE = {
   contentLoaded: false,
   type: 'wolves',
   levelId: 1,
+  isWalletConnected: false,
 };
 
 class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
@@ -45,16 +55,20 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
   levelFilter = 0;
   nextLevel = -1;
   prevLevel = -1;
-  isWalletConnected = true;
   constructor(props: PAGE3_PROPS) {
     super(props);
     this.state = INITIAL_PAGE3_STATE;
+    this.onConnectionChanged = this.onConnectionChanged.bind(this);
     this.onAssetsLoaded = this.onAssetsLoaded.bind(this);
+    this.onSFTState = this.onSFTState.bind(this);
   }
 
   componentDidMount(): void {
     this._checkContent();
+    this.setState({ isWalletConnected: StoreClasses.store.isConnected() });
+    StoreClasses.emitter.on(CONNECTION_CHANGED, this.onConnectionChanged);
     StoreClasses.emitter.on(ASSETS_LOADED, this.onAssetsLoaded);
+    StoreClasses.emitter.on(SFT_STATE, this.onSFTState);
   }
 
   componentDidUpdate(): void {
@@ -63,6 +77,18 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
 
   componentWillUnmount(): void {
     StoreClasses.emitter.off(ASSETS_LOADED, this.onAssetsLoaded);
+    StoreClasses.emitter.off(SFT_STATE, this.onSFTState);
+    StoreClasses.emitter.off(CONNECTION_CHANGED, this.onConnectionChanged);
+  }
+
+  onConnectionChanged(params: ConnectResult): void {
+    if (params.type === 'prod') {
+      this.setState({ isWalletConnected: params.address !== '' });
+    }
+  }
+
+  onSFTState(ststus: SFTStateresult) {
+    if (this.state.contentLoaded) this.setState({ contentLoaded: true });
   }
 
   onAssetsLoaded(type: string) {
@@ -168,7 +194,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
 
     return (
       <div className={'wolves-container bg-' + type}>
-        {!this.isWalletConnected ? (
+        {!this.state.isWalletConnected && display === 'my' ? (
           <span className="font-32 tk-vincente-lightbold wallet-warning">
             Wallet is not connected.
             <br /> Please connect your wallet.
