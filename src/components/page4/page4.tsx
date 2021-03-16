@@ -12,8 +12,12 @@ import { TFunction, withTranslation } from 'react-i18next';
 import { RouteComponentProps } from 'react-router-dom';
 
 import Logo from '../../assets/logo.png';
-import { ASSETS_LOADED, SFT_BUY } from '../../stores/constants';
-import { StoreClasses } from '../../stores/store';
+import {
+  ASSETS_LOADED,
+  CONNECTION_CHANGED,
+  SFT_BUY,
+} from '../../stores/constants';
+import { ConnectResult, StoreClasses } from '../../stores/store';
 import { CARD_LEVEL } from '../types/cards';
 
 type PAGE4_PROPS = {
@@ -28,12 +32,14 @@ type PAGE4_STATE = {
   cardId: string;
   contentLoaded: boolean;
   type: QueryType;
+  isWalletConnected: boolean;
 };
 
 const INITIAL_PAGE4_STATE: PAGE4_STATE = {
   cardId: '',
   contentLoaded: false,
   type: 'wolves',
+  isWalletConnected: false,
 };
 
 class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
@@ -43,16 +49,18 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
   levelName = '';
   nextUrl = '';
   prevUrl = '';
-  isWalletConnected = true;
 
   constructor(props: PAGE4_PROPS) {
     super(props);
     this.state = INITIAL_PAGE4_STATE;
+    this.onConnectionChanged = this.onConnectionChanged.bind(this);
     this.onAssetsLoaded = this.onAssetsLoaded.bind(this);
   }
 
   componentDidMount(): void {
     this._checkContent();
+    this.setState({ isWalletConnected: StoreClasses.store.isConnected() });
+    StoreClasses.emitter.on(CONNECTION_CHANGED, this.onConnectionChanged);
     StoreClasses.emitter.on(ASSETS_LOADED, this.onAssetsLoaded);
   }
 
@@ -62,6 +70,13 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
 
   componentWillUnmount(): void {
     StoreClasses.emitter.off(ASSETS_LOADED, this.onAssetsLoaded);
+    StoreClasses.emitter.off(CONNECTION_CHANGED, this.onConnectionChanged);
+  }
+
+  onConnectionChanged(params: ConnectResult): void {
+    if (params.type === 'prod') {
+      this.setState({ isWalletConnected: params.address !== '' });
+    }
   }
 
   onAssetsLoaded(type: string) {
@@ -200,7 +215,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
 
   render(): JSX.Element {
     const { history, t } = this.props;
-    const { type } = this.state;
+    const { isWalletConnected, type } = this.state;
     const { contentLoaded } = this.state;
 
     const cardlength = this.content?.cards.length || 0;
@@ -208,7 +223,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       cardlength > 0 ? this.content?.cards[this.cardIndex] : undefined;
 
     const getButtonText = (s: string): string =>
-      this.isWalletConnected ? s : t('header.connectWallet').toString();
+      isWalletConnected ? s : t('header.connectWallet').toString();
 
     return (
       <div className={'wolves-container bg-' + type}>
@@ -346,7 +361,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                     value={getButtonText(
                       t('page4.buy', { name: currentCard.name }).toString()
                     )}
-                    disabled={!this.isWalletConnected}
+                    disabled={!isWalletConnected}
                     onClick={() => this._onBuy()}
                   />
                 )}
