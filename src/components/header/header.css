@@ -54,7 +54,7 @@
   margin: 8px 0px 8px 0px;
 }
 
-@media screen and (max-width: 995px) {
+@media screen and (max-width: 997px) {
   .navbar-collapse a,
   .navbar-collapse span {
     margin: 2px 8px;
@@ -65,6 +65,14 @@
     flex-direction: column;
     justify-content: unset;
   }
+}
+
+@media screen and (max-width: 500px) {
+  .navbar-collapse a,
+  .navbar-collapse span {
+    font-size: 26px;
+  }
+ 
 }
 
 .dp-conn-form {
