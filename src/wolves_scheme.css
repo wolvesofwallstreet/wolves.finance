@@ -24,6 +24,7 @@
   align-items: center;
   flex-direction: column;
   padding: 15px;
+  min-height: 300px;
 }
 
 .wolves-container.bg-wolves {

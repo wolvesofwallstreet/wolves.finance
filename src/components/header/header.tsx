@@ -86,24 +86,24 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
     const result = [
       { id: t('header.home'), to: '/', disabled: location.pathname === '/' },
       {
-        id: t('header.wolvesSft'),
+        id: t('header.wolvesCf'),
         to: '/shop?type=wolves&levelId=' + levelId,
         disabled: type === 'wolves',
       },
       {
-        id: t('header.boisSft'),
+        id: t('header.boisCf'),
         to: '/shop?type=bois&levelId=' + levelId,
         disabled: type === 'bois',
-      },
-      {
-        id: t('header.stake'),
-        to: '/stake',
-        disabled: location.pathname === '/stake',
       },
       {
         id: t('header.myPack'),
         to: '/my?type=myPack&levelId=' + levelId,
         disabled: type === 'myPack',
+      },
+      {
+        id: t('header.stake'),
+        to: '/stake',
+        disabled: location.pathname === '/stake',
       },
     ];
 

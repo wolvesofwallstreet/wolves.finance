@@ -43,6 +43,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
   levelName = '';
   nextUrl = '';
   prevUrl = '';
+  isWalletConnected = true;
 
   constructor(props: PAGE4_PROPS) {
     super(props);
@@ -206,6 +207,9 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     const currentCard =
       cardlength > 0 ? this.content?.cards[this.cardIndex] : undefined;
 
+    const getButtonText = (s: string): string =>
+      this.isWalletConnected ? s : t('header.connectWallet').toString();
+
     return (
       <div className={'wolves-container bg-' + type}>
         <img src={Logo} alt="WOWS" width="50px" height="50px" />
@@ -216,9 +220,23 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
           {t('page4.header-' + type)}
         </h3>
         {contentLoaded && (
-          <span className="tk-vincente-lightbold font-20 content-margin">
-            {this.levelName}
-          </span>
+          <div className="back-level-container">
+            <span
+              className="tk-vincente-lightbold font-24 content-margin link"
+              onClick={() =>
+                history.push(
+                  this.tokenId
+                    ? `my?type=myPack&levelId=${this.content?.levelId}`
+                    : `/shop?type=${type}&levelId=${this.content?.levelId}`
+                )
+              }
+            >
+              {t('page.back')}
+            </span>
+            <span className="tk-vincente-lightbold font-24 content-margin">
+              {this.levelName}
+            </span>
+          </div>
         )}
         <span className="line-container">
           <span id="left" className="dot" />
@@ -230,27 +248,16 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
           className="tk-vincente-lightbold font-20 single-line"
         >
           <span>
-            &lt;
-            {this.prevUrl ? (
-              <span
-                className="tk-vincente-lightbold font-24 single-line link"
-                onClick={() => history.push(this.prevUrl)}
-              >
-                {t('page.previousCard')}
-              </span>
-            ) : (
-              <span
-                className="tk-vincente-lightbold font-24 single-line link"
-                onClick={() =>
-                  history.push(
-                    this.tokenId
-                      ? `my?type=myPack&levelId=${this.content?.levelId}`
-                      : `/shop?type=${type}&levelId=${this.content?.levelId}`
-                  )
-                }
-              >
-                {t('page.back')}
-              </span>
+            {this.prevUrl && (
+              <>
+                &lt;
+                <span
+                  className="tk-vincente-lightbold font-24 single-line link"
+                  onClick={() => history.push(this.prevUrl)}
+                >
+                  {t('page.previousCard')}
+                </span>
+              </>
             )}
           </span>
           <span
@@ -332,13 +339,17 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                     </li>
                   </ul>
                 </div>
-                <input
-                  className="wolves-btn buy-btn"
-                  type="button"
-                  value={t('page4.buy', { name: currentCard.name }).toString()}
-                  disabled={false}
-                  onClick={() => this._onBuy()}
-                />
+                {!this.tokenId && (
+                  <input
+                    className="wolves-btn buy-btn"
+                    type="button"
+                    value={getButtonText(
+                      t('page4.buy', { name: currentCard.name }).toString()
+                    )}
+                    disabled={!this.isWalletConnected}
+                    onClick={() => this._onBuy()}
+                  />
+                )}
               </>
             )}
           </div>

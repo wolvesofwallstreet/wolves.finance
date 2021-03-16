@@ -5,11 +5,11 @@
       "levelId": 0,
       "chainRef": 0,
       "type": "bois",
-      "quantity": 20,
+      "quantity": 0,
       "price": 0.5,
       "autoUpgrade": "2 MONTHS",
       "profitReward": 25,
-      "header": "1/20 RARITY - 25% PROFIT REWARD",
+      "header": "1/{Q} RARITY - 25% PROFIT SHARE",
       "cards": [
         {
           "id": "bugsey",
@@ -57,11 +57,11 @@
       "levelId": 1,
       "chainRef": 1,
       "type": "bois",
-      "quantity": 20,
+      "quantity": 0,
       "price": 1,
       "autoUpgrade": "2 MONTHS",
       "profitReward": 50,
-      "header": "1/20 RARITY - 50% PROFIT REWARD",
+      "header": "1/{Q} RARITY - 50% PROFIT SHARE",
       "cards": [
         {
           "id": "barkley",
@@ -113,7 +113,7 @@
       "price": 2,
       "autoUpgrade": "2 MONTHS",
       "profitReward": 75,
-      "header": "1/0 RARITY - 75% PROFIT REWARD",
+      "header": "1/{Q} RARITY - 75% PROFIT REWARD",
       "cards": []
     },
     {
@@ -124,18 +124,18 @@
       "price": 3,
       "autoUpgrade": "2 MONTHS",
       "profitReward": 100,
-      "header": "1/0 RARITY - 100% PROFIT REWARD",
+      "header": "1/{Q} RARITY - 100% PROFIT REWARD",
       "cards": []
     },
     {
       "levelId": 0,
       "chainRef": 4,
       "type": "wolves",
-      "quantity": 20,
+      "quantity": 0,
       "price": 0.5,
       "autoUpgrade": "2 MONTHS",
       "profitReward": 25,
-      "header": "1/20 RARITY - 25% PROFIT REWARD",
+      "header": "1/{Q} RARITY - 25% PROFIT SHARE",
       "cards": [
         {
           "id": "aksinia",
@@ -183,11 +183,11 @@
       "levelId": 1,
       "chainRef": 5,
       "type": "wolves",
-      "quantity": 20,
+      "quantity": 0,
       "price": 1,
       "autoUpgrade": "2 MONTHS",
       "profitReward": 50,
-      "header": "1/20 RARITY - 50% PROFIT REWARD",
+      "header": "1/{Q} RARITY - 50% PROFIT SHARE",
       "cards": [
         {
           "id": "decko",
@@ -239,7 +239,7 @@
       "price": 2,
       "autoUpgrade": "2 MONTHS",
       "profitReward": 75,
-      "header": "1/0 RARITY - 75% PROFIT REWARD",
+      "header": "1/{Q} RARITY - 25% PROFIT SHARE",
       "cards": []
     },
     {
@@ -250,7 +250,7 @@
       "price": 3,
       "autoUpgrade": "2 MONTHS",
       "profitReward": 100,
-      "header": "1/0 RARITY - 100% PROFIT REWARD",
+      "header": "1/{Q} RARITY - 25% PROFIT SHARE",
       "cards": []
     }
   ]

@@ -12,11 +12,6 @@
   text-align: center;
   min-height: 100vh;
 }
-@media screen and (max-width: 450px) {
-  .App {
-    min-height: auto;
-  }
-}
 
 .no-margin {
   margin: 0px;
