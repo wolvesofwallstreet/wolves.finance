@@ -98,7 +98,8 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
     }
   }
 
-  onSFTState(ststus: SFTStateresult): void {
+  onSFTState(status: SFTStateresult): void {
+    console.log('xxx status: ', status.status);
     this.setState({ contentLoaded: false });
   }
 
@@ -127,6 +128,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
     if (this.content.levelNames.length > 0) {
       if (!contentLoaded) {
         this.setState({ contentLoaded: true, levelId: -1 });
+        return;
       }
       const newLevelId = parseInt(query.get('levelId') || '0') | 0;
       if (levelId !== newLevelId) {

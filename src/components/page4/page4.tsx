@@ -177,26 +177,28 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         } else {
           const cardlength = this.content?.cards.length || 0;
           if (cardlength > 1) {
-            const nextCardIndex = this.cardIndex + 1;
-            const prevCardIndex = this.cardIndex - 1;
-            if (prevCardIndex >= 0)
-              this.prevUrl =
-                '?type=' +
-                newType +
-                '&levelId=' +
-                newLevelId +
-                '&cardId=' +
-                this.content?.cards[prevCardIndex].id +
-                '&scroll=false';
-            if (nextCardIndex < cardlength)
-              this.nextUrl =
-                '?type=' +
-                newType +
-                '&levelId=' +
-                newLevelId +
-                '&cardId=' +
-                this.content?.cards[nextCardIndex].id +
-                '&scroll=false';
+            let nextCardIndex = this.cardIndex + 1;
+
+            if (nextCardIndex >= cardlength) nextCardIndex = 0;
+            let prevCardIndex = this.cardIndex - 1;
+            if (prevCardIndex < 0) prevCardIndex = cardlength - 1;
+
+            this.prevUrl =
+              '?type=' +
+              newType +
+              '&levelId=' +
+              newLevelId +
+              '&cardId=' +
+              this.content?.cards[prevCardIndex].id +
+              '&scroll=false';
+            this.nextUrl =
+              '?type=' +
+              newType +
+              '&levelId=' +
+              newLevelId +
+              '&cardId=' +
+              this.content?.cards[nextCardIndex].id +
+              '&scroll=false';
           }
         }
         this.setState({ cardId: newCardId });
@@ -251,7 +253,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                 )
               }
             >
-              {t('page.back')}
+              &lt;{t('page.back')}
             </span>
             <span className="tk-vincente-lightbold font-24 content-margin">
               {this.levelName}
