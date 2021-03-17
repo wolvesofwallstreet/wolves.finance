@@ -94,14 +94,14 @@
           "url": "https://github.com/wolvesofwallstreet/wolves.assets.low/raw/main/cards/bois/level2/ETHAN-{res}.mp4"
         },
         {
-          "id": "nole",
-          "chainRef": 3,
-          "minted": 0,
-          "name": "KSUM NOLE",
-          "motto": "I AM INEVITABLE",
-          "description": "An iconic entrepreneur and visionary, Ksum can run four businesses simultaneously. His impressive portfolio boasts space projects that move at the speed of light, electric cars and the audacity to inhabit new planets. Smashing through new frontiers and paradigms of both space and time, Ksum is the ultimate innovator. Not short of a dollar, he is revolutionising trillion-dollar industries at the drop of hat.",
-          "type": "movie",
-          "url": "https://github.com/wolvesofwallstreet/wolves.assets.low/raw/main/cards/bois/level2/NOLE-{res}.mp4"
+          "//id": "nole",
+          "//chainRef": 3,
+          "//minted": 0,
+          "//name": "KSUM NOLE",
+          "//motto": "I AM INEVITABLE",
+          "//description": "An iconic entrepreneur and visionary, Ksum can run four businesses simultaneously. His impressive portfolio boasts space projects that move at the speed of light, electric cars and the audacity to inhabit new planets. Smashing through new frontiers and paradigms of both space and time, Ksum is the ultimate innovator. Not short of a dollar, he is revolutionising trillion-dollar industries at the drop of hat.",
+          "//type": "movie",
+          "//url": "https://github.com/wolvesofwallstreet/wolves.assets.low/raw/main/cards/bois/level2/NOLE-{res}.mp4"
         }
       ]
     },
@@ -210,14 +210,14 @@
           "url": "https://github.com/wolvesofwallstreet/wolves.assets.low/raw/main/cards/wolves/level2/LAYLA-{res}.mp4"
         },
         {
-          "id": "fang",
-          "chainRef": 2,
-          "minted": 0,
-          "name": "MAX FANG",
-          "motto": "BUY WHEN THERE IS BLOOD ON THE STREETS",
-          "description": "With maximum skin in the game, Max is ruthless and loves it when the trading wolves around him are bleeding out. Contrarian in nature, he goes against the crowd to snap up his deals. He laughs in the face of fear and showcases it in the money he’s made from those FUD losers.",
-          "type": "movie",
-          "url": "https://github.com/wolvesofwallstreet/wolves.assets.low/raw/main/cards/wolves/level2/MAX-{res}.mp4"
+          "//id": "fang",
+          "//chainRef": 2,
+          "//minted": 0,
+          "//name": "MAX FANG",
+          "//motto": "BUY WHEN THERE IS BLOOD ON THE STREETS",
+          "//description": "With maximum skin in the game, Max is ruthless and loves it when the trading wolves around him are bleeding out. Contrarian in nature, he goes against the crowd to snap up his deals. He laughs in the face of fear and showcases it in the money he’s made from those FUD losers.",
+          "//type": "movie",
+          "//url": "https://github.com/wolvesofwallstreet/wolves.assets.low/raw/main/cards/wolves/level2/MAX-{res}.mp4"
         },
         {
           "id": "watcher",

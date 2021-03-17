@@ -20,7 +20,7 @@
   font-size: 22px;
   line-height: 1.2em;
   color: white;
-  margin: 0 15px;
+  margin: 0 12px;
 }
 
 .navbar-collapse a:hover {
@@ -54,7 +54,7 @@
   margin: 8px 0px 8px 0px;
 }
 
-@media screen and (max-width: 997px) {
+@media screen and (max-width: 992px) {
   .navbar-collapse a,
   .navbar-collapse span {
     margin: 2px 8px;
