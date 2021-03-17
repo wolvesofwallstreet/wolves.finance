@@ -25,8 +25,8 @@ const addresses = {
     //rinkeby
     token: '0x048C1ddc142EE156eD40aa7c270371c25323f4Cd',
     stakeFarm: '0x434C19d1da27666A4a0691369F392563F22Ee992',
-    sftMinter: '0xE6a6a09779Ab5834aCc172eC698174BeBCC98eF2',
-    sftHolder: '0x02A15E2F3CF6Eec72bE7aBF3ff3a3c9cA2079218',
+    sftMinter: '0x951A365Dd2731ba8B802d1d1b05D70576768c084',
+    sftHolder: '0x12a7e16CA95DF8f6753157d3ADAd155f90926cC9',
   },
   97: {
     //Binance SC Test

@@ -99,7 +99,6 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
   }
 
   onSFTState(status: SFTStateresult): void {
-    console.log('xxx status: ', status.status);
     this.setState({ contentLoaded: false });
   }
 
