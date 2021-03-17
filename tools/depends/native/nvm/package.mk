@@ -45,6 +45,7 @@ $(NVM_BIN_PATH): $(S)/.precheckout
 
 	[ -f "$(NVM_BIN_PATH)" ] || ( \
 	  wget -qO- "$(NVM_INSTALL_SCRIPT)" | \
+	    sed -e 's|$$(nvm_install_dir)|$(REPO_DIR_NVM)|' | \
 	    NVM_DIR="$(REPO_DIR_NVM)" \
 	    PROFILE="/dev/null" \
 	    bash \
