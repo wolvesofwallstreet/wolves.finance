@@ -263,17 +263,19 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
           className="tk-vincente-lightbold font-20 single-line"
         >
           <span>
-            {this.prevUrl && (
-              <>
-                &lt;
-                <span
-                  className="tk-vincente-lightbold font-24 single-line link"
-                  onClick={() => history.push(this.prevUrl)}
-                >
-                  {t('page.previousCard')}
-                </span>
-              </>
-            )}
+            <>
+              &lt;
+              <span
+                className={`tk-vincente-lightbold font-24 single-line ${
+                  this.prevUrl ? 'link' : 'disabled-link'
+                }`}
+                onClick={() =>
+                  this.prevUrl ? history.push(this.prevUrl) : undefined
+                }
+              >
+                {t('page.previousCard')}
+              </span>
+            </>
           </span>
           <span
             className={`tk-vincente-lightbold font-24 single-line ${

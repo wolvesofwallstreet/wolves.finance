@@ -17,6 +17,10 @@
   cursor: pointer;
 }
 
+#page4-section-header .disabled-link {
+  color: var(--wolves-orange);
+}
+
 #page4-section-header .link:hover {
   color: var(--wolves-orange);
 }
