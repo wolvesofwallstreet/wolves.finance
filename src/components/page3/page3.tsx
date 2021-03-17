@@ -7,7 +7,7 @@
  */
 import './page3.css';
 
-import { Component } from 'react';
+import React, { Component } from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { Link, RouteComponentProps } from 'react-router-dom';
 
@@ -44,7 +44,7 @@ type PAGE3_STATE = {
 const INITIAL_PAGE3_STATE: PAGE3_STATE = {
   contentLoaded: false,
   type: 'wolves',
-  levelId: 1,
+  levelId: -1,
   isWalletConnected: false,
 };
 
@@ -59,6 +59,9 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
   levelFilter = 0;
   nextLevel = -1;
   prevLevel = -1;
+  scrollOnUpdate = true;
+  mainRef: React.RefObject<HTMLDivElement> = React.createRef();
+
   constructor(props: PAGE3_PROPS) {
     super(props);
     this.state = INITIAL_PAGE3_STATE;
@@ -76,7 +79,11 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
   }
 
   componentDidUpdate(): void {
-    if (this._checkContent()) window.scrollTo(0, 0);
+    this._checkContent();
+    if (this.scrollOnUpdate) {
+      this.mainRef.current?.scrollIntoView();
+      this.scrollOnUpdate = false;
+    }
   }
 
   componentWillUnmount(): void {
@@ -91,16 +98,16 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
     }
   }
 
-  onSFTState(ststus: SFTStateresult) {
-    if (this.state.contentLoaded) this.setState({ contentLoaded: true });
+  onSFTState(ststus: SFTStateresult): void {
+    this.setState({ contentLoaded: false });
   }
 
-  onAssetsLoaded(type: string) {
+  onAssetsLoaded(type: string): void {
     this.setState({ contentLoaded: false });
     this._checkContent();
   }
 
-  _checkContent(): boolean {
+  _checkContent(): void {
     const { display, history, location } = this.props;
     const { type } = this.state;
     let { contentLoaded } = this.state;
@@ -119,7 +126,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
     }
     if (this.content.levelNames.length > 0) {
       if (!contentLoaded) {
-        this.setState({ contentLoaded: true, levelId: 0 });
+        this.setState({ contentLoaded: true, levelId: -1 });
       }
       const newLevelId = parseInt(query.get('levelId') || '0') | 0;
       if (levelId !== newLevelId) {
@@ -186,7 +193,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
         this.setState({ levelId: newLevelId });
       }
     }
-    return query.get('scroll') !== 'false';
+    if (query.get('scroll') === 'false') this.scrollOnUpdate = false;
   }
 
   render(): JSX.Element {
@@ -199,7 +206,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
     let tokenIdx = 0;
 
     return (
-      <div className={'wolves-container bg-' + type}>
+      <div ref={this.mainRef} className={'wolves-container bg-' + type}>
         {!this.state.isWalletConnected && display === 'my' ? (
           <span className="font-32 tk-vincente-lightbold wallet-warning">
             Wallet is not connected.

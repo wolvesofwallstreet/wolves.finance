@@ -49,6 +49,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
   levelName = '';
   nextUrl = '';
   prevUrl = '';
+  scrollOnUpdate = true;
 
   constructor(props: PAGE4_PROPS) {
     super(props);
@@ -65,7 +66,11 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
   }
 
   componentDidUpdate(): void {
-    if (this._checkContent()) window.scrollTo(0, 0);
+    this._checkContent();
+    if (this.scrollOnUpdate) {
+      window.scrollTo(0, 0);
+      this.scrollOnUpdate = false;
+    }
   }
 
   componentWillUnmount(): void {
@@ -79,11 +84,11 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     }
   }
 
-  onAssetsLoaded(type: string) {
+  onAssetsLoaded(type: string): void {
     this._checkContent();
   }
 
-  _checkContent() {
+  _checkContent(): void {
     const { location } = this.props;
     const { type } = this.state;
     let { cardId, contentLoaded } = this.state;
@@ -160,12 +165,12 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
             const prevTokenId = nextTokenId - 2;
             if (prevTokenId >= 0)
               this.prevUrl =
-                'detail?type=myPack&tokenId=' +
+                '?type=myPack&tokenId=' +
                 tokenIds[prevTokenId] +
                 '&scroll=false';
             if (nextTokenId < tokenIds.length)
               this.nextUrl =
-                'detail?type=myPack&tokenId=' +
+                '?type=myPack&tokenId=' +
                 tokenIds[nextTokenId] +
                 '&scroll=false';
           }
@@ -197,7 +202,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         this.setState({ cardId: newCardId });
       }
     }
-    return query.get('scroll') !== 'false';
+    if (query.get('scroll') === 'false') this.scrollOnUpdate = false;
   }
 
   _onBuy(): void {
@@ -226,7 +231,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       isWalletConnected ? s : t('header.connectWallet').toString();
 
     return (
-      <div className={'wolves-container bg-' + type}>
+      <div id="top" className={'wolves-container bg-' + type}>
         <img src={Logo} alt="WOWS" width="50px" height="50px" />
         <h2 className="tk-vincente-lightbold no-margin">
           {t('page4.welcome-' + type)}
