@@ -49,6 +49,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
   levelName = '';
   nextUrl = '';
   prevUrl = '';
+  scrollOnUpdate = true;
 
   constructor(props: PAGE4_PROPS) {
     super(props);
@@ -65,7 +66,11 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
   }
 
   componentDidUpdate(): void {
-    if (this._checkContent()) window.scrollTo(0, 0);
+    this._checkContent();
+    if (this.scrollOnUpdate) {
+      window.scrollTo(0, 0);
+      this.scrollOnUpdate = false;
+    }
   }
 
   componentWillUnmount(): void {
@@ -79,11 +84,11 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     }
   }
 
-  onAssetsLoaded(type: string) {
+  onAssetsLoaded(type: string): void {
     this._checkContent();
   }
 
-  _checkContent() {
+  _checkContent(): void {
     const { location } = this.props;
     const { type } = this.state;
     let { cardId, contentLoaded } = this.state;
@@ -160,44 +165,46 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
             const prevTokenId = nextTokenId - 2;
             if (prevTokenId >= 0)
               this.prevUrl =
-                'detail?type=myPack&tokenId=' +
+                '?type=myPack&tokenId=' +
                 tokenIds[prevTokenId] +
                 '&scroll=false';
             if (nextTokenId < tokenIds.length)
               this.nextUrl =
-                'detail?type=myPack&tokenId=' +
+                '?type=myPack&tokenId=' +
                 tokenIds[nextTokenId] +
                 '&scroll=false';
           }
         } else {
           const cardlength = this.content?.cards.length || 0;
           if (cardlength > 1) {
-            const nextCardIndex = this.cardIndex + 1;
-            const prevCardIndex = this.cardIndex - 1;
-            if (prevCardIndex >= 0)
-              this.prevUrl =
-                '?type=' +
-                newType +
-                '&levelId=' +
-                newLevelId +
-                '&cardId=' +
-                this.content?.cards[prevCardIndex].id +
-                '&scroll=false';
-            if (nextCardIndex < cardlength)
-              this.nextUrl =
-                '?type=' +
-                newType +
-                '&levelId=' +
-                newLevelId +
-                '&cardId=' +
-                this.content?.cards[nextCardIndex].id +
-                '&scroll=false';
+            let nextCardIndex = this.cardIndex + 1;
+
+            if (nextCardIndex >= cardlength) nextCardIndex = 0;
+            let prevCardIndex = this.cardIndex - 1;
+            if (prevCardIndex < 0) prevCardIndex = cardlength - 1;
+
+            this.prevUrl =
+              '?type=' +
+              newType +
+              '&levelId=' +
+              newLevelId +
+              '&cardId=' +
+              this.content?.cards[prevCardIndex].id +
+              '&scroll=false';
+            this.nextUrl =
+              '?type=' +
+              newType +
+              '&levelId=' +
+              newLevelId +
+              '&cardId=' +
+              this.content?.cards[nextCardIndex].id +
+              '&scroll=false';
           }
         }
         this.setState({ cardId: newCardId });
       }
     }
-    return query.get('scroll') !== 'false';
+    if (query.get('scroll') === 'false') this.scrollOnUpdate = false;
   }
 
   _onBuy(): void {
@@ -226,7 +233,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       isWalletConnected ? s : t('header.connectWallet').toString();
 
     return (
-      <div className={'wolves-container bg-' + type}>
+      <div id="top" className={'wolves-container bg-' + type}>
         <img src={Logo} alt="WOWS" width="50px" height="50px" />
         <h2 className="tk-vincente-lightbold no-margin">
           {t('page4.welcome-' + type)}
@@ -246,7 +253,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                 )
               }
             >
-              {t('page.back')}
+              &lt;{t('page.back')}
             </span>
             <span className="tk-vincente-lightbold font-24 content-margin">
               {this.levelName}

@@ -66,3 +66,7 @@ span a:hover {
 .disabled-link {
   color: var(--wolves-orange);
 }
+
+.link {
+  cursor: pointer;
+}

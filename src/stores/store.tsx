@@ -192,6 +192,8 @@ class Store {
       this.assets.cards.myPackLevelDescriptions =
         content.default.myPackLevelDescriptions;
       this.assets.cards.cards = content.default.levels as CARD_LEVEL[];
+      this.assets.cards.cards[1].cards.splice(3, 1);
+      this.assets.cards.cards[5].cards.splice(3, 1);
       emitter.emit(ASSETS_LOADED);
     });
   }
@@ -753,6 +755,15 @@ class Store {
 
     try {
       const sftAmount = this.toWei(amount);
+      const walletAmount = await this.tokenContract.balanceOf(this.address);
+
+      if (sftAmount.gt(walletAmount)) {
+        emitter.emit(SFT_BUY, {
+          status: 'error',
+          errorMessage: 'Insufficient balances',
+        } as StatusResult);
+        return;
+      }
 
       const allowance = await this.tokenContract.allowance(
         this.address,

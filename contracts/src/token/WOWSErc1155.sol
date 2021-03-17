@@ -75,6 +75,9 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
   // URI used for custom tokenIds without specific URI
   string private _customDefaultUri;
 
+  // Name of the metadata json file for OpenSea contract data
+  string private _contractMetadataName;
+
   //////////////////////////////////////////////////////////////////////////////
   // Constructor
   //////////////////////////////////////////////////////////////////////////////
@@ -87,7 +90,8 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
   constructor(
     address _owner,
     address __cryptofolio,
-    string memory _uri
+    string memory _uri,
+    string memory __contractMetadataName
   ) ERC1155PresetMinterPauser(_uri) {
     // Grant _owner initial admin role
     _setupRole(DEFAULT_ADMIN_ROLE, _owner);
@@ -100,6 +104,7 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
 
     // Our clone blueprint cryptofolio.
     _cryptofolio = __cryptofolio;
+    _contractMetadataName = __contractMetadataName;
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -261,6 +266,16 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
           '.json'
         )
       );
+  }
+
+  /**
+   * @dev Opensea calls this fuction to get information about how to display storefront.
+   * Our return value is the base URI of the stock card metadata + the filename.
+   *
+   * @return full URI to the location of the contract metadata.
+   */
+  function contractURI() public view returns (string memory) {
+    return string(abi.encodePacked(super.uri(0), _contractMetadataName));
   }
 
   //////////////////////////////////////////////////////////////////////////////

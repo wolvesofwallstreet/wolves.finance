@@ -23,6 +23,9 @@ const SFT_MINTER_CONTRACT = 'WOWSSftMinter';
 const METADATA_URI =
   'https://raw.githubusercontent.com/wolvesofwallstreet/wolves.assets.low/main/metadata/';
 
+// Filename for contract metadata, will be prefixed with METADATA_URI
+const CONTRACT_METADATA_NAME = 'mainnet_contract.json';
+
 // Path to generated address registry file
 const ADDRESS_REGISTRY = `${__dirname}/../src/config/generated-addresses.json`;
 
@@ -72,7 +75,12 @@ const sft_func = async function (hardhat_re) {
 
   const sftReceipt = await deploy(SFT_CONTRACT, {
     from: deployer,
-    args: [marketingWallet, SFT_CRYPTOFOLIO_ADDRESS, METADATA_URI],
+    args: [
+      marketingWallet,
+      SFT_CRYPTOFOLIO_ADDRESS,
+      METADATA_URI,
+      CONTRACT_METADATA_NAME,
+    ],
     log: true,
     deterministicDeployment: true,
   });
