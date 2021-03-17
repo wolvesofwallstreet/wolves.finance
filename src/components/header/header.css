@@ -17,10 +17,10 @@
   letter-spacing: 0.02em;
   font-family: 'vincente', serif;
   font-weight: 500;
-  font-size: 28px;
+  font-size: 22px;
   line-height: 1.2em;
   color: white;
-  margin: 0 15px;
+  margin: 0 12px;
 }
 
 .navbar-collapse a:hover {
@@ -54,15 +54,23 @@
   margin: 8px 0px 8px 0px;
 }
 
-@media screen and (max-width: 450px) {
+@media screen and (max-width: 992px) {
   .navbar-collapse a,
   .navbar-collapse span {
     margin: 2px 8px;
   }
+  .navbar-collapse a,
   .navbar-collapse {
     display: flex;
     flex-direction: column;
     justify-content: unset;
+  }
+}
+
+@media screen and (max-width: 500px) {
+  .navbar-collapse a,
+  .navbar-collapse span {
+    font-size: 26px;
   }
 }
 

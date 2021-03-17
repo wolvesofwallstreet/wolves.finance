@@ -49,7 +49,11 @@ const INITIAL_PAGE3_STATE: PAGE3_STATE = {
 };
 
 class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
-  content: CARDS = { levelNames: [], cards: [] };
+  content: CARDS = {
+    levelNames: [],
+    cards: [],
+    myPackLevelDescriptions: [],
+  };
   levelDescription = '';
   tokenIds: number[] = [];
   levelFilter = 0;
@@ -140,17 +144,19 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
           );
         } else {
           this.tokenIds = StoreClasses.store.getAssets().userSFT;
+
           // collect tokenId bitbask
           let tokenIdBits = 0;
           this.tokenIds.forEach((n) => (tokenIdBits |= 1 << (n >> 24)));
           this.content.cards.forEach((level) => {
-            if (tokenIdBits & (1 << level.chainRef))
+            if (tokenIdBits & (1 << level.chainRef)) {
               this.levelFilter |= 1 << level.levelId;
+            }
           });
           this.levelDescription =
-            newLevelId === 0
-              ? '1/60 RARITY - 25% PROFIT SHARE'
-              : '1/60 RARITY - 50% PROFIT SHARE';
+            this.levelFilter === 0
+              ? ''
+              : this.content.myPackLevelDescriptions[newLevelId];
         }
 
         if (this.levelFilter && (this.levelFilter & (1 << newLevelId)) === 0) {

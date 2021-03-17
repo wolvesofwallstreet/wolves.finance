@@ -1,5 +1,12 @@
 {
-  "levelNames": ["Level 1", "Level 2", "Level 3", "Level 4"],
+  "levelNames": ["Prodigy", "Phenom", "Elite", "Alpha"],
+  "myPackLevelDescriptions": [
+    "1/20 RARITY - 25% PROFIT SHARE",
+    "1/20 RARITY - 50% PROFIT SHARE",
+    "1/0 RARITY - 75% PROFIT SHARE",
+    "1/0 RARITY - 100% PROFIT SHARE"
+  ],
+
   "levels": [
     {
       "levelId": 0,
@@ -94,14 +101,14 @@
           "url": "https://github.com/wolvesofwallstreet/wolves.assets.low/raw/main/cards/bois/level2/ETHAN-{res}.mp4"
         },
         {
-          "id": "nole",
-          "chainRef": 3,
-          "minted": 0,
-          "name": "KSUM NOLE",
-          "motto": "I AM INEVITABLE",
-          "description": "An iconic entrepreneur and visionary, Ksum can run four businesses simultaneously. His impressive portfolio boasts space projects that move at the speed of light, electric cars and the audacity to inhabit new planets. Smashing through new frontiers and paradigms of both space and time, Ksum is the ultimate innovator. Not short of a dollar, he is revolutionising trillion-dollar industries at the drop of hat.",
-          "type": "movie",
-          "url": "https://github.com/wolvesofwallstreet/wolves.assets.low/raw/main/cards/bois/level2/NOLE-{res}.mp4"
+          "//id": "nole",
+          "//chainRef": 3,
+          "//minted": 0,
+          "//name": "KSUM NOLE",
+          "//motto": "I AM INEVITABLE",
+          "//description": "An iconic entrepreneur and visionary, Ksum can run four businesses simultaneously. His impressive portfolio boasts space projects that move at the speed of light, electric cars and the audacity to inhabit new planets. Smashing through new frontiers and paradigms of both space and time, Ksum is the ultimate innovator. Not short of a dollar, he is revolutionising trillion-dollar industries at the drop of hat.",
+          "//type": "movie",
+          "//url": "https://github.com/wolvesofwallstreet/wolves.assets.low/raw/main/cards/bois/level2/NOLE-{res}.mp4"
         }
       ]
     },
@@ -220,14 +227,14 @@
           "url": "https://github.com/wolvesofwallstreet/wolves.assets.low/raw/main/cards/wolves/level2/MAX-{res}.mp4"
         },
         {
-          "id": "watcher",
-          "chainRef": 3,
-          "minted": 0,
-          "name": "WARG THE WATCHER",
-          "motto": "FILL IT OR KILL IT",
-          "description": "He watches trades like a hunter, our Warg is always ready to pounce. You won't see him coming until it's too late! His fearless and substantial trades will make anything go green but if you stop the train before he strikes, you’ll be sheepishly left behind.",
-          "type": "movie",
-          "url": "https://github.com/wolvesofwallstreet/wolves.assets.low/raw/main/cards/wolves/level2/WARG-{res}.mp4"
+          "//id": "watcher",
+          "//chainRef": 3,
+          "//minted": 0,
+          "//name": "WARG THE WATCHER",
+          "//motto": "FILL IT OR KILL IT",
+          "//description": "He watches trades like a hunter, our Warg is always ready to pounce. You won't see him coming until it's too late! His fearless and substantial trades will make anything go green but if you stop the train before he strikes, you’ll be sheepishly left behind.",
+          "//type": "movie",
+          "//url": "https://github.com/wolvesofwallstreet/wolves.assets.low/raw/main/cards/wolves/level2/WARG-{res}.mp4"
         }
       ]
     },
