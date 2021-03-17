@@ -131,7 +131,7 @@ class Store {
 
   assets = {
     userSFT: [],
-    cards: { levelNames: [], cards: [] },
+    cards: { levelNames: [], cards: [], myPackLevelDescriptions: [] },
   } as ASSETS;
 
   constructor() {
@@ -189,6 +189,8 @@ class Store {
     /** Load assets **/
     import('locales/en_US/cards.json').then((content) => {
       this.assets.cards.levelNames = content.default.levelNames;
+      this.assets.cards.myPackLevelDescriptions =
+        content.default.myPackLevelDescriptions;
       this.assets.cards.cards = content.default.levels as CARD_LEVEL[];
       emitter.emit(ASSETS_LOADED);
     });
