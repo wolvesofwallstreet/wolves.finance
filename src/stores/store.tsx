@@ -735,7 +735,7 @@ class Store {
   _doSftBuy = async (payloadContent: PayloadContent) => {
     const { amount, id } = payloadContent;
 
-    if (!amount || !id) {
+    if (!amount || id === undefined) {
       emitter.emit(SFT_BUY, {
         status: 'error',
         errorMessage: 'Invalid input',
