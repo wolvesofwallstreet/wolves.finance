@@ -16,4 +16,4 @@
 /src/web3/hardhat.ts
 
 # Metadata generator
-/metadata
+/metadata/generated

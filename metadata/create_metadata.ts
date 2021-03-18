@@ -6,6 +6,8 @@
  * See the file LICENSES/README.md for more information.
  */
 
+/* eslint @typescript-eslint/no-var-requires: "off" */
+
 //import {cards_zh} from '../locales/zh_CN/cards.json';
 const fs = require('fs');
 const cards = require('../src/locales/en_US/cards.json');
