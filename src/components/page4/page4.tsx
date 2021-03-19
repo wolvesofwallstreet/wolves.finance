@@ -344,7 +344,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                       <span>
                         {` ${t('page4.tokenId')}: 0x${this.tokenId
                           .toString(16)
-                          .padEnd(8, '0')}`}
+                          .padStart(8, '0')}`}
                       </span>
                     </h2>
                   )}
