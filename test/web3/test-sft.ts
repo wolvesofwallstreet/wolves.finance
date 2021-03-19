@@ -258,6 +258,16 @@ describe('SFT contracts', function () {
     chai.expect(uri).to.equal('');
   });
 
+  it('should have a contract metadata URI', async function () {
+    this.timeout(30 * 1000);
+
+    const { sftContract } = await setupTest();
+
+    // Check contract metadata URI
+    const contractUri = await sftContract.contractURI();
+    chai.expect(contractUri).to.equal(METADATA_URI + 'mainnet_contract.json');
+  });
+
   it('should set custom default URI', async function () {
     this.timeout(30 * 1000);
 
@@ -637,7 +647,7 @@ describe('SFT contracts', function () {
       marketingWallet
     );
 
-    // Mint an NFT in the contract for the clone address (without permission)
+    // Mint an NFT in the contract for the clone address
     let tradeFloorTokenId = 0;
     tx = stakingContract.stake(cryptofolioAddress, tradeFloorTokenId);
     await chai
