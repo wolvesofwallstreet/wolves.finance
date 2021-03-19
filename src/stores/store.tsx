@@ -568,7 +568,9 @@ class Store {
         | undefined = await this.sftHolderContractRO.getTokenIds(this.address);
 
       if (result) {
-        this.assets.userSFT = result.map((bn) => bn.toNumber());
+        this.assets.userSFT = result
+          .map((bn) => bn.toNumber())
+          .filter((n) => n >> 16 !== 0x0103 && n >> 16 !== 0x0503);
         this.assets.userSFT.sort((a: number, b: number) => a - b);
         emitter.emit(SFT_STATE, { status: 'user' } as SFTStateresult);
       }

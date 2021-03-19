@@ -31,12 +31,12 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
       <Link
         to={
           '/detail?type=' +
-          (tokenId ? 'myPack' : type) +
+          (tokenId !== undefined ? 'myPack' : type) +
           '&levelId=' +
           levelId +
           '&cardId=' +
           content.id +
-          (tokenId ? '&tokenId=' + tokenId : '')
+          (tokenId !== undefined ? '&tokenId=' + tokenId : '')
         }
       >
         {content.type === 'movie' ? (

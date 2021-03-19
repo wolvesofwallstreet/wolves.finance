@@ -16,8 +16,13 @@ import {
   ASSETS_LOADED,
   CONNECTION_CHANGED,
   SFT_BUY,
+  SFT_STATE,
 } from '../../stores/constants';
-import { ConnectResult, StoreClasses } from '../../stores/store';
+import {
+  ConnectResult,
+  SFTStateresult,
+  StoreClasses,
+} from '../../stores/store';
 import { CARD_LEVEL } from '../types/cards';
 
 type PAGE4_PROPS = {
@@ -56,6 +61,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     this.state = INITIAL_PAGE4_STATE;
     this.onConnectionChanged = this.onConnectionChanged.bind(this);
     this.onAssetsLoaded = this.onAssetsLoaded.bind(this);
+    this.onSFTState = this.onSFTState.bind(this);
   }
 
   componentDidMount(): void {
@@ -63,6 +69,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     this.setState({ isWalletConnected: StoreClasses.store.isConnected() });
     StoreClasses.emitter.on(CONNECTION_CHANGED, this.onConnectionChanged);
     StoreClasses.emitter.on(ASSETS_LOADED, this.onAssetsLoaded);
+    StoreClasses.emitter.on(SFT_STATE, this.onSFTState);
   }
 
   componentDidUpdate(): void {
@@ -74,6 +81,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
   }
 
   componentWillUnmount(): void {
+    StoreClasses.emitter.off(SFT_STATE, this.onSFTState);
     StoreClasses.emitter.off(ASSETS_LOADED, this.onAssetsLoaded);
     StoreClasses.emitter.off(CONNECTION_CHANGED, this.onConnectionChanged);
   }
@@ -85,7 +93,11 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
   }
 
   onAssetsLoaded(type: string): void {
-    this._checkContent();
+    this.setState({ contentLoaded: false });
+  }
+
+  onSFTState(status: SFTStateresult): void {
+    this.setState({ cardId: '' });
   }
 
   _checkContent(): void {
@@ -161,18 +173,14 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         this.nextUrl = '';
         if (this.tokenId !== undefined) {
           if (tokenIds.length > 1) {
-            const nextTokenId = (tokenIds.indexOf(this.tokenId) || 0) + 1;
-            const prevTokenId = nextTokenId - 2;
-            if (prevTokenId >= 0)
-              this.prevUrl =
-                '?type=myPack&tokenId=' +
-                tokenIds[prevTokenId] +
-                '&scroll=false';
-            if (nextTokenId < tokenIds.length)
-              this.nextUrl =
-                '?type=myPack&tokenId=' +
-                tokenIds[nextTokenId] +
-                '&scroll=false';
+            let nextTokenId = (tokenIds.indexOf(this.tokenId) || 0) + 1;
+            let prevTokenId = nextTokenId - 2;
+            if (nextTokenId >= tokenIds.length) nextTokenId = 0;
+            if (prevTokenId < 0) prevTokenId = tokenIds.length - 1;
+            this.prevUrl =
+              '?type=myPack&tokenId=' + tokenIds[prevTokenId] + '&scroll=false';
+            this.nextUrl =
+              '?type=myPack&tokenId=' + tokenIds[nextTokenId] + '&scroll=false';
           }
         } else {
           const cardlength = this.content?.cards.length || 0;
@@ -331,7 +339,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                     <span>{t('page.motto')}: </span>
                     {currentCard.motto}
                   </h2>
-                  {this.tokenId && (
+                  {this.tokenId !== undefined && (
                     <h2 className="tk-vincente-lightbold font-24">
                       <span>
                         {` ${t('page4.tokenId')}: 0x${this.tokenId
@@ -362,7 +370,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                     </li>
                   </ul>
                 </div>
-                {!this.tokenId && (
+                {!this.tokenId === undefined && (
                   <input
                     className="wolves-btn buy-btn"
                     type="button"
