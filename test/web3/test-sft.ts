@@ -647,7 +647,7 @@ describe('SFT contracts', function () {
       marketingWallet
     );
 
-    // Mint an NFT in the contract for the clone address (without permission)
+    // Mint an NFT in the contract for the clone address
     let tradeFloorTokenId = 0;
     tx = stakingContract.stake(cryptofolioAddress, tradeFloorTokenId);
     await chai
