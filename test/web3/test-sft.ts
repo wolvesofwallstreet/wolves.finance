@@ -258,6 +258,16 @@ describe('SFT contracts', function () {
     chai.expect(uri).to.equal('');
   });
 
+  it('should have a contract metadata URI', async function () {
+    this.timeout(30 * 1000);
+
+    const { sftContract } = await setupTest();
+
+    // Check contract metadata URI
+    const contractUri = await sftContract.contractURI();
+    chai.expect(contractUri).to.equal(METADATA_URI + 'mainnet_contract.json');
+  });
+
   it('should set custom default URI', async function () {
     this.timeout(30 * 1000);
 
