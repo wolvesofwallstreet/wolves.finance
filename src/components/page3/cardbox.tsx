@@ -55,22 +55,24 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
           />
         )}
       </Link>
-      <span id="triangle-up" />
-      {tokenId && (
-        <span className="tk-vincente-lightbold font-28">
-          {`TOKEN ID: 0x${tokenId.toString(16)}`}
+      <div className="wrapper">
+        <span id="triangle-up" />
+        {tokenId !== undefined && (
+          <span className="tk-vincente-lightbold font-28">
+            {`TOKEN ID: 0x${tokenId.toString(16).padEnd(8, '0')}`}
+          </span>
+        )}
+        <span className="tk-grotesk-lightbold font-14 ellipsis">
+          {t('page.motto')}: {content.motto}
         </span>
-      )}
-      <span className="tk-grotesk-lightbold font-14 ellipsis">
-        {t('page.motto')}: {content.motto}
-      </span>
-      <hr className="wolves" />
-      <span className="tk-grotesk-lightbold font-14 ellipsis">
-        {t('page.available')}: {quantity - content.minted}/{quantity}
-      </span>
-      <span className="tk-grotesk-lightbold font-14 ellipsis line-h">
-        {t('page.price')}: {price} WOWS{' '}
-      </span>
+        <hr className="wolves" />
+        <span className="tk-grotesk-lightbold font-14 ellipsis">
+          {t('page.available')}: {quantity - content.minted}/{quantity}
+        </span>
+        <span className="tk-grotesk-lightbold font-14 ellipsis line-h">
+          {t('page.price')}: {price} WOWS{' '}
+        </span>
+      </div>
     </div>
   );
 }

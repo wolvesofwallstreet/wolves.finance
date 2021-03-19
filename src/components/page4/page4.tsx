@@ -271,7 +271,6 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         >
           <span>
             <>
-              &lt;
               <span
                 className={`tk-vincente-lightbold font-24 single-line ${
                   this.prevUrl ? 'link' : 'disabled-link'
@@ -280,7 +279,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                   this.prevUrl ? history.push(this.prevUrl) : undefined
                 }
               >
-                {t('page.previousCard')}
+                &lt;{t('page.previousCard')}
               </span>
             </>
           </span>
@@ -335,9 +334,9 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                   {this.tokenId && (
                     <h2 className="tk-vincente-lightbold font-24">
                       <span>
-                        {` ${t('page4.tokenId')}: 0x${this.tokenId.toString(
-                          16
-                        )}`}
+                        {` ${t('page4.tokenId')}: 0x${this.tokenId
+                          .toString(16)
+                          .padEnd(8, '0')}`}
                       </span>
                     </h2>
                   )}

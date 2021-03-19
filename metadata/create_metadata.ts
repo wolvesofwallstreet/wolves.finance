@@ -21,10 +21,17 @@ if (!fs.existsSync('./generated')) {
 cards.levels.forEach((level) =>
   level.cards.forEach((card) => {
     const lc = toHex(level.chainRef) + toHex(card.chainRef);
+    const animation =
+      card.type === 'video'
+        ? { animation_url: card.url.replace('{res}', '500') }
+        : {};
     const content = {
       name: card.name,
       description: card.description,
-      image: card.url.replace('{res}', '500'),
+      image: (card.type === 'movie' ? card.url + '.jpg' : card.url).replace(
+        '{res}',
+        '300'
+      ),
       external_url:
         'https://app.wolvesofwallstreet.finance/detail?type=' +
         level.type +
@@ -37,7 +44,9 @@ cards.levels.forEach((level) =>
         default: 'en_US',
         locales: ['en_US', 'zh_CN'],
       },
+      ...animation,
     };
+
     const content_zh = {
       name: card.name,
       description: card.description,

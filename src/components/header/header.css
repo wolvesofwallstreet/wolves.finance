@@ -72,6 +72,10 @@
   .navbar-collapse span {
     font-size: 26px;
   }
+
+  .logo {
+    width: 260px;
+  }
 }
 
 .dp-conn-form {
