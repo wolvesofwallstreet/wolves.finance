@@ -31,12 +31,12 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
       <Link
         to={
           '/detail?type=' +
-          (tokenId ? 'myPack' : type) +
+          (tokenId !== undefined ? 'myPack' : type) +
           '&levelId=' +
           levelId +
           '&cardId=' +
           content.id +
-          (tokenId ? '&tokenId=' + tokenId : '')
+          (tokenId !== undefined ? '&tokenId=' + tokenId : '')
         }
       >
         {content.type === 'movie' ? (
@@ -59,7 +59,7 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
         <span id="triangle-up" />
         {tokenId !== undefined && (
           <span className="tk-vincente-lightbold font-28">
-            {`TOKEN ID: 0x${tokenId.toString(16).padEnd(8, '0')}`}
+            {`TOKEN ID: 0x${tokenId.toString(16).padStart(8, '0')}`}
           </span>
         )}
         <span className="tk-grotesk-lightbold font-14 ellipsis">
