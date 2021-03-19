@@ -17,6 +17,12 @@
   flex-basis: 21%;
 }
 
+.wrapper {
+  max-width: 100%;
+  align-items: center;
+  display: grid;
+}
+
 .card-container .card-visual {
   width: 300px;
   min-height: 300px;
@@ -32,7 +38,7 @@
   border-left: 10px solid transparent;
   border-right: 10px solid transparent;
   border-bottom: 6px solid white;
-  margin: 5px 0 10px 0;
+  margin: 5px auto 10px auto;
 }
 
 .line-h {
