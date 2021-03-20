@@ -544,7 +544,7 @@ class Store {
         cardIds
       );
 
-      if (result) {
+      if (result !== undefined && result.length > 0) {
         let index = 0;
         this.assets.cards.cards.forEach((level) =>
           level.cards.forEach((card) => {
