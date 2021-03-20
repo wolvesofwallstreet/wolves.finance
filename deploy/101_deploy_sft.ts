@@ -15,7 +15,7 @@ require('hardhat-deploy');
 require('hardhat-deploy-ethers');
 
 // TODO: Fully qualified contract names
-const SFT_CONTRACT = 'WOWSERC1155';
+const SFT_HOLDER_CONTRACT = 'WOWSERC1155';
 const SFT_CRYPTOFOLIO = 'WOWSCryptofolio';
 const SFT_MINTER_CONTRACT = 'WOWSSftMinter';
 
@@ -67,13 +67,13 @@ const sft_func = async function (hardhat_re) {
 
   //////////////////////////////////////////////////////////////////////////////
   //
-  // Deploy SFT contract
+  // Deploy SFT holder contract
   //
   //////////////////////////////////////////////////////////////////////////////
 
-  log_step('Deploying SFT contract');
+  log_step('Deploying SFT holder contract');
 
-  const sftReceipt = await deploy(SFT_CONTRACT, {
+  const sftHolderReceipt = await deploy(SFT_HOLDER_CONTRACT, {
     from: deployer,
     args: [
       marketingWallet,
@@ -85,7 +85,7 @@ const sft_func = async function (hardhat_re) {
     deterministicDeployment: true,
   });
 
-  const SFT_ADDRESS = sftReceipt.address;
+  const SFT_HOLDER_ADDRESS = sftHolderReceipt.address;
 
   //////////////////////////////////////////////////////////////////////////////
   //
@@ -101,7 +101,7 @@ const sft_func = async function (hardhat_re) {
       marketingWallet,
       addressRegistry.hardhat.token,
       addressRegistry.hardhat.token,
-      SFT_ADDRESS,
+      SFT_HOLDER_ADDRESS,
     ],
     log: true,
     deterministicDeployment: true,
@@ -117,7 +117,7 @@ const sft_func = async function (hardhat_re) {
 
   log_step(`Writing ${ADDRESS_REGISTRY}`);
 
-  addressRegistry.hardhat.sft = SFT_ADDRESS;
+  addressRegistry.hardhat.sftHolder = SFT_HOLDER_ADDRESS;
   addressRegistry.hardhat.sftMinter = SFT_MINTER_ADDRESS;
 
   fs.writeFileSync(
