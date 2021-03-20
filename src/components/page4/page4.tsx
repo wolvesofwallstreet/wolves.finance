@@ -50,7 +50,7 @@ const INITIAL_PAGE4_STATE: PAGE4_STATE = {
 class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
   content: CARD_LEVEL | undefined = undefined;
   cardIndex = 0;
-  tokenId: number | undefined;
+  tokenId: number | undefined = undefined;
   levelName = '';
   nextUrl = '';
   prevUrl = '';
@@ -370,7 +370,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                     </li>
                   </ul>
                 </div>
-                {this.tokenId !== undefined && (
+                {this.tokenId === undefined && (
                   <input
                     className="wolves-btn buy-btn"
                     type="button"
