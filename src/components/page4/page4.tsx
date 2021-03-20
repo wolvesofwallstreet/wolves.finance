@@ -370,7 +370,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                     </li>
                   </ul>
                 </div>
-                {!this.tokenId === undefined && (
+                {this.tokenId !== undefined && (
                   <input
                     className="wolves-btn buy-btn"
                     type="button"
