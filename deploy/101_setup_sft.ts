@@ -16,7 +16,7 @@ require('hardhat-deploy-ethers');
 
 // TODO: Fully qualified contract names
 const TOKEN_CONTRACT = 'WowsToken';
-const SFT_CONTRACT = 'WOWSERC1155';
+const SFT_HOLDER_CONTRACT = 'WOWSERC1155';
 const SFT_MINTER_CONTRACT = 'WOWSSftMinter';
 
 // Path to generated address registry file
@@ -44,7 +44,7 @@ const func = async function (hardhat_re) {
   const addresses = addressRegistry.hardhat;
 
   const TOKEN_INSTANCE = await hardhat_re.ethers.getContract(TOKEN_CONTRACT);
-  const SFT_INSTANCE = await hardhat_re.ethers.getContract(SFT_CONTRACT);
+  const SFT_INSTANCE = await hardhat_re.ethers.getContract(SFT_HOLDER_CONTRACT);
 
   //////////////////////////////////////////////////////////////////////////////
   //
@@ -95,7 +95,7 @@ const func = async function (hardhat_re) {
   //
 
   await execute(
-    SFT_CONTRACT,
+    SFT_HOLDER_CONTRACT,
     {
       from: marketingWallet,
       log: true,
