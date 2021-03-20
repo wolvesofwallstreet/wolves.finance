@@ -24,7 +24,7 @@ cards.levels.forEach((level) =>
   level.cards.forEach((card) => {
     const lc = toHex(level.chainRef) + toHex(card.chainRef);
     const animation =
-      card.type === 'video'
+      card.type === 'movie'
         ? { animation_url: card.url.replace('{res}', '500') }
         : {};
     const content = {
