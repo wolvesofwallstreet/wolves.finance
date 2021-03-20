@@ -153,7 +153,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
         } else {
           this.tokenIds = StoreClasses.store.getAssets().userSFT;
 
-          // collect tokenId bitbask
+          // collect tokenId bitmask
           let tokenIdBits = 0;
           this.tokenIds.forEach((n) => (tokenIdBits |= 1 << (n >> 24)));
           this.content.cards.forEach((level) => {
