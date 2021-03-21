@@ -11,6 +11,19 @@ pragma solidity >=0.6.0 <0.8.0;
 interface IRewardHandler {
   /**
    * @dev Transfer reward and distribute the fee
+   * Future implementation
+   *
+   * _to values are in 1e6 factor notation.
+   */
+  function distribute2(
+    address _recipient,
+    uint256 _amount,
+    uint32 _fee
+  ) external;
+
+  /**
+   * @dev Transfer reward and distribute the fee
+   * Backward compatibility implementation
    *
    * _to values are in 1e6 factor notation.
    */

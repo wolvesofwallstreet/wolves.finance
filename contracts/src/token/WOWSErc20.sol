@@ -16,20 +16,13 @@ import '../../interfaces/uniswap/IUniswapV2Router02.sol';
 import '../../interfaces/uniswap/IUniswapV2Factory.sol';
 import '../../interfaces/uniswap/IUniswapV2Pair.sol';
 
-import '../investment/interfaces/IRewardHandler.sol';
 import '../investment/interfaces/ITxWorker.sol';
 import '../utils/AddressBook.sol';
 import '../utils/interfaces/IAddressRegistry.sol';
 
-import './interfaces/IERC20WolfMintable.sol';
+import './interfaces/IERC20WowsMintable.sol';
 
-contract WowsToken is
-  IERC20WolfMintable,
-  ERC20Capped,
-  AccessControl,
-  IRewardHandler,
-  AddressBook
-{
+contract WowsToken is IERC20WowsMintable, ERC20Capped, AccessControl {
   using SafeMath for uint256;
 
   /**
@@ -59,21 +52,8 @@ contract WowsToken is
    */
   bytes32 public constant MINTER_ROLE = 'minter_role';
 
-  /**
-   * @dev Role to allow reward distributon
-   */
-  bytes32 public constant REWARD_ROLE = 'reward_role';
-
   address public immutable uniV2Pair;
   bytes32 private immutable _uniV2PairCodeHash;
-
-  address private immutable _teamWallet;
-  address private immutable _marketingWallet;
-
-  /**
-   * @dev booster address for rewards
-   */
-  address public booster;
 
   /**
    * @dev transaction worker for low gas service tasks
@@ -104,10 +84,9 @@ contract WowsToken is
      *   2.) 1800 token for marketing (influencer / design ...)
      */
     // reverts if address is invalid
-    address __marketingWallet =
-      _addressRegistry.getRegistryEntry(MARKETING_WALLET);
-    _mint(__marketingWallet, 3600 * 1e18);
-    _marketingWallet = __marketingWallet;
+    address marketingWallet =
+      _addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
+    _mint(marketingWallet, 3600 * 1e18);
 
     /*
      * Mint 7500 token into teams wallet
@@ -115,17 +94,17 @@ contract WowsToken is
      *   1.) 500 tokens * 15 month = 7500 team rewards
      */
     // reverts if address is invalid
-    address __teamWallet = _addressRegistry.getRegistryEntry(TEAM_WALLET);
-    _mint(__teamWallet, 7500 * 1e18);
-    _teamWallet = __teamWallet;
+    address teamWallet =
+      _addressRegistry.getRegistryEntry(AddressBook.TEAM_WALLET);
+    _mint(teamWallet, 7500 * 1e18);
 
     // Multi-sig marketing wallet gets admin rights
-    _setupRole(DEFAULT_ADMIN_ROLE, __marketingWallet);
+    _setupRole(DEFAULT_ADMIN_ROLE, marketingWallet);
 
     // Reverts if address is invalid
     IUniswapV2Router02 _uniV2Router =
       IUniswapV2Router02(
-        _addressRegistry.getRegistryEntry(UNISWAP_V2_ROUTER02)
+        _addressRegistry.getRegistryEntry(AddressBook.UNISWAP_V2_ROUTER02)
       );
 
     // Create the UniV2 liquidity pool
@@ -252,51 +231,8 @@ contract WowsToken is
     return codeHash != _uniV2PairCodeHash;
   }
 
-  function setBooster(address _booster) external {
-    require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), 'Only admins');
-    booster = _booster;
-  }
-
   function setTXWorker(address _txWorker) external {
     require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), 'Only admins');
     txWorker = ITxWorker(_txWorker);
-  }
-
-  /* ================ IRewardHandler ================= */
-
-  function distribute(
-    address _recipient,
-    uint256 _amount,
-    uint32 _fee,
-    uint32 _toTeam,
-    uint32 _toMarketing,
-    uint32 _toBooster,
-    uint32 _toRewardPool
-  ) external override {
-    require(hasRole(REWARD_ROLE, msg.sender), 'Only rewarders');
-
-    if (_amount == 0) return;
-
-    // Check how much we have to mint
-    uint256 balance = balanceOf(address(this));
-    if (balance < _amount) _mint(address(this), _amount - balance);
-
-    // Distribute the fee
-    uint256 absFee = _amount.mul(_fee).div(1e6);
-    _transfer(address(this), _teamWallet, absFee.mul(_toTeam).div(1e6));
-    _transfer(
-      address(this),
-      _marketingWallet,
-      absFee.mul(_toMarketing).div(1e6)
-    );
-
-    if (booster != address(0))
-      _transfer(address(this), booster, absFee.mul(_toBooster).div(1e6));
-
-    // Nothing to do with _toRewardPool beause we are rewardPool
-    _toRewardPool;
-
-    // Now send rewards to the user
-    _transfer(address(this), _recipient, _amount.sub(absFee));
   }
 }

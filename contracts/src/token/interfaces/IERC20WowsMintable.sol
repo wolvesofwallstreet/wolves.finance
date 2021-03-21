@@ -10,7 +10,7 @@ pragma solidity >=0.7.0 <0.8.0;
 
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
-interface IERC20WolfMintable is IERC20 {
+interface IERC20WowsMintable is IERC20 {
   function mint(address account, uint256 amount) external returns (bool);
 
   function enableUniV2Pair(bool enable) external;

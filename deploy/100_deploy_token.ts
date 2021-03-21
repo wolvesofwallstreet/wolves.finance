@@ -19,15 +19,38 @@ const WETH_CONTRACT = 'WETH9';
 const UNI_V2_FACTORY_CONTRACT = 'UniswapV2Factory';
 const UNI_V2_ROUTER_CONTRACT = 'UniswapV2Router02';
 const ADDRESS_REGISTRY_CONTRACT = 'AddressRegistry';
-const ADDRESS_BOOK_CONTRACT = 'AddressBook';
 const TOKEN_CONTRACT = 'WowsToken';
 const CONTROLLER_CONTRACT = 'Controller';
 const UNIV2_STAKE_FARM_CONTRACT = 'UniV2StakeFarm';
 const BOOSTER_CONTRACT = 'Booster';
+const REWARD_HANDLER_CONTRACT = 'RewardHandler';
 const PRESALE_CONTRACT = 'Crowdsale';
 
 // Path to generated addresses file
 const GENERATED_ADDRESSES = `${__dirname}/../src/config/generated-addresses.json`;
+
+// Addressbook constants
+const ADDRESS_BOOK_TEAM_WALLET_KEY = ethers.utils.formatBytes32String(
+  'TEAM_WALLET'
+);
+const ADDRESS_BOOK_MARKETING_WALLET_KEY = ethers.utils.formatBytes32String(
+  'MARKETING_WALLET'
+);
+const ADDRESS_BOOK_UNISWAP_V2_ROUTER02_KEY = ethers.utils.formatBytes32String(
+  'UNISWAP_V2_ROUTER02'
+);
+const ADDRESS_BOOK_STAKE_FARM_KEY = ethers.utils.formatBytes32String(
+  'WETH_WOWS_STAKE_FARM'
+);
+const ADDRESS_BOOK_WOWS_TOKEN_KEY = ethers.utils.formatBytes32String(
+  'WOWS_TOKEN'
+);
+const ADDRESS_BOOK_WOWS_BOOSTER_KEY = ethers.utils.formatBytes32String(
+  'WOWS_BOOSTER'
+);
+const ADDRESS_BOOK_REWARD_HANDLER_KEY = ethers.utils.formatBytes32String(
+  'REWARD_HANDLER'
+);
 
 // Helper function
 function log_step(step_string) {
@@ -157,54 +180,31 @@ const func = async function (hardhat_re) {
 
   //////////////////////////////////////////////////////////////////////////////
   //
-  // Address book
-  //
-  //////////////////////////////////////////////////////////////////////////////
-
-  log_step('Deploying address book');
-
-  const addressBookReceipt = await deploy(ADDRESS_BOOK_CONTRACT, {
-    from: deployer,
-    log: true,
-    deterministicDeployment: true,
-  });
-
-  const ADDRESS_BOOK_ADDRESS = addressBookReceipt.address;
-  const ADDRESS_BOOK_INSTANCE = await hardhat_re.ethers.getContract(
-    ADDRESS_BOOK_CONTRACT
-  );
-
-  //////////////////////////////////////////////////////////////////////////////
-  //
   // Register addresses for wallets and Uniswap router
   //
   //////////////////////////////////////////////////////////////////////////////
 
   log_step('Setting addresses in address registry');
 
-  const MARKETING_WALLET_KEY = await ADDRESS_BOOK_INSTANCE.MARKETING_WALLET();
-  const TEAM_WALLET_KEY = await ADDRESS_BOOK_INSTANCE.TEAM_WALLET();
-  const UNISWAP_ROUTER_KEY = await ADDRESS_BOOK_INSTANCE.UNISWAP_V2_ROUTER02();
-
   await setRegistryKey(
     deployer,
     execute,
     ADDRESS_REGISTRY_INSTANCE,
-    MARKETING_WALLET_KEY,
+    ADDRESS_BOOK_MARKETING_WALLET_KEY,
     marketingWallet
   );
   await setRegistryKey(
     deployer,
     execute,
     ADDRESS_REGISTRY_INSTANCE,
-    TEAM_WALLET_KEY,
+    ADDRESS_BOOK_TEAM_WALLET_KEY,
     teamWallet
   );
   await setRegistryKey(
     deployer,
     execute,
     ADDRESS_REGISTRY_INSTANCE,
-    UNISWAP_ROUTER_KEY,
+    ADDRESS_BOOK_UNISWAP_V2_ROUTER02_KEY,
     UNI_V2_ROUTER_ADDRESS
   );
 
@@ -225,6 +225,22 @@ const func = async function (hardhat_re) {
 
   const TOKEN_ADDRESS = tokenReceipt.address;
   const TOKEN_INSTANCE = await hardhat_re.ethers.getContract(TOKEN_CONTRACT);
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // Registry address for token
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  log_step('Setting WOWS token in address registry');
+
+  await setRegistryKey(
+    deployer,
+    execute,
+    ADDRESS_REGISTRY_INSTANCE,
+    ADDRESS_BOOK_WOWS_TOKEN_KEY,
+    TOKEN_ADDRESS
+  );
 
   //////////////////////////////////////////////////////////////////////////////
   //
@@ -286,13 +302,11 @@ const func = async function (hardhat_re) {
 
   log_step('Setting stake farm in address registry');
 
-  const STAKE_FARM_KEY = await ADDRESS_BOOK_INSTANCE.WETH_WOWS_STAKE_FARM();
-
   await setRegistryKey(
     deployer,
     execute,
     ADDRESS_REGISTRY_INSTANCE,
-    STAKE_FARM_KEY,
+    ADDRESS_BOOK_STAKE_FARM_KEY,
     UNIV2_STAKE_FARM_ADDRESS
   );
 
@@ -312,6 +326,55 @@ const func = async function (hardhat_re) {
   });
 
   const BOOSTER_ADDRESS = boosterReceipt.address;
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // Registry address for Booster
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  log_step('Setting booster in address registry');
+
+  await setRegistryKey(
+    deployer,
+    execute,
+    ADDRESS_REGISTRY_INSTANCE,
+    ADDRESS_BOOK_WOWS_BOOSTER_KEY,
+    BOOSTER_ADDRESS
+  );
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // Deploy RewardHandler
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  log_step('Deploying RewardHandler');
+
+  const rewardHandlerReceipt = await deploy(REWARD_HANDLER_CONTRACT, {
+    from: deployer,
+    log: true,
+    args: [ADDRESS_REGISTRY_ADDRESS],
+    deterministicDeployment: true,
+  });
+
+  const REWARD_HANDLER_ADDRESS = rewardHandlerReceipt.address;
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // Registry address for RewardHandler
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  log_step('Setting RewardHander in address registry');
+
+  await setRegistryKey(
+    deployer,
+    execute,
+    ADDRESS_REGISTRY_INSTANCE,
+    ADDRESS_BOOK_REWARD_HANDLER_KEY,
+    REWARD_HANDLER_ADDRESS
+  );
 
   //////////////////////////////////////////////////////////////////////////////
   //
@@ -361,12 +424,12 @@ const func = async function (hardhat_re) {
   const addresses = {
     hardhat: {
       addressRegistry: ADDRESS_REGISTRY_ADDRESS,
-      addressBook: ADDRESS_BOOK_ADDRESS,
       token: TOKEN_ADDRESS,
       controller: CONTROLLER_ADDRESS,
       stakeFarm: UNIV2_STAKE_FARM_ADDRESS,
       booster: BOOSTER_ADDRESS,
       presale: PRESALE_ADDRESS,
+      rewardHandler: REWARD_HANDLER_ADDRESS,
     },
   };
 

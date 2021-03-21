@@ -16,9 +16,10 @@ import { ethers } from 'ethers';
 import fs from 'fs';
 
 import WOWSSftMinterAbi from '../../src/abi/contracts/src/crowdsale/WOWSSftMinter.sol/WOWSSftMinter.json';
+import RewardHandlerAbi from '../../src/abi/contracts/src/investment/RewardHandler.sol/RewardHandler.json';
 import TradeFloorAbi from '../../src/abi/contracts/src/token/TradeFloor.sol/TradeFloor.json';
 import WOWSCryptofolioAbi from '../../src/abi/contracts/src/token/WOWSCryptofolio.sol/WOWSCryptofolio.json';
-import WowsTokenAbi from '../../src/abi/contracts/src/token/WOWSErc20.sol/WowsToken.json';
+import WOWSTokenAbi from '../../src/abi/contracts/src/token/WOWSErc20.sol/WowsToken.json';
 import WOWSERC1155Abi from '../../src/abi/contracts/src/token/WOWSErc1155.sol/WOWSERC1155.json';
 import TestStakingContractAbi from '../../src/abi/contracts/test/TestStakingContract.sol/TestStakingContract.json';
 import { hardhat } from '../../src/web3/hardhat';
@@ -64,7 +65,12 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
   // Construct the contracts
   const tokenContract = new ethers.Contract(
     addresses.token,
-    WowsTokenAbi,
+    WOWSTokenAbi,
+    marketingWallet
+  );
+  const rewardHandlerContract = new ethers.Contract(
+    addresses.rewardHandler,
+    RewardHandlerAbi,
     marketingWallet
   );
   const sftHolderContract = new ethers.Contract(
@@ -90,6 +96,7 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
 
   return {
     tokenContract,
+    rewardHandlerContract,
     sftHolderContract,
     sftMinterContract,
     tradeFloorContract,
@@ -552,23 +559,26 @@ describe('SFT contracts', function () {
       .to.equal(marketingWallet.address);
   });
 
-  it('should have reward role for WOWS token', async function () {
+  it('should have reward role for Reward handler', async function () {
     this.timeout(30 * 1000);
 
-    const { tokenContract, sftMinterContract } = await setupTest();
+    const { rewardHandlerContract, sftMinterContract } = await setupTest();
 
-    const ERC20_DEFAULT_ADMIN_ROLE = await tokenContract.DEFAULT_ADMIN_ROLE();
-    const ERC20_REWARD_ROLE = await tokenContract.REWARD_ROLE();
+    const RH_DEFAULT_ADMIN_ROLE = await rewardHandlerContract.DEFAULT_ADMIN_ROLE();
+    const RH_REWARD_ROLE = await rewardHandlerContract.REWARD_ROLE();
 
     // Check roles of SFT minter for the ERC-20 token contract
     chai.expect(
-      await tokenContract.hasRole(
-        ERC20_DEFAULT_ADMIN_ROLE,
+      await rewardHandlerContract.hasRole(
+        RH_DEFAULT_ADMIN_ROLE,
         sftMinterContract.address
       )
     ).to.be.false;
     chai.expect(
-      await tokenContract.hasRole(ERC20_REWARD_ROLE, sftMinterContract.address)
+      await rewardHandlerContract.hasRole(
+        RH_REWARD_ROLE,
+        sftMinterContract.address
+      )
     ).to.be.true;
   });
 
@@ -620,10 +630,12 @@ describe('SFT contracts', function () {
   it('should set reward handler', async function () {
     this.timeout(30 * 1000);
 
-    const { tokenContract, sftMinterContract } = await setupTest();
+    const { rewardHandlerContract, sftMinterContract } = await setupTest();
 
     // Set reward handler
-    const tx = sftMinterContract.setRewardHandler(tokenContract.address);
+    const tx = sftMinterContract.setRewardHandler(
+      rewardHandlerContract.address
+    );
     await chai.expect(tx).to.not.be.reverted;
   });
 
