@@ -11,10 +11,15 @@ pragma solidity >=0.6.0 <0.8.0;
 interface IRewardHandler {
   /**
    * @dev Transfer reward and distribute the fee
-   * Future implementation
    *
-   * _to values are in 1e6 factor notation.
+   * This is the new implementation of distribute() which uses internal fees
+   * defined in the {RewardHandler} contract.
+   *
+   * @param recipient The recipient of the reward
+   * @param amount The amount of WOWS to transfer to the recipient
+   * @param fee The reward fee in 1e6 factor notation
    */
+
   function distribute2(
     address recipient,
     uint256 amount,
@@ -23,9 +28,14 @@ interface IRewardHandler {
 
   /**
    * @dev Transfer reward and distribute the fee
-   * Backward compatibility implementation
    *
-   * _to values are in 1e6 factor notation.
+   * This is the current implementation, needed for backward compatibility.
+   *
+   * Current ERC1155Minter and Controller call this function, later
+   * rewardhandler clients should call the the new one with internal
+   * fees specified in this contract.
+   *
+   * uint32 values are in 1e6 factor notation.
    */
   function distribute(
     address recipient,

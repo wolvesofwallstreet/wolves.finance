@@ -78,8 +78,7 @@ contract RewardHandler is AccessControl, IRewardHandler {
   /* ================ IRewardHandler ================= */
 
   /**
-   * @dev New implementation of distribute() which uses
-   * the internal fees defined in this contract
+   * @dev See {IRewardHandler-distribute2}
    *
    */
   function distribute2(
@@ -121,11 +120,7 @@ contract RewardHandler is AccessControl, IRewardHandler {
   }
 
   /**
-   * @dev Current implementation, need this for backward compatibility
-   *
-   * Current ERC1155Minter and Controller call this function, later
-   * rewardhandler clients should call the the new one with internal
-   * fees specified in this contract.
+   * @dev See {IRewardHandler-distribute}
    */
   function distribute(
     address recipient,
