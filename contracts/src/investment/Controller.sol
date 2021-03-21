@@ -18,7 +18,7 @@ import './interfaces/IController.sol';
 import './interfaces/IFarm.sol';
 import './interfaces/IRewardHandler.sol';
 
-contract Controller is IController, Ownable, AddressBook {
+contract Controller is IController, Ownable {
   using SafeMath for uint256;
 
   /* ========== STATE VARIABLES ========== */
@@ -89,7 +89,7 @@ contract Controller is IController, Ownable, AddressBook {
     previousController = _previousController;
 
     address _marketingWallet =
-      _addressRegistry.getRegistryEntry(MARKETING_WALLET);
+      _addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
     transferOwnership(_marketingWallet);
   }
 

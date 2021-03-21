@@ -40,6 +40,11 @@ Steps to setup the WOWS environment.
 
 > \- \_owner address\
 
+9.) deploy RewardHandler.sol\
+-> parameter:\
+
+> \- \AddressRegistry address\
+
 <h2>****** PRESALE DEPLOY ******</h2>
 
 1.) deploy Crowdsale.sol\
@@ -60,10 +65,13 @@ Steps to setup the WOWS environment.
 
 <h3>From MultiSig marketing wallet call:</h3>
 
-1.) call WOWSErc20.sol::grantRole(WOWSErc20.sol.REWARD_ROLE(), controller)\
+1.) call RewardHander.sol::grantRole(RewardHandler.sol.REWARD_ROLE(), controller)\
 -> This is to allow controller to call into WOWSErc20.sol to distribute rewards
 
-2.) call Controller::registerFarm\
+2.) call WowsToken.sol::grantRole(WowsToken.sol.MINTER_ROLE(), RewardHandler)\
+-> This is to allow RewardHandler to mint rewards fro distributing
+
+3.) call Controller::registerFarm\
 -> parameter:\
 
 > \- farmAddress UniV2StakeFarm address\
@@ -72,12 +80,7 @@ Steps to setup the WOWS environment.
 > \- rewardProvided 0\
 > \- rewardfee 2\*1e4 (0.02)
 
-3.) call WOWSErc20.sol setBooster\
--> parameter:\
-
-> \- address of Booster.sol
-
-4.) call WOWSErc20.sol::grantRole(WOWSErc20.sol.MINTER_ROLE(), Crowdsale.sol)\
+5.) call WOWSErc20.sol::grantRole(WOWSErc20.sol.MINTER_ROLE(), Crowdsale.sol)\
 \!\!\! ONLY DURING PRESALE \!\!\!
 
 <h2>****** SFT CONTRACT ******</h2>
@@ -97,6 +100,6 @@ Steps to setup the WOWS environment.
 
 Setup:
 
-> \- WowsToken:: grantRole (REWARD_ROLE, WOWSSftMinter.sol)
+> \- RewardHandler:: grantRole (RewardHandler.REWARD_ROLE, WOWSSftMinter.sol)
 > \- WOWSSftMinter:: setPrices (for test: ["0", "1", "2", "3"],["500000000000000000", "1000000000000000000", "2000000000000000000", "4000000000000000000"])
 > \- WowsERC1155:: grantRole (MINTER_ROLE, WOWSSftMinter.sol)
