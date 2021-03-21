@@ -37,8 +37,11 @@ const renderer = ({
   );
 };
 
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-const CountDown = ({ source }: { source?: string }) => {
+const CountDown: React.FC<{ source?: string }> = ({
+  source,
+}: {
+  source?: string;
+}) => {
   const dappDate = new Date(1616432400 * 1000);
 
   return source === 'page4' ? (
