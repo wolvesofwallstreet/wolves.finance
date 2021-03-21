@@ -19,6 +19,7 @@ import 'contracts/src/utils/interfaces/IAddressRegistry.sol';
 contract RewardHandler is AccessControl, IRewardHandler {
   using SafeMath for uint256;
 
+  // Role granted to distribute funds
   bytes32 public constant REWARD_ROLE = 'reward_role';
 
   // The fee is distributed to 4 channels:
@@ -30,24 +31,45 @@ contract RewardHandler is AccessControl, IRewardHandler {
   uint32 private constant FEE_TO_BOOSTER = 4 * 1e5;
   // 0.3 back to reward pool
   uint32 private constant FEE_TO_REWARDPOOL = 3 * 1e5;
+
   // Minimal mint amount
   uint256 private _minimalMintAmount = 100 * 1e18;
 
+  // Registry for addresses in the system
   IAddressRegistry private immutable _addressRegistry;
+
+  // Amount to distribute?
   uint256 private _distributeAmount;
 
+  /**
+   * @dev Constructor
+   *
+   * @param addressRegistry The registry for addresses in the system
+   */
   constructor(IAddressRegistry addressRegistry) {
+    // Initialize parameters
     _addressRegistry = addressRegistry;
+
+    // Initialize access
     address marketingWallet =
       addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
     _setupRole(DEFAULT_ADMIN_ROLE, marketingWallet);
   }
 
+  //////////////////////////////////////////////////////////////////////////////
+  // Public API
+  //////////////////////////////////////////////////////////////////////////////
+
   /**
-   * @dev Set the minimal mint amount to save mint calls.
+   * @dev Set the minimal mint amount to save mint calls
+   *
+   * @param newAmount The new minimal amount before mint() is called
    */
   function setMinimalMintAmount(uint256 newAmount) external {
+    // Validate access
     require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), 'Only admins');
+
+    // Update state
     _minimalMintAmount = newAmount;
   }
 
@@ -59,35 +81,46 @@ contract RewardHandler is AccessControl, IRewardHandler {
   }
 
   /**
-   * @dev Distribute _distributeAmount to internal targets,
-   * transfer all WOWS to the new reward handler and destroy this contract
+   * @dev Distribute _distributeAmount to internal targets, transfer all WOWS
+   * to the new reward handler, and destroy this contract
+   *
+   * @param newRewardHandler The reward handler that succeeds this one
+   * @param destroy True to destroy this contract, false to distribute without
+   * destroying
    */
   function terminate(address newRewardHandler, bool destroy) external {
+    // Validate access
     require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), 'Only admins');
+
     // Distribute remaining fees
     IERC20WowsMintable rewardToken = _distribute();
-    // Transfer WOWS to the nre rewardHandler
+
+    // Transfer WOWS to the new rewardHandler
     rewardToken.transfer(
       newRewardHandler,
       rewardToken.balanceOf(address(this))
     );
+
     // Destroy contract
     if (destroy) selfdestruct(payable(address(this)));
   }
 
-  /* ================ IRewardHandler ================= */
+  //////////////////////////////////////////////////////////////////////////////
+  // Implementation of {IRewardHandler}
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
    * @dev See {IRewardHandler-distribute2}
-   *
    */
   function distribute2(
     address recipient,
     uint256 amount,
     uint32 fee
   ) public override {
+    // Validate access
     require(hasRole(REWARD_ROLE, msg.sender), 'Only rewarders');
 
+    // If amount is zero there's nothing to do
     if (amount == 0) return;
 
     IERC20WowsMintable rewardToken =
@@ -98,15 +131,17 @@ contract RewardHandler is AccessControl, IRewardHandler {
     // Calculate absolute fee
     uint256 absFee = amount.mul(fee).div(1e6);
 
-    // Amount send to recipient
+    // Calculate amount to send to the recipient
     uint256 recipientAmount = amount.sub(absFee);
 
-    // Accumulate fee which has to be distributed
+    // Update state with accumulated fee to be distributed
     _distributeAmount = _distributeAmount.add(absFee);
 
     if (recipientAmount > 0) {
       // Check how much we have to mint
       uint256 balance = rewardToken.balanceOf(address(this));
+
+      // Mint to this contract
       if (balance < recipientAmount) {
         uint256 mintAmount =
           recipientAmount > _minimalMintAmount
@@ -114,6 +149,7 @@ contract RewardHandler is AccessControl, IRewardHandler {
             : _minimalMintAmount;
         rewardToken.mint(address(this), mintAmount);
       }
+
       // Now send rewards to the user
       rewardToken.transfer(recipient, recipientAmount);
     }
@@ -131,17 +167,21 @@ contract RewardHandler is AccessControl, IRewardHandler {
     uint32,
     uint32
   ) external override {
+    // Forward to new distribution function
     distribute2(recipient, amount, fee);
   }
 
-  /************ INTERNAL ************/
+  //////////////////////////////////////////////////////////////////////////////
+  // Internal details
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev distributes the accumulated fees
+   * @dev Distribute the accumulated fees
    *
-   * @return returns the WOWS token
+   * @return The WOWS token
    */
   function _distribute() internal returns (IERC20WowsMintable) {
+    // Validate state
     require(_distributeAmount > 0, 'nothing to distribute');
 
     IERC20WowsMintable rewardToken =
@@ -154,6 +194,7 @@ contract RewardHandler is AccessControl, IRewardHandler {
     if (balance < _distributeAmount)
       rewardToken.mint(address(this), _distributeAmount.sub(balance));
 
+    // Load addresses
     address marketingWallet =
       _addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
     address teamWallet =
@@ -161,7 +202,10 @@ contract RewardHandler is AccessControl, IRewardHandler {
     address booster =
       _addressRegistry.getRegistryEntry(AddressBook.WOWS_BOOSTER);
 
+    // Load distributed amount
     uint256 distributeAmount = _distributeAmount;
+
+    // Update state
     _distributeAmount = 0;
 
     // Distribute the fee
@@ -177,6 +221,7 @@ contract RewardHandler is AccessControl, IRewardHandler {
       booster,
       distributeAmount.mul(FEE_TO_BOOSTER).div(1e6)
     );
+
     return rewardToken;
   }
 }
