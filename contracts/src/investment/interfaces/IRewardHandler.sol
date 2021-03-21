@@ -16,9 +16,9 @@ interface IRewardHandler {
    * _to values are in 1e6 factor notation.
    */
   function distribute2(
-    address _recipient,
-    uint256 _amount,
-    uint32 _fee
+    address recipient,
+    uint256 amount,
+    uint32 fee
   ) external;
 
   /**
@@ -28,12 +28,12 @@ interface IRewardHandler {
    * _to values are in 1e6 factor notation.
    */
   function distribute(
-    address _recipient,
-    uint256 _amount,
-    uint32 _fee,
-    uint32 _toTeam,
-    uint32 _toMarketing,
-    uint32 _toBooster,
-    uint32 _toRewardPool
+    address recipient,
+    uint256 amount,
+    uint32 fee,
+    uint32 toTeam,
+    uint32 toMarketing,
+    uint32 toBooster,
+    uint32 toRewardPool
   ) external;
 }

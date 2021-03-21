@@ -83,13 +83,13 @@ contract RewardHandler is AccessControl, IRewardHandler {
    *
    */
   function distribute2(
-    address _recipient,
-    uint256 _amount,
-    uint32 _fee
+    address recipient,
+    uint256 amount,
+    uint32 fee
   ) public override {
     require(hasRole(REWARD_ROLE, msg.sender), 'Only rewarders');
 
-    if (_amount == 0) return;
+    if (amount == 0) return;
 
     IERC20WowsMintable rewardToken =
       IERC20WowsMintable(
@@ -97,10 +97,10 @@ contract RewardHandler is AccessControl, IRewardHandler {
       );
 
     // Calculate absolute fee
-    uint256 absFee = _amount.mul(_fee).div(1e6);
+    uint256 absFee = amount.mul(fee).div(1e6);
 
     // Amount send to recipient
-    uint256 recipientAmount = _amount.sub(absFee);
+    uint256 recipientAmount = amount.sub(absFee);
 
     // Accumulate fee which has to be distributed
     _distributeAmount = _distributeAmount.add(absFee);
@@ -116,7 +116,7 @@ contract RewardHandler is AccessControl, IRewardHandler {
         rewardToken.mint(address(this), mintAmount);
       }
       // Now send rewards to the user
-      rewardToken.transfer(_recipient, recipientAmount);
+      rewardToken.transfer(recipient, recipientAmount);
     }
   }
 
@@ -128,15 +128,15 @@ contract RewardHandler is AccessControl, IRewardHandler {
    * fees specified in this contract.
    */
   function distribute(
-    address _recipient,
-    uint256 _amount,
-    uint32 _fee,
+    address recipient,
+    uint256 amount,
+    uint32 fee,
     uint32,
     uint32,
     uint32,
     uint32
   ) external override {
-    distribute2(_recipient, _amount, _fee);
+    distribute2(recipient, amount, fee);
   }
 
   /************ INTERNAL ************/
