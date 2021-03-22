@@ -23,6 +23,9 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
   // Role granted to distribute funds
   bytes32 public constant REWARD_ROLE = 'reward_role';
 
+  // Role granted to access the private API for testing
+  bytes32 public constant TESTER_ROLE = 'test';
+
   // The fee is distributed to 4 channels:
   // 0.15 team
   uint32 private constant FEE_TO_TEAM = 15 * 1e4;
@@ -92,6 +95,9 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
   function terminate(address newRewardHandler, bool destroy) external {
     // Validate access
     require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admins');
+
+    // Validate parameters
+    require(newRewardHandler != address(0), "Can't transfer to address 0");
 
     // Distribute remaining fees
     IERC20WowsMintable rewardToken = _distribute();
@@ -243,5 +249,28 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
     );
 
     return rewardToken;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Private testing API
+  //
+  // These functions must not modity the contract or have any side effects.
+  // They are for testing only.
+  //////////////////////////////////////////////////////////////////////////////
+
+  function getMinimalMintAmount() public view returns (uint256) {
+    // Validate access
+    require(hasRole(TESTER_ROLE, _msgSender()), 'Only testers');
+
+    // Access state
+    return _minimalMintAmount;
+  }
+
+  function getDistributeAmount() public view returns (uint256) {
+    // Validate access
+    require(hasRole(TESTER_ROLE, _msgSender()), 'Only testers');
+
+    // Access state
+    return _distributeAmount;
   }
 }
