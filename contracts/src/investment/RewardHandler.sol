@@ -104,6 +104,26 @@ contract RewardHandler is AccessControl, IRewardHandler {
     if (destroy) selfdestruct(payable(address(this)));
   }
 
+  /**
+   * @dev Withdraw tokenAddress ERC20token to destiation
+   * tokenAddress cannot be rewardToken.
+   * TODO: provide the possibility to swap into WOWS
+   *
+   * @param tokenAddress the address of the token to transfer
+   */
+  function collectGarbage(address tokenAddress) external {
+    // Validate access
+    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admins');
+    address rewardToken =
+      _addressRegistry.getRegistryEntry(AddressBook.WOWS_TOKEN);
+    require(tokenAddress != address(rewardToken), 'rewardToken not allowed');
+
+    // Transfer token to msg.sender
+    uint256 amountToken = IERC20(tokenAddress).balanceOf(address(this));
+    if (amountToken > 0)
+      IERC20(tokenAddress).transfer(_msgSender(), amountToken);
+  }
+
   //////////////////////////////////////////////////////////////////////////////
   // Implementation of {IRewardHandler}
   //////////////////////////////////////////////////////////////////////////////
