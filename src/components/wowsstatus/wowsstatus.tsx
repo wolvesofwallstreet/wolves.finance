@@ -9,13 +9,14 @@ import './wowsstatus.css';
 
 import { Component, ReactNode } from 'react';
 
+import CountDown from '../controls/CountDown';
 import { ProgressStatus } from '../controls/progress_status';
 
 class WowsStatus extends Component {
   render(): ReactNode {
     return (
       <ProgressStatus route="home">
-        <span>WOWS CURRENT PRICE: $34.45 CIRCULATING MC: $450,000</span>
+        <CountDown />
       </ProgressStatus>
     );
   }

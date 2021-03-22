@@ -78,7 +78,8 @@
 }
 
 .page1-title-box .progress-status-container {
-  width: 40%;
+  /* for timer countdown width: 40%; */
+  width: 30%;
   margin: 8px auto;
 }
 
@@ -141,7 +142,8 @@
   }
 
   .page1-title-box .progress-status-container {
-    width: 90%;
+    /* for timer countdown width: 90%; */
+    width: 70%;
   }
 
   .page1-line-v {

@@ -12,7 +12,7 @@ import { Link } from 'react-router-dom';
 
 import BoisLogo from '../../assets/bois_shadow.png';
 import WolvesLogo from '../../assets/wolves_shadow.png';
-// import WowsStatus from '../wowsstatus';
+import WowsStatus from '../wowsstatus';
 
 type PAGE1_PROPS = {
   t: TFunction;
@@ -23,7 +23,7 @@ function Page1(props: PAGE1_PROPS) {
   return (
     <div className="page1-container">
       <div className="page1-title-box">
-        {/* <WowsStatus /> */}
+        <WowsStatus />
         <div className="page1-title-box-text">
           <h2 className="tk-vincente-bold no-margin">{t('page1.head1')}</h2>
           <h3 className="tk-aktiv-grotesk-condensed">{t('page1.head2')}</h3>

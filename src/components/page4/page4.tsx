@@ -7,6 +7,7 @@
  */
 import './page4.css';
 
+import CountDown from 'components/controls/CountDown';
 import { Component } from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { RouteComponentProps } from 'react-router-dom';
@@ -25,6 +26,9 @@ import {
 } from '../../stores/store';
 import { CARD_LEVEL } from '../types/cards';
 
+const dappDate = 1616432400 * 1000; // Monday 22 , 17:00 utc in millseconds
+const timeRemainingInMillSeconds = dappDate - Date.now();
+
 type PAGE4_PROPS = {
   t: TFunction;
   location: RouteComponentProps['location'];
@@ -38,6 +42,7 @@ type PAGE4_STATE = {
   contentLoaded: boolean;
   type: QueryType;
   isWalletConnected: boolean;
+  isLive: boolean;
 };
 
 const INITIAL_PAGE4_STATE: PAGE4_STATE = {
@@ -45,6 +50,7 @@ const INITIAL_PAGE4_STATE: PAGE4_STATE = {
   contentLoaded: false,
   type: 'wolves',
   isWalletConnected: false,
+  isLive: timeRemainingInMillSeconds <= 0,
 };
 
 class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
@@ -70,6 +76,12 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     StoreClasses.emitter.on(CONNECTION_CHANGED, this.onConnectionChanged);
     StoreClasses.emitter.on(ASSETS_LOADED, this.onAssetsLoaded);
     StoreClasses.emitter.on(SFT_STATE, this.onSFTState);
+
+    if (!this.state.isLive) {
+      setTimeout(() => {
+        this.setState({ isLive: true });
+      }, timeRemainingInMillSeconds);
+    }
   }
 
   componentDidUpdate(): void {
@@ -232,7 +244,6 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     const { history, t } = this.props;
     const { isWalletConnected, type } = this.state;
     const { contentLoaded } = this.state;
-
     const cardlength = this.content?.cards.length || 0;
     const currentCard =
       cardlength > 0 ? this.content?.cards[this.cardIndex] : undefined;
@@ -370,17 +381,21 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                     </li>
                   </ul>
                 </div>
-                {this.tokenId === undefined && (
-                  <input
-                    className="wolves-btn buy-btn"
-                    type="button"
-                    value={getButtonText(
-                      t('page4.buy', { name: currentCard.name }).toString()
-                    )}
-                    disabled={!isWalletConnected}
-                    onClick={() => this._onBuy()}
-                  />
-                )}
+
+                {this.tokenId === undefined &&
+                  (this.state.isLive ? (
+                    <input
+                      className="wolves-btn buy-btn"
+                      type="button"
+                      value={getButtonText(
+                        t('page4.buy', { name: currentCard.name }).toString()
+                      )}
+                      disabled={!isWalletConnected}
+                      onClick={() => this._onBuy()}
+                    />
+                  ) : (
+                    <CountDown source={'page4'} />
+                  ))}
               </>
             )}
           </div>
