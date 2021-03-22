@@ -29,8 +29,8 @@ contract RewardHandler is AccessControl, IRewardHandler {
   uint32 private constant FEE_TO_MARKETING = 15 * 1e4;
   // 0.4 booster
   uint32 private constant FEE_TO_BOOSTER = 4 * 1e5;
-  // 0.3 back to reward pool
-  uint32 private constant FEE_TO_REWARDPOOL = 3 * 1e5;
+  // 0.3 back to reward pool (remaining fee remains in contract)
+  // uint32 private constant FEE_TO_REWARDPOOL = 3 * 1e5;
 
   // Minimal mint amount
   uint256 private _minimalMintAmount = 100 * 1e18;
