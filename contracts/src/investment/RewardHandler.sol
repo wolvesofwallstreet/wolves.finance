@@ -10,13 +10,14 @@ pragma solidity >=0.7.0 <0.8.0;
 
 import '@openzeppelin/contracts/access/AccessControl.sol';
 import '@openzeppelin/contracts/math/SafeMath.sol';
+import '@openzeppelin/contracts/utils/Context.sol';
 
 import 'contracts/src/investment/interfaces/IRewardHandler.sol';
 import 'contracts/src/token/interfaces/IERC20WowsMintable.sol';
 import 'contracts/src/utils/AddressBook.sol';
 import 'contracts/src/utils/interfaces/IAddressRegistry.sol';
 
-contract RewardHandler is AccessControl, IRewardHandler {
+contract RewardHandler is Context, AccessControl, IRewardHandler {
   using SafeMath for uint256;
 
   // Role granted to distribute funds
@@ -67,7 +68,7 @@ contract RewardHandler is AccessControl, IRewardHandler {
    */
   function setMinimalMintAmount(uint256 newAmount) external {
     // Validate access
-    require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), 'Only admins');
+    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admins');
 
     // Update state
     _minimalMintAmount = newAmount;
@@ -90,7 +91,7 @@ contract RewardHandler is AccessControl, IRewardHandler {
    */
   function terminate(address newRewardHandler, bool destroy) external {
     // Validate access
-    require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), 'Only admins');
+    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admins');
 
     // Distribute remaining fees
     IERC20WowsMintable rewardToken = _distribute();
@@ -137,7 +138,7 @@ contract RewardHandler is AccessControl, IRewardHandler {
     uint32 fee
   ) public override {
     // Validate access
-    require(hasRole(REWARD_ROLE, msg.sender), 'Only rewarders');
+    require(hasRole(REWARD_ROLE, _msgSender()), 'Only rewarders');
 
     // If amount is zero there's nothing to do
     if (amount == 0) return;
