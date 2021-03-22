@@ -189,11 +189,6 @@ contract RewardHandler is AccessControl, IRewardHandler {
         _addressRegistry.getRegistryEntry(AddressBook.WOWS_TOKEN)
       );
 
-    // Check how much / if we have to mint
-    uint256 balance = rewardToken.balanceOf(address(this));
-    if (balance < _distributeAmount)
-      rewardToken.mint(address(this), _distributeAmount.sub(balance));
-
     // Load addresses
     address marketingWallet =
       _addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
@@ -202,11 +197,16 @@ contract RewardHandler is AccessControl, IRewardHandler {
     address booster =
       _addressRegistry.getRegistryEntry(AddressBook.WOWS_BOOSTER);
 
-    // Load distributed amount
+    // Load state
     uint256 distributeAmount = _distributeAmount;
 
     // Update state
     _distributeAmount = 0;
+
+    // Check how much / if we have to mint
+    uint256 balance = rewardToken.balanceOf(address(this));
+    if (balance < distributeAmount)
+      rewardToken.mint(address(this), distributeAmount.sub(balance));
 
     // Distribute the fee
     rewardToken.transfer(
