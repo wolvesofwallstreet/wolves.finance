@@ -394,7 +394,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                       onClick={() => this._onBuy()}
                     />
                   ) : (
-                    <CountDown source={'page4'} />
+                    <CountDown cardName={currentCard.name} />
                   ))}
               </>
             )}

@@ -10,47 +10,27 @@
   position: relative;
   margin-top: 10px;
   padding: 6px 0px;
-  background-color: #000000;
-  color: white;
-  font-size: 24px;
-  font-weight: bold;
-  border: 1px solid #888888;
-}
-
-/* 
-commented for timer countdown
-.progress-status-container {
-  position: relative;
-  margin-top: 10px;
-  padding: 6px 0px;
   background-color: var(--wolves-blue-dk);
   color: white;
   font-size: 14px;
   border: 1px solid var(--wolves-orange);
-} */
+}
 
 .home {
-  /* top: -28px; */
+  top: -28px;
 }
 
 @media screen and (max-width: 450px) {
-  /* .progress-status-container {
+  .progress-status-container {
     width: 80%;
     padding: 12px 5px;
     font-size: 16px;
     margin: 8px auto;
-  } */
-
-  .progress-status-container {
-    width: 80%;
-    padding: 12px 5px;
-    font-size: 24px;
-    margin: 8px auto;
   }
 
-  /* .home {
+  .home {
     top: -16px;
-  } for timer countdown*/
+  }
 }
 
 .progress-status-progress {

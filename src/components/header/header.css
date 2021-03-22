@@ -74,15 +74,10 @@
   }
 
   .logo {
-    width: 260px;
+    width: 250px;
   }
 }
 
-@media screen and (max-width: 400px) {
-  .logo {
-    max-width: 250px;
-  }
-}
 .dp-conn-form {
   margin: 8px auto;
 }

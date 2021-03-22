@@ -1,16 +1,15 @@
+import './countDown.css';
+
 import React from 'react';
 import Countdown from 'react-countdown';
-
 const renderer = ({
   hours,
   minutes,
   seconds,
-  days,
 }: {
   hours: number;
   minutes: number;
   seconds: number;
-  days: number;
 }) => {
   const secondsFormatted = seconds.toLocaleString('en-US', {
     minimumIntegerDigits: 2,
@@ -22,13 +21,10 @@ const renderer = ({
     useGrouping: false,
   });
 
-  const hoursFormatted =
-    days > 0
-      ? hours + 24
-      : hours.toLocaleString('en-US', {
-          minimumIntegerDigits: 2,
-          useGrouping: false,
-        });
+  const hoursFormatted = hours.toLocaleString('en-US', {
+    minimumIntegerDigits: 2,
+    useGrouping: false,
+  });
 
   return (
     <span>
@@ -37,19 +33,17 @@ const renderer = ({
   );
 };
 
-const CountDown: React.FC<{ source?: string }> = ({
-  source,
+const CountDown: React.FC<{ cardName: string }> = ({
+  cardName,
 }: {
-  source?: string;
+  cardName: string;
 }) => {
   const dappDate = new Date(1616432400 * 1000);
 
-  return source === 'page4' ? (
-    <button className="wolves-btn buy-btn" disabled={true}>
-      BUY WOWS SFT in : <Countdown date={dappDate} renderer={renderer} />
+  return (
+    <button className="wolves-btn buy-btn font-12" disabled={true}>
+      BUY {cardName} in : <Countdown date={dappDate} renderer={renderer} />
     </button>
-  ) : (
-    <Countdown date={dappDate} renderer={renderer} />
   );
 };
 
