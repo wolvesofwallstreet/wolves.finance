@@ -100,7 +100,7 @@ const sft_func = async function (hardhat_re) {
     args: [
       marketingWallet,
       addressRegistry.hardhat.token,
-      addressRegistry.hardhat.token,
+      addressRegistry.hardhat.rewardHandler,
       SFT_HOLDER_ADDRESS,
     ],
     log: true,

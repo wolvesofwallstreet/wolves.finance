@@ -17,6 +17,7 @@ require('hardhat-deploy-ethers');
 // TODO: Fully qualified contract names
 const TOKEN_CONTRACT = 'WowsToken';
 const CONTROLLER_CONTRACT = 'Controller';
+const REWARD_HANDLER_CONTRACT = 'RewardHandler';
 
 // Path to generated addresses file
 const ADDRESS_REGISTRY = `${__dirname}/../src/config/generated-addresses.json`;
@@ -41,6 +42,9 @@ const func = async function (hardhat_re) {
   );
 
   const TOKEN_INSTANCE = await hardhat_re.ethers.getContract(TOKEN_CONTRACT);
+  const REWARD_HANDLER_INSTANCE = await hardhat_re.ethers.getContract(
+    REWARD_HANDLER_CONTRACT
+  );
 
   //////////////////////////////////////////////////////////////////////////////
   //
@@ -51,7 +55,24 @@ const func = async function (hardhat_re) {
   log_step('Marketing wallet calls');
 
   //
-  // 1.) Call WOWSErc20.sol::grantRole(WOWSErc20.sol.REWARD_ROLE(), controller)
+  // 1.) Call RewardHandler.sol::grantRole(RewardHandler.sol.REWARD_ROLE(), controller)
+  //     This is to allow controller to call into RewardHandler.sol to distribute
+  //     rewards.
+  //
+
+  await execute(
+    REWARD_HANDLER_CONTRACT,
+    {
+      from: marketingWallet,
+      log: true,
+    },
+    'grantRole',
+    await REWARD_HANDLER_INSTANCE.REWARD_ROLE(),
+    addressRegistry.hardhat.controller
+  );
+
+  //
+  // 2.) Call WOWSErc20.sol::grantRole(WOWSErc20.sol.REWARD_ROLE(), controller)
   //     This is to allow controller to call into WOWSErc20.sol to distribute
   //     rewards.
   //
@@ -64,11 +85,11 @@ const func = async function (hardhat_re) {
     },
     'grantRole',
     await TOKEN_INSTANCE.MINTER_ROLE(),
-    addressRegistry.hardhat.controller
+    addressRegistry.hardhat.rewardHandler
   );
 
   //
-  // 2.) Call Controller.sol::registerFarm()
+  // 3.) Call Controller.sol::registerFarm()
   //     Parameters:
   //       * farmAddress         The UniV2StakeFarm address
   //       * rewardCap           15,000 * 1e18 Wei
@@ -95,22 +116,6 @@ const func = async function (hardhat_re) {
     REWARD_PER_DURATION,
     REWARD_PROVIDED,
     REWARD_FEE
-  );
-
-  //
-  // 3.) Call WOWSErc20.sol::setBooster()
-  //     Parameters:
-  //       * booster  The address of Booster.sol
-  //
-
-  await execute(
-    TOKEN_CONTRACT,
-    {
-      from: marketingWallet,
-      log: true,
-    },
-    'setBooster',
-    addressRegistry.hardhat.booster
   );
 
   //

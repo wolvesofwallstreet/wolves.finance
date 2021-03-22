@@ -15,9 +15,9 @@ require('hardhat-deploy');
 require('hardhat-deploy-ethers');
 
 // TODO: Fully qualified contract names
-const TOKEN_CONTRACT = 'WowsToken';
 const SFT_HOLDER_CONTRACT = 'WOWSERC1155';
 const SFT_MINTER_CONTRACT = 'WOWSSftMinter';
+const REWARD_HANDLER_CONTRACT = 'RewardHandler';
 
 // Path to generated address registry file
 const ADDRESS_REGISTRY = `${__dirname}/../src/config/generated-addresses.json`;
@@ -43,7 +43,9 @@ const func = async function (hardhat_re) {
 
   const addresses = addressRegistry.hardhat;
 
-  const TOKEN_INSTANCE = await hardhat_re.ethers.getContract(TOKEN_CONTRACT);
+  const REWARD_HANDLER_INSTANCE = await hardhat_re.ethers.getContract(
+    REWARD_HANDLER_CONTRACT
+  );
   const SFT_INSTANCE = await hardhat_re.ethers.getContract(SFT_HOLDER_CONTRACT);
 
   //////////////////////////////////////////////////////////////////////////////
@@ -59,13 +61,13 @@ const func = async function (hardhat_re) {
   //
 
   await execute(
-    TOKEN_CONTRACT,
+    REWARD_HANDLER_CONTRACT,
     {
       from: marketingWallet,
       log: true,
     },
     'grantRole',
-    await TOKEN_INSTANCE.REWARD_ROLE(),
+    await REWARD_HANDLER_INSTANCE.REWARD_ROLE(),
     addresses.sftMinter
   );
 

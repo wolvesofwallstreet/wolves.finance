@@ -18,7 +18,7 @@ import '../../interfaces/uniswap/IUniswapV2Factory.sol';
 import '../../interfaces/uniswap/IUniswapV2Router02.sol';
 
 import '../investment/interfaces/IStakeFarm.sol';
-import '../token/interfaces/IERC20WolfMintable.sol';
+import '../token/interfaces/IERC20WowsMintable.sol';
 import '../utils/AddressBook.sol';
 import '../utils/interfaces/IAddressRegistry.sol';
 
@@ -38,13 +38,13 @@ import '../utils/interfaces/IAddressRegistry.sol';
  * crowdsales. Override the methods to add functionality. Consider using 'super'
  * where appropriate to concatenate behavior.
  */
-contract Crowdsale is Context, ReentrancyGuard, AddressBook {
+contract Crowdsale is Context, ReentrancyGuard {
   using SafeMath for uint256;
   using SafeERC20 for IERC20;
-  using SafeERC20 for IERC20WolfMintable;
+  using SafeERC20 for IERC20WowsMintable;
 
   // The token being sold
-  IERC20WolfMintable public token;
+  IERC20WowsMintable public token;
 
   // Address where funds are collected
   address payable private _wallet;
@@ -152,7 +152,7 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
   constructor(
     IAddressRegistry _addressRegistry,
     uint256 _rate,
-    IERC20WolfMintable _token,
+    IERC20WowsMintable _token,
     uint256 _cap,
     uint256 _investMin,
     uint256 _walletCap,
@@ -174,7 +174,7 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
     // Reverts if address is invalid
     IUniswapV2Router02 _uniV2Router =
       IUniswapV2Router02(
-        _addressRegistry.getRegistryEntry(UNISWAP_V2_ROUTER02)
+        _addressRegistry.getRegistryEntry(AddressBook.UNISWAP_V2_ROUTER02)
       );
     uniV2Router = _uniV2Router;
 
@@ -189,12 +189,12 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
 
     // Reverts if address is invalid
     address _marketingWallet =
-      _addressRegistry.getRegistryEntry(MARKETING_WALLET);
+      _addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
     _wallet = payable(_marketingWallet);
 
     // Reverts if address is invalid
     address _stakeFarm =
-      _addressRegistry.getRegistryEntry(WETH_WOWS_STAKE_FARM);
+      _addressRegistry.getRegistryEntry(AddressBook.WETH_WOWS_STAKE_FARM);
     stakeFarm = IStakeFarm(_stakeFarm);
 
     rate = _rate;
