@@ -96,10 +96,9 @@ contract RewardHandler is AccessControl, IRewardHandler {
     IERC20WowsMintable rewardToken = _distribute();
 
     // Transfer WOWS to the new rewardHandler
-    rewardToken.transfer(
-      newRewardHandler,
-      rewardToken.balanceOf(address(this))
-    );
+    uint256 amountRewards = rewardToken.balanceOf(address(this));
+    if (amountRewards > 0)
+      rewardToken.transfer(newRewardHandler, amountRewards);
 
     // Destroy contract
     if (destroy) selfdestruct(payable(address(this)));
