@@ -747,7 +747,11 @@ class Store {
       return;
     }
 
-    if (!this.sftMintContract || !this.tokenContract) {
+    if (
+      !this.sftMintContract ||
+      !this.tokenContract ||
+      !this.sftHolderContractRO
+    ) {
       emitter.emit(SFT_BUY, {
         status: 'error',
         errorMessage: 'Invalid contract',
@@ -763,6 +767,18 @@ class Store {
         emitter.emit(SFT_BUY, {
           status: 'error',
           errorMessage: 'Insufficient balances',
+        } as StatusResult);
+        return;
+      }
+
+      const capsMinted = await this.sftHolderContractRO?.getCardData(
+        id >> 8,
+        id & 0xff
+      );
+      if (capsMinted.cap <= capsMinted.minted) {
+        emitter.emit(SFT_BUY, {
+          status: 'error',
+          errorMessage: 'No cards available',
         } as StatusResult);
         return;
       }
@@ -790,7 +806,8 @@ class Store {
         | undefined = await this.sftMintContract?.mintWowsSFT(
         this.address,
         id >> 8,
-        id & 0xff
+        id & 0xff,
+        { gasLimit: 350000 }
       );
       emitter.emit(SFT_BUY, {
         status: 'tx',

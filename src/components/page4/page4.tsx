@@ -248,8 +248,17 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     const currentCard =
       cardlength > 0 ? this.content?.cards[this.cardIndex] : undefined;
 
+    const noQuantity =
+      !currentCard ||
+      !this.content ||
+      currentCard.minted >= this.content.quantity;
+
     const getButtonText = (s: string): string =>
-      isWalletConnected ? s : t('header.connectWallet').toString();
+      !isWalletConnected
+        ? t('header.connectWallet').toString()
+        : noQuantity
+        ? t('page4.noQuantity').toString()
+        : s;
 
     return (
       <div id="top" className={'wolves-container bg-' + type}>
@@ -389,7 +398,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                       value={getButtonText(
                         t('page4.buy', { name: currentCard.name }).toString()
                       )}
-                      disabled={!isWalletConnected}
+                      disabled={!isWalletConnected || noQuantity}
                       onClick={() => this._onBuy()}
                     />
                   ) : (
