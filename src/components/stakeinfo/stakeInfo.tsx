@@ -133,6 +133,7 @@ class StakeInfo extends Component<STAKEINFOPROPS, STAKEINFOSTATE> {
     } = this.state;
 
     let apy = 0;
+    let apr = 0;
     // APY calculation
     if (stakeSupply > 0 && rewardPerDuration > 0) {
       const {
@@ -152,27 +153,43 @@ class StakeInfo extends Component<STAKEINFOPROPS, STAKEINFOSTATE> {
       const emmission =
         ((rewardPerDuration * SECONDS_PER_YEAR) / rewardsDuration) * wowsPrice;
       // APR
-      const apr = emmission / stakedPrice;
+      apr = emmission / stakedPrice;
       apy = (Math.pow(1.0 + apr / 52, 52) - 1.0) * 100;
     }
 
     return (
-      <ProgressStatus
-        route="stake"
-        progressCallback={
-          stakeSupplyUser > 0 ? this.onProgressIteration : undefined
-        }
-      >
-        {ethAmount !== undefined && wowsAmount !== undefined ? (
-          <>
-            ETH: {ethAmount.toFixed(2)}, WOWS: {wowsAmount.toFixed(2)},{' '}
-          </>
-        ) : (
-          <> LPToken: {availableLP.toFixed(2)}, </>
-        )}
-        Staked: {stakeSupplyUser.toFixed(2)}, Earned:{earned.toFixed(6)}, APY:{' '}
-        {apy.toFixed(2)}%
-      </ProgressStatus>
+      <>
+        <ProgressStatus
+          route="stake"
+          progressCallback={
+            stakeSupplyUser > 0 ? this.onProgressIteration : undefined
+          }
+        >
+          {ethAmount !== undefined && wowsAmount !== undefined ? (
+            <>
+              ETH:&nbsp;{ethAmount.toFixed(2)}, WOWS:&nbsp;
+              {wowsAmount.toFixed(2)},{' '}
+            </>
+          ) : (
+            <>LPToken:&nbsp;{availableLP.toFixed(2)}, </>
+          )}
+          Staked:&nbsp;{stakeSupplyUser.toFixed(2)}, Earned:&nbsp;
+          {earned.toFixed(6)}, APY*:&nbsp;
+          {apy > 5000 ? 'INF' : apy.toFixed(2)}%, APR:&nbsp;
+          {(apr * 100).toFixed(2)}%
+          {stakeSupplyUser > 0 ? (
+            <span
+              onAnimationIteration={this.onProgressIteration}
+              className="info-progress"
+            />
+          ) : (
+            ''
+          )}
+        </ProgressStatus>
+        <span className="info-hint">
+          * based on weekly manual reward compounding
+        </span>
+      </>
     );
   }
 }
