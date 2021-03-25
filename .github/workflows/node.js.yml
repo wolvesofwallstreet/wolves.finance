@@ -66,7 +66,7 @@ jobs:
           path: |
             contracts/depends
             depends
-          key: restore-contracts-${{ hashFiles('tools/Makefile', 'tools/*.mk', 'tools/depends/native/**') }}
+          key: restore-contracts-${{ hashFiles('tools/Makefile', 'tools/*.mk', 'tools/depends/chain/**', 'tools/depends/native/nvm/**') }}
 
       - name: yarn install
         if: steps.restore-node.outputs.cache-hit != 'true'

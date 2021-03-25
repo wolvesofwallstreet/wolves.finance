@@ -54,11 +54,11 @@ TEST := 1
 #
 ################################################################################
 
-include depends/native/canonical-weth/package.mk
+include depends/chain/canonical-weth/package.mk
+include depends/chain/uniswap-core/package.mk
+include depends/chain/uniswap-lib/package.mk
+include depends/chain/uniswap-periphery/package.mk
 include depends/native/nvm/package.mk
-include depends/native/uniswap-core/package.mk
-include depends/native/uniswap-lib/package.mk
-include depends/native/uniswap-periphery/package.mk
 
 ################################################################################
 #

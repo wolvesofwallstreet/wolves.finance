@@ -95,7 +95,7 @@ $(S)/build-uniswap-periphery: $(S)/.prebuild $(UNISWAP_PERIPHERY_BUILD_DEPENDS)
 	  --directory="$(BUILD_DIR_UNISWAP_PERIPHERY)" \
 	  --reject-file="/dev/null" \
 	  --no-backup-if-mismatch \
-	  < "$(TOOL_DIR)/depends/native/uniswap-periphery/0001-Remove-optimization-requiring-byte-identical-bytecod.patch" \
+	  < "$(TOOL_DIR)/depends/chain/uniswap-periphery/0001-Remove-optimization-requiring-byte-identical-bytecod.patch" \
 	  || : \
 
 	patch \
@@ -104,7 +104,7 @@ $(S)/build-uniswap-periphery: $(S)/.prebuild $(UNISWAP_PERIPHERY_BUILD_DEPENDS)
 	  --directory="$(BUILD_DIR_UNISWAP_PERIPHERY)" \
 	  --reject-file="/dev/null" \
 	  --no-backup-if-mismatch \
-	  < "$(TOOL_DIR)/depends/native/uniswap-periphery/0002-Delegate-import-locations-to-dependency-management.patch" \
+	  < "$(TOOL_DIR)/depends/chain/uniswap-periphery/0002-Delegate-import-locations-to-dependency-management.patch" \
 	  || : \
 
 	touch "$@"
