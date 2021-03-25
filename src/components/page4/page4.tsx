@@ -338,6 +338,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                     autoPlay={true}
                     loop={true}
                     src={currentCard.url.replace('{res}', '500')}
+                    poster={currentCard.url.replace('{res}', '300') + '.jpg'}
                   />
                 ) : (
                   <img

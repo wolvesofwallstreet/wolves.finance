@@ -174,7 +174,7 @@ class StakeInfo extends Component<STAKEINFOPROPS, STAKEINFOSTATE> {
             <>LPToken:&nbsp;{availableLP.toFixed(2)}, </>
           )}
           Staked:&nbsp;{stakeSupplyUser.toFixed(2)}, Earned:&nbsp;
-          {earned.toFixed(6)}, APY*:&nbsp;
+          {earned.toFixed(6)}&nbsp;WOWS, APY*:&nbsp;
           {apy > 5000 ? 'INF' : apy.toFixed(2)}%, APR:&nbsp;
           {(apr * 100).toFixed(2)}%
           {stakeSupplyUser > 0 ? (

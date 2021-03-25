@@ -19,9 +19,10 @@ import Emitter from 'events';
 import Dispatcher from 'flux';
 import React from 'react';
 import { WalletLink } from 'walletlink';
-import Web3Modal from 'web3modal';
+import Web3Modal, { IProviderOptions } from 'web3modal';
 
 import WalletLinkLogo from '../assets/coinbase-wallet.svg';
+import InjectedLogo from '../assets/injected.png';
 import { CARD_LEVEL, CARDS } from '../components/types/cards';
 import { addresses } from '../config/addresses';
 import { privateNetworkRPC, privateNetworkWS } from '../config/networks';
@@ -137,39 +138,53 @@ class Store {
   } as ASSETS;
 
   constructor() {
+    const providerOptions: IProviderOptions = {
+      walletconnect: {
+        package: WalletConnectProvider,
+        options: {
+          infuraId: process.env.REACT_APP_INFURA_ID,
+        },
+      },
+      'custom-walletlink': {
+        display: {
+          logo: WalletLinkLogo,
+          name: 'WalletLink',
+          description: 'Scan with WalletLink to connect',
+        },
+        options: {
+          appName: 'WolvesOfWallStreet', // Your app name
+          networkUrl: `https://mainnet.infura.io/v3/${process.env.REACT_APP_INFURA_ID}`,
+          chainId: this.chainId,
+        },
+        package: WalletLink,
+        connector: async (_, options) => {
+          const { appName, networkUrl, chainId } = options;
+          const walletLink = new WalletLink({
+            appName,
+          });
+          const provider = walletLink.makeWeb3Provider(networkUrl, chainId);
+          await provider.enable();
+          return provider;
+        },
+      },
+    };
+
+    // Metamask is handled automatically in Web3Modal
+    if (!window.ethereum || !('isMetaMask' in window.ethereum)) {
+      providerOptions.injected = {
+        display: {
+          logo: InjectedLogo,
+          name: 'Injected',
+          description: 'Connect with the provider in your Browser',
+        },
+        package: null,
+      };
+    }
+
     this.web3Modal = new Web3Modal({
       network: this.networkName,
       cacheProvider: true,
-      providerOptions: {
-        walletconnect: {
-          package: WalletConnectProvider,
-          options: {
-            infuraId: process.env.REACT_APP_INFURA_ID,
-          },
-        },
-        'custom-walletlink': {
-          display: {
-            logo: WalletLinkLogo,
-            name: 'WalletLink',
-            description: 'Scan with WalletLink to connect',
-          },
-          options: {
-            appName: 'WolvesOfWallStreet', // Your app name
-            networkUrl: `https://mainnet.infura.io/v3/${process.env.REACT_APP_INFURA_ID}`,
-            chainId: this.chainId,
-          },
-          package: WalletLink,
-          connector: async (_, options) => {
-            const { appName, networkUrl, chainId } = options;
-            const walletLink = new WalletLink({
-              appName,
-            });
-            const provider = walletLink.makeWeb3Provider(networkUrl, chainId);
-            await provider.enable();
-            return provider;
-          },
-        },
-      },
+      providerOptions: providerOptions,
     });
 
     dispatcher.register((payload) => {
