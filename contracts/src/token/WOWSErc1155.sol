@@ -360,7 +360,7 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
   {
     return (
       _wowsLevelCap[level],
-      _wowsCardsMinted[uint16(level << 8) | cardId]
+      _wowsCardsMinted[(uint16(level) << 8) | cardId]
     );
   }
 

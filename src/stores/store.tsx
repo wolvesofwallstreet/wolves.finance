@@ -19,10 +19,13 @@ import Emitter from 'events';
 import Dispatcher from 'flux';
 import React from 'react';
 import { WalletLink } from 'walletlink';
-import Web3Modal, { IProviderOptions } from 'web3modal';
+import Web3Modal, {
+  getInjectedProvider,
+  getProviderDescription,
+  IProviderOptions,
+} from 'web3modal';
 
 import WalletLinkLogo from '../assets/coinbase-wallet.svg';
-import InjectedLogo from '../assets/injected.png';
 import { CARD_LEVEL, CARDS } from '../components/types/cards';
 import { addresses } from '../config/addresses';
 import { privateNetworkRPC, privateNetworkWS } from '../config/networks';
@@ -169,13 +172,13 @@ class Store {
       },
     };
 
-    // Metamask is handled automatically in Web3Modal
-    if (!window.ethereum || !('isMetaMask' in window.ethereum)) {
+    const providerInfo = getInjectedProvider();
+    if (providerInfo) {
       providerOptions.injected = {
         display: {
-          logo: InjectedLogo,
-          name: 'Injected',
-          description: 'Connect with the provider in your Browser',
+          logo: providerInfo.logo,
+          name: providerInfo.name,
+          description: getProviderDescription(providerInfo),
         },
         package: null,
       };
@@ -810,11 +813,11 @@ class Store {
         return;
       }
 
-      const capsMinted = await this.sftHolderContractRO?.getCardData(
-        id >> 8,
-        id & 0xff
+      const cardData = await this.sftHolderContractRO?.getCardDataBatch(
+        [id >> 8],
+        [id & 0xff]
       );
-      if (capsMinted.cap <= capsMinted.minted) {
+      if (cardData[0] <= cardData[1]) {
         emitter.emit(SFT_BUY, {
           status: 'error',
           errorMessage: 'No cards available',
