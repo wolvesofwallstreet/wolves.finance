@@ -68,6 +68,7 @@
     "welcome-myPack": "$t(page3.welcome-myPack)",
     "buy": "BUY {{name}}",
     "tokenId": "TOKEN ID",
-    "noQuantity": "NO CARDS AVAILABLE"
+    "noQuantity": "NO CARDS AVAILABLE",
+    "txPending": "TRANSACTION PENDING"
   }
 }
