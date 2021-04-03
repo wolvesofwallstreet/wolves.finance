@@ -10,17 +10,21 @@ pragma solidity >=0.7.0 <0.8.0;
 
 import '@openzeppelin/contracts/access/AccessControl.sol';
 import '@openzeppelin/contracts/math/SafeMath.sol';
+import '@openzeppelin/contracts/utils/Context.sol';
 
 import 'contracts/src/investment/interfaces/IRewardHandler.sol';
 import 'contracts/src/token/interfaces/IERC20WowsMintable.sol';
 import 'contracts/src/utils/AddressBook.sol';
 import 'contracts/src/utils/interfaces/IAddressRegistry.sol';
 
-contract RewardHandler is AccessControl, IRewardHandler {
+contract RewardHandler is Context, AccessControl, IRewardHandler {
   using SafeMath for uint256;
 
   // Role granted to distribute funds
   bytes32 public constant REWARD_ROLE = 'reward_role';
+
+  // Role granted to access the private API for testing
+  bytes32 public constant TESTER_ROLE = 'test';
 
   // The fee is distributed to 4 channels:
   // 0.15 team
@@ -67,7 +71,7 @@ contract RewardHandler is AccessControl, IRewardHandler {
    */
   function setMinimalMintAmount(uint256 newAmount) external {
     // Validate access
-    require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), 'Only admins');
+    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admins');
 
     // Update state
     _minimalMintAmount = newAmount;
@@ -90,7 +94,10 @@ contract RewardHandler is AccessControl, IRewardHandler {
    */
   function terminate(address newRewardHandler, bool destroy) external {
     // Validate access
-    require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), 'Only admins');
+    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admins');
+
+    // Validate parameters
+    require(newRewardHandler != address(0), "Can't transfer to address 0");
 
     // Distribute remaining fees
     IERC20WowsMintable rewardToken = _distribute();
@@ -137,7 +144,7 @@ contract RewardHandler is AccessControl, IRewardHandler {
     uint32 fee
   ) public override {
     // Validate access
-    require(hasRole(REWARD_ROLE, msg.sender), 'Only rewarders');
+    require(hasRole(REWARD_ROLE, _msgSender()), 'Only rewarders');
 
     // If amount is zero there's nothing to do
     if (amount == 0) return;
@@ -242,5 +249,28 @@ contract RewardHandler is AccessControl, IRewardHandler {
     );
 
     return rewardToken;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Private testing API
+  //
+  // These functions must not modity the contract or have any side effects.
+  // They are for testing only.
+  //////////////////////////////////////////////////////////////////////////////
+
+  function getMinimalMintAmount() public view returns (uint256) {
+    // Validate access
+    require(hasRole(TESTER_ROLE, _msgSender()), 'Only testers');
+
+    // Access state
+    return _minimalMintAmount;
+  }
+
+  function getDistributeAmount() public view returns (uint256) {
+    // Validate access
+    require(hasRole(TESTER_ROLE, _msgSender()), 'Only testers');
+
+    // Access state
+    return _distributeAmount;
   }
 }
