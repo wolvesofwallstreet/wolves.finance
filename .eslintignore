@@ -17,3 +17,6 @@
 
 # Metadata generator
 /metadata/generated
+
+# Files from auditors
+/audits

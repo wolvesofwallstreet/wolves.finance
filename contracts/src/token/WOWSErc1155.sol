@@ -311,7 +311,7 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
         tokenInfo.minted = true;
         // solhint-disable-next-line not-rely-on-time
         tokenInfo.timestamp = uint64(block.timestamp);
-        // Create a new WOWSCryptofolio by cloning masterTokenReciver
+        // Create a new WOWSCryptofolio by cloning masterTokenReceiver
         // The clone itself is a minimal delegate proxy.
         if (tokenAddress == address(0)) {
           tokenAddress = Clones.clone(_cryptofolio);
