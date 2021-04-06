@@ -8,11 +8,14 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
-import '@openzeppelin/contracts/access/AccessControl.sol';
-import '@openzeppelin/contracts/presets/ERC1155PresetMinterPauser.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/utils/Context.sol';
 
+import '../utils/AddressBook.sol';
+import '../utils/interfaces/IAddressRegistry.sol';
+
 import './interfaces/IMinterCallback.sol';
+import './WOWSMinterPauser.sol';
 
 /**
  * @dev Implementation of https://eips.ethereum.org/EIPS/eip-1155[ERC1155]
@@ -22,7 +25,7 @@ import './interfaces/IMinterCallback.sol';
  * of the contract minting the token via the ERC-1155 data parameter. When
  * the token is transferred or burned, the minter is notified.
  */
-contract TradeFloor is Context, AccessControl, ERC1155PresetMinterPauser {
+contract TradeFloor is Context, WOWSMinterPauser {
   //////////////////////////////////////////////////////////////////////////////
   // State
   //////////////////////////////////////////////////////////////////////////////
@@ -36,6 +39,67 @@ contract TradeFloor is Context, AccessControl, ERC1155PresetMinterPauser {
    */
   mapping(uint256 => address) private _tokenIdToMinter;
 
+  /**
+   * @dev Per token information, used to cap NFT's and
+   * to allow querying a list of NFT's owned by an address
+   */
+
+  // using a stuct allows us to work byRef
+  struct ListKey {
+    uint64 index;
+  }
+
+  // Per token information
+  struct TokenInfo {
+    bool minted; // Make sure we only mint 1
+    ListKey listKey; // Next tokenId in the owner linkedList
+  }
+  mapping(uint64 => TokenInfo) private _tokenInfos;
+
+  // Mapping owner -> first owned token
+  //
+  // Note that we work 1 based here because of initialization
+  // e.g. firstId == 1 links to tokenId 0;
+  struct Owned {
+    uint64 count;
+    ListKey listKey; // First tokenId in linked list
+  }
+  mapping(address => Owned) private _owned;
+
+  /**
+   * @dev the registry to get the required addreeses from
+   */
+  IAddressRegistry private _addressRegistry;
+
+  // Name of the metadata json file for OpenSea contract data
+  string private _contractMetadataUri;
+
+  // Conversion to hex string
+  bytes16 private constant HEX_MAP = '0123456789ABCDEF';
+
+  // bytes4(keccak256('contractURI()')) == 0xe8a3d485
+  bytes4 private constant _INTERFACE_ID_CONTRACT_URI = 0xe8a3d485;
+
+  /*
+   * bytes4(keccak256('getFeeBps(uint256)')) == 0x0ebd4c7f
+   * bytes4(keccak256('getFeeRecipients(uint256)')) == 0xb9c4d9fb
+   *
+   * => 0x0ebd4c7f ^ 0xb9c4d9fb == 0xb7799584
+   */
+  bytes4 private constant _INTERFACE_ID_FEES = 0xb7799584;
+  uint256 private _fee = 1000; // 10%
+  address private _feeRecipient;
+
+  // Rarible events
+  string private constant _NAME = 'WolvesOfWallStreet NFT';
+  string private constant _SYMBOL = 'WOWS NFT';
+  event CreateERC1155_v1(address indexed creator, string name, string symbol);
+  event SecondarySaleFees(
+    uint256 tokenId,
+    address payable[] recipients,
+    uint256[] bps
+  );
+
   //////////////////////////////////////////////////////////////////////////////
   // Initialization
   //////////////////////////////////////////////////////////////////////////////
@@ -43,12 +107,47 @@ contract TradeFloor is Context, AccessControl, ERC1155PresetMinterPauser {
   /**
    * @dev Construct the contract
    *
-   * @param owner The address given admin control over this contract
-   * @param uri The ERC-1155 metadata URI
+   * Pause operation in this context. Only calls from Proxy allowed
    */
-  constructor(address owner, string memory uri) ERC1155PresetMinterPauser(uri) {
+  constructor() WOWSMinterPauser('') {
+    pause();
+  }
+
+  /**
+   * @dev One time contract initializer
+   *
+   * @param addressRegistry registry containing our system addresses
+   * @param tokenUriPrefix The ERC-1155 metadata URI Prefix
+   * @param contractUri The contract metadata URI
+   */
+  function initialize(
+    IAddressRegistry addressRegistry,
+    string memory tokenUriPrefix,
+    string memory contractUri
+  ) public {
+    require(address(_addressRegistry) == address(0), 'already initialized');
+    // Set tokenURIPrefix
+    setURI(tokenUriPrefix);
+
     // Initialize {AccessControl}
-    _setupRole(DEFAULT_ADMIN_ROLE, owner);
+    address marketingWallet =
+      addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
+    _setupRole(DEFAULT_ADMIN_ROLE, marketingWallet);
+
+    _feeRecipient = addressRegistry.getRegistryEntry(
+      AddressBook.REWARD_HANDLER
+    );
+
+    _addressRegistry = addressRegistry;
+    _contractMetadataUri = contractUri;
+
+    // Rarible interface
+    // Register contractURI interface
+    _registerInterface(_INTERFACE_ID_CONTRACT_URI);
+    // Register fee interface
+    _registerInterface(_INTERFACE_ID_FEES);
+
+    CreateERC1155_v1(_msgSender(), _NAME, _SYMBOL);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -67,12 +166,46 @@ contract TradeFloor is Context, AccessControl, ERC1155PresetMinterPauser {
     return _tokenIdToMinter[tokenId];
   }
 
+  /**
+   * @dev Opensea calls this fuction to get information about how to display storefront.
+   * Our return value is the base URI of the stock card metadata + the filename.
+   *
+   * @return full URI to the location of the contract metadata.
+   */
+  function contractURI() public view returns (string memory) {
+    return _contractMetadataUri;
+  }
+
+  /**
+   * @dev Return list of tokenIds owned by `account`
+   */
+  function getTokenIds(address account)
+    external
+    view
+    returns (uint256[] memory)
+  {
+    Owned storage list = _owned[account];
+    uint256[] memory result = new uint256[](list.count);
+    ListKey storage key = list.listKey;
+    for (uint256 i = 0; i < list.count; ++i) {
+      result[i] = key.index;
+      key = _tokenInfos[key.index].listKey;
+    }
+    return result;
+  }
+
   //////////////////////////////////////////////////////////////////////////////
-  // Implementation of {ERC1155PresetMinterPauser}
+  // Minting interface
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev See {ERC1155PresetMinterPauser-mint}.
+   * @dev Creates `amount` new tokens for `to`, of token type `tokenId`.
+   *
+   * See {ERC1155-_mint}.
+   *
+   * Requirements:
+   *
+   * - The caller must have the `MINTER_ROLE`.
    */
   function mint(
     address to,
@@ -80,8 +213,8 @@ contract TradeFloor is Context, AccessControl, ERC1155PresetMinterPauser {
     uint256 amount,
     bytes memory data
   ) public virtual override {
-    // Validate parameters
-    require(to != address(0), "Can't mint to zero address");
+    // Only tokenIds >= 64 Bit allowed
+    require((tokenId >> 64) != 0, 'TokenId reserved');
 
     // Translate parameter
     address minter = _getAddress(data);
@@ -90,12 +223,12 @@ contract TradeFloor is Context, AccessControl, ERC1155PresetMinterPauser {
     // Update state
     _onMint(minter, tokenId);
 
-    // Call parent
+    // Call ancestor
     super.mint(to, tokenId, amount, data);
   }
 
   /**
-   * @dev See {ERC1155PresetMinterPauser-mintBatch}.
+   * @dev Batched variant of {mint}.
    */
   function mintBatch(
     address to,
@@ -103,25 +236,23 @@ contract TradeFloor is Context, AccessControl, ERC1155PresetMinterPauser {
     uint256[] memory amounts,
     bytes memory data
   ) public virtual override {
-    // Validate parameters
-    require(to != address(0), "Can't mint to zero address");
-    require(tokenIds.length == amounts.length, "Lengths don't match");
-
     // Translate parameter
     address minter = _getAddress(data);
     require(minter != address(0), 'Invalid minter in data');
 
     // Update state
     for (uint256 i = 0; i < tokenIds.length; i++) {
+      // Only tokenIds >= 64 Bit allowed
+      require((tokenIds[i] >> 64) != 0, 'TokenId reserved');
       _onMint(minter, tokenIds[i]);
     }
 
-    // Call parent
+    // Call ancestor
     super.mintBatch(to, tokenIds, amounts, data);
   }
 
   //////////////////////////////////////////////////////////////////////////////
-  // Implementation of {IERC1155} via {ERC1155PresetMinterPauser}
+  // Implementation of {IERC1155}
   //////////////////////////////////////////////////////////////////////////////
 
   /**
@@ -145,8 +276,10 @@ contract TradeFloor is Context, AccessControl, ERC1155PresetMinterPauser {
     // Call parent
     super.safeTransferFrom(from, to, tokenId, amount, data);
 
-    // Invoke callback
-    IMinterCallback(minter).onTransferFrom(from, to, tokenId, amount);
+    if ((tokenId >> 64) == 0)
+      _relinkOwner(from, to, uint64(tokenId));
+      // Invoke callback
+    else IMinterCallback(minter).onTransferFrom(from, to, tokenId, amount);
   }
 
   /**
@@ -170,16 +303,19 @@ contract TradeFloor is Context, AccessControl, ERC1155PresetMinterPauser {
     // Invoke callbacks
     for (uint256 i = 0; i < tokenIds.length; i++) {
       uint256 tokenId = tokenIds[i];
-      uint256 amount = amounts[i];
-      address minter = _tokenIdToMinter[tokenId];
-      require(minter != address(0), 'Invalid minter for token');
+      if ((tokenId >> 64) == 0) {
+        _relinkOwner(from, to, uint64(tokenId));
+      } else {
+        address minter = _tokenIdToMinter[tokenId];
+        require(minter != address(0), 'Invalid minter for token');
 
-      IMinterCallback(minter).onTransferFrom(from, to, tokenId, amount);
+        IMinterCallback(minter).onTransferFrom(from, to, tokenId, amounts[i]);
+      }
     }
   }
 
   //////////////////////////////////////////////////////////////////////////////
-  // Implementation of {ERC1155Burnable} via {ERC1155PresetMinterPauser}
+  // Implementation of {ERC1155Burnable}
   //////////////////////////////////////////////////////////////////////////////
 
   /**
@@ -193,15 +329,15 @@ contract TradeFloor is Context, AccessControl, ERC1155PresetMinterPauser {
     // Validate parameters
     require(account != address(0), 'Invalid zero address');
 
-    // Translate parameter
-    address minter = _tokenIdToMinter[tokenId];
-    require(minter != address(0), 'Token has no minter');
-
-    // Call parent
+    // Call ancestor
     super.burn(account, tokenId, value);
 
-    // Invoke callback
-    IMinterCallback(minter).onBurn(account, tokenId, value);
+    uint256[] memory tokenIds = new uint256[](1);
+    uint256[] memory values = new uint256[](1);
+    tokenIds[0] = tokenId;
+    values[0] = value;
+
+    _onBurn(account, tokenIds, values);
   }
 
   /**
@@ -218,16 +354,122 @@ contract TradeFloor is Context, AccessControl, ERC1155PresetMinterPauser {
 
     // Call parent
     super.burnBatch(account, tokenIds, values);
+    _onBurn(account, tokenIds, values);
+  }
 
-    // Invoke callbacks
-    for (uint256 i = 0; i < tokenIds.length; i++) {
-      uint256 tokenId = tokenIds[i];
-      uint256 value = values[i];
-      address minter = _tokenIdToMinter[tokenId];
-      require(minter != address(0), 'Token has no minter');
+  //////////////////////////////////////////////////////////////////////////////
+  // Implementation of {IERC1155MetadataURI}
+  //////////////////////////////////////////////////////////////////////////////
 
-      IMinterCallback(minter).onBurn(account, tokenId, value);
+  /**
+   * @dev See {IERC1155MetadataURI-uri}.
+   *
+   * Revert for unminted SFT NFTs
+   */
+  function uri(uint256 tokenId)
+    public
+    view
+    virtual
+    override(ERC1155)
+    returns (string memory)
+  {
+    // Validate state
+    require(
+      (tokenId >> 64) > 0 || _tokenInfos[uint64(tokenId)].minted,
+      'Token not minted'
+    );
+
+    // Calculate URI
+    uint256 temp = tokenId;
+    uint256 length = tokenId == 0 ? 1 : 0;
+    while (temp != 0) {
+      length++;
+      temp >>= 8;
     }
+    bytes memory buffer = new bytes(2 * length);
+    for (uint256 i = 2 * length; i > 0; --i) {
+      buffer[i - 1] = HEX_MAP[tokenId & 0xf];
+      tokenId >>= 4;
+    }
+    return string(abi.encodePacked(super.uri(0), buffer, '.json'));
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Rarible Fees and events
+  //////////////////////////////////////////////////////////////////////////////
+
+  function setFee(uint256 fee) external {
+    // Validate access
+    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admin');
+
+    // Update state
+    _fee = fee;
+  }
+
+  function setFeeRecipient(address feeRecipient) external {
+    // Validate access
+    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admin');
+
+    // Update state
+    _feeRecipient = feeRecipient;
+  }
+
+  function getFeeRecipients(uint256)
+    public
+    view
+    returns (address payable[] memory)
+  {
+    // Return value
+    address payable[] memory recipients = new address payable[](1);
+
+    // Load state
+    recipients[0] = payable(_feeRecipient);
+    return recipients;
+  }
+
+  function getFeeBps(uint256) public view returns (uint256[] memory) {
+    // Return value
+    uint256[] memory bps = new uint256[](1);
+
+    // Load state
+    bps[0] = _fee;
+
+    return bps;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Hooks
+  //////////////////////////////////////////////////////////////////////////////
+
+  function onERC1155Received(
+    address,
+    address from,
+    uint256 tokenId,
+    uint256 amount,
+    bytes memory
+  ) external returns (bytes4) {
+    // Update state
+    uint256[] memory tokenIds = new uint256[](1);
+    tokenIds[0] = tokenId;
+    uint256[] memory amounts = new uint256[](1);
+    amounts[0] = amount;
+    _onTokensReceived(from, tokenIds, amounts);
+
+    // This contract supports safe ERC-1155 transfers
+    return this.onERC1155Received.selector;
+  }
+
+  function onERC1155BatchReceived(
+    address,
+    address from,
+    uint256[] memory tokenIds,
+    uint256[] memory amounts,
+    bytes memory
+  ) external returns (bytes4) {
+    _onTokensReceived(from, tokenIds, amounts);
+
+    // This contract supports safe ERC-1155 transfers
+    return this.onERC1155BatchReceived.selector;
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -237,17 +479,102 @@ contract TradeFloor is Context, AccessControl, ERC1155PresetMinterPauser {
   /**
    * @dev See {ERC1155-_setURI}.
    */
-  function setURI(string memory newuri) public {
+  function setURI(string memory newUri) public {
     // Access control
     require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admin');
 
     // Call parent
-    super._setURI(newuri);
+    super._setURI(newUri);
+  }
+
+  /**
+   * @dev Set contract metadata URI
+   */
+  function setContractURI(string memory newContractUri) public {
+    // Access control
+    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admin');
+
+    _contractMetadataUri = newContractUri;
+  }
+
+  /**
+   * @dev Withdraw tokenAddress ERC20token to destination
+   * tokenAddress cannot be rewardToken.
+   * TODO: provide the possibility to swap into WOWS
+   *
+   * @param tokenAddress the address of the token to transfer
+   */
+  function collectGarbage(address tokenAddress) external {
+    // Validate access
+    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admins');
+
+    // Transfer token to msg.sender
+    uint256 amountToken = IERC20(tokenAddress).balanceOf(address(this));
+    if (amountToken > 0)
+      IERC20(tokenAddress).transfer(_msgSender(), amountToken);
+  }
+
+  /**
+   * remove before mainnet deploy
+   */
+  function testSelfDestroy() external {
+    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admins');
+    selfdestruct(payable(address(this)));
   }
 
   //////////////////////////////////////////////////////////////////////////////
   // Internal details
   //////////////////////////////////////////////////////////////////////////////
+
+  function _onBurn(
+    address account,
+    uint256[] memory tokenIds,
+    uint256[] memory amounts
+  ) private {
+    // Count tokenIds < 64 Bit
+    uint256 numStakes = 0;
+
+    // Invoke callbacks / count SFT's
+    for (uint256 i = 0; i < tokenIds.length; i++) {
+      uint256 tokenId = tokenIds[i];
+
+      // Unstake SFT on burn
+      if ((tokenId >> 64) == 0) {
+        ++numStakes;
+        _relinkOwner(account, address(0), uint64(tokenId));
+      } else {
+        address minter = _tokenIdToMinter[tokenId];
+        require(minter != address(0), 'Token has no minter');
+
+        IMinterCallback(minter).onBurn(account, tokenId, amounts[i]);
+      }
+    }
+
+    // Unstake SFTs if required
+    if (numStakes > 0) {
+      uint256[] memory unstakeIds = new uint256[](numStakes);
+      uint256[] memory unstakeAmounts = new uint256[](numStakes);
+
+      for (uint256 i = 0; i < tokenIds.length; ++i) {
+        uint256 tokenId = tokenIds[i];
+        if ((tokenId >> 64) == 0) {
+          unstakeIds[--numStakes] = tokenId;
+          unstakeAmounts[numStakes] = 1;
+        }
+      }
+      // Load address
+      IERC1155 sftContract =
+        IERC1155(_addressRegistry.getRegistryEntry(AddressBook.SFT_HOLDER));
+
+      sftContract.safeBatchTransferFrom(
+        address(this),
+        _msgSender(),
+        unstakeIds,
+        unstakeAmounts,
+        ''
+      );
+    }
+  }
 
   /**
    * @dev Update the state of this contract when `minter` mints `tokenId`
@@ -270,6 +597,92 @@ contract TradeFloor is Context, AccessControl, ERC1155PresetMinterPauser {
     } else {
       // Token hasn't been minted before, record minter
       _tokenIdToMinter[tokenId] = minter;
+    }
+  }
+
+  /**
+   * @dev SFT Token arrived, provide a NFT
+   */
+  function _onTokensReceived(
+    address from,
+    uint256[] memory tokenIds,
+    uint256[] memory amounts
+  ) private {
+    // We only support tokens from our SFT Holder contract
+    require(
+      _msgSender() == _addressRegistry.getRegistryEntry(AddressBook.SFT_HOLDER),
+      'Invald sender'
+    );
+
+    // Validate parameters
+    require(tokenIds.length == amounts.length, 'Lengths mismatch');
+
+    // Update state
+    for (uint256 i = 0; i < tokenIds.length; ++i) {
+      uint256 tokenId = tokenIds[i];
+      require((tokenId >> 64) == 0, 'Invalid TokenId');
+      require(amounts[i] == 1, 'Amount != 0 not alowed');
+      require(
+        _tokenInfos[uint64(tokenId)].minted == false,
+        'Token already minted'
+      );
+      _relinkOwner(address(0), from, uint64(tokenId));
+      // OpenSea only listens to TransferSingle event on mint
+      _mint(from, tokenId, 1, '');
+      // Even the tokenId has not changed we fire URI to
+      // let clients know that Metadata has to be refreshed
+      emit URI(uri(tokenId), tokenId);
+      // Rarible needs to be informed abiut fees
+      emit SecondarySaleFees(tokenId, getFeeRecipients(0), getFeeBps(0));
+    }
+  }
+
+  /**
+   * @dev Ownership change -> update linked list owner -> tokenId
+   *
+   * linkKeys are 1 based where tokenIds are 0-based.
+   */
+  function _relinkOwner(
+    address from,
+    address to,
+    uint64 tokenId
+  ) internal {
+    // Load state
+    TokenInfo storage tokenInfo = _tokenInfos[tokenId];
+
+    // Remove tokenId from List
+    if (from != address(0)) {
+      // Load state
+      Owned storage fromList = _owned[from];
+
+      // Validate state
+      require(fromList.count > 0, 'Count mismatch');
+
+      ListKey storage key = fromList.listKey;
+      uint64 count = fromList.count;
+
+      // Search the token which links to tokenId
+      for (; count > 0 && key.index != tokenId; --count)
+        key = _tokenInfos[key.index].listKey;
+      require(key.index == tokenId, 'Key mismatch');
+
+      // Unlink prev -> tokenId
+      key.index = tokenInfo.listKey.index;
+      // Unlink tokenId -> next
+      tokenInfo.listKey.index = 0;
+      // Decrement count
+      fromList.count--;
+    }
+
+    // Update state
+    if (to != address(0)) {
+      Owned storage toList = _owned[to];
+      tokenInfo.listKey.index = toList.listKey.index;
+      toList.listKey.index = tokenId;
+      toList.count++;
+      _tokenInfos[uint64(tokenId)].minted = true;
+    } else {
+      _tokenInfos[uint64(tokenId)].minted = false;
     }
   }
 

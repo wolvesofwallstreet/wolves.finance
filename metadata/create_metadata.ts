@@ -32,10 +32,10 @@ cards.levels.forEach((level) =>
       description: card.description,
       image: (card.type === 'movie' ? card.url + '.jpg' : card.url).replace(
         '{res}',
-        '300'
+        '500'
       ),
       external_url:
-        'https://app.wolvesofwallstreet.finance/detail?type=' +
+        'https://app.wows.finance/detail?type=' +
         level.type +
         '&levelId=' +
         level.levelId +

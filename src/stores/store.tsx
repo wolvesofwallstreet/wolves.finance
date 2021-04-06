@@ -11,6 +11,7 @@ import IERC20Abi from 'abi/@openzeppelin/contracts/token/ERC20/IERC20.sol/IERC20
 import UniV2PairAbi from 'abi/contracts/interfaces/uniswap/IUniswapV2Pair.sol/IUniswapV2Pair.json';
 import SFTMinterAbi from 'abi/contracts/src/crowdsale/WOWSSftMinter.sol/WOWSSftMinter.json';
 import StakeAbi from 'abi/contracts/src/investment/UniV2StakeFarm.sol/UniV2StakeFarm.json';
+import TradeFloorAbi from 'abi/contracts/src/token/TradeFloor.sol/TradeFloor.json';
 import TokenAbi from 'abi/contracts/src/token/WOWSErc20.sol/WowsToken.json';
 import SFTHolderAbi from 'abi/contracts/src/token/WOWSErc1155.sol/WOWSERC1155.json';
 import async from 'async';
@@ -35,7 +36,9 @@ import {
   ERC20_TOKEN_CONTRACT,
   NEW_BLOCK,
   SFT_BUY,
+  SFT_LOCK,
   SFT_STATE,
+  SFT_UNLOCK,
   SFT_USER,
   STAKE_ADD,
   STAKE_CLAIM,
@@ -63,6 +66,7 @@ type ChainAddresses = {
   stakeFarm: string;
   sftMinter: string;
   sftHolder: string;
+  tradeFloor: string;
 };
 interface IIndexable {
   [key: number]: ChainAddresses;
@@ -108,7 +112,7 @@ export type StakeResult = {
 type cbf = async.AsyncResultCallback<unknown, Error>;
 
 type ASSETS = {
-  userSFT: number[];
+  userSFT: { id: number; locked: boolean }[];
   cards: CARDS;
 };
 
@@ -122,6 +126,8 @@ class Store {
   stakeContract: ethers.Contract | null = null;
   lPContract: ethers.Contract | null = null;
   sftMintContract: ethers.Contract | null = null;
+  tradeFloorContract: ethers.Contract | null = null;
+
   sftHolderContractRO: ethers.Contract | null = null;
   stakeContractRO: ethers.Contract | null = null;
   uniDaiWethPairContractRO: ethers.Contract | null = null;
@@ -134,6 +140,7 @@ class Store {
   chainId = 0;
   address = '';
   tokenContractAddress = Store.nullAddress;
+  pauseSFTUser = false;
 
   assets = {
     userSFT: [],
@@ -216,8 +223,14 @@ class Store {
         case SFT_BUY:
           this._doSftBuy(_payload.content);
           break;
+        case SFT_LOCK:
+          this._doSftLock(_payload.content);
+          break;
         case SFT_STATE:
           this._getSftState(_payload.content);
+          break;
+        case SFT_UNLOCK:
+          this._doSftUnlock(_payload.content);
           break;
         case SFT_USER:
           this._getUserSft(_payload.content);
@@ -324,7 +337,7 @@ class Store {
       }
     });
 
-    provider.on('networkChanged', async (networkId: number) => {
+    provider.on('networkChanged', async () => {
       if (this.ethersProvider !== null) {
         const network = await this.ethersProvider.getNetwork();
         if (network.chainId !== this.chainId) await this.connect();
@@ -377,12 +390,12 @@ class Store {
     });
     this.sftHolderContractRO?.on('TransferSingle', (operator, from, to) => {
       dispatcher.dispatch({ type: SFT_STATE } as Payload);
-      if (from === this.address || to === this.address)
+      if (!this.pauseSFTUser && (from === this.address || to === this.address))
         dispatcher.dispatch({ type: SFT_USER } as Payload);
     });
     this.sftHolderContractRO?.on('TransferBatch', (operator, from, to) => {
       dispatcher.dispatch({ type: SFT_STATE } as Payload);
-      if (from === this.address || to === this.address)
+      if (!this.pauseSFTUser && (from === this.address || to === this.address))
         dispatcher.dispatch({ type: SFT_USER } as Payload);
     });
     return true;
@@ -509,6 +522,12 @@ class Store {
         SFTMinterAbi,
         signer
       );
+      if (chainAddresses.tradeFloor !== '')
+        this.tradeFloorContract = new ethers.Contract(
+          chainAddresses.tradeFloor,
+          TradeFloorAbi,
+          signer
+        );
       return true;
     }
     return false;
@@ -610,12 +629,28 @@ class Store {
         | undefined = await this.sftHolderContractRO.getTokenIds(this.address);
 
       if (result) {
-        this.assets.userSFT = result
-          .map((bn) => bn.toNumber())
-          .filter((n) => n >> 16 !== 0x0103 && n >> 16 !== 0x0503);
-        this.assets.userSFT.sort((a: number, b: number) => a - b);
-        emitter.emit(SFT_STATE, { status: 'user' } as SFTStateresult);
+        this.assets.userSFT = result.map((bn) => {
+          return { id: bn.toNumber(), locked: false };
+        });
+      } else this.assets.userSFT = [];
+
+      if (this.tradeFloorContract) {
+        const result:
+          | ethers.BigNumber[]
+          | undefined = await this.tradeFloorContract.getTokenIds(this.address);
+
+        if (result) {
+          this.assets.userSFT = this.assets.userSFT.concat(
+            result.map((bn) => {
+              return { id: bn.toNumber(), locked: true };
+            })
+          );
+        }
       }
+      this.assets.userSFT = this.assets.userSFT
+        .filter((n) => n.id >> 16 !== 0x0103 && n.id >> 16 !== 0x0503)
+        .sort((a, b) => a.id - b.id);
+      emitter.emit(SFT_STATE, { status: 'user' } as SFTStateresult);
     } catch (e) {
       console.log(e.message);
     }
@@ -872,6 +907,109 @@ class Store {
     }
   };
 
+  _doSftLock = async (payloadContent: PayloadContent) => {
+    const { id } = payloadContent;
+    if (id === undefined) {
+      emitter.emit(SFT_LOCK, {
+        status: 'error',
+        errorMessage: 'Invalid id',
+      } as StatusResult);
+      return;
+    }
+
+    if (
+      !this.sftHolderContractRO ||
+      !this.tradeFloorContract ||
+      !this.ethersProvider
+    ) {
+      emitter.emit(SFT_LOCK, {
+        status: 'error',
+        errorMessage: 'Invalid contract state',
+      } as StatusResult);
+      return;
+    }
+
+    const sftHolderContract = new ethers.Contract(
+      this.sftHolderContractRO.address,
+      this.sftHolderContractRO.interface,
+      this.ethersProvider.getSigner(this.accountId)
+    );
+
+    try {
+      this.pauseSFTUser = true;
+      const tx:
+        | ethers.ContractTransaction
+        | undefined = await sftHolderContract.safeTransferFrom(
+        this.address,
+        this.tradeFloorContract.address,
+        id,
+        1,
+        []
+      );
+      emitter.emit(SFT_LOCK, {
+        status: 'tx',
+        tx: tx?.hash,
+      } as StatusResult);
+
+      await tx?.wait();
+      this._resolveSFTUser(id, true);
+      emitter.emit(SFT_LOCK, {
+        status: 'success',
+        tx: tx?.hash,
+      } as StatusResult);
+    } catch (e) {
+      this.pauseSFTUser = true;
+      emitter.emit(SFT_LOCK, {
+        status: 'error',
+        type: SFT_LOCK,
+        errorMessage: e.error ? e.error.message : e.message,
+      } as StatusResult);
+    }
+  };
+
+  _doSftUnlock = async (payloadContent: PayloadContent) => {
+    const { id } = payloadContent;
+    if (id === undefined) {
+      emitter.emit(SFT_UNLOCK, {
+        status: 'error',
+        errorMessage: 'Invalid id',
+      } as StatusResult);
+      return;
+    }
+
+    if (!this.tradeFloorContract) {
+      emitter.emit(SFT_UNLOCK, {
+        status: 'error',
+        errorMessage: 'Invalid contract state',
+      } as StatusResult);
+      return;
+    }
+
+    try {
+      this.pauseSFTUser = true;
+      const tx:
+        | ethers.ContractTransaction
+        | undefined = await this.tradeFloorContract.burn(this.address, id, 1);
+      emitter.emit(SFT_UNLOCK, {
+        status: 'tx',
+        tx: tx?.hash,
+      } as StatusResult);
+
+      await tx?.wait();
+      this._resolveSFTUser(id, false);
+      emitter.emit(SFT_UNLOCK, {
+        status: 'success',
+        tx: tx?.hash,
+      } as StatusResult);
+    } catch (e) {
+      this.pauseSFTUser = true;
+      emitter.emit(SFT_UNLOCK, {
+        status: 'error',
+        errorMessage: e.error ? e.error.message : e.message,
+      } as StatusResult);
+    }
+  };
+
   /************** Getter ****************/
 
   _getTokenAmount = async (payloadContent: PayloadContent, callback: cbf) => {
@@ -894,6 +1032,15 @@ class Store {
   toWei(n: number, decimals = 18) {
     const parsed = typeof n === 'number' ? n.toFixed(decimals) : n;
     return ethers.utils.parseUnits(parsed, decimals);
+  }
+
+  _resolveSFTUser(tokenId: number, locked: boolean) {
+    if (this.pauseSFTUser) {
+      const elem = this.assets.userSFT.find((entry) => entry.id === tokenId);
+      if (elem) elem.locked = locked;
+      this.pauseSFTUser = false;
+      emitter.emit(SFT_STATE, { status: 'user' } as SFTStateresult);
+    }
   }
 }
 

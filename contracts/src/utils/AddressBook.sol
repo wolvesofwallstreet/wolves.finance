@@ -16,4 +16,5 @@ library AddressBook {
   bytes32 public constant WOWS_TOKEN = 'WOWS_TOKEN';
   bytes32 public constant WOWS_BOOSTER = 'WOWS_BOOSTER';
   bytes32 public constant REWARD_HANDLER = 'REWARD_HANDLER';
+  bytes32 public constant SFT_HOLDER = 'SFT_HOLDER';
 }

@@ -22,6 +22,8 @@ import {
   ADDRESS_COPIED,
   CONNECTION_CHANGED,
   SFT_BUY,
+  SFT_LOCK,
+  SFT_UNLOCK,
   STAKE_ADD,
   STAKE_CLAIM,
   STAKE_EXIT,
@@ -63,10 +65,14 @@ class WolfToast extends Component<TOASTPROPS, TOASTSTATE> {
     StoreClasses.emitter.on(STAKE_CLAIM, this.onTransaction);
     StoreClasses.emitter.on(STAKE_EXIT, this.onTransaction);
     StoreClasses.emitter.on(SFT_BUY, this.onTransaction);
+    StoreClasses.emitter.on(SFT_LOCK, this.onTransaction);
+    StoreClasses.emitter.on(SFT_UNLOCK, this.onTransaction);
   }
 
   componentWillUnmount(): void {
-    StoreClasses.emitter.on(SFT_BUY, this.onTransaction);
+    StoreClasses.emitter.off(SFT_UNLOCK, this.onTransaction);
+    StoreClasses.emitter.off(SFT_LOCK, this.onTransaction);
+    StoreClasses.emitter.off(SFT_BUY, this.onTransaction);
     StoreClasses.emitter.off(STAKE_EXIT, this.onTransaction);
     StoreClasses.emitter.off(STAKE_CLAIM, this.onTransaction);
     StoreClasses.emitter.off(STAKE_ADD, this.onTransaction);

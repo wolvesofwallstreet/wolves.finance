@@ -27,8 +27,7 @@ import { hardhat } from '../../src/web3/hardhat';
 chai.use(solidity);
 
 // ERC-1155 metadata URI
-const METADATA_URI =
-  'https://raw.githubusercontent.com/wolvesofwallstreet/wolves.assets.low/main/metadata/';
+const METADATA_URI = 'https://4travelers.de/wolves_assets/metadata/';
 
 // Path to generated address registry file
 const GENERATED_ADDRESSES = `${__dirname}/../../src/config/generated-addresses.json`;
@@ -705,7 +704,7 @@ describe('SFT contracts', function () {
     );
 
     // Mint an NFT in the contract for the clone address
-    let tradeFloorTokenId = 0;
+    const tradeFloorTokenId = ethers.BigNumber.from('0x10000000000000000');
     tx = stakingContract.stake(cryptofolioAddress, tradeFloorTokenId);
     await chai
       .expect(tx)
@@ -727,8 +726,8 @@ describe('SFT contracts', function () {
         [1]
       );
 
-    tradeFloorTokenId = 1;
-    tx = stakingContract.stake(cryptofolioAddress, tradeFloorTokenId);
+    const tradeFloorTokenId2 = ethers.BigNumber.from('0x10000000000000001');
+    tx = stakingContract.stake(cryptofolioAddress, tradeFloorTokenId2);
     await chai
       .expect(tx)
       .to.emit(tradeFloorContract, 'TransferSingle')
@@ -736,7 +735,7 @@ describe('SFT contracts', function () {
         stakingContract.address,
         ethers.BigNumber.from('0'),
         cryptofolioAddress,
-        tradeFloorTokenId,
+        tradeFloorTokenId2,
         1
       );
     await chai
@@ -745,7 +744,7 @@ describe('SFT contracts', function () {
       .withArgs(
         cryptofolioAddress,
         tradeFloorContract.address,
-        [tradeFloorTokenId],
+        [tradeFloorTokenId2],
         [1]
       );
 
@@ -755,29 +754,26 @@ describe('SFT contracts', function () {
     );
     chai.expect(idsLength).to.equal(2);
     chai.expect(tokenIds.length).to.equal(2);
-    chai.expect(tokenIds[0]).to.equal(0);
-    chai.expect(tokenIds[1]).to.equal(1);
+    chai.expect(tokenIds[0]).to.equal(tradeFloorTokenId);
+    chai.expect(tokenIds[1]).to.equal(tradeFloorTokenId2);
 
     // Approval is needed to burn the NFT
     tx = cryptofolioContract.setApprovalForAll(stakingContract.address, true);
     await chai.expect(tx).to.not.be.reverted;
 
     // Burn one NFT
-    tradeFloorTokenId = 0;
     tx = stakingContract.unstake(cryptofolioAddress, tradeFloorTokenId);
     await chai.expect(tx).to.not.be.reverted;
 
     // Check the cryptofolio again and verify it only holds the second NFT
-    tradeFloorTokenId = 1;
     [tokenIds, idsLength] = await cryptofolioContract.getCryptofolio(
       tradeFloorContract.address
     );
     chai.expect(idsLength).to.equal(1);
-    chai.expect(tokenIds[0]).to.equal(tradeFloorTokenId);
+    chai.expect(tokenIds[0]).to.equal(tradeFloorTokenId2);
 
     // Burn the second NFT
-    tradeFloorTokenId = 1;
-    tx = stakingContract.unstake(cryptofolioAddress, tradeFloorTokenId);
+    tx = stakingContract.unstake(cryptofolioAddress, tradeFloorTokenId2);
     await chai.expect(tx).to.not.be.reverted;
 
     // Check the cryptofolio again and it should be in its original state
