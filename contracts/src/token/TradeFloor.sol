@@ -87,7 +87,7 @@ contract TradeFloor is Context, WOWSMinterPauser {
    * => 0x0ebd4c7f ^ 0xb9c4d9fb == 0xb7799584
    */
   bytes4 private constant _INTERFACE_ID_FEES = 0xb7799584;
-  uint256 private _fee = 1000; // 10%
+  uint256 private _fee;
   address private _feeRecipient;
 
   // Rarible events
@@ -143,6 +143,7 @@ contract TradeFloor is Context, WOWSMinterPauser {
     _feeRecipient = addressRegistry.getRegistryEntry(
       AddressBook.REWARD_HANDLER
     );
+    _fee = 1000; // 10%
 
     _addressRegistry = addressRegistry;
     _contractMetadataUri = contractUri;
