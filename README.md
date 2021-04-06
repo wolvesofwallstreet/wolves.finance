@@ -80,12 +80,19 @@ Contracts can be deployed on the following networks:
 You can also specify tags with `yarn hardhat:deploy --tags <tags>`.
 The following tags are available:
 
+- `TokenDepends` - the dependencies needed for the token
 - `Token` - the ERC-20 token and presale launch contracts
 - `TokenSetup` - transactions to setup the token contracts
 - `SFT` - the WOWS SFT contract and minter
 - `SFTSetup` - additional steps for setting up SFT contracts
-- `SFTTest` - additional contracts for testing SFTs
-- `SFTTestSetup` - additional steps for setting up SFT test contracts
+- `TradeFloor` - contracts for the Trade Floor
+- `TradeFloorSetup` - additional steps for the Trade Floor
+
+Separate multiple tags with a comma, e.g.:
+
+```
+yarn hardhat:deploy --tags TokenDepends,Token,TokenSetup,SFT,SFTSetup,TradeFloor,TradeFloorSetup
+```
 
 ### `yarn <network>:verify`
 
@@ -108,7 +115,8 @@ Deployment scripts are executed by Hardhat in lexicographic order. Number
 prefixes are used to control deployment order, with the following ranges
 defined here:
 
+- 000-099: Dependencies for testing
 - 100: Token contract
 - 101: SFT contract
-- 102: SFT test contracts
+- 102: Trade floor contracts
 - 103-199: Dapp contracts
