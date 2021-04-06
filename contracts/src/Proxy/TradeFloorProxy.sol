@@ -19,8 +19,8 @@ contract TradeFloorProxy is UpgradeableProxy {
    * This is the keccak-256 hash of "eip1967.proxy.admin" subtracted by 1, and is
    * validated in the constructor.
    */
-  bytes32 private constant _REGISTRY_SLOT =
-    0xcdd043ceca57fbb0bae6ee2e6e291af7addb66a9abb044fed45e71adcc247c1c;
+  bytes32 private constant _ADMIN_SLOT =
+    0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103;
 
   /**
    * @dev Emitted when the admin account has changed.
@@ -31,12 +31,7 @@ contract TradeFloorProxy is UpgradeableProxy {
    * @dev Modifier used internally that will delegate the call to the implementation unless the sender is the admin.
    */
   modifier ifAdmin() {
-    if (
-      msg.sender ==
-      IAddressRegistry(_addressRegistry()).getRegistryEntry(
-        AddressBook.MARKETING_WALLET
-      )
-    ) {
+    if (msg.sender == _admin()) {
       _;
     } else {
       _fallback();
@@ -48,15 +43,17 @@ contract TradeFloorProxy is UpgradeableProxy {
   //////////////////////////////////////////////////////////////////////////////
 
   constructor(
-    address addressRegistry_,
+    IAddressRegistry addressRegistry_,
     address _logic,
     bytes memory _data
   ) UpgradeableProxy(_logic, _data) {
     assert(
-      _REGISTRY_SLOT ==
-        bytes32(uint256(keccak256('eip1967.proxy.registry')) - 1)
+      _ADMIN_SLOT == bytes32(uint256(keccak256('eip1967.proxy.admin')) - 1)
     );
-    _setAddressRegistry(addressRegistry_);
+    // Initialize {AccessControl}
+    address marketingWallet =
+      addressRegistry_.getRegistryEntry(AddressBook.MARKETING_WALLET);
+    _setAdmin(marketingWallet);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -105,23 +102,23 @@ contract TradeFloorProxy is UpgradeableProxy {
   /**
    * @dev Returns the current admin.
    */
-  function _addressRegistry() internal view virtual returns (address reg) {
-    bytes32 slot = _REGISTRY_SLOT;
+  function _admin() internal view virtual returns (address adm) {
+    bytes32 slot = _ADMIN_SLOT;
     // solhint-disable-next-line no-inline-assembly
     assembly {
-      reg := sload(slot)
+      adm := sload(slot)
     }
   }
 
   /**
    * @dev Stores a new address in the EIP1967 admin slot.
    */
-  function _setAddressRegistry(address reg) private {
-    bytes32 slot = _REGISTRY_SLOT;
+  function _setAdmin(address adm) private {
+    bytes32 slot = _ADMIN_SLOT;
 
     // solhint-disable-next-line no-inline-assembly
     assembly {
-      sstore(slot, reg)
+      sstore(slot, adm)
     }
   }
 }

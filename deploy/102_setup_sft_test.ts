@@ -46,6 +46,7 @@ const func = async function (hardhat_re) {
   const TRADE_FLOOR_INSTANCE = await hardhat_re.ethers.getContract(
     TRADE_FLOOR_CONTRACT
   );
+  const TRADE_FLOOR_PROXY_ADDRESS = addresses.tradefloorProxy;
 
   //////////////////////////////////////////////////////////////////////////////
   //
@@ -78,6 +79,7 @@ const func = async function (hardhat_re) {
     TRADE_FLOOR_CONTRACT,
     {
       from: marketingWallet,
+      to: TRADE_FLOOR_PROXY_ADDRESS,
       log: true,
     },
     'grantRole',
