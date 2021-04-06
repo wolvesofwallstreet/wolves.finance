@@ -9,6 +9,7 @@
 pragma solidity >=0.7.0 <0.8.0;
 
 library AddressBook {
+  bytes32 public constant DEPLOYER = 'DEPLOYER';
   bytes32 public constant TEAM_WALLET = 'TEAM_WALLET';
   bytes32 public constant MARKETING_WALLET = 'MARKETING_WALLET';
   bytes32 public constant UNISWAP_V2_ROUTER02 = 'UNISWAP_V2_ROUTER02';

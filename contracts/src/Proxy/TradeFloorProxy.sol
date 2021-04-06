@@ -61,15 +61,6 @@ contract TradeFloorProxy is UpgradeableProxy {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev Returns the current implementation.
-   *
-   * NOTE: Only the admin can call this function.
-   */
-  function implementation() external ifAdmin returns (address implementation_) {
-    implementation_ = _implementation();
-  }
-
-  /**
    * @dev Upgrade the implementation of the proxy.
    *
    * NOTE: Only the admin can call this function.
