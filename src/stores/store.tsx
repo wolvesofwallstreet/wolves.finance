@@ -18,8 +18,14 @@ import { ethers } from 'ethers';
 import Emitter from 'events';
 import Dispatcher from 'flux';
 import React from 'react';
-import Web3Modal from 'web3modal';
+import { WalletLink } from 'walletlink';
+import Web3Modal, {
+  getInjectedProvider,
+  getProviderDescription,
+  IProviderOptions,
+} from 'web3modal';
 
+import WalletLinkLogo from '../assets/coinbase-wallet.svg';
 import { CARD_LEVEL, CARDS } from '../components/types/cards';
 import { addresses } from '../config/addresses';
 import { privateNetworkRPC, privateNetworkWS } from '../config/networks';
@@ -135,17 +141,53 @@ class Store {
   } as ASSETS;
 
   constructor() {
+    const providerOptions: IProviderOptions = {
+      walletconnect: {
+        package: WalletConnectProvider,
+        options: {
+          infuraId: process.env.REACT_APP_INFURA_ID,
+        },
+      },
+      'custom-walletlink': {
+        display: {
+          logo: WalletLinkLogo,
+          name: 'WalletLink',
+          description: 'Scan with WalletLink to connect',
+        },
+        options: {
+          appName: 'WolvesOfWallStreet', // Your app name
+          networkUrl: `https://mainnet.infura.io/v3/${process.env.REACT_APP_INFURA_ID}`,
+          chainId: this.chainId,
+        },
+        package: WalletLink,
+        connector: async (_, options) => {
+          const { appName, networkUrl, chainId } = options;
+          const walletLink = new WalletLink({
+            appName,
+          });
+          const provider = walletLink.makeWeb3Provider(networkUrl, chainId);
+          await provider.enable();
+          return provider;
+        },
+      },
+    };
+
+    const providerInfo = getInjectedProvider();
+    if (providerInfo) {
+      providerOptions.injected = {
+        display: {
+          logo: providerInfo.logo,
+          name: providerInfo.name,
+          description: getProviderDescription(providerInfo),
+        },
+        package: null,
+      };
+    }
+
     this.web3Modal = new Web3Modal({
       network: this.networkName,
       cacheProvider: true,
-      providerOptions: {
-        walletconnect: {
-          package: WalletConnectProvider,
-          options: {
-            infuraId: process.env.REACT_APP_INFURA_ID,
-          },
-        },
-      },
+      providerOptions: providerOptions,
     });
 
     dispatcher.register((payload) => {
@@ -747,7 +789,11 @@ class Store {
       return;
     }
 
-    if (!this.sftMintContract || !this.tokenContract) {
+    if (
+      !this.sftMintContract ||
+      !this.tokenContract ||
+      !this.sftHolderContractRO
+    ) {
       emitter.emit(SFT_BUY, {
         status: 'error',
         errorMessage: 'Invalid contract',
@@ -763,6 +809,18 @@ class Store {
         emitter.emit(SFT_BUY, {
           status: 'error',
           errorMessage: 'Insufficient balances',
+        } as StatusResult);
+        return;
+      }
+
+      const cardData = await this.sftHolderContractRO?.getCardDataBatch(
+        [id >> 8],
+        [id & 0xff]
+      );
+      if (cardData[0] <= cardData[1]) {
+        emitter.emit(SFT_BUY, {
+          status: 'error',
+          errorMessage: 'No cards available',
         } as StatusResult);
         return;
       }
@@ -790,7 +848,8 @@ class Store {
         | undefined = await this.sftMintContract?.mintWowsSFT(
         this.address,
         id >> 8,
-        id & 0xff
+        id & 0xff,
+        { gasLimit: 350000 }
       );
       emitter.emit(SFT_BUY, {
         status: 'tx',

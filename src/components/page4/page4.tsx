@@ -22,6 +22,7 @@ import {
 import {
   ConnectResult,
   SFTStateresult,
+  StatusResult,
   StoreClasses,
 } from '../../stores/store';
 import { CARD_LEVEL } from '../types/cards';
@@ -43,6 +44,7 @@ type PAGE4_STATE = {
   type: QueryType;
   isWalletConnected: boolean;
   isLive: boolean;
+  txPending: boolean;
 };
 
 const INITIAL_PAGE4_STATE: PAGE4_STATE = {
@@ -51,6 +53,7 @@ const INITIAL_PAGE4_STATE: PAGE4_STATE = {
   type: 'wolves',
   isWalletConnected: false,
   isLive: timeRemainingInMillSeconds <= 0,
+  txPending: false,
 };
 
 class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
@@ -68,6 +71,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     this.onConnectionChanged = this.onConnectionChanged.bind(this);
     this.onAssetsLoaded = this.onAssetsLoaded.bind(this);
     this.onSFTState = this.onSFTState.bind(this);
+    this.onSFTBuy = this.onSFTBuy.bind(this);
   }
 
   componentDidMount(): void {
@@ -76,6 +80,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     StoreClasses.emitter.on(CONNECTION_CHANGED, this.onConnectionChanged);
     StoreClasses.emitter.on(ASSETS_LOADED, this.onAssetsLoaded);
     StoreClasses.emitter.on(SFT_STATE, this.onSFTState);
+    StoreClasses.emitter.on(SFT_BUY, this.onSFTBuy);
 
     if (!this.state.isLive) {
       setTimeout(() => {
@@ -93,6 +98,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
   }
 
   componentWillUnmount(): void {
+    StoreClasses.emitter.off(SFT_BUY, this.onSFTBuy);
     StoreClasses.emitter.off(SFT_STATE, this.onSFTState);
     StoreClasses.emitter.off(ASSETS_LOADED, this.onAssetsLoaded);
     StoreClasses.emitter.off(CONNECTION_CHANGED, this.onConnectionChanged);
@@ -110,6 +116,11 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
 
   onSFTState(status: SFTStateresult): void {
     this.setState({ cardId: '' });
+  }
+
+  onSFTBuy(status: StatusResult): void {
+    if (status.status === 'success' || status.status === 'error')
+      this.setState({ txPending: false });
   }
 
   _checkContent(): void {
@@ -236,20 +247,32 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
           (this.content.chainRef << 8) |
           this.content.cards[this.cardIndex].chainRef,
       };
+      this.setState({ txPending: true });
       StoreClasses.dispatcher.dispatch(payload);
     }
   }
 
   render(): JSX.Element {
     const { history, t } = this.props;
-    const { isWalletConnected, type } = this.state;
+    const { isWalletConnected, txPending, type } = this.state;
     const { contentLoaded } = this.state;
     const cardlength = this.content?.cards.length || 0;
     const currentCard =
       cardlength > 0 ? this.content?.cards[this.cardIndex] : undefined;
 
+    const noQuantity =
+      !currentCard ||
+      !this.content ||
+      currentCard.minted >= this.content.quantity;
+
     const getButtonText = (s: string): string =>
-      isWalletConnected ? s : t('header.connectWallet').toString();
+      !isWalletConnected
+        ? t('header.connectWallet').toString()
+        : noQuantity
+        ? t('page4.noQuantity').toString()
+        : txPending
+        ? t('page4.txPending')
+        : s;
 
     return (
       <div id="top" className={'wolves-container bg-' + type}>
@@ -329,6 +352,8 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                     autoPlay={true}
                     loop={true}
                     src={currentCard.url.replace('{res}', '500')}
+                    poster={currentCard.url.replace('{res}', '300') + '.jpg'}
+                    playsInline
                   />
                 ) : (
                   <img
@@ -389,7 +414,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                       value={getButtonText(
                         t('page4.buy', { name: currentCard.name }).toString()
                       )}
-                      disabled={!isWalletConnected}
+                      disabled={!isWalletConnected || noQuantity || txPending}
                       onClick={() => this._onBuy()}
                     />
                   ) : (

@@ -46,6 +46,8 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
             autoPlay={true}
             loop={true}
             src={content.url.replace('{res}', '300')}
+            poster={content.url.replace('{res}', '300') + '.jpg'}
+            playsInline
           />
         ) : (
           <img

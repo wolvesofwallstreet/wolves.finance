@@ -18,6 +18,7 @@ import Header from './components/header';
 import Page1 from './components/page1';
 import Page3 from './components/page3';
 import Page4 from './components/page4';
+import { PageStatus } from './components/pageStatus';
 import Stake from './components/stake';
 import WolfToast from './components/toast/wolftoast';
 import { StoreContainer } from './stores/store';
@@ -41,6 +42,7 @@ class App extends React.Component {
                 render={(props) => <Page3 {...props} display={'my'} />}
               />
               <Route path="/detail" component={Page4} />
+              <Route path="/status" component={PageStatus} />
               <Route component={Page1} />
             </Switch>
             <Footer />

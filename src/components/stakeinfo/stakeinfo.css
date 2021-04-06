@@ -6,15 +6,10 @@
  * See the file LICENSES/README.md for more information.
  */
 
-.info-container {
-  position: relative;
-  border: 1px gray solid;
-  margin-top: 10px;
-  padding: 6px 0px;
-  width: 100%;
-  background-color: var(--wolves-blue-dk);
+.info-hint {
   color: white;
-  opacity: 0.75;
+  font-size: 12px;
+  opacity: 0.85;
 }
 
 .info-progress {
