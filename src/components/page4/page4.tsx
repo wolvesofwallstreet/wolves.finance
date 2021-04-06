@@ -7,7 +7,6 @@
  */
 import './page4.css';
 
-import CountDown from 'components/controls/CountDown';
 import { Component } from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { RouteComponentProps } from 'react-router-dom';
@@ -17,7 +16,9 @@ import {
   ASSETS_LOADED,
   CONNECTION_CHANGED,
   SFT_BUY,
+  SFT_LOCK,
   SFT_STATE,
+  SFT_UNLOCK,
 } from '../../stores/constants';
 import {
   ConnectResult,
@@ -26,9 +27,6 @@ import {
   StoreClasses,
 } from '../../stores/store';
 import { CARD_LEVEL } from '../types/cards';
-
-const dappDate = 1616432400 * 1000; // Monday 22 , 17:00 utc in millseconds
-const timeRemainingInMillSeconds = dappDate - Date.now();
 
 type PAGE4_PROPS = {
   t: TFunction;
@@ -43,7 +41,6 @@ type PAGE4_STATE = {
   contentLoaded: boolean;
   type: QueryType;
   isWalletConnected: boolean;
-  isLive: boolean;
   txPending: boolean;
 };
 
@@ -52,7 +49,6 @@ const INITIAL_PAGE4_STATE: PAGE4_STATE = {
   contentLoaded: false,
   type: 'wolves',
   isWalletConnected: false,
-  isLive: timeRemainingInMillSeconds <= 0,
   txPending: false,
 };
 
@@ -60,6 +56,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
   content: CARD_LEVEL | undefined = undefined;
   cardIndex = 0;
   tokenId: number | undefined = undefined;
+  tokenLocked = false;
   levelName = '';
   nextUrl = '';
   prevUrl = '';
@@ -71,7 +68,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     this.onConnectionChanged = this.onConnectionChanged.bind(this);
     this.onAssetsLoaded = this.onAssetsLoaded.bind(this);
     this.onSFTState = this.onSFTState.bind(this);
-    this.onSFTBuy = this.onSFTBuy.bind(this);
+    this.onSFTTransaction = this.onSFTTransaction.bind(this);
   }
 
   componentDidMount(): void {
@@ -80,13 +77,9 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     StoreClasses.emitter.on(CONNECTION_CHANGED, this.onConnectionChanged);
     StoreClasses.emitter.on(ASSETS_LOADED, this.onAssetsLoaded);
     StoreClasses.emitter.on(SFT_STATE, this.onSFTState);
-    StoreClasses.emitter.on(SFT_BUY, this.onSFTBuy);
-
-    if (!this.state.isLive) {
-      setTimeout(() => {
-        this.setState({ isLive: true });
-      }, timeRemainingInMillSeconds);
-    }
+    StoreClasses.emitter.on(SFT_BUY, this.onSFTTransaction);
+    StoreClasses.emitter.on(SFT_LOCK, this.onSFTTransaction);
+    StoreClasses.emitter.on(SFT_UNLOCK, this.onSFTTransaction);
   }
 
   componentDidUpdate(): void {
@@ -98,7 +91,9 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
   }
 
   componentWillUnmount(): void {
-    StoreClasses.emitter.off(SFT_BUY, this.onSFTBuy);
+    StoreClasses.emitter.off(SFT_UNLOCK, this.onSFTTransaction);
+    StoreClasses.emitter.off(SFT_LOCK, this.onSFTTransaction);
+    StoreClasses.emitter.off(SFT_BUY, this.onSFTTransaction);
     StoreClasses.emitter.off(SFT_STATE, this.onSFTState);
     StoreClasses.emitter.off(ASSETS_LOADED, this.onAssetsLoaded);
     StoreClasses.emitter.off(CONNECTION_CHANGED, this.onConnectionChanged);
@@ -118,7 +113,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     this.setState({ cardId: '' });
   }
 
-  onSFTBuy(status: StatusResult): void {
+  onSFTTransaction(status: StatusResult): void {
     if (status.status === 'success' || status.status === 'error')
       this.setState({ txPending: false });
   }
@@ -140,8 +135,12 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     const tokenId = parseInt(query.get('tokenId') || '-1');
     const oldTokenId = this.tokenId;
     this.tokenId = undefined;
-    if (tokenId >= 0 && tokenIds.indexOf(tokenId) !== undefined) {
+    this.tokenLocked = false;
+    const tokenIndex =
+      tokenId >= 0 ? tokenIds.findIndex((e) => e.id === tokenId) : -1;
+    if (tokenIndex >= 0) {
       // retrieve levelId and cardId from tokenId
+      this.tokenLocked = tokenIds[tokenIndex].locked;
       newLevelId = cards.cards.findIndex(
         (level) => level.chainRef === tokenId >> 24
       );
@@ -196,14 +195,19 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         this.nextUrl = '';
         if (this.tokenId !== undefined) {
           if (tokenIds.length > 1) {
-            let nextTokenId = (tokenIds.indexOf(this.tokenId) || 0) + 1;
+            let nextTokenId =
+              tokenIds.findIndex((e) => e.id === this.tokenId) + 1;
             let prevTokenId = nextTokenId - 2;
             if (nextTokenId >= tokenIds.length) nextTokenId = 0;
             if (prevTokenId < 0) prevTokenId = tokenIds.length - 1;
             this.prevUrl =
-              '?type=myPack&tokenId=' + tokenIds[prevTokenId] + '&scroll=false';
+              '?type=myPack&tokenId=' +
+              tokenIds[prevTokenId].id +
+              '&scroll=false';
             this.nextUrl =
-              '?type=myPack&tokenId=' + tokenIds[nextTokenId] + '&scroll=false';
+              '?type=myPack&tokenId=' +
+              tokenIds[nextTokenId].id +
+              '&scroll=false';
           }
         } else {
           const cardlength = this.content?.cards.length || 0;
@@ -240,12 +244,22 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
 
   _onBuy(): void {
     if (this.content) {
-      const payload = { type: SFT_BUY, content: {} };
+      const payload = {
+        type:
+          this.tokenId === undefined
+            ? SFT_BUY
+            : this.tokenLocked
+            ? SFT_UNLOCK
+            : SFT_LOCK,
+        content: {},
+      };
       payload.content = {
         amount: this.content.price,
         id:
-          (this.content.chainRef << 8) |
-          this.content.cards[this.cardIndex].chainRef,
+          this.tokenId === undefined
+            ? (this.content.chainRef << 8) |
+              this.content.cards[this.cardIndex].chainRef
+            : this.tokenId,
       };
       this.setState({ txPending: true });
       StoreClasses.dispatcher.dispatch(payload);
@@ -263,7 +277,8 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     const noQuantity =
       !currentCard ||
       !this.content ||
-      currentCard.minted >= this.content.quantity;
+      (this.tokenId === undefined &&
+        currentCard.minted >= this.content.quantity);
 
     const getButtonText = (s: string): string =>
       !isWalletConnected
@@ -272,7 +287,11 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         ? t('page4.noQuantity').toString()
         : txPending
         ? t('page4.txPending')
-        : s;
+        : this.tokenId === undefined
+        ? t('page4.buy', { name: s }).toString()
+        : this.tokenLocked
+        ? t('page4.unlock', { name: s }).toString()
+        : t('page4.lock', { name: s }).toString();
 
     return (
       <div id="top" className={'wolves-container bg-' + type}>
@@ -406,20 +425,13 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                     </li>
                   </ul>
                 </div>
-                {this.tokenId === undefined &&
-                  (this.state.isLive ? (
-                    <input
-                      className="wolves-btn buy-btn"
-                      type="button"
-                      value={getButtonText(
-                        t('page4.buy', { name: currentCard.name }).toString()
-                      )}
-                      disabled={!isWalletConnected || noQuantity || txPending}
-                      onClick={() => this._onBuy()}
-                    />
-                  ) : (
-                    <CountDown cardName={currentCard.name} />
-                  ))}
+                <input
+                  className="wolves-btn buy-btn"
+                  type="button"
+                  value={getButtonText(currentCard.name)}
+                  disabled={!isWalletConnected || noQuantity || txPending}
+                  onClick={() => this._onBuy()}
+                />
               </>
             )}
           </div>

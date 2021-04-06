@@ -56,7 +56,7 @@ interface IWOWSERC1155 {
    * @dev Get the next mintable token ID for the specified card
    *
    * @param level The level of the card
-   * @param cardId The token ID of the card
+   * @param cardId The ID of the card
    *
    * @return bool True if a free token ID was found, false otherwise
    * @return uint256 The first free token ID if one was found, or invalid otherwise

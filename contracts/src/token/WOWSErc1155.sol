@@ -8,24 +8,35 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
-import '@openzeppelin/contracts/presets/ERC1155PresetMinterPauser.sol';
+import '@openzeppelin/contracts/access/AccessControl.sol';
 import '@openzeppelin/contracts/proxy/Clones.sol';
+import '@openzeppelin/contracts/utils/Context.sol';
 
 import './interfaces/IWOWSCryptofolio.sol';
 import './interfaces/IWOWSERC1155.sol';
-
-bytes16 constant HEX = '0123456789ABCDEF';
+import './WOWSMinterPauser.sol';
 
 /**
  * TODO's:
  * implement transfer and burn helpers for cryptofolio items
  */
+contract WOWSERC1155 is IWOWSERC1155, Context, AccessControl, WOWSMinterPauser {
+  //////////////////////////////////////////////////////////////////////////////
+  // Constants
+  //////////////////////////////////////////////////////////////////////////////
 
-contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
   // Used to restict calls to TRADEFLOOR but also to collect all TRADEFLOORS
   bytes32 public constant TRADEFLOOR_ROLE = keccak256('TRADEFLOOR_ROLE');
+
   // Used to restict calls to TRADEFLOOR but also to collect all TRADEFLOORS
   bytes32 public constant OPERATOR_ROLE = keccak256('OPERATOR_ROLE');
+
+  // Hex numbers for creating hexadecimal tokenId
+  bytes16 private constant HEX = '0123456789ABCDEF';
+
+  //////////////////////////////////////////////////////////////////////////////
+  // State
+  //////////////////////////////////////////////////////////////////////////////
 
   // Cap per card for each level
   mapping(uint8 => uint16) private _wowsLevelCap;
@@ -92,8 +103,8 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
     address __cryptofolio,
     string memory _uri,
     string memory __contractMetadataName
-  ) ERC1155PresetMinterPauser(_uri) {
-    // Grant _owner initial admin role
+  ) WOWSMinterPauser(_uri) {
+    // Initialize {AccessControl}
     _setupRole(DEFAULT_ADMIN_ROLE, _owner);
 
     // Setup wows card definition
@@ -127,8 +138,16 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
     override
     returns (uint256)
   {
+    // Load state
     uint256 tokenId = _addressToTokenId[tokenAddress];
-    return _tokenIdToAddress[tokenId] == tokenAddress ? tokenId : uint256(-1);
+
+    // Error case: token ID isn't known
+    if (_tokenIdToAddress[tokenId] != tokenAddress) {
+      return uint256(-1);
+    }
+
+    // Success
+    return tokenId;
   }
 
   /**
@@ -140,6 +159,7 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
     override
     returns (address)
   {
+    // Load state
     return _tokenIdToAddress[tokenId];
   }
 
@@ -152,12 +172,21 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
     override
     returns (bool, uint256)
   {
-    uint16 levelCard = ((uint16(level) << 8) | cardId);
-    uint256 tokenId = uint32(levelCard) << 16;
+    // Encode token ID
+    uint256 tokenId = _encodeTokenId(level, cardId);
+
+    // Load state
     uint256 tokenIdEnd = tokenId + _wowsLevelCap[level];
 
-    for (; tokenId < tokenIdEnd; ++tokenId)
-      if (!_tokenInfos[tokenId].minted) return (true, tokenId);
+    // Search state
+    for (; tokenId < tokenIdEnd; ++tokenId) {
+      if (!_tokenInfos[tokenId].minted) {
+        // Success
+        return (true, tokenId);
+      }
+    }
+
+    // Error case: no free token ID
     return (false, uint256(-1));
   }
 
@@ -170,7 +199,10 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
     override
     returns (uint256)
   {
+    // Validate state
     require(_customCardCount + 0x100000000 > _customCardCount, 'math overflow');
+
+    // Encode token ID
     return _customCardCount + 0x100000000;
   }
 
@@ -178,12 +210,16 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
    * @dev See {IWOWSERC1155-setURI}.
    */
   function setURI(uint256 tokenId, string memory _uri) public override {
+    // Access control
     require(
       hasRole((tokenId == 0) ? DEFAULT_ADMIN_ROLE : MINTER_ROLE, _msgSender()),
       'Access denied'
     );
-    require(tokenId == 0 || tokenId > 0xFFFFFFFF, 'invalid tokenId');
 
+    // Validate parameters
+    require(tokenId == 0 || _isCustomToken(tokenId), 'invalid tokenId');
+
+    // Update state
     if (tokenId == 0) _setURI(_uri);
     else _customCards[tokenId].uri = _uri;
   }
@@ -192,7 +228,10 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
    * @dev See {IWOWSERC1155-setCustomDefaultURI}.
    */
   function setCustomDefaultURI(string memory _uri) public override {
+    // Access control
     require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admin');
+
+    // Update state
     _customDefaultUri = _uri;
   }
 
@@ -203,13 +242,18 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
     public
     override
   {
+    // Access control
     require(hasRole(MINTER_ROLE, _msgSender()), 'Only minter');
-    require(tokenId > 0xFFFFFFFF, 'Only for custom cards');
+
+    // Validate parameter
+    require(_isCustomToken(tokenId), 'Only for custom cards');
+
+    // Update state
     _customCards[tokenId].level = cardLevel;
   }
 
   //////////////////////////////////////////////////////////////////////////////
-  // Implementation of {IERC1155} via {ERC1155PresetMinterPauser}
+  // Implementation of {IERC1155}
   //////////////////////////////////////////////////////////////////////////////
 
   /**
@@ -225,20 +269,21 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
     // TradeFloor contracts.
     require(hasRole(OPERATOR_ROLE, operator), 'Only Operators');
 
+    // Call ancestor
     super.setApprovalForAll(operator, approved);
   }
 
   //////////////////////////////////////////////////////////////////////////////
-  // Implementation of {IERC1155MetadataURI} via {ERC1155PresetMinterPauser}
+  // Implementation of {IERC1155MetadataURI}
   //////////////////////////////////////////////////////////////////////////////
 
   /**
    * @dev See {IERC1155MetadataURI-uri}.
    *
    * For custom tokens the URI is thought to be a full URL without
-   * placeholders. For our WOWS token a tokenid placeholder is expected, and
-   * the id is of the metadata is tokenId >> 16 because 16Bit tken share the
-   * same metadata / image.
+   * placeholders. For our WOWS token a tokenId placeholder is expected, and
+   * the ID is tokenId >> 16 because 16-bit then shares the same
+   * metadata / image.
    */
   function uri(uint256 tokenId)
     public
@@ -247,12 +292,14 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
     override(ERC1155)
     returns (string memory)
   {
-    if (tokenId > 0xFFFFFFFF)
-      // Custom token
-      return
-        bytes(_customCards[tokenId].uri).length == 0
-          ? _customDefaultUri
-          : _customCards[tokenId].uri;
+    // Custom token
+    if (_isCustomToken(tokenId)) {
+      if (bytes(_customCards[tokenId].uri).length == 0) {
+        return _customDefaultUri;
+      } else {
+        return _customCards[tokenId].uri;
+      }
+    }
 
     // WOWS token
     return
@@ -279,7 +326,7 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
   }
 
   //////////////////////////////////////////////////////////////////////////////
-  // Implementation of {ERC1155PresetMinterPauser}
+  // Implementation of {ERC1155} via {WOWSMinterPauser}
   //////////////////////////////////////////////////////////////////////////////
 
   /**
@@ -292,22 +339,27 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
     uint256[] memory tokenIds,
     uint256[] memory amounts,
     bytes memory data
-  ) internal virtual override(ERC1155PresetMinterPauser) {
-    super._beforeTokenTransfer(operator, from, to, tokenIds, amounts, data);
-
+  ) internal virtual override {
+    // Validate parameters
     require(tokenIds.length == amounts.length, 'Length mismatch');
 
+    // Process tokens being transferred
     for (uint256 i = 0; i < tokenIds.length; ++i) {
       // We have only NFT's in this contract
       require(amounts[i] == 1, 'Amount != 1');
 
       uint256 tokenId = tokenIds[i];
+
+      // Load state
       address tokenAddress = _tokenIdToAddress[tokenId];
       TokenInfo storage tokenInfo = _tokenInfos[tokenId];
 
+      // Minting
       if (from == address(0)) {
-        // Minting
+        // Validate state
         require(!tokenInfo.minted, 'Already minted');
+
+        // Update state
         tokenInfo.minted = true;
         // solhint-disable-next-line not-rely-on-time
         tokenInfo.timestamp = uint64(block.timestamp);
@@ -319,17 +371,26 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
           IWOWSCryptofolio(tokenAddress).initialize();
         }
         _addressToTokenId[tokenAddress] = tokenId;
+
         // Increment the minted count for this card
-        if (tokenId <= 0xFFFFFFFF) _wowsCardsMinted[uint16(tokenId >> 16)] += 1;
-        else ++_customCardCount;
-      } else if (to == address(0)) {
-        // Burning
+        if (!_isCustomToken(tokenId)) {
+          _wowsCardsMinted[uint16(tokenId >> 16)] += 1;
+        } else {
+          ++_customCardCount;
+        }
+      }
+      // Burning
+      else if (to == address(0)) {
         // Make sure underlying assets gets burned
         IWOWSCryptofolio(tokenAddress).burn();
+
         // Make token mintable again
         tokenInfo.minted = false;
+
         // Decrement the minted count for this card
-        if (tokenId <= 0xFFFFFFFF) _wowsCardsMinted[uint16(tokenId >> 16)] -= 1;
+        if (!_isCustomToken(tokenId)) {
+          _wowsCardsMinted[uint16(tokenId >> 16)] -= 1;
+        }
       }
 
       // Signal ownership change in Cryptofolio
@@ -338,6 +399,9 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
       // Reflect ownership change in our linked list
       _relinkOwner(from, to, tokenId);
     }
+
+    // Call ancestor
+    super._beforeTokenTransfer(operator, from, to, tokenIds, amounts, data);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -358,10 +422,8 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
     view
     returns (uint16 cap, uint16 minted)
   {
-    return (
-      _wowsLevelCap[level],
-      _wowsCardsMinted[(uint16(level) << 8) | cardId]
-    );
+    // Load state
+    return (_wowsLevelCap[level], _getCardsMinted(level, cardId));
   }
 
   /**
@@ -377,14 +439,21 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
     view
     returns (uint16[] memory capMintedPair)
   {
+    // Validate parameters
     require(levels.length == cardIds.length, 'Length mismatch');
+
+    // Return value
     uint16[] memory result = new uint16[](cardIds.length * 2);
+
+    // Load state
     for (uint256 i = 0; i < cardIds.length; ++i) {
+      // Record cap
       result[i * 2] = _wowsLevelCap[levels[i]];
-      result[i * 2 + 1] = _wowsCardsMinted[
-        (uint16(levels[i]) << 8) | cardIds[i]
-      ];
+
+      // Record minted
+      result[i * 2 + 1] = _getCardsMinted(levels[i], cardIds[i]);
     }
+
     return result;
   }
 
@@ -401,10 +470,10 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
     view
     returns (uint64 mintTimestamp, uint8 level)
   {
-    uint8 _level =
-      (tokenId > 0xFFFFFFFF)
-        ? _customCards[tokenId].level
-        : uint8(tokenId >> 24);
+    // Decode token ID
+    uint8 _level = _getLevel(tokenId);
+
+    // Load state
     return (_tokenInfos[tokenId].timestamp, _level);
   }
 
@@ -416,13 +485,19 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
     view
     returns (uint256[] memory)
   {
+    // Load state
     Owned storage list = _owned[account];
+
+    // Return value
     uint256[] memory result = new uint256[](list.count);
+
+    // Search state
     ListKey storage key = list.listKey;
     for (uint256 i = 0; i < list.count; ++i) {
       result[i] = key.index;
       key = _tokenInfos[key.index].listKey;
     }
+
     return result;
   }
 
@@ -438,9 +513,13 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
   function setWowsLevelCaps(uint8[] memory levels, uint16[] memory newCaps)
     public
   {
+    // Access control
     require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admin');
+
+    // Validate parameters
     require(levels.length == newCaps.length, "Lengths don't match");
 
+    // Update state
     for (uint256 i = 0; i < levels.length; ++i) {
       require(_wowsLevelCap[levels[i]] < newCaps[i], 'Decrement forbidden');
       _wowsLevelCap[levels[i]] = newCaps[i];
@@ -461,12 +540,17 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
     address to,
     uint256 tokenId
   ) internal {
+    // Load state
     TokenInfo storage tokenInfo = _tokenInfos[tokenId];
 
     // Remove tokenId from List
     if (from != address(0)) {
+      // Load state
       Owned storage fromList = _owned[from];
+
+      // Validate state
       require(fromList.count > 0, 'Count mismatch');
+
       ListKey storage key = fromList.listKey;
       uint256 count = fromList.count;
 
@@ -483,11 +567,72 @@ contract WOWSERC1155 is IWOWSERC1155, ERC1155PresetMinterPauser {
       fromList.count--;
     }
 
+    // Update state
     if (to != address(0)) {
       Owned storage toList = _owned[to];
       tokenInfo.listKey.index = toList.listKey.index;
       toList.listKey.index = tokenId;
       toList.count++;
+    }
+  }
+
+  /**
+   * @dev Check if a token ID belongs to a custom token
+   *
+   * @param tokenId The token ID to check
+   *
+   * @return True if the token is a custom token, false otherwise
+   */
+  function _isCustomToken(uint256 tokenId) private pure returns (bool) {
+    return tokenId > 0xFFFFFFFF;
+  }
+
+  /**
+   * @dev Utility function to encode a level and card ID into a token ID
+   *
+   * @param level The level of the card
+   * @param cardId The ID of the card
+   *
+   * @return tokenId The encoded token ID
+   */
+  function _encodeTokenId(uint8 level, uint8 cardId)
+    private
+    pure
+    returns (uint256 tokenId)
+  {
+    uint16 levelCard = (uint16(level) << 8) | cardId;
+    tokenId = uint32(levelCard) << 16;
+  }
+
+  /**
+   * @dev Get the number of cards that have been minted
+   *
+   * @param level The level of cards to check
+   * @param cardId The ID of cards to check
+   *
+   * @return cardsMinted The number of cards that have been minted
+   */
+  function _getCardsMinted(uint8 level, uint8 cardId)
+    private
+    view
+    returns (uint16 cardsMinted)
+  {
+    uint16 levelCard = (uint16(level) << 8) | cardId;
+    cardsMinted = _wowsCardsMinted[levelCard];
+  }
+
+  /**
+   * @dev Get the level of a given token
+   *
+   * @param tokenId The ID of the token
+   *
+   * @return level The level of the token
+   */
+  function _getLevel(uint256 tokenId) private view returns (uint8 level) {
+    if (_isCustomToken(tokenId)) {
+      level = _customCards[tokenId].level;
+    } else {
+      level = uint8(tokenId >> 24);
     }
   }
 }

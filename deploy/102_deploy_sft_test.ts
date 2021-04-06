@@ -19,7 +19,10 @@ const TRADE_FLOOR_CONTRACT = 'TradeFloor';
 const TEST_STAKING_CONTRACT = 'TestStakingContract';
 
 // TODO: Trade floor will use {id} mechamism eventually
-const METADATA_URI = '';
+const METADATA_URI =
+  'https://4travelers.de/wolves_assets/tradefloor/rinkeby/metadata/';
+const CONTRACT_METADATA_URI =
+  'https://4travelers.de/wolves_assets/tradefloor/rinkeby/metadata/contract.json';
 
 // Path to generated address registry file
 const ADDRESS_REGISTRY = `${__dirname}/../src/config/generated-addresses.json`;
@@ -36,7 +39,7 @@ const func = async function (hardhat_re) {
   const { deployments, getNamedAccounts } = hardhat_re;
 
   const { deploy } = deployments;
-  const { deployer, marketingWallet } = await getNamedAccounts();
+  const { deployer } = await getNamedAccounts();
 
   // Load contract addresses
   const addressRegistry = JSON.parse(
@@ -53,7 +56,11 @@ const func = async function (hardhat_re) {
 
   const tradeFloorReceipt = await deploy(TRADE_FLOOR_CONTRACT, {
     from: deployer,
-    args: [marketingWallet, METADATA_URI],
+    args: [
+      addressRegistry.hardhat.addressRegistry,
+      METADATA_URI,
+      CONTRACT_METADATA_URI,
+    ],
     log: true,
     deterministicDeployment: true,
   });

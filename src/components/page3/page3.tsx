@@ -55,7 +55,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
     myPackLevelDescriptions: [],
   };
   levelDescription = '';
-  tokenIds: number[] = [];
+  tokenIds: { id: number; locked: boolean }[] = [];
   levelFilter = 0;
   nextLevel = -1;
   prevLevel = -1;
@@ -146,16 +146,20 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
             '{Q}',
             this.content.cards[idx].quantity.toString()
           );
-          this.tokenIds = this.content.cards[idx].cards.map(
-            (card) =>
-              (this.content.cards[idx].chainRef << 24) | (card.chainRef << 16)
-          );
+          this.tokenIds = this.content.cards[idx].cards.map((card) => {
+            return {
+              id:
+                (this.content.cards[idx].chainRef << 24) |
+                (card.chainRef << 16),
+              locked: false,
+            };
+          });
         } else {
           this.tokenIds = StoreClasses.store.getAssets().userSFT;
 
           // collect tokenId bitmask
           let tokenIdBits = 0;
-          this.tokenIds.forEach((n) => (tokenIdBits |= 1 << (n >> 24)));
+          this.tokenIds.forEach((n) => (tokenIdBits |= 1 << (n.id >> 24)));
           this.content.cards.forEach((level) => {
             if (tokenIdBits & (1 << level.chainRef)) {
               this.levelFilter |= 1 << level.levelId;
@@ -299,9 +303,9 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
                       const tokenId = (level.chainRef << 8) | card.chainRef;
                       while (
                         tokenIdx < this.tokenIds.length &&
-                        this.tokenIds[tokenIdx] >> 16 <= tokenId
+                        this.tokenIds[tokenIdx].id >> 16 <= tokenId
                       ) {
-                        this.tokenIds[tokenIdx] >> 16 === tokenId &&
+                        this.tokenIds[tokenIdx].id >> 16 === tokenId &&
                           collection.push(
                             <CardBox
                               key={'card_' + tokenIdx}
@@ -312,7 +316,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
                               price={level.price}
                               tokenId={
                                 display === 'my'
-                                  ? this.tokenIds[tokenIdx]
+                                  ? this.tokenIds[tokenIdx].id
                                   : undefined
                               }
                               t={t}

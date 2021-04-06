@@ -67,6 +67,8 @@
     "header-myPack": "",
     "welcome-myPack": "$t(page3.welcome-myPack)",
     "buy": "BUY {{name}}",
+    "lock": "LOCK {{name}}",
+    "unlock": "UNLOCK {{name}}",
     "tokenId": "TOKEN ID",
     "noQuantity": "NO CARDS AVAILABLE",
     "txPending": "TRANSACTION PENDING"

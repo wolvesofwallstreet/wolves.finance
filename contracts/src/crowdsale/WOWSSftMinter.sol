@@ -83,7 +83,10 @@ contract WOWSSftMinter is Ownable {
     external
     onlyOwner
   {
+    // Validate parameters
     require(levels.length == prices.length, 'Length mismatch');
+
+    // Update state
     for (uint256 i = 0; i < levels.length; ++i)
       _pricePerLevel[levels[i]] = prices[i];
   }
@@ -97,6 +100,7 @@ contract WOWSSftMinter is Ownable {
     external
     onlyOwner
   {
+    // Update state
     _rewardHandler = newRewardHandler;
   }
 
@@ -110,14 +114,18 @@ contract WOWSSftMinter is Ownable {
     uint8 level,
     uint8 cardId
   ) external {
+    // Load state
     uint256 price = _pricePerLevel[level];
+
+    // Validate state
     require(price > 0, 'No price available');
 
-    // get the next free mintable token for level / cardId
+    // Get the next free mintable token for level / cardId
     (bool success, uint256 tokenId) =
       _sftContract.getNextMintableTokenId(level, cardId);
     require(success, 'Unsufficient cards');
 
+    // Update state
     _mint(recipient, tokenId, price);
   }
 
@@ -131,7 +139,10 @@ contract WOWSSftMinter is Ownable {
     uint8 level,
     string memory uri
   ) external {
+    // Load state
     uint256 price = _pricePerLevel[0x100 + level];
+
+    // Validate state
     require(price > 0, 'No price available');
 
     // Get the next free mintable token for level / cardId
@@ -141,6 +152,7 @@ contract WOWSSftMinter is Ownable {
     _sftContract.setCustomCardLevel(tokenId, level);
     _sftContract.setURI(tokenId, uri);
 
+    // Update state
     _mint(recipient, tokenId, price);
   }
 
@@ -188,6 +200,7 @@ contract WOWSSftMinter is Ownable {
       FEE_TO_REWARDPOOL
     );
 
+    // Log event
     emit Mint(recipient, tokenId, price);
   }
 }
