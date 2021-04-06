@@ -107,10 +107,16 @@ contract TradeFloor is Context, WOWSMinterPauser {
   /**
    * @dev Construct the contract
    *
-   * Pause operation in this context. Only calls from Proxy allowed
+   * @param addressRegistry registry containing our system addresses
+   *
+   * Note: Pause operation in this context. Only calls from Proxy allowed
    */
-  constructor() WOWSMinterPauser('') {
-    pause();
+  constructor(IAddressRegistry addressRegistry) WOWSMinterPauser('') {
+    // Initialize {AccessControl}
+    address marketingWallet =
+      addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
+    _setupRole(DEFAULT_ADMIN_ROLE, marketingWallet);
+    _pause();
   }
 
   /**
@@ -127,7 +133,7 @@ contract TradeFloor is Context, WOWSMinterPauser {
   ) public {
     require(address(_addressRegistry) == address(0), 'already initialized');
     // Set tokenURIPrefix
-    setURI(tokenUriPrefix);
+    _setURI(tokenUriPrefix);
 
     // Initialize {AccessControl}
     address marketingWallet =
@@ -519,7 +525,7 @@ contract TradeFloor is Context, WOWSMinterPauser {
    */
   function testSelfDestroy() external {
     require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admins');
-    selfdestruct(payable(address(this)));
+    selfdestruct(_msgSender());
   }
 
   //////////////////////////////////////////////////////////////////////////////
