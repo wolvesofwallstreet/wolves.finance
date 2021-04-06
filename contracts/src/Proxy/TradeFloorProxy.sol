@@ -87,7 +87,6 @@ contract TradeFloorProxy is UpgradeableProxy {
    */
   function upgradeToAndCall(address newImplementation, bytes calldata data)
     external
-    payable
     virtual
     ifAdmin
   {
