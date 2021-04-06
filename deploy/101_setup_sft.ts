@@ -19,8 +19,8 @@ const SFT_HOLDER_CONTRACT = 'WOWSERC1155';
 const SFT_MINTER_CONTRACT = 'WOWSSftMinter';
 const REWARD_HANDLER_CONTRACT = 'RewardHandler';
 
-// Path to generated address registry file
-const ADDRESS_REGISTRY = `${__dirname}/../src/config/generated-addresses.json`;
+// Path to generated addresses file
+const GENERATED_ADDRESSES = `${__dirname}/../src/config/generated-addresses.json`;
 
 // Helper function
 function log_step(step_string) {
@@ -36,17 +36,22 @@ const func = async function (hardhat_re) {
   const { execute } = deployments;
   const { marketingWallet } = await getNamedAccounts();
 
+  // Get chain ID
+  const chainId = await hardhat_re.getChainId();
+
   // Load contract addresses
-  const addressRegistry = JSON.parse(
-    fs.readFileSync(ADDRESS_REGISTRY).toString()
+  const generatedNetworks = JSON.parse(
+    fs.readFileSync(GENERATED_ADDRESSES).toString()
   );
+  const generatedAddresses = generatedNetworks[chainId] || {};
 
-  const addresses = addressRegistry.hardhat;
-
+  // Load deployed contract instances
   const REWARD_HANDLER_INSTANCE = await hardhat_re.ethers.getContract(
     REWARD_HANDLER_CONTRACT
   );
-  const SFT_INSTANCE = await hardhat_re.ethers.getContract(SFT_HOLDER_CONTRACT);
+  const SFT_HOLDER_INSTANCE = await hardhat_re.ethers.getContract(
+    SFT_HOLDER_CONTRACT
+  );
 
   //////////////////////////////////////////////////////////////////////////////
   //
@@ -68,7 +73,7 @@ const func = async function (hardhat_re) {
     },
     'grantRole',
     await REWARD_HANDLER_INSTANCE.REWARD_ROLE(),
-    addresses.sftMinter
+    generatedAddresses.sftMinter
   );
 
   //
@@ -103,11 +108,10 @@ const func = async function (hardhat_re) {
       log: true,
     },
     'grantRole',
-    await SFT_INSTANCE.MINTER_ROLE(),
-    addresses.sftMinter
+    await SFT_HOLDER_INSTANCE.MINTER_ROLE(),
+    generatedAddresses.sftMinter
   );
 };
 
 module.exports = func;
 module.exports.tags = ['SFTSetup'];
-module.exports.dependencies = ['SFT'];

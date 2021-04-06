@@ -36,8 +36,9 @@ const METADATA_URI = 'https://4travelers.de/wolves_assets/metadata/';
 // Filename for contract metadata, will be prefixed with METADATA_URI
 const CONTRACT_METADATA_NAME = 'mainnet_contract.json';
 
-// Path to generated address registry file
-const ADDRESS_REGISTRY = `${__dirname}/../src/config/generated-addresses.json`;
+// Path to address files
+const CONFIG_ADDRESSES = `${__dirname}/../src/config/addresses.json`;
+const GENERATED_ADDRESSES = `${__dirname}/../src/config/generated-addresses.json`;
 
 // Helper function
 function log_step(step_string) {
@@ -89,16 +90,26 @@ const sft_func = async function (hardhat_re) {
   const { execute, deploy } = deployments;
   const { deployer, marketingWallet } = await getNamedAccounts();
 
+  // Get chain ID
+  const chainId = await hardhat_re.getChainId();
+
   // Load contract addresses
-  const addressRegistry = JSON.parse(
-    fs.readFileSync(ADDRESS_REGISTRY).toString()
+  const configNetworks = JSON.parse(
+    fs.readFileSync(CONFIG_ADDRESSES).toString()
   );
+  const generatedNetworks = JSON.parse(
+    fs.readFileSync(GENERATED_ADDRESSES).toString()
+  );
+
+  const configAddresses = configNetworks[chainId] || {};
+  const generatedAddresses = generatedNetworks[chainId] || {};
 
   //////////////////////////////////////////////////////////////////////////////
   //
   // Get Address Registry Instance
   //
   //////////////////////////////////////////////////////////////////////////////
+
   const ADDRESS_REGISTRY_INSTANCE = await hardhat_re.ethers.getContract(
     ADDRESS_REGISTRY_CONTRACT
   );
@@ -109,16 +120,23 @@ const sft_func = async function (hardhat_re) {
   //
   //////////////////////////////////////////////////////////////////////////////
 
-  log_step('Deploying SFT cryptofolio');
+  if (configAddresses.sftCryptofolio) {
+    log_step(`Using SFT cryptofolio: ${configAddresses.sftCryptofolio}`);
+    generatedAddresses.sftCryptofolio = configAddresses.sftCryptofolio;
+  } else {
+    log_step('Deploying SFT cryptofolio');
 
-  const sftCryptofolioReceipt = await deploy(SFT_CRYPTOFOLIO, {
-    from: deployer,
-    args: [],
-    log: true,
-    deterministicDeployment: true,
-  });
+    const sftCryptofolioReceipt = await deploy(SFT_CRYPTOFOLIO, {
+      from: deployer,
+      args: [],
+      log: true,
+      deterministicDeployment: true,
+    });
 
-  const SFT_CRYPTOFOLIO_ADDRESS = sftCryptofolioReceipt.address;
+    generatedAddresses.sftCryptofolio = sftCryptofolioReceipt.address;
+  }
+
+  const SFT_CRYPTOFOLIO_ADDRESS = generatedAddresses.sftCryptofolio;
 
   //////////////////////////////////////////////////////////////////////////////
   //
@@ -126,21 +144,28 @@ const sft_func = async function (hardhat_re) {
   //
   //////////////////////////////////////////////////////////////////////////////
 
-  log_step('Deploying SFT holder contract');
+  if (configAddresses.sftHolder) {
+    log_step(`Using SFT holder contract: ${configAddresses.sftHolder}`);
+    generatedAddresses.sftHolder = configAddresses.sftHolder;
+  } else {
+    log_step('Deploying SFT holder contract');
 
-  const sftHolderReceipt = await deploy(SFT_HOLDER_CONTRACT, {
-    from: deployer,
-    args: [
-      marketingWallet,
-      SFT_CRYPTOFOLIO_ADDRESS,
-      METADATA_URI,
-      CONTRACT_METADATA_NAME,
-    ],
-    log: true,
-    deterministicDeployment: true,
-  });
+    const sftHolderReceipt = await deploy(SFT_HOLDER_CONTRACT, {
+      from: deployer,
+      args: [
+        marketingWallet,
+        SFT_CRYPTOFOLIO_ADDRESS,
+        METADATA_URI,
+        CONTRACT_METADATA_NAME,
+      ],
+      log: true,
+      deterministicDeployment: true,
+    });
 
-  const SFT_HOLDER_ADDRESS = sftHolderReceipt.address;
+    generatedAddresses.sftHolder = sftHolderReceipt.address;
+  }
+
+  const SFT_HOLDER_ADDRESS = generatedAddresses.sftHolder;
 
   await setRegistryKey(
     deployer,
@@ -156,21 +181,26 @@ const sft_func = async function (hardhat_re) {
   //
   //////////////////////////////////////////////////////////////////////////////
 
-  log_step('Deploying SFT minter');
+  if (configAddresses.sftMinter) {
+    log_step(`Using SFT minter: ${configAddresses.sftMinter}`);
+    generatedAddresses.sftMinter = configAddresses.sftMinter;
+  } else {
+    log_step('Deploying SFT minter');
 
-  const sftMinterReceipt = await deploy(SFT_MINTER_CONTRACT, {
-    from: deployer,
-    args: [
-      marketingWallet,
-      addressRegistry.hardhat.token,
-      addressRegistry.hardhat.rewardHandler,
-      SFT_HOLDER_ADDRESS,
-    ],
-    log: true,
-    deterministicDeployment: true,
-  });
+    const sftMinterReceipt = await deploy(SFT_MINTER_CONTRACT, {
+      from: deployer,
+      args: [
+        marketingWallet,
+        generatedAddresses.token,
+        generatedAddresses.rewardHandler,
+        SFT_HOLDER_ADDRESS,
+      ],
+      log: true,
+      deterministicDeployment: true,
+    });
 
-  const SFT_MINTER_ADDRESS = sftMinterReceipt.address;
+    generatedAddresses.sftMinter = sftMinterReceipt.address;
+  }
 
   //////////////////////////////////////////////////////////////////////////////
   //
@@ -178,17 +208,15 @@ const sft_func = async function (hardhat_re) {
   //
   //////////////////////////////////////////////////////////////////////////////
 
-  log_step(`Writing ${ADDRESS_REGISTRY}`);
+  log_step(`Writing ${GENERATED_ADDRESSES}`);
 
-  addressRegistry.hardhat.sftHolder = SFT_HOLDER_ADDRESS;
-  addressRegistry.hardhat.sftMinter = SFT_MINTER_ADDRESS;
+  generatedNetworks[chainId] = generatedAddresses;
 
   fs.writeFileSync(
-    ADDRESS_REGISTRY,
-    JSON.stringify(addressRegistry, null, '  ')
+    GENERATED_ADDRESSES,
+    JSON.stringify(generatedNetworks, null, '  ')
   );
 };
 
 module.exports = sft_func;
 module.exports.tags = ['SFT'];
-module.exports.dependencies = ['Token'];
