@@ -154,7 +154,7 @@ contract TradeFloor is Context, WOWSMinterPauser {
     // Register fee interface
     _registerInterface(_INTERFACE_ID_FEES);
 
-    CreateERC1155_v1(_msgSender(), _NAME, _SYMBOL);
+    CreateERC1155_v1(marketingWallet, _NAME, _SYMBOL);
   }
 
   //////////////////////////////////////////////////////////////////////////////
