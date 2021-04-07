@@ -8,7 +8,7 @@
 
 /* eslint @typescript-eslint/no-var-requires: "off" */
 
-//const ethers = require('ethers');
+const ethers = require('ethers');
 const fs = require('fs');
 
 require('hardhat-deploy');
@@ -39,7 +39,7 @@ function log_step(step_string) {
 const func = async function (hardhat_re) {
   const { deployments, getNamedAccounts } = hardhat_re;
 
-  const { deploy } = deployments;
+  const { get, deploy } = deployments;
   const { deployer } = await getNamedAccounts();
 
   // Load contract addresses
@@ -87,7 +87,7 @@ const func = async function (hardhat_re) {
   let tradeFloorProxyReceipt = undefined;
   try {
     tradeFloorProxyReceipt = await get(TRADE_FLOOR_PROXY_CONTRACT);
-    if (!tradeFloorProxyReceipt.address) throw "No address";
+    if (!tradeFloorProxyReceipt.address) throw new Error('No address');
     console.log(
       'INFO: Proxy upgrade required! Initialization: ',
       proxyCallData
