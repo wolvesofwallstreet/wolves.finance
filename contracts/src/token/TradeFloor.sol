@@ -154,7 +154,10 @@ contract TradeFloor is Context, WOWSMinterPauser {
     // Register fee interface
     _registerInterface(_INTERFACE_ID_FEES);
 
-    CreateERC1155_v1(marketingWallet, _NAME, _SYMBOL);
+    // Rarible: Need a real wallet for setting up storefront
+    address deployer = addressRegistry.getRegistryEntry(AddressBook.DEPLOYER);
+    // This event initializes Rarible storefront
+    CreateERC1155_v1(deployer, _NAME, _SYMBOL);
   }
 
   //////////////////////////////////////////////////////////////////////////////

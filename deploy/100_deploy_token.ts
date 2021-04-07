@@ -51,6 +51,7 @@ const ADDRESS_BOOK_WOWS_BOOSTER_KEY = ethers.utils.formatBytes32String(
 const ADDRESS_BOOK_REWARD_HANDLER_KEY = ethers.utils.formatBytes32String(
   'REWARD_HANDLER'
 );
+const ADDRESS_BOOK_DEPLOYER_KEY = ethers.utils.formatBytes32String('DEPLOYER');
 
 // Helper function
 function log_step(step_string) {
@@ -186,6 +187,13 @@ const func = async function (hardhat_re) {
 
   log_step('Setting addresses in address registry');
 
+  await setRegistryKey(
+    deployer,
+    execute,
+    ADDRESS_REGISTRY_INSTANCE,
+    ADDRESS_BOOK_DEPLOYER_KEY,
+    deployer
+  );
   await setRegistryKey(
     deployer,
     execute,
