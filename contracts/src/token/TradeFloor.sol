@@ -71,19 +71,10 @@ contract TradeFloor is Context, WOWSMinterPauser {
    */
   IAddressRegistry private _addressRegistry;
 
-  // Name of the metadata json file for OpenSea contract data
-  string private _contractMetadataUri;
-
-  // Conversion to hex string
-  bytes16 private constant HEX_MAP = '0123456789ABCDEF';
-
   // solhint-disable-next-line const-name-snakecase
   string public constant name = 'WolvesOfWallStreet NFT';
   // solhint-disable-next-line const-name-snakecase
   string public constant symbol = 'WOWS NFT';
-
-  // bytes4(keccak256('contractURI()')) == 0xe8a3d485
-  bytes4 private constant _INTERFACE_ID_CONTRACT_URI = 0xe8a3d485;
 
   // OpenSea Compatibility
   event OwnershipTransferred(
@@ -392,7 +383,7 @@ contract TradeFloor is Context, WOWSMinterPauser {
   function uri(uint256 tokenId)
     public
     view
-    override(ERC1155)
+    override
     returns (string memory)
   {
     // Validate state
@@ -401,19 +392,7 @@ contract TradeFloor is Context, WOWSMinterPauser {
       'Token not minted'
     );
 
-    // Calculate URI
-    uint256 temp = tokenId;
-    uint256 length = tokenId == 0 ? 1 : 0;
-    while (temp != 0) {
-      length++;
-      temp >>= 8;
-    }
-    bytes memory buffer = new bytes(2 * length);
-    for (uint256 i = 2 * length; i > 0; --i) {
-      buffer[i - 1] = HEX_MAP[tokenId & 0xf];
-      tokenId >>= 4;
-    }
-    return string(abi.encodePacked(super.uri(0), buffer, '.json'));
+    return super.uri(tokenId);
   }
 
   //////////////////////////////////////////////////////////////////////////////

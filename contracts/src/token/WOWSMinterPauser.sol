@@ -11,9 +11,9 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
+import '../../0xerc1155/tokens/ERC1155/ERC1155Metadata.sol';
+import '../../0xerc1155/tokens/ERC1155/ERC1155MintBurn.sol';
 import '@openzeppelin/contracts/access/AccessControl.sol';
-import '@openzeppelin/contracts/token/ERC1155/ERC1155Burnable.sol';
-import '@openzeppelin/contracts/token/ERC1155/ERC1155Pausable.sol';
 import '@openzeppelin/contracts/utils/Context.sol';
 
 /**
@@ -26,8 +26,8 @@ import '@openzeppelin/contracts/utils/Context.sol';
 contract WOWSMinterPauser is
   Context,
   AccessControl,
-  ERC1155Burnable,
-  ERC1155Pausable
+  ERC1155MintBurn,
+  ERC1155Metadata
 {
   //////////////////////////////////////////////////////////////////////////////
   // Constants
@@ -38,6 +38,11 @@ contract WOWSMinterPauser is
 
   // Role to mint new tokens
   bytes32 public constant MINTER_ROLE = keccak256('MINTER_ROLE');
+
+  // Pause
+  bool private _pause;
+  // Event triggered when _pause state changed
+  event Pause(bool on);
 
   //////////////////////////////////////////////////////////////////////////////
   // Constructor
@@ -52,35 +57,25 @@ contract WOWSMinterPauser is
   /**
    * @dev Pauses all token transfers.
    *
-   * See {ERC1155Pausable} and {Pausable-_pause}.
-   *
    * Requirements:
    *
-   * - The caller must have the `PAUSER_ROLE`.
+   * - The caller must have the `DEFAULT_ADMIN_ROLE`.
    */
-  function pause() public virtual {
+  function pause(bool pause) public virtual {
     // Validate access
-    require(hasRole(PAUSER_ROLE, _msgSender()), 'pauser role required');
+    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'pauser role required');
 
-    // Update state
-    _pause();
+    if (_pause != pause) {
+      // Update state
+      _pause = pause;
+    }
   }
 
   /**
-   * @dev Unpauses all token transfers.
-   *
-   * See {ERC1155Pausable} and {Pausable-_unpause}.
-   *
-   * Requirements:
-   *
-   * - The caller must have the `PAUSER_ROLE`.
-   */
-  function unpause() public virtual {
-    // Validate access
-    require(hasRole(PAUSER_ROLE, _msgSender()), 'pauser role required');
-
-    // Update state
-    _unpause();
+    * @dev Returns true if the contract is paused, and false otherwise.
+    */
+  function paused() public view virtual returns (bool) {
+      return _paused;
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -133,11 +128,11 @@ contract WOWSMinterPauser is
   }
 
   //////////////////////////////////////////////////////////////////////////////
-  // Implementation of {ERC1155} via {ERC1155Pausable}
+  // Implementation of {ERC1155}
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev See {ERC1155-_beforeTokenTransfer}.
+   * @dev See {ERC1155-_beforeBatchTokenTransfer}.
    *
    * This function is necessary due to diamond inheritance.
    */
@@ -145,11 +140,30 @@ contract WOWSMinterPauser is
     address operator,
     address from,
     address to,
+    uint256 tokenId,
+    uint256 amount,
+    bytes memory data
+  ) internal virtual override {
+    require(_pause == false, 'Transfer operation paused!');
+    // Call ancestor
+    super._beforeTokenTransfer(operator, from, to, tokenId, amount, data);
+  }
+
+  /**
+   * @dev See {ERC1155-_beforeBatchTokenTransfer}.
+   *
+   * This function is necessary due to diamond inheritance.
+   */
+  function _beforeBatchTokenTransfer(
+    address operator,
+    address from,
+    address to,
     uint256[] memory tokenIds,
     uint256[] memory amounts,
     bytes memory data
-  ) internal virtual override(ERC1155, ERC1155Pausable) {
+  ) internal virtual override {
+    require(_pause == false, 'Transfer operation paused!');
     // Call ancestor
-    super._beforeTokenTransfer(operator, from, to, tokenIds, amounts, data);
+    super._beforeBatchTokenTransfer(operator, from, to, tokenIds, amounts, data);
   }
 }

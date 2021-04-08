@@ -8,12 +8,13 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
+import '@openzeppelin/contracts/introspection/IERC165.sol';
 import '@openzeppelin/contracts/proxy/UpgradeableProxy.sol';
 
 import '../utils/AddressBook.sol';
 import '../utils/interfaces/IAddressRegistry.sol';
 
-contract TradeFloorProxy is UpgradeableProxy {
+contract TradeFloorProxy is UpgradeableProxy is IERC165 {
   /**
    * @dev Storage slot with the admin of the contract.
    * This is the keccak-256 hash of "eip1967.proxy.admin" subtracted by 1, and is

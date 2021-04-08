@@ -8,9 +8,7 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
-import '@openzeppelin/contracts/access/AccessControl.sol';
 import '@openzeppelin/contracts/proxy/Clones.sol';
-import '@openzeppelin/contracts/utils/Context.sol';
 
 import './interfaces/IWOWSCryptofolio.sol';
 import './interfaces/IWOWSERC1155.sol';
@@ -20,7 +18,7 @@ import './WOWSMinterPauser.sol';
  * TODO's:
  * implement transfer and burn helpers for cryptofolio items
  */
-contract WOWSERC1155 is IWOWSERC1155, Context, AccessControl, WOWSMinterPauser {
+contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
   //////////////////////////////////////////////////////////////////////////////
   // Constants
   //////////////////////////////////////////////////////////////////////////////
@@ -30,9 +28,6 @@ contract WOWSERC1155 is IWOWSERC1155, Context, AccessControl, WOWSMinterPauser {
 
   // Used to restict calls to TRADEFLOOR but also to collect all TRADEFLOORS
   bytes32 public constant OPERATOR_ROLE = keccak256('OPERATOR_ROLE');
-
-  // Hex numbers for creating hexadecimal tokenId
-  bytes16 private constant HEX = '0123456789ABCDEF';
 
   //////////////////////////////////////////////////////////////////////////////
   // State
@@ -83,12 +78,6 @@ contract WOWSERC1155 is IWOWSERC1155, Context, AccessControl, WOWSMinterPauser {
   // Our master cryptofolio used for clones
   address private _cryptofolio;
 
-  // URI used for custom tokenIds without specific URI
-  string private _customDefaultUri;
-
-  // Name of the metadata json file for OpenSea contract data
-  string private _contractMetadataName;
-
   //////////////////////////////////////////////////////////////////////////////
   // Constructor
   //////////////////////////////////////////////////////////////////////////////
@@ -99,13 +88,13 @@ contract WOWSERC1155 is IWOWSERC1155, Context, AccessControl, WOWSMinterPauser {
    * The other token URI's must be set separately.
    */
   constructor(
-    address _owner,
-    address __cryptofolio,
-    string memory _uri,
-    string memory __contractMetadataName
+    address owner,
+    address cryptofolio,
+    string memory baseMetadataURI,
+    string memory contractMetadataURI
   ) WOWSMinterPauser(_uri) {
     // Initialize {AccessControl}
-    _setupRole(DEFAULT_ADMIN_ROLE, _owner);
+    _setupRole(DEFAULT_ADMIN_ROLE, owner);
 
     // Setup wows card definition
     _wowsLevelCap[0] = 20;
@@ -114,8 +103,11 @@ contract WOWSERC1155 is IWOWSERC1155, Context, AccessControl, WOWSMinterPauser {
     _wowsLevelCap[5] = 20;
 
     // Our clone blueprint cryptofolio.
-    _cryptofolio = __cryptofolio;
-    _contractMetadataName = __contractMetadataName;
+    _cryptofolio = cryptofolio;
+    
+    // MetaData
+    _setBaseMetadataURI(baseMetadataURI);
+    _setContractMetaDataURI(contractMetadataURI);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -207,32 +199,27 @@ contract WOWSERC1155 is IWOWSERC1155, Context, AccessControl, WOWSMinterPauser {
   }
 
   /**
-   * @dev See {IWOWSERC1155-setURI}.
+   * @dev See {IWOWSERC1155-setBaseMetadataURI}.
    */
-  function setURI(uint256 tokenId, string memory _uri) public override {
+  function setBaseMetadataURI(string memory uri) external {
     // Access control
-    require(
-      hasRole((tokenId == 0) ? DEFAULT_ADMIN_ROLE : MINTER_ROLE, _msgSender()),
-      'Access denied'
-    );
-
-    // Validate parameters
-    require(tokenId == 0 || _isCustomToken(tokenId), 'invalid tokenId');
-
-    // Update state
-    if (tokenId == 0) _setURI(_uri);
-    else _customCards[tokenId].uri = _uri;
+    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()),'Access denied');
+    // Set state
+    _setBaseMetadataURI(uri);
   }
 
   /**
-   * @dev See {IWOWSERC1155-setCustomDefaultURI}.
+   * @dev See {IWOWSERC1155-setCustumURI}.
    */
-  function setCustomDefaultURI(string memory _uri) public override {
+  function setCustomURI(uint256 tokenId, string memory _uri) public override {
     // Access control
-    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admin');
+    require(hasRole(MINTER_ROLE, _msgSender()),'Access denied');
+
+    // Validate parameters
+    require(_isCustomToken(tokenId), 'invalid tokenId');
 
     // Update state
-    _customDefaultUri = _uri;
+    _customCards[tokenId].uri = _uri;
   }
 
   /**
@@ -294,35 +281,15 @@ contract WOWSERC1155 is IWOWSERC1155, Context, AccessControl, WOWSMinterPauser {
   {
     // Custom token
     if (_isCustomToken(tokenId)) {
-      if (bytes(_customCards[tokenId].uri).length == 0) {
-        return _customDefaultUri;
+      if (_customCards[tokenId].uri == '') {
+        return super.uri(tokenId);
       } else {
         return _customCards[tokenId].uri;
       }
     }
 
     // WOWS token
-    return
-      string(
-        abi.encodePacked(
-          super.uri(0),
-          HEX[(tokenId >> 28) & 0xF],
-          HEX[(tokenId >> 24) & 0xF],
-          HEX[(tokenId >> 20) & 0xF],
-          HEX[(tokenId >> 16) & 0xF],
-          '.json'
-        )
-      );
-  }
-
-  /**
-   * @dev Opensea calls this fuction to get information about how to display storefront.
-   * Our return value is the base URI of the stock card metadata + the filename.
-   *
-   * @return full URI to the location of the contract metadata.
-   */
-  function contractURI() public view returns (string memory) {
-    return string(abi.encodePacked(super.uri(0), _contractMetadataName));
+    return super.uri(tokenId >> 16);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -336,6 +303,23 @@ contract WOWSERC1155 is IWOWSERC1155, Context, AccessControl, WOWSMinterPauser {
     address operator,
     address from,
     address to,
+    uint256 tokenId,
+    uint256 /*amount*/,
+    bytes memory data
+  ) internal virtual override {
+    // Perform action
+    _tokenTransfered(from, to, tokenId);
+    // Call ancestor
+    super._beforeTokenTransfer(operator, from, to, tokenIds, amounts, data);
+  }
+
+  /**
+   * @dev See {ERC1155-_beforeBatchTokenTransfer}.
+   */
+  function _beforeBatchTokenTransfer(
+    address operator,
+    address from,
+    address to,
     uint256[] memory tokenIds,
     uint256[] memory amounts,
     bytes memory data
@@ -344,60 +328,9 @@ contract WOWSERC1155 is IWOWSERC1155, Context, AccessControl, WOWSMinterPauser {
     require(tokenIds.length == amounts.length, 'Length mismatch');
 
     // Process tokens being transferred
-    for (uint256 i = 0; i < tokenIds.length; ++i) {
-      // We have only NFT's in this contract
-      require(amounts[i] == 1, 'Amount != 1');
-
-      uint256 tokenId = tokenIds[i];
-
-      // Load state
-      address tokenAddress = _tokenIdToAddress[tokenId];
-      TokenInfo storage tokenInfo = _tokenInfos[tokenId];
-
-      // Minting
-      if (from == address(0)) {
-        // Validate state
-        require(!tokenInfo.minted, 'Already minted');
-
-        // Update state
-        tokenInfo.minted = true;
-        // solhint-disable-next-line not-rely-on-time
-        tokenInfo.timestamp = uint64(block.timestamp);
-        // Create a new WOWSCryptofolio by cloning masterTokenReceiver
-        // The clone itself is a minimal delegate proxy.
-        if (tokenAddress == address(0)) {
-          tokenAddress = Clones.clone(_cryptofolio);
-          _tokenIdToAddress[tokenId] = tokenAddress;
-          IWOWSCryptofolio(tokenAddress).initialize();
-        }
-        _addressToTokenId[tokenAddress] = tokenId;
-
-        // Increment the minted count for this card
-        if (!_isCustomToken(tokenId)) {
-          _wowsCardsMinted[uint16(tokenId >> 16)] += 1;
-        } else {
-          ++_customCardCount;
-        }
-      }
-      // Burning
-      else if (to == address(0)) {
-        // Make sure underlying assets gets burned
-        IWOWSCryptofolio(tokenAddress).burn();
-
-        // Make token mintable again
-        tokenInfo.minted = false;
-
-        // Decrement the minted count for this card
-        if (!_isCustomToken(tokenId)) {
-          _wowsCardsMinted[uint16(tokenId >> 16)] -= 1;
-        }
-      }
-
-      // Signal ownership change in Cryptofolio
-      IWOWSCryptofolio(tokenAddress).setOwner(to);
-
-      // Reflect ownership change in our linked list
-      _relinkOwner(from, to, tokenId);
+    uint length = tokenIds.length;
+    for (uint256 i = 0; i < length; ++i) {
+      _tokenTransfered(from, to, tokenIds[i]);
     }
 
     // Call ancestor
@@ -531,17 +464,63 @@ contract WOWSERC1155 is IWOWSERC1155, Context, AccessControl, WOWSMinterPauser {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev Ownership change -> update linked list owner -> tokenId
-   *
-   * linkKeys are 1 based where tokenIds are 0-based.
+   * @dev Handles transfer of an SFT token
    */
-  function _relinkOwner(
+  function _tokenTransfered(
     address from,
     address to,
     uint256 tokenId
-  ) internal {
+  ) private {
+    // We have only NFT's in this contract
+    require(amounts[i] == 1, 'Amount != 1');
+
+    uint256 tokenId = tokenIds[i];
+
     // Load state
+    address tokenAddress = _tokenIdToAddress[tokenId];
     TokenInfo storage tokenInfo = _tokenInfos[tokenId];
+
+    // Minting
+    if (from == address(0)) {
+      // Validate state
+      require(!tokenInfo.minted, 'Already minted');
+
+      // Update state
+      tokenInfo.minted = true;
+      // solhint-disable-next-line not-rely-on-time
+      tokenInfo.timestamp = uint64(block.timestamp);
+      // Create a new WOWSCryptofolio by cloning masterTokenReceiver
+      // The clone itself is a minimal delegate proxy.
+      if (tokenAddress == address(0)) {
+        tokenAddress = Clones.clone(_cryptofolio);
+        _tokenIdToAddress[tokenId] = tokenAddress;
+        IWOWSCryptofolio(tokenAddress).initialize();
+      }
+      _addressToTokenId[tokenAddress] = tokenId;
+
+      // Increment the minted count for this card
+      if (!_isCustomToken(tokenId)) {
+        _wowsCardsMinted[uint16(tokenId >> 16)] += 1;
+      } else {
+        ++_customCardCount;
+      }
+    }
+    // Burning
+    else if (to == address(0)) {
+      // Make sure underlying assets gets burned
+      IWOWSCryptofolio(tokenAddress).burn();
+
+      // Make token mintable again
+      tokenInfo.minted = false;
+
+      // Decrement the minted count for this card
+      if (!_isCustomToken(tokenId)) {
+        _wowsCardsMinted[uint16(tokenId >> 16)] -= 1;
+      }
+    }
+
+    // Signal ownership change in Cryptofolio
+    IWOWSCryptofolio(tokenAddress).setOwner(to);
 
     // Remove tokenId from List
     if (from != address(0)) {

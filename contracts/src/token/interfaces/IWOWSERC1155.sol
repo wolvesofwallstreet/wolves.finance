@@ -76,23 +76,22 @@ interface IWOWSERC1155 {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev Set the URI for either predefined cards or custom cards
+   * @dev Set the base URI for either predefined cards or custom cards
+   * which don't have it's own URI.
    *
-   * For changing the default URI for predefined cards, token ID 0 must be
-   * passed. Custom token ID's (> 32-bit range) get their own URI per token ID.
+   * The resulting uri is baseUri+[hex(tokenId)] + '.json'. where
+   * tokenId will be reduces to upper 16 bit (>> 16) before building the hex string.
    *
-   * @param tokenId The token ID whose URI is being set. Use `tokenId` == 0 to
-   * set the default URI. `tokenId` >= 0xFFFFFFFF is for custom URIs.
-   * @param _uri The URI, also allowing for the ERC-1155 {id} mechanism.
    */
-  function setURI(uint256 tokenId, string memory _uri) external;
+  function setBaseMetadataURI(string memory _uri) external;
 
   /**
-   * @dev Set the URI which is returned for custom cards without specific URI
+   * @dev Set the URI for a custom card
    *
-   * @param _uri The URI, also allowing for the ERC-1155 {id} mechanism.
+   * @param tokenId The token ID whose URI is being set.
+   * @param _uri The URI which point to an unique metadata file.
    */
-  function setCustomDefaultURI(string memory _uri) external;
+  function setCustomURI(uint256 tokenId, string memory _uri) external;
 
   /**
    * @dev Each custom card has its own level. Level will be used when
