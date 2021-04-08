@@ -17,6 +17,11 @@ import '../utils/interfaces/IAddressRegistry.sol';
 import './interfaces/IMinterCallback.sol';
 import './WOWSMinterPauser.sol';
 
+// OpenSea ProxyRegistry for gasless TX
+abstract contract ProxyRegistry {
+  mapping(address => address) public proxies;
+}
+
 /**
  * @dev Implementation of https://eips.ethereum.org/EIPS/eip-1155[ERC1155]
  * Multi Token Standard, including the Metadata URI extension.
@@ -77,9 +82,22 @@ contract TradeFloor is Context, WOWSMinterPauser {
   // Conversion to hex string
   bytes16 private constant HEX_MAP = '0123456789ABCDEF';
 
+  // solhint-disable-next-line const-name-snakecase
+  string public constant name = 'WolvesOfWallStreet NFT';
+  // solhint-disable-next-line const-name-snakecase
+  string public constant symbol = 'WOWS NFT';
+
   // bytes4(keccak256('contractURI()')) == 0xe8a3d485
   bytes4 private constant _INTERFACE_ID_CONTRACT_URI = 0xe8a3d485;
 
+  // OpenSea Compatibility
+  ProxyRegistry private _openSeaProxyRegistry;
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
+
+  // Rarible compatibility
   /*
    * bytes4(keccak256('getFeeBps(uint256)')) == 0x0ebd4c7f
    * bytes4(keccak256('getFeeRecipients(uint256)')) == 0xb9c4d9fb
@@ -91,8 +109,7 @@ contract TradeFloor is Context, WOWSMinterPauser {
   address private _feeRecipient;
 
   // Rarible events
-  string private constant _NAME = 'WolvesOfWallStreet NFT';
-  string private constant _SYMBOL = 'WOWS NFT';
+  // solhint-disable-next-line event-name-camelcase
   event CreateERC1155_v1(address indexed creator, string name, string symbol);
   event SecondarySaleFees(
     uint256 tokenId,
@@ -128,6 +145,7 @@ contract TradeFloor is Context, WOWSMinterPauser {
    */
   function initialize(
     IAddressRegistry addressRegistry,
+    ProxyRegistry openSeaProxyRegistry,
     string memory tokenUriPrefix,
     string memory contractUri
   ) public {
@@ -147,6 +165,7 @@ contract TradeFloor is Context, WOWSMinterPauser {
 
     _addressRegistry = addressRegistry;
     _contractMetadataUri = contractUri;
+    _openSeaProxyRegistry = openSeaProxyRegistry;
 
     // Rarible interface
     // Register contractURI interface
@@ -157,7 +176,9 @@ contract TradeFloor is Context, WOWSMinterPauser {
     // Rarible: Need a real wallet for setting up storefront
     address deployer = addressRegistry.getRegistryEntry(AddressBook.DEPLOYER);
     // This event initializes Rarible storefront
-    CreateERC1155_v1(deployer, _NAME, _SYMBOL);
+    emit CreateERC1155_v1(deployer, name, symbol);
+    // OpenSea enable storefront editing
+    emit OwnershipTransferred(address(0), deployer);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -324,6 +345,21 @@ contract TradeFloor is Context, WOWSMinterPauser {
     }
   }
 
+  /**
+   * @dev See {IERC1155-isApprovedForAll}.
+   */
+  function isApprovedForAll(address account, address operator)
+    public
+    view
+    override
+    returns (bool)
+  {
+    if (ProxyRegistry(_openSeaProxyRegistry).proxies(account) == operator) {
+      return true;
+    }
+    return super.isApprovedForAll(account, operator);
+  }
+
   //////////////////////////////////////////////////////////////////////////////
   // Implementation of {ERC1155Burnable}
   //////////////////////////////////////////////////////////////////////////////
@@ -335,7 +371,7 @@ contract TradeFloor is Context, WOWSMinterPauser {
     address account,
     uint256 tokenId,
     uint256 value
-  ) public virtual override {
+  ) public override {
     // Validate parameters
     require(account != address(0), 'Invalid zero address');
 
@@ -379,7 +415,6 @@ contract TradeFloor is Context, WOWSMinterPauser {
   function uri(uint256 tokenId)
     public
     view
-    virtual
     override(ERC1155)
     returns (string memory)
   {
@@ -445,6 +480,18 @@ contract TradeFloor is Context, WOWSMinterPauser {
     bps[0] = _fee;
 
     return bps;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // OpenSea compatibility
+  //////////////////////////////////////////////////////////////////////////////
+
+  function isOwner() external view returns (bool) {
+    return _msgSender() == owner();
+  }
+
+  function owner() public view returns (address) {
+    return _addressRegistry.getRegistryEntry(AddressBook.DEPLOYER);
   }
 
   //////////////////////////////////////////////////////////////////////////////
