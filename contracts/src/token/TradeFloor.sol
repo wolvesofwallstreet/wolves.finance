@@ -17,11 +17,6 @@ import '../utils/interfaces/IAddressRegistry.sol';
 import './interfaces/IMinterCallback.sol';
 import './WOWSMinterPauser.sol';
 
-// OpenSea ProxyRegistry for gasless TX
-abstract contract ProxyRegistry {
-  mapping(address => address) public proxies;
-}
-
 /**
  * @dev Implementation of https://eips.ethereum.org/EIPS/eip-1155[ERC1155]
  * Multi Token Standard, including the Metadata URI extension.
@@ -91,7 +86,6 @@ contract TradeFloor is Context, WOWSMinterPauser {
   bytes4 private constant _INTERFACE_ID_CONTRACT_URI = 0xe8a3d485;
 
   // OpenSea Compatibility
-  ProxyRegistry private _openSeaProxyRegistry;
   event OwnershipTransferred(
     address indexed previousOwner,
     address indexed newOwner
@@ -145,7 +139,6 @@ contract TradeFloor is Context, WOWSMinterPauser {
    */
   function initialize(
     IAddressRegistry addressRegistry,
-    ProxyRegistry openSeaProxyRegistry,
     string memory tokenUriPrefix,
     string memory contractUri
   ) public {
@@ -165,7 +158,6 @@ contract TradeFloor is Context, WOWSMinterPauser {
 
     _addressRegistry = addressRegistry;
     _contractMetadataUri = contractUri;
-    _openSeaProxyRegistry = openSeaProxyRegistry;
 
     // Rarible interface
     // Register contractURI interface
@@ -343,21 +335,6 @@ contract TradeFloor is Context, WOWSMinterPauser {
         IMinterCallback(minter).onTransferFrom(from, to, tokenId, amounts[i]);
       }
     }
-  }
-
-  /**
-   * @dev See {IERC1155-isApprovedForAll}.
-   */
-  function isApprovedForAll(address account, address operator)
-    public
-    view
-    override
-    returns (bool)
-  {
-    if (ProxyRegistry(_openSeaProxyRegistry).proxies(account) == operator) {
-      return true;
-    }
-    return super.isApprovedForAll(account, operator);
   }
 
   //////////////////////////////////////////////////////////////////////////////
