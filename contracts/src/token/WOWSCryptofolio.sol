@@ -12,7 +12,9 @@ import './interfaces/IERC1155BurnMintable.sol';
 import './interfaces/IWOWSCryptofolio.sol';
 import './interfaces/IWOWSERC1155.sol';
 
-contract WOWSCryptofolio is IWOWSCryptofolio {
+import '../../0xerc1155/tokens/ERC1155/ERC1155Holder.sol';
+
+contract WOWSCryptofolio is ERC1155Holder, IWOWSCryptofolio {
   //////////////////////////////////////////////////////////////////////////////
   // State
   //////////////////////////////////////////////////////////////////////////////
@@ -175,12 +177,12 @@ contract WOWSCryptofolio is IWOWSCryptofolio {
   //////////////////////////////////////////////////////////////////////////////
 
   function onERC1155Received(
-    address,
-    address,
+    address operator,
+    address from,
     uint256 tokenId,
     uint256 amount,
-    bytes memory
-  ) external returns (bytes4) {
+    bytes memory data
+  ) public override returns (bytes4) {
     // Parameters
     uint256[] memory tokenIds = new uint256[](1);
     tokenIds[0] = tokenId;
@@ -191,21 +193,22 @@ contract WOWSCryptofolio is IWOWSCryptofolio {
     _onTokensReceived(tokenIds, amounts);
 
     // This contract supports safe ERC-1155 transfers
-    return this.onERC1155Received.selector;
+    return super.onERC1155Received(operator, from, tokenId, amount, data);
   }
 
   function onERC1155BatchReceived(
-    address,
-    address,
+    address operator,
+    address from,
     uint256[] memory tokenIds,
     uint256[] memory amounts,
-    bytes memory
-  ) external returns (bytes4) {
+    bytes memory data
+  ) public override returns (bytes4) {
     // Update state
     _onTokensReceived(tokenIds, amounts);
 
     // This contract supports safe ERC-1155 transfers
-    return this.onERC1155BatchReceived.selector;
+    return
+      super.onERC1155BatchReceived(operator, from, tokenIds, amounts, data);
   }
 
   //////////////////////////////////////////////////////////////////////////////

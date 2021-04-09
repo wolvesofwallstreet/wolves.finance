@@ -83,15 +83,22 @@ interface IWOWSERC1155 {
    * tokenId will be reduces to upper 16 bit (>> 16) before building the hex string.
    *
    */
-  function setBaseMetadataURI(string memory _uri) external;
+  function setBaseMetadataURI(string memory baseContractMetadata) external;
+
+  /**
+   * @dev Set the contracts metadata URI
+   *
+   * @param contractMetadataURI The URI which point to the contract metadata file.
+   */
+  function setContractMetadataURI(string memory contractMetadataURI) external;
 
   /**
    * @dev Set the URI for a custom card
    *
    * @param tokenId The token ID whose URI is being set.
-   * @param _uri The URI which point to an unique metadata file.
+   * @param customURI The URI which point to an unique metadata file.
    */
-  function setCustomURI(uint256 tokenId, string memory _uri) external;
+  function setCustomURI(uint256 tokenId, string memory customURI) external;
 
   /**
    * @dev Each custom card has its own level. Level will be used when

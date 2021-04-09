@@ -11,10 +11,9 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
+import '../../0xerc1155/access/AccessControl.sol';
 import '../../0xerc1155/tokens/ERC1155/ERC1155Metadata.sol';
 import '../../0xerc1155/tokens/ERC1155/ERC1155MintBurn.sol';
-import '@openzeppelin/contracts/access/AccessControl.sol';
-import '@openzeppelin/contracts/utils/Context.sol';
 
 /**
  * @dev Partial implementation of https://eips.ethereum.org/EIPS/eip-1155[ERC1155]
@@ -40,15 +39,15 @@ contract WOWSMinterPauser is
   bytes32 public constant MINTER_ROLE = keccak256('MINTER_ROLE');
 
   // Pause
-  bool private _pause;
+  bool private _pauseActive;
   // Event triggered when _pause state changed
-  event Pause(bool on);
+  event Pause(bool active);
 
   //////////////////////////////////////////////////////////////////////////////
   // Constructor
   //////////////////////////////////////////////////////////////////////////////
 
-  constructor(string memory uri) ERC1155(uri) {}
+  constructor() {}
 
   //////////////////////////////////////////////////////////////////////////////
   // Pausing interface
@@ -61,21 +60,26 @@ contract WOWSMinterPauser is
    *
    * - The caller must have the `DEFAULT_ADMIN_ROLE`.
    */
-  function pause(bool pause) public virtual {
+  function pause(bool active) public {
     // Validate access
     require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'pauser role required');
 
-    if (_pause != pause) {
+    if (_pauseActive != active) {
       // Update state
-      _pause = pause;
+      _pauseActive = active;
+      emit Pause(active);
     }
   }
 
   /**
-    * @dev Returns true if the contract is paused, and false otherwise.
-    */
-  function paused() public view virtual returns (bool) {
-      return _paused;
+   * @dev Returns true if the contract is paused, and false otherwise.
+   */
+  function paused() public view returns (bool) {
+    return _pauseActive;
+  }
+
+  function _pause(bool active) internal {
+    _pauseActive = active;
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -124,7 +128,36 @@ contract WOWSMinterPauser is
     require(tokenIds.length == amounts.length, "Lengths don't match");
 
     // Update state
-    _mintBatch(to, tokenIds, amounts, data);
+    _batchMint(to, tokenIds, amounts, data);
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Burning interface
+  //////////////////////////////////////////////////////////////////////////////
+
+  function burn(
+    address account,
+    uint256 id,
+    uint256 value
+  ) public virtual {
+    require(
+      account == _msgSender() || isApprovedForAll(account, _msgSender()),
+      'Caller is not owner nor approved'
+    );
+    _burn(account, id, value);
+  }
+
+  function burnBatch(
+    address account,
+    uint256[] memory ids,
+    uint256[] memory values
+  ) public virtual {
+    require(
+      account == _msgSender() || isApprovedForAll(account, _msgSender()),
+      'Caller is not owner nor approved'
+    );
+
+    _batchBurn(account, ids, values);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -144,7 +177,7 @@ contract WOWSMinterPauser is
     uint256 amount,
     bytes memory data
   ) internal virtual override {
-    require(_pause == false, 'Transfer operation paused!');
+    require(_pauseActive == false, 'Transfer operation paused!');
     // Call ancestor
     super._beforeTokenTransfer(operator, from, to, tokenId, amount, data);
   }
@@ -162,8 +195,25 @@ contract WOWSMinterPauser is
     uint256[] memory amounts,
     bytes memory data
   ) internal virtual override {
-    require(_pause == false, 'Transfer operation paused!');
+    require(_pauseActive == false, 'Transfer operation paused!');
     // Call ancestor
-    super._beforeBatchTokenTransfer(operator, from, to, tokenIds, amounts, data);
+    super._beforeBatchTokenTransfer(
+      operator,
+      from,
+      to,
+      tokenIds,
+      amounts,
+      data
+    );
+  }
+
+  function supportsInterface(bytes4 _interfaceID)
+    public
+    pure
+    virtual
+    override(ERC1155, ERC1155Metadata)
+    returns (bool)
+  {
+    return super.supportsInterface(_interfaceID);
   }
 }

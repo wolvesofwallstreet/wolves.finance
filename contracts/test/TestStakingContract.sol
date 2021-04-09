@@ -8,7 +8,7 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
-import '@openzeppelin/contracts/token/ERC1155/ERC1155Holder.sol';
+import '../0xerc1155/tokens/ERC1155/ERC1155Holder.sol';
 
 import '../src/token/interfaces/IMinterCallback.sol';
 import '../src/token/TradeFloor.sol';
