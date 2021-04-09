@@ -29,7 +29,7 @@ const addresses = {
     stakeFarm: '0x434C19d1da27666A4a0691369F392563F22Ee992',
     sftMinter: '0x951A365Dd2731ba8B802d1d1b05D70576768c084',
     sftHolder: '0x12a7e16CA95DF8f6753157d3ADAd155f90926cC9',
-    tradeFloor: '0x770fe7Ec514DD3dD220Db0e699edCC28860479C3',
+    tradeFloor: '0xBb5aE97A4359Db908A6B8dce6146e3a195B0ee58',
   },
   97: {
     //Binance SC Test
