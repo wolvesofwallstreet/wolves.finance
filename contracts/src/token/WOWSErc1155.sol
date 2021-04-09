@@ -92,7 +92,7 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
     address cryptofolio,
     string memory baseMetadataURI,
     string memory contractMetadataURI
-  ) WOWSMinterPauser(_uri) {
+  ) {
     // Initialize {AccessControl}
     _setupRole(DEFAULT_ADMIN_ROLE, owner);
 
@@ -104,10 +104,10 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
 
     // Our clone blueprint cryptofolio.
     _cryptofolio = cryptofolio;
-    
+
     // MetaData
     _setBaseMetadataURI(baseMetadataURI);
-    _setContractMetaDataURI(contractMetadataURI);
+    _setContractMetadataURI(contractMetadataURI);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -201,25 +201,41 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
   /**
    * @dev See {IWOWSERC1155-setBaseMetadataURI}.
    */
-  function setBaseMetadataURI(string memory uri) external {
+  function setBaseMetadataURI(string memory baseMetadataURI) external override {
     // Access control
-    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()),'Access denied');
+    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Access denied');
     // Set state
-    _setBaseMetadataURI(uri);
+    _setBaseMetadataURI(baseMetadataURI);
+  }
+
+  /**
+   * @dev See {IWOWSERC1155-setContractMetadataURI}.
+   */
+  function setContractMetadataURI(string memory contractMetadataURI)
+    external
+    override
+  {
+    // Access control
+    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Access denied');
+    // Set state
+    _setContractMetadataURI(contractMetadataURI);
   }
 
   /**
    * @dev See {IWOWSERC1155-setCustumURI}.
    */
-  function setCustomURI(uint256 tokenId, string memory _uri) public override {
+  function setCustomURI(uint256 tokenId, string memory customURI)
+    public
+    override
+  {
     // Access control
-    require(hasRole(MINTER_ROLE, _msgSender()),'Access denied');
+    require(hasRole(MINTER_ROLE, _msgSender()), 'Access denied');
 
     // Validate parameters
     require(_isCustomToken(tokenId), 'invalid tokenId');
 
     // Update state
-    _customCards[tokenId].uri = _uri;
+    _customCards[tokenId].uri = customURI;
   }
 
   /**
@@ -276,12 +292,12 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
     public
     view
     virtual
-    override(ERC1155)
+    override
     returns (string memory)
   {
     // Custom token
     if (_isCustomToken(tokenId)) {
-      if (_customCards[tokenId].uri == '') {
+      if (bytes(_customCards[tokenId].uri).length == 0) {
         return super.uri(tokenId);
       } else {
         return _customCards[tokenId].uri;
@@ -304,13 +320,13 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
     address from,
     address to,
     uint256 tokenId,
-    uint256 /*amount*/,
+    uint256 amount,
     bytes memory data
   ) internal virtual override {
     // Perform action
-    _tokenTransfered(from, to, tokenId);
+    _tokenTransfered(from, to, tokenId, amount);
     // Call ancestor
-    super._beforeTokenTransfer(operator, from, to, tokenIds, amounts, data);
+    super._beforeTokenTransfer(operator, from, to, tokenId, amount, data);
   }
 
   /**
@@ -328,13 +344,20 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
     require(tokenIds.length == amounts.length, 'Length mismatch');
 
     // Process tokens being transferred
-    uint length = tokenIds.length;
+    uint256 length = tokenIds.length;
     for (uint256 i = 0; i < length; ++i) {
-      _tokenTransfered(from, to, tokenIds[i]);
+      _tokenTransfered(from, to, tokenIds[i], amounts[i]);
     }
 
     // Call ancestor
-    super._beforeTokenTransfer(operator, from, to, tokenIds, amounts, data);
+    super._beforeBatchTokenTransfer(
+      operator,
+      from,
+      to,
+      tokenIds,
+      amounts,
+      data
+    );
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -469,12 +492,11 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
   function _tokenTransfered(
     address from,
     address to,
-    uint256 tokenId
+    uint256 tokenId,
+    uint256 amount
   ) private {
     // We have only NFT's in this contract
-    require(amounts[i] == 1, 'Amount != 1');
-
-    uint256 tokenId = tokenIds[i];
+    require(amount == 1, 'Amount != 1');
 
     // Load state
     address tokenAddress = _tokenIdToAddress[tokenId];

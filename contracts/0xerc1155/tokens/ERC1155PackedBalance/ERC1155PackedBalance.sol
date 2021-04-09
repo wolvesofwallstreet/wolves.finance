@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.7.4;
 
-import "../../utils/SafeMath.sol";
-import "../../interfaces/IERC1155TokenReceiver.sol";
-import "../../interfaces/IERC1155.sol";
-import "../../utils/Address.sol";
-import "../../utils/ERC165.sol";
-
+import '../../utils/SafeMath.sol';
+import '../../interfaces/IERC1155TokenReceiver.sol';
+import '../../interfaces/IERC1155.sol';
+import '../../utils/Address.sol';
+import '../../utils/ERC165.sol';
 
 /**
  * @dev Implementation of Multi-Token Standard contract. This implementation of the ERC-1155 standard
@@ -25,23 +24,22 @@ contract ERC1155PackedBalance is IERC1155, ERC165 {
   |__________________________________*/
 
   // onReceive function signatures
-  bytes4 constant internal ERC1155_RECEIVED_VALUE = 0xf23a6e61;
-  bytes4 constant internal ERC1155_BATCH_RECEIVED_VALUE = 0xbc197c81;
+  bytes4 internal constant ERC1155_RECEIVED_VALUE = 0xf23a6e61;
+  bytes4 internal constant ERC1155_BATCH_RECEIVED_VALUE = 0xbc197c81;
 
   // Constants regarding bin sizes for balance packing
   // IDS_BITS_SIZE **MUST** be a power of 2 (e.g. 2, 4, 8, 16, 32, 64, 128)
-  uint256 internal constant IDS_BITS_SIZE   = 32;                  // Max balance amount in bits per token ID
+  uint256 internal constant IDS_BITS_SIZE = 32; // Max balance amount in bits per token ID
   uint256 internal constant IDS_PER_UINT256 = 256 / IDS_BITS_SIZE; // Number of ids per uint256
 
   // Operations for _updateIDBalance
   enum Operations { Add, Sub }
 
   // Token IDs balances ; balances[address][id] => balance (using array instead of mapping for efficiency)
-  mapping (address => mapping(uint256 => uint256)) internal balances;
+  mapping(address => mapping(uint256 => uint256)) internal balances;
 
   // Operators
-  mapping (address => mapping(address => bool)) internal operators;
-
+  mapping(address => mapping(address => bool)) internal operators;
 
   /***********************************|
   |     Public Transfer Functions     |
@@ -55,12 +53,22 @@ contract ERC1155PackedBalance is IERC1155, ERC165 {
    * @param _amount  Transfered amount
    * @param _data    Additional data with no specified format, sent in call to `_to`
    */
-  function safeTransferFrom(address _from, address _to, uint256 _id, uint256 _amount, bytes memory _data)
-    public override
-  {
+  function safeTransferFrom(
+    address _from,
+    address _to,
+    uint256 _id,
+    uint256 _amount,
+    bytes memory _data
+  ) public override {
     // Requirements
-    require((msg.sender == _from) || isApprovedForAll(_from, msg.sender), "ERC1155PackedBalance#safeTransferFrom: INVALID_OPERATOR");
-    require(_to != address(0),"ERC1155PackedBalance#safeTransferFrom: INVALID_RECIPIENT");
+    require(
+      (msg.sender == _from) || isApprovedForAll(_from, msg.sender),
+      'ERC1155PackedBalance#safeTransferFrom: INVALID_OPERATOR'
+    );
+    require(
+      _to != address(0),
+      'ERC1155PackedBalance#safeTransferFrom: INVALID_RECIPIENT'
+    );
     // require(_amount <= balances);  Not necessary since checked with _viewUpdateBinValue() checks
 
     _safeTransferFrom(_from, _to, _id, _amount);
@@ -76,17 +84,26 @@ contract ERC1155PackedBalance is IERC1155, ERC165 {
    * @param _amounts  Transfer amounts per token type
    * @param _data     Additional data with no specified format, sent in call to `_to`
    */
-  function safeBatchTransferFrom(address _from, address _to, uint256[] memory _ids, uint256[] memory _amounts, bytes memory _data)
-    public override
-  {
+  function safeBatchTransferFrom(
+    address _from,
+    address _to,
+    uint256[] memory _ids,
+    uint256[] memory _amounts,
+    bytes memory _data
+  ) public override {
     // Requirements
-    require((msg.sender == _from) || isApprovedForAll(_from, msg.sender), "ERC1155PackedBalance#safeBatchTransferFrom: INVALID_OPERATOR");
-    require(_to != address(0),"ERC1155PackedBalance#safeBatchTransferFrom: INVALID_RECIPIENT");
+    require(
+      (msg.sender == _from) || isApprovedForAll(_from, msg.sender),
+      'ERC1155PackedBalance#safeBatchTransferFrom: INVALID_OPERATOR'
+    );
+    require(
+      _to != address(0),
+      'ERC1155PackedBalance#safeBatchTransferFrom: INVALID_RECIPIENT'
+    );
 
     _safeBatchTransferFrom(_from, _to, _ids, _amounts);
     _callonERC1155BatchReceived(_from, _to, _ids, _amounts, gasleft(), _data);
   }
-
 
   /***********************************|
   |    Internal Transfer Functions    |
@@ -99,12 +116,15 @@ contract ERC1155PackedBalance is IERC1155, ERC165 {
    * @param _id      ID of the token type
    * @param _amount  Transfered amount
    */
-  function _safeTransferFrom(address _from, address _to, uint256 _id, uint256 _amount)
-    internal
-  {
+  function _safeTransferFrom(
+    address _from,
+    address _to,
+    uint256 _id,
+    uint256 _amount
+  ) internal {
     //Update balances
     _updateIDBalance(_from, _id, _amount, Operations.Sub); // Subtract amount from sender
-    _updateIDBalance(_to,   _id, _amount, Operations.Add); // Add amount to recipient
+    _updateIDBalance(_to, _id, _amount, Operations.Add); // Add amount to recipient
 
     // Emit event
     emit TransferSingle(msg.sender, _from, _to, _id, _amount);
@@ -113,13 +133,28 @@ contract ERC1155PackedBalance is IERC1155, ERC165 {
   /**
    * @notice Verifies if receiver is contract and if so, calls (_to).onERC1155Received(...)
    */
-  function _callonERC1155Received(address _from, address _to, uint256 _id, uint256 _amount, uint256 _gasLimit, bytes memory _data)
-    internal
-  {
+  function _callonERC1155Received(
+    address _from,
+    address _to,
+    uint256 _id,
+    uint256 _amount,
+    uint256 _gasLimit,
+    bytes memory _data
+  ) internal {
     // Check if recipient is contract
     if (_to.isContract()) {
-      bytes4 retval = IERC1155TokenReceiver(_to).onERC1155Received{gas:_gasLimit}(msg.sender, _from, _id, _amount, _data);
-      require(retval == ERC1155_RECEIVED_VALUE, "ERC1155PackedBalance#_callonERC1155Received: INVALID_ON_RECEIVE_MESSAGE");
+      bytes4 retval =
+        IERC1155TokenReceiver(_to).onERC1155Received{ gas: _gasLimit }(
+          msg.sender,
+          _from,
+          _id,
+          _amount,
+          _data
+        );
+      require(
+        retval == ERC1155_RECEIVED_VALUE,
+        'ERC1155PackedBalance#_callonERC1155Received: INVALID_ON_RECEIVE_MESSAGE'
+      );
     }
   }
 
@@ -131,19 +166,37 @@ contract ERC1155PackedBalance is IERC1155, ERC165 {
    * @param _ids      IDs of each token type
    * @param _amounts  Transfer amounts per token type
    */
-  function _safeBatchTransferFrom(address _from, address _to, uint256[] memory _ids, uint256[] memory _amounts)
-    internal
-  {
+  function _safeBatchTransferFrom(
+    address _from,
+    address _to,
+    uint256[] memory _ids,
+    uint256[] memory _amounts
+  ) internal {
     uint256 nTransfer = _ids.length; // Number of transfer to execute
-    require(nTransfer == _amounts.length, "ERC1155PackedBalance#_safeBatchTransferFrom: INVALID_ARRAYS_LENGTH");
+    require(
+      nTransfer == _amounts.length,
+      'ERC1155PackedBalance#_safeBatchTransferFrom: INVALID_ARRAYS_LENGTH'
+    );
 
     if (_from != _to && nTransfer > 0) {
       // Load first bin and index where the token ID balance exists
       (uint256 bin, uint256 index) = getIDBinIndex(_ids[0]);
 
       // Balance for current bin in memory (initialized with first transfer)
-      uint256 balFrom = _viewUpdateBinValue(balances[_from][bin], index, _amounts[0], Operations.Sub);
-      uint256 balTo = _viewUpdateBinValue(balances[_to][bin], index, _amounts[0], Operations.Add);
+      uint256 balFrom =
+        _viewUpdateBinValue(
+          balances[_from][bin],
+          index,
+          _amounts[0],
+          Operations.Sub
+        );
+      uint256 balTo =
+        _viewUpdateBinValue(
+          balances[_to][bin],
+          index,
+          _amounts[0],
+          Operations.Add
+        );
 
       // Last bin updated
       uint256 lastBin = bin;
@@ -165,7 +218,12 @@ contract ERC1155PackedBalance is IERC1155, ERC165 {
         }
 
         // Update memory balance
-        balFrom = _viewUpdateBinValue(balFrom, index, _amounts[i], Operations.Sub);
+        balFrom = _viewUpdateBinValue(
+          balFrom,
+          index,
+          _amounts[i],
+          Operations.Sub
+        );
         balTo = _viewUpdateBinValue(balTo, index, _amounts[i], Operations.Add);
       }
 
@@ -173,10 +231,13 @@ contract ERC1155PackedBalance is IERC1155, ERC165 {
       balances[_from][bin] = balFrom;
       balances[_to][bin] = balTo;
 
-    // If transfer to self, just make sure all amounts are valid
+      // If transfer to self, just make sure all amounts are valid
     } else {
       for (uint256 i = 0; i < nTransfer; i++) {
-        require(balanceOf(_from, _ids[i]) >= _amounts[i], "ERC1155PackedBalance#_safeBatchTransferFrom: UNDERFLOW");
+        require(
+          balanceOf(_from, _ids[i]) >= _amounts[i],
+          'ERC1155PackedBalance#_safeBatchTransferFrom: UNDERFLOW'
+        );
       }
     }
 
@@ -187,16 +248,30 @@ contract ERC1155PackedBalance is IERC1155, ERC165 {
   /**
    * @notice Verifies if receiver is contract and if so, calls (_to).onERC1155BatchReceived(...)
    */
-  function _callonERC1155BatchReceived(address _from, address _to, uint256[] memory _ids, uint256[] memory _amounts, uint256 _gasLimit, bytes memory _data)
-    internal
-  {
+  function _callonERC1155BatchReceived(
+    address _from,
+    address _to,
+    uint256[] memory _ids,
+    uint256[] memory _amounts,
+    uint256 _gasLimit,
+    bytes memory _data
+  ) internal {
     // Pass data if recipient is contract
     if (_to.isContract()) {
-      bytes4 retval = IERC1155TokenReceiver(_to).onERC1155BatchReceived{gas: _gasLimit}(msg.sender, _from, _ids, _amounts, _data);
-      require(retval == ERC1155_BATCH_RECEIVED_VALUE, "ERC1155PackedBalance#_callonERC1155BatchReceived: INVALID_ON_RECEIVE_MESSAGE");
+      bytes4 retval =
+        IERC1155TokenReceiver(_to).onERC1155BatchReceived{ gas: _gasLimit }(
+          msg.sender,
+          _from,
+          _ids,
+          _amounts,
+          _data
+        );
+      require(
+        retval == ERC1155_BATCH_RECEIVED_VALUE,
+        'ERC1155PackedBalance#_callonERC1155BatchReceived: INVALID_ON_RECEIVE_MESSAGE'
+      );
     }
   }
-
 
   /***********************************|
   |         Operator Functions        |
@@ -208,7 +283,8 @@ contract ERC1155PackedBalance is IERC1155, ERC165 {
    * @param _approved  True if the operator is approved, false to revoke approval
    */
   function setApprovalForAll(address _operator, bool _approved)
-    external override
+    external
+    override
   {
     // Update operator status
     operators[msg.sender][_operator] = _approved;
@@ -222,11 +298,13 @@ contract ERC1155PackedBalance is IERC1155, ERC165 {
    * @return isOperator True if the operator is approved, false if not
    */
   function isApprovedForAll(address _owner, address _operator)
-    public override view returns (bool isOperator)
+    public
+    view
+    override
+    returns (bool isOperator)
   {
     return operators[_owner][_operator];
   }
-
 
   /***********************************|
   |     Public Balance Functions      |
@@ -239,7 +317,10 @@ contract ERC1155PackedBalance is IERC1155, ERC165 {
    * @return The _owner's balance of the Token type requested
    */
   function balanceOf(address _owner, uint256 _id)
-    public override view returns (uint256)
+    public
+    view
+    override
+    returns (uint256)
   {
     uint256 bin;
     uint256 index;
@@ -254,12 +335,18 @@ contract ERC1155PackedBalance is IERC1155, ERC165 {
    * @param _owners The addresses of the token holders (sorted owners will lead to less gas usage)
    * @param _ids    ID of the Tokens (sorted ids will lead to less gas usage
    * @return The _owner's balance of the Token types requested (i.e. balance for each (owner, id) pair)
-    */
+   */
   function balanceOfBatch(address[] memory _owners, uint256[] memory _ids)
-    public override view returns (uint256[] memory)
+    public
+    view
+    override
+    returns (uint256[] memory)
   {
     uint256 n_owners = _owners.length;
-    require(n_owners == _ids.length, "ERC1155PackedBalance#balanceOfBatch: INVALID_ARRAY_LENGTH");
+    require(
+      n_owners == _ids.length,
+      'ERC1155PackedBalance#balanceOfBatch: INVALID_ARRAY_LENGTH'
+    );
 
     // First values
     (uint256 bin, uint256 index) = getIDBinIndex(_ids[0]);
@@ -275,7 +362,7 @@ contract ERC1155PackedBalance is IERC1155, ERC165 {
       (bin, index) = getIDBinIndex(_ids[i]);
 
       // SLOAD if bin changed for the same owner or if owner changed
-      if (bin != last_bin || _owners[i-1] != _owners[i]) {
+      if (bin != last_bin || _owners[i - 1] != _owners[i]) {
         balance_bin = balances[_owners[i]][bin];
         last_bin = bin;
       }
@@ -285,7 +372,6 @@ contract ERC1155PackedBalance is IERC1155, ERC165 {
 
     return batchBalances;
   }
-
 
   /***********************************|
   |      Packed Balance Functions     |
@@ -300,9 +386,12 @@ contract ERC1155PackedBalance is IERC1155, ERC165 {
    *   Operations.Add: Add _amount to id balance
    *   Operations.Sub: Substract _amount from id balance
    */
-  function _updateIDBalance(address _address, uint256 _id, uint256 _amount, Operations _operation)
-    internal
-  {
+  function _updateIDBalance(
+    address _address,
+    uint256 _id,
+    uint256 _amount,
+    Operations _operation
+  ) internal {
     uint256 bin;
     uint256 index;
 
@@ -310,7 +399,12 @@ contract ERC1155PackedBalance is IERC1155, ERC165 {
     (bin, index) = getIDBinIndex(_id);
 
     // Update balance
-    balances[_address][bin] = _viewUpdateBinValue(balances[_address][bin], index, _amount, _operation);
+    balances[_address][bin] = _viewUpdateBinValue(
+      balances[_address][bin],
+      index,
+      _amount,
+      _operation
+    );
   }
 
   /**
@@ -322,42 +416,53 @@ contract ERC1155PackedBalance is IERC1155, ERC165 {
    *   Operations.Add: Add _amount to value in _binValues at _index
    *   Operations.Sub: Substract _amount from value in _binValues at _index
    */
-  function _viewUpdateBinValue(uint256 _binValues, uint256 _index, uint256 _amount, Operations _operation)
-    internal pure returns (uint256 newBinValues)
-  {
+  function _viewUpdateBinValue(
+    uint256 _binValues,
+    uint256 _index,
+    uint256 _amount,
+    Operations _operation
+  ) internal pure returns (uint256 newBinValues) {
     uint256 shift = IDS_BITS_SIZE * _index;
     uint256 mask = (uint256(1) << IDS_BITS_SIZE) - 1;
 
     if (_operation == Operations.Add) {
       newBinValues = _binValues + (_amount << shift);
-      require(newBinValues >= _binValues, "ERC1155PackedBalance#_viewUpdateBinValue: OVERFLOW");
+      require(
+        newBinValues >= _binValues,
+        'ERC1155PackedBalance#_viewUpdateBinValue: OVERFLOW'
+      );
       require(
         ((_binValues >> shift) & mask) + _amount < 2**IDS_BITS_SIZE, // Checks that no other id changed
-        "ERC1155PackedBalance#_viewUpdateBinValue: OVERFLOW"
+        'ERC1155PackedBalance#_viewUpdateBinValue: OVERFLOW'
       );
-
     } else if (_operation == Operations.Sub) {
       newBinValues = _binValues - (_amount << shift);
-      require(newBinValues <= _binValues, "ERC1155PackedBalance#_viewUpdateBinValue: UNDERFLOW");
+      require(
+        newBinValues <= _binValues,
+        'ERC1155PackedBalance#_viewUpdateBinValue: UNDERFLOW'
+      );
       require(
         ((_binValues >> shift) & mask) >= _amount, // Checks that no other id changed
-        "ERC1155PackedBalance#_viewUpdateBinValue: UNDERFLOW"
+        'ERC1155PackedBalance#_viewUpdateBinValue: UNDERFLOW'
       );
-
     } else {
-      revert("ERC1155PackedBalance#_viewUpdateBinValue: INVALID_BIN_WRITE_OPERATION"); // Bad operation
+      revert(
+        'ERC1155PackedBalance#_viewUpdateBinValue: INVALID_BIN_WRITE_OPERATION'
+      ); // Bad operation
     }
 
     return newBinValues;
   }
 
   /**
-  * @notice Return the bin number and index within that bin where ID is
-  * @param _id  Token id
-  * @return bin index (Bin number, ID"s index within that bin)
-  */
+   * @notice Return the bin number and index within that bin where ID is
+   * @param _id  Token id
+   * @return bin index (Bin number, ID"s index within that bin)
+   */
   function getIDBinIndex(uint256 _id)
-    public pure returns (uint256 bin, uint256 index)
+    public
+    pure
+    returns (uint256 bin, uint256 index)
   {
     bin = _id / IDS_PER_UINT256;
     index = _id % IDS_PER_UINT256;
@@ -371,7 +476,9 @@ contract ERC1155PackedBalance is IERC1155, ERC165 {
    * @return amount at given _index in _bin
    */
   function getValueInBin(uint256 _binValues, uint256 _index)
-    public pure returns (uint256)
+    public
+    pure
+    returns (uint256)
   {
     // require(_index < IDS_PER_UINT256) is not required since getIDBinIndex ensures `_index < IDS_PER_UINT256`
 
@@ -383,7 +490,6 @@ contract ERC1155PackedBalance is IERC1155, ERC165 {
     return (_binValues >> rightShift) & mask;
   }
 
-
   /***********************************|
   |          ERC165 Functions         |
   |__________________________________*/
@@ -393,7 +499,13 @@ contract ERC1155PackedBalance is IERC1155, ERC165 {
    * @param _interfaceID  The interface identifier, as specified in ERC-165
    * @return `true` if the contract implements `_interfaceID` and
    */
-  function supportsInterface(bytes4 _interfaceID) public override virtual pure returns (bool) {
+  function supportsInterface(bytes4 _interfaceID)
+    public
+    pure
+    virtual
+    override
+    returns (bool)
+  {
     if (_interfaceID == type(IERC1155).interfaceId) {
       return true;
     }

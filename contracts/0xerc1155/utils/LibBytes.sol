@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.7.4;
 
-
 library LibBytes {
   using LibBytes for bytes;
 
@@ -14,14 +13,10 @@ library LibBytes {
    * @param b Byte array that will be modified.
    * @return result The byte that was popped off.
    */
-  function popLastByte(bytes memory b)
-    internal
-    pure
-    returns (bytes1 result)
-  {
+  function popLastByte(bytes memory b) internal pure returns (bytes1 result) {
     require(
       b.length > 0,
-      "LibBytes#popLastByte: GREATER_THAN_ZERO_LENGTH_REQUIRED"
+      'LibBytes#popLastByte: GREATER_THAN_ZERO_LENGTH_REQUIRED'
     );
 
     // Store last byte.
@@ -35,7 +30,6 @@ library LibBytes {
     return result;
   }
 
-
   /***********************************|
   |        Read Bytes Functions       |
   |__________________________________*/
@@ -46,17 +40,14 @@ library LibBytes {
    * @param index Index in byte array of bytes32 value.
    * @return result bytes32 value from byte array.
    */
-  function readBytes32(
-    bytes memory b,
-    uint256 index
-  )
+  function readBytes32(bytes memory b, uint256 index)
     internal
     pure
     returns (bytes32 result)
   {
     require(
       b.length >= index + 32,
-      "LibBytes#readBytes32: GREATER_OR_EQUAL_TO_32_LENGTH_REQUIRED"
+      'LibBytes#readBytes32: GREATER_OR_EQUAL_TO_32_LENGTH_REQUIRED'
     );
 
     // Arrays are prefixed by a 256 bit length parameter

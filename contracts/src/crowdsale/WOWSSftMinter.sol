@@ -150,7 +150,7 @@ contract WOWSSftMinter is Ownable {
 
     // Set card level and uri
     _sftContract.setCustomCardLevel(tokenId, level);
-    _sftContract.setURI(tokenId, uri);
+    _sftContract.setCustomURI(tokenId, uri);
 
     // Update state
     _mint(recipient, tokenId, price);

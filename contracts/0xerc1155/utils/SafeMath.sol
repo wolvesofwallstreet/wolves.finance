@@ -1,12 +1,11 @@
+// SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.7.4;
-
 
 /**
  * @title SafeMath
  * @dev Unsigned math operations with safety checks that revert on error
  */
 library SafeMath {
-
   /**
    * @dev Multiplies two unsigned integers, reverts on overflow.
    */
@@ -19,7 +18,7 @@ library SafeMath {
     }
 
     uint256 c = a * b;
-    require(c / a == b, "SafeMath#mul: OVERFLOW");
+    require(c / a == b, 'SafeMath#mul: OVERFLOW');
 
     return c;
   }
@@ -29,7 +28,7 @@ library SafeMath {
    */
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // Solidity only automatically asserts when dividing by 0
-    require(b > 0, "SafeMath#div: DIVISION_BY_ZERO");
+    require(b > 0, 'SafeMath#div: DIVISION_BY_ZERO');
     uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
 
@@ -40,7 +39,7 @@ library SafeMath {
    * @dev Subtracts two unsigned integers, reverts on overflow (i.e. if subtrahend is greater than minuend).
    */
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    require(b <= a, "SafeMath#sub: UNDERFLOW");
+    require(b <= a, 'SafeMath#sub: UNDERFLOW');
     uint256 c = a - b;
 
     return c;
@@ -51,9 +50,9 @@ library SafeMath {
    */
   function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
-    require(c >= a, "SafeMath#add: OVERFLOW");
+    require(c >= a, 'SafeMath#add: OVERFLOW');
 
-    return c; 
+    return c;
   }
 
   /**
@@ -61,7 +60,7 @@ library SafeMath {
    * reverts when dividing by zero.
    */
   function mod(uint256 a, uint256 b) internal pure returns (uint256) {
-    require(b != 0, "SafeMath#mod: DIVISION_BY_ZERO");
+    require(b != 0, 'SafeMath#mod: DIVISION_BY_ZERO');
     return a % b;
   }
 }

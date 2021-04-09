@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.7.4;
-import "../../interfaces/IERC1155Metadata.sol";
-import "../../utils/ERC165.sol";
-
+import '../../interfaces/IERC1155Metadata.sol';
+import '../../utils/ERC165.sol';
 
 /**
  * @notice Contract that handles metadata related methods.
@@ -32,7 +31,13 @@ contract ERC1155Metadata is IERC1155Metadata, ERC165 {
    *      URIs are assumed to be deterministically generated based on token ID
    * @return URI string
    */
-  function uri(uint256 _id) public override view returns (string memory) {
+  function uri(uint256 _id)
+    public
+    view
+    virtual
+    override
+    returns (string memory)
+  {
     return _uri(_id);
   }
 
@@ -71,7 +76,9 @@ contract ERC1155Metadata is IERC1155Metadata, ERC165 {
    * @notice Will update the contract metadata URI
    * @param newContractMetadataURI New contract metadata URI
    */
-  function _setContractMetadataURI(string memory newContractMetadataURI) internal {
+  function _setContractMetadataURI(string memory newContractMetadataURI)
+    internal
+  {
     _contractMetadataURI = newContractMetadataURI;
   }
 
@@ -80,14 +87,21 @@ contract ERC1155Metadata is IERC1155Metadata, ERC165 {
    * @param _interfaceID  The interface identifier, as specified in ERC-165
    * @return `true` if the contract implements `_interfaceID` or CONTRACT_URI
    */
-  function supportsInterface(bytes4 _interfaceID) public override virtual pure returns (bool) {
-    if (_interfaceID == type(IERC1155Metadata).interfaceId ||
-    _interfaceID == _INTERFACE_ID_CONTRACT_URI) {
+  function supportsInterface(bytes4 _interfaceID)
+    public
+    pure
+    virtual
+    override
+    returns (bool)
+  {
+    if (
+      _interfaceID == type(IERC1155Metadata).interfaceId ||
+      _interfaceID == _INTERFACE_ID_CONTRACT_URI
+    ) {
       return true;
     }
     return super.supportsInterface(_interfaceID);
   }
-
 
   /***********************************|
   |    Utility private Functions     |

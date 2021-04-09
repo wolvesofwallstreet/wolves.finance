@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.7.4;
 
-
-interface  IERC1271Wallet {
-
+interface IERC1271Wallet {
   /**
    * @notice Verifies whether the provided signature is valid with respect to the provided data
    * @dev MUST return the correct magic value if the signature provided is valid for the provided data
@@ -14,9 +12,7 @@ interface  IERC1271Wallet {
    * @return magicValue Magic value 0x20c13b0b if the signature is valid and 0x0 otherwise
    *
    */
-  function isValidSignature(
-    bytes calldata _data,
-    bytes calldata _signature)
+  function isValidSignature(bytes calldata _data, bytes calldata _signature)
     external
     view
     returns (bytes4 magicValue);
@@ -30,9 +26,7 @@ interface  IERC1271Wallet {
    * @param _signature  Signature byte array associated with _data
    * @return magicValue Magic value 0x20c13b0b if the signature is valid and 0x0 otherwise
    */
-  function isValidSignature(
-    bytes32 _hash,
-    bytes calldata _signature)
+  function isValidSignature(bytes32 _hash, bytes calldata _signature)
     external
     view
     returns (bytes4 magicValue);

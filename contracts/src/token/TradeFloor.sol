@@ -8,8 +8,7 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/utils/Context.sol';
+import '../../0xerc1155/interfaces/IERC20.sol';
 
 import '../utils/AddressBook.sol';
 import '../utils/interfaces/IAddressRegistry.sol';
@@ -113,12 +112,12 @@ contract TradeFloor is Context, WOWSMinterPauser {
    *
    * Note: Pause operation in this context. Only calls from Proxy allowed
    */
-  constructor(IAddressRegistry addressRegistry) WOWSMinterPauser('') {
+  constructor(IAddressRegistry addressRegistry) {
     // Initialize {AccessControl}
     address marketingWallet =
       addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
     _setupRole(DEFAULT_ADMIN_ROLE, marketingWallet);
-    _pause();
+    _pause(true);
   }
 
   /**
@@ -135,7 +134,7 @@ contract TradeFloor is Context, WOWSMinterPauser {
   ) public {
     require(address(_addressRegistry) == address(0), 'already initialized');
     // Set tokenURIPrefix
-    _setURI(tokenUriPrefix);
+    _setBaseMetadataURI(tokenUriPrefix);
 
     // Initialize {AccessControl}
     address marketingWallet =
@@ -148,13 +147,7 @@ contract TradeFloor is Context, WOWSMinterPauser {
     _fee = 1000; // 10%
 
     _addressRegistry = addressRegistry;
-    _contractMetadataUri = contractUri;
-
-    // Rarible interface
-    // Register contractURI interface
-    _registerInterface(_INTERFACE_ID_CONTRACT_URI);
-    // Register fee interface
-    _registerInterface(_INTERFACE_ID_FEES);
+    _setContractMetadataURI(contractUri);
 
     // Rarible: Need a real wallet for setting up storefront
     address deployer = addressRegistry.getRegistryEntry(AddressBook.DEPLOYER);
@@ -178,16 +171,6 @@ contract TradeFloor is Context, WOWSMinterPauser {
    */
   function getMinter(uint256 tokenId) public view returns (address minter) {
     return _tokenIdToMinter[tokenId];
-  }
-
-  /**
-   * @dev Opensea calls this fuction to get information about how to display storefront.
-   * Our return value is the base URI of the stock card metadata + the filename.
-   *
-   * @return full URI to the location of the contract metadata.
-   */
-  function contractURI() public view returns (string memory) {
-    return _contractMetadataUri;
   }
 
   /**
@@ -266,6 +249,49 @@ contract TradeFloor is Context, WOWSMinterPauser {
   }
 
   //////////////////////////////////////////////////////////////////////////////
+  // Burning interface
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * @dev See {ERC1155MintBurn-_burn}.
+   */
+  function burn(
+    address account,
+    uint256 tokenId,
+    uint256 value
+  ) public override {
+    // Validate parameters
+    require(account != address(0), 'Invalid zero address');
+
+    // Call ancestor
+    super.burn(account, tokenId, value);
+
+    uint256[] memory tokenIds = new uint256[](1);
+    uint256[] memory values = new uint256[](1);
+    tokenIds[0] = tokenId;
+    values[0] = value;
+
+    _onBurn(account, tokenIds, values);
+  }
+
+  /**
+   * @dev See {ERC1155MintBurn-_batchBurn}.
+   */
+  function burnBatch(
+    address account,
+    uint256[] memory tokenIds,
+    uint256[] memory values
+  ) public virtual override {
+    // Validate parameters
+    require(account != address(0), 'Invalid zero address');
+    require(tokenIds.length == values.length, "Lengths don't match");
+
+    // Call parent
+    super.burnBatch(account, tokenIds, values);
+    _onBurn(account, tokenIds, values);
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
   // Implementation of {IERC1155}
   //////////////////////////////////////////////////////////////////////////////
 
@@ -329,49 +355,6 @@ contract TradeFloor is Context, WOWSMinterPauser {
   }
 
   //////////////////////////////////////////////////////////////////////////////
-  // Implementation of {ERC1155Burnable}
-  //////////////////////////////////////////////////////////////////////////////
-
-  /**
-   * @dev See {ERC1155Burnable-burn}.
-   */
-  function burn(
-    address account,
-    uint256 tokenId,
-    uint256 value
-  ) public override {
-    // Validate parameters
-    require(account != address(0), 'Invalid zero address');
-
-    // Call ancestor
-    super.burn(account, tokenId, value);
-
-    uint256[] memory tokenIds = new uint256[](1);
-    uint256[] memory values = new uint256[](1);
-    tokenIds[0] = tokenId;
-    values[0] = value;
-
-    _onBurn(account, tokenIds, values);
-  }
-
-  /**
-   * @dev See {ERC1155Burnable-burnBatch}.
-   */
-  function burnBatch(
-    address account,
-    uint256[] memory tokenIds,
-    uint256[] memory values
-  ) public virtual override {
-    // Validate parameters
-    require(account != address(0), 'Invalid zero address');
-    require(tokenIds.length == values.length, "Lengths don't match");
-
-    // Call parent
-    super.burnBatch(account, tokenIds, values);
-    _onBurn(account, tokenIds, values);
-  }
-
-  //////////////////////////////////////////////////////////////////////////////
   // Implementation of {IERC1155MetadataURI}
   //////////////////////////////////////////////////////////////////////////////
 
@@ -380,12 +363,7 @@ contract TradeFloor is Context, WOWSMinterPauser {
    *
    * Revert for unminted SFT NFTs
    */
-  function uri(uint256 tokenId)
-    public
-    view
-    override
-    returns (string memory)
-  {
+  function uri(uint256 tokenId) public view override returns (string memory) {
     // Validate state
     require(
       (tokenId >> 64) > 0 || _tokenInfos[uint64(tokenId)].minted,
@@ -490,24 +468,40 @@ contract TradeFloor is Context, WOWSMinterPauser {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev See {ERC1155-_setURI}.
+   * @dev See {ERC1155Metadata-setBaseMetadataURI}.
    */
-  function setURI(string memory newUri) public {
+  function setBaseMetadataURI(string memory baseMetadataURI) external {
     // Access control
-    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admin');
-
-    // Call parent
-    super._setURI(newUri);
+    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Access denied');
+    // Set state
+    _setBaseMetadataURI(baseMetadataURI);
   }
 
   /**
    * @dev Set contract metadata URI
    */
-  function setContractURI(string memory newContractUri) public {
+  function setContractMetadataURI(string memory newContractUri) public {
     // Access control
     require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admin');
 
-    _contractMetadataUri = newContractUri;
+    _setContractMetadataURI(newContractUri);
+  }
+
+  /**
+   * @dev Register interfaces
+   */
+  function supportsInterface(bytes4 _interfaceID)
+    public
+    pure
+    virtual
+    override
+    returns (bool)
+  {
+    // Register rarible fee interface
+    if (_interfaceID == _INTERFACE_ID_FEES) {
+      return true;
+    }
+    return super.supportsInterface(_interfaceID);
   }
 
   /**

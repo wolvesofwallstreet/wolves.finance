@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.7.4;
 
-import "../../utils/SafeMath.sol";
-import "../../interfaces/IERC1155TokenReceiver.sol";
-import "../../interfaces/IERC1155.sol";
-import "../../utils/Address.sol";
-import "../../utils/ERC165.sol";
-
+import '../../utils/SafeMath.sol';
+import '../../interfaces/IERC1155TokenReceiver.sol';
+import '../../interfaces/IERC1155.sol';
+import '../../utils/Address.sol';
+import '../../utils/ERC165.sol';
 
 /**
  * @dev Implementation of Multi-Token Standard contract
@@ -20,15 +19,14 @@ contract ERC1155 is IERC1155, ERC165 {
   |__________________________________*/
 
   // onReceive function signatures
-  bytes4 constant internal ERC1155_RECEIVED_VALUE = 0xf23a6e61;
-  bytes4 constant internal ERC1155_BATCH_RECEIVED_VALUE = 0xbc197c81;
+  bytes4 internal constant ERC1155_RECEIVED_VALUE = 0xf23a6e61;
+  bytes4 internal constant ERC1155_BATCH_RECEIVED_VALUE = 0xbc197c81;
 
   // Objects balances
-  mapping (address => mapping(uint256 => uint256)) internal balances;
+  mapping(address => mapping(uint256 => uint256)) internal balances;
 
   // Operator Functions
-  mapping (address => mapping(address => bool)) internal operators;
-
+  mapping(address => mapping(address => bool)) internal operators;
 
   /***********************************|
   |     Public Transfer Functions     |
@@ -42,11 +40,18 @@ contract ERC1155 is IERC1155, ERC165 {
    * @param _amount  Transfered amount
    * @param _data    Additional data with no specified format, sent in call to `_to`
    */
-  function safeTransferFrom(address _from, address _to, uint256 _id, uint256 _amount, bytes memory _data)
-    public override
-  {
-    require((msg.sender == _from) || isApprovedForAll(_from, msg.sender), "ERC1155#safeTransferFrom: INVALID_OPERATOR");
-    require(_to != address(0),"ERC1155#safeTransferFrom: INVALID_RECIPIENT");
+  function safeTransferFrom(
+    address _from,
+    address _to,
+    uint256 _id,
+    uint256 _amount,
+    bytes memory _data
+  ) public virtual override {
+    require(
+      (msg.sender == _from) || isApprovedForAll(_from, msg.sender),
+      'ERC1155#safeTransferFrom: INVALID_OPERATOR'
+    );
+    require(_to != address(0), 'ERC1155#safeTransferFrom: INVALID_RECIPIENT');
     // require(_amount <= balances[_from][_id]) is not necessary since checked with safemath operations
 
     _safeTransferFrom(_from, _to, _id, _amount);
@@ -61,17 +66,26 @@ contract ERC1155 is IERC1155, ERC165 {
    * @param _amounts  Transfer amounts per token type
    * @param _data     Additional data with no specified format, sent in call to `_to`
    */
-  function safeBatchTransferFrom(address _from, address _to, uint256[] memory _ids, uint256[] memory _amounts, bytes memory _data)
-    public override
-  {
+  function safeBatchTransferFrom(
+    address _from,
+    address _to,
+    uint256[] memory _ids,
+    uint256[] memory _amounts,
+    bytes memory _data
+  ) public virtual override {
     // Requirements
-    require((msg.sender == _from) || isApprovedForAll(_from, msg.sender), "ERC1155#safeBatchTransferFrom: INVALID_OPERATOR");
-    require(_to != address(0), "ERC1155#safeBatchTransferFrom: INVALID_RECIPIENT");
+    require(
+      (msg.sender == _from) || isApprovedForAll(_from, msg.sender),
+      'ERC1155#safeBatchTransferFrom: INVALID_OPERATOR'
+    );
+    require(
+      _to != address(0),
+      'ERC1155#safeBatchTransferFrom: INVALID_RECIPIENT'
+    );
 
     _safeBatchTransferFrom(_from, _to, _ids, _amounts);
     _callonERC1155BatchReceived(_from, _to, _ids, _amounts, gasleft(), _data);
   }
-
 
   /***********************************|
   |    Internal Transfer Functions    |
@@ -84,14 +98,17 @@ contract ERC1155 is IERC1155, ERC165 {
    * @param _id      ID of the token type
    * @param _amount  Transfered amount
    */
-  function _safeTransferFrom(address _from, address _to, uint256 _id, uint256 _amount)
-    internal
-  {
+  function _safeTransferFrom(
+    address _from,
+    address _to,
+    uint256 _id,
+    uint256 _amount
+  ) internal {
     _beforeTokenTransfer(msg.sender, _from, _to, _id, _amount, '');
 
     // Update balances
     balances[_from][_id] = balances[_from][_id].sub(_amount); // Subtract amount
-    balances[_to][_id] = balances[_to][_id].add(_amount);     // Add amount
+    balances[_to][_id] = balances[_to][_id].add(_amount); // Add amount
 
     // Emit event
     emit TransferSingle(msg.sender, _from, _to, _id, _amount);
@@ -100,13 +117,28 @@ contract ERC1155 is IERC1155, ERC165 {
   /**
    * @notice Verifies if receiver is contract and if so, calls (_to).onERC1155Received(...)
    */
-  function _callonERC1155Received(address _from, address _to, uint256 _id, uint256 _amount, uint256 _gasLimit, bytes memory _data)
-    internal
-  {
+  function _callonERC1155Received(
+    address _from,
+    address _to,
+    uint256 _id,
+    uint256 _amount,
+    uint256 _gasLimit,
+    bytes memory _data
+  ) internal {
     // Check if recipient is contract
     if (_to.isContract()) {
-      bytes4 retval = IERC1155TokenReceiver(_to).onERC1155Received{gas: _gasLimit}(msg.sender, _from, _id, _amount, _data);
-      require(retval == ERC1155_RECEIVED_VALUE, "ERC1155#_callonERC1155Received: INVALID_ON_RECEIVE_MESSAGE");
+      bytes4 retval =
+        IERC1155TokenReceiver(_to).onERC1155Received{ gas: _gasLimit }(
+          msg.sender,
+          _from,
+          _id,
+          _amount,
+          _data
+        );
+      require(
+        retval == ERC1155_RECEIVED_VALUE,
+        'ERC1155#_callonERC1155Received: INVALID_ON_RECEIVE_MESSAGE'
+      );
     }
   }
 
@@ -117,10 +149,16 @@ contract ERC1155 is IERC1155, ERC165 {
    * @param _ids      IDs of each token type
    * @param _amounts  Transfer amounts per token type
    */
-  function _safeBatchTransferFrom(address _from, address _to, uint256[] memory _ids, uint256[] memory _amounts)
-    internal
-  {
-    require(_ids.length == _amounts.length, "ERC1155#_safeBatchTransferFrom: INVALID_ARRAYS_LENGTH");
+  function _safeBatchTransferFrom(
+    address _from,
+    address _to,
+    uint256[] memory _ids,
+    uint256[] memory _amounts
+  ) internal {
+    require(
+      _ids.length == _amounts.length,
+      'ERC1155#_safeBatchTransferFrom: INVALID_ARRAYS_LENGTH'
+    );
 
     _beforeBatchTokenTransfer(msg.sender, _from, _to, _ids, _amounts, '');
 
@@ -141,16 +179,30 @@ contract ERC1155 is IERC1155, ERC165 {
   /**
    * @notice Verifies if receiver is contract and if so, calls (_to).onERC1155BatchReceived(...)
    */
-  function _callonERC1155BatchReceived(address _from, address _to, uint256[] memory _ids, uint256[] memory _amounts, uint256 _gasLimit, bytes memory _data)
-    internal
-  {
+  function _callonERC1155BatchReceived(
+    address _from,
+    address _to,
+    uint256[] memory _ids,
+    uint256[] memory _amounts,
+    uint256 _gasLimit,
+    bytes memory _data
+  ) internal {
     // Pass data if recipient is contract
     if (_to.isContract()) {
-      bytes4 retval = IERC1155TokenReceiver(_to).onERC1155BatchReceived{gas: _gasLimit}(msg.sender, _from, _ids, _amounts, _data);
-      require(retval == ERC1155_BATCH_RECEIVED_VALUE, "ERC1155#_callonERC1155BatchReceived: INVALID_ON_RECEIVE_MESSAGE");
+      bytes4 retval =
+        IERC1155TokenReceiver(_to).onERC1155BatchReceived{ gas: _gasLimit }(
+          msg.sender,
+          _from,
+          _ids,
+          _amounts,
+          _data
+        );
+      require(
+        retval == ERC1155_BATCH_RECEIVED_VALUE,
+        'ERC1155#_callonERC1155BatchReceived: INVALID_ON_RECEIVE_MESSAGE'
+      );
     }
   }
-
 
   /***********************************|
   |         Operator Functions        |
@@ -162,7 +214,9 @@ contract ERC1155 is IERC1155, ERC165 {
    * @param _approved  True if the operator is approved, false to revoke approval
    */
   function setApprovalForAll(address _operator, bool _approved)
-    external override
+    public
+    virtual
+    override
   {
     // Update operator status
     operators[msg.sender][_operator] = _approved;
@@ -176,11 +230,14 @@ contract ERC1155 is IERC1155, ERC165 {
    * @return isOperator True if the operator is approved, false if not
    */
   function isApprovedForAll(address _owner, address _operator)
-    public override view returns (bool isOperator)
+    public
+    view
+    virtual
+    override
+    returns (bool isOperator)
   {
     return operators[_owner][_operator];
   }
-
 
   /***********************************|
   |         Balance Functions         |
@@ -193,7 +250,10 @@ contract ERC1155 is IERC1155, ERC165 {
    * @return The _owner's balance of the Token type requested
    */
   function balanceOf(address _owner, uint256 _id)
-    public override view returns (uint256)
+    public
+    view
+    override
+    returns (uint256)
   {
     return balances[_owner][_id];
   }
@@ -205,9 +265,15 @@ contract ERC1155 is IERC1155, ERC165 {
    * @return        The _owner's balance of the Token types requested (i.e. balance for each (owner, id) pair)
    */
   function balanceOfBatch(address[] memory _owners, uint256[] memory _ids)
-    public override view returns (uint256[] memory)
+    public
+    view
+    override
+    returns (uint256[] memory)
   {
-    require(_owners.length == _ids.length, "ERC1155#balanceOfBatch: INVALID_ARRAY_LENGTH");
+    require(
+      _owners.length == _ids.length,
+      'ERC1155#balanceOfBatch: INVALID_ARRAY_LENGTH'
+    );
 
     // Variables
     uint256[] memory batchBalances = new uint256[](_owners.length);
@@ -234,8 +300,7 @@ contract ERC1155 is IERC1155, ERC165 {
     uint256 tokenId,
     uint256 amount,
     bytes memory data
-  ) internal virtual {
-  }
+  ) internal virtual {}
 
   /**
    * @notice overrideable hook for batch transfers.
@@ -247,8 +312,7 @@ contract ERC1155 is IERC1155, ERC165 {
     uint256[] memory tokenIds,
     uint256[] memory amounts,
     bytes memory data
-  ) internal virtual {
-  }
+  ) internal virtual {}
 
   /***********************************|
   |          ERC165 Functions         |
@@ -259,7 +323,13 @@ contract ERC1155 is IERC1155, ERC165 {
    * @param _interfaceID  The interface identifier, as specified in ERC-165
    * @return `true` if the contract implements `_interfaceID` and
    */
-  function supportsInterface(bytes4 _interfaceID) public override virtual pure returns (bool) {
+  function supportsInterface(bytes4 _interfaceID)
+    public
+    pure
+    virtual
+    override
+    returns (bool)
+  {
     if (_interfaceID == type(IERC1155).interfaceId) {
       return true;
     }

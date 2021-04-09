@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.7.4;
 
-import "./ERC1155PackedBalance.sol";
-
+import './ERC1155PackedBalance.sol';
 
 /**
  * @dev Multi-Fungible Tokens with minting and burning methods. These methods assume
  *      a parent contract to be executed as they are `internal` functions.
  */
 contract ERC1155MintBurnPackedBalance is ERC1155PackedBalance {
-
   /****************************************|
   |            Minting Functions           |
   |_______________________________________*/
@@ -21,11 +19,14 @@ contract ERC1155MintBurnPackedBalance is ERC1155PackedBalance {
    * @param _amount  The amount to be minted
    * @param _data    Data to pass if receiver is contract
    */
-  function _mint(address _to, uint256 _id, uint256 _amount, bytes memory _data)
-    internal
-  {
+  function _mint(
+    address _to,
+    uint256 _id,
+    uint256 _amount,
+    bytes memory _data
+  ) internal {
     //Add _amount
-    _updateIDBalance(_to,   _id, _amount, Operations.Add); // Add amount to recipient
+    _updateIDBalance(_to, _id, _amount, Operations.Add); // Add amount to recipient
 
     // Emit event
     emit TransferSingle(msg.sender, address(0x0), _to, _id, _amount);
@@ -41,17 +42,29 @@ contract ERC1155MintBurnPackedBalance is ERC1155PackedBalance {
    * @param _amounts  Array of amount of tokens to mint per id
    * @param _data    Data to pass if receiver is contract
    */
-  function _batchMint(address _to, uint256[] memory _ids, uint256[] memory _amounts, bytes memory _data)
-    internal
-  {
-    require(_ids.length == _amounts.length, "ERC1155MintBurnPackedBalance#_batchMint: INVALID_ARRAYS_LENGTH");
+  function _batchMint(
+    address _to,
+    uint256[] memory _ids,
+    uint256[] memory _amounts,
+    bytes memory _data
+  ) internal {
+    require(
+      _ids.length == _amounts.length,
+      'ERC1155MintBurnPackedBalance#_batchMint: INVALID_ARRAYS_LENGTH'
+    );
 
     if (_ids.length > 0) {
       // Load first bin and index where the token ID balance exists
       (uint256 bin, uint256 index) = getIDBinIndex(_ids[0]);
 
       // Balance for current bin in memory (initialized with first transfer)
-      uint256 balTo = _viewUpdateBinValue(balances[_to][bin], index, _amounts[0], Operations.Add);
+      uint256 balTo =
+        _viewUpdateBinValue(
+          balances[_to][bin],
+          index,
+          _amounts[0],
+          Operations.Add
+        );
 
       // Number of transfer to execute
       uint256 nTransfer = _ids.length;
@@ -84,9 +97,15 @@ contract ERC1155MintBurnPackedBalance is ERC1155PackedBalance {
     emit TransferBatch(msg.sender, address(0x0), _to, _ids, _amounts);
 
     // Calling onReceive method if recipient is contract
-    _callonERC1155BatchReceived(address(0x0), _to, _ids, _amounts, gasleft(), _data);
+    _callonERC1155BatchReceived(
+      address(0x0),
+      _to,
+      _ids,
+      _amounts,
+      gasleft(),
+      _data
+    );
   }
-
 
   /****************************************|
   |            Burning Functions           |
@@ -98,9 +117,11 @@ contract ERC1155MintBurnPackedBalance is ERC1155PackedBalance {
    * @param _id      Token id to burn
    * @param _amount  The amount to be burned
    */
-  function _burn(address _from, uint256 _id, uint256 _amount)
-    internal
-  {
+  function _burn(
+    address _from,
+    uint256 _id,
+    uint256 _amount
+  ) internal {
     // Substract _amount
     _updateIDBalance(_from, _id, _amount, Operations.Sub);
 
@@ -118,17 +139,22 @@ contract ERC1155MintBurnPackedBalance is ERC1155PackedBalance {
    * @param _ids      Array of token ids to burn
    * @param _amounts  Array of the amount to be burned
    */
-  function _batchBurn(address _from, uint256[] memory _ids, uint256[] memory _amounts)
-    internal
-  {
+  function _batchBurn(
+    address _from,
+    uint256[] memory _ids,
+    uint256[] memory _amounts
+  ) internal {
     // Number of burning to execute
     uint256 nBurn = _ids.length;
-    require(nBurn == _amounts.length, "ERC1155MintBurnPackedBalance#batchBurn: INVALID_ARRAYS_LENGTH");
+    require(
+      nBurn == _amounts.length,
+      'ERC1155MintBurnPackedBalance#batchBurn: INVALID_ARRAYS_LENGTH'
+    );
 
     // Executing all burning
     for (uint256 i = 0; i < nBurn; i++) {
       // Update storage balance
-      _updateIDBalance(_from,   _ids[i], _amounts[i], Operations.Sub); // Add amount to recipient
+      _updateIDBalance(_from, _ids[i], _amounts[i], Operations.Sub); // Add amount to recipient
     }
 
     // Emit batch burn event
