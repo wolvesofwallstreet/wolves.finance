@@ -23,6 +23,12 @@ const SFT_MINTER_CONTRACT = 'WOWSSftMinter';
 const ADDRESS_BOOK_SFT_HOLDER_KEY = ethers.utils.formatBytes32String(
   'SFT_HOLDER'
 );
+// Used in TradingFloor
+// mainnet: 0xa5409ec958c83c3f309868babaca7c86dcb077c1
+// rinkeby: 0xf57b2c51ded3a29e6891aba85459d600256cf317
+/*const ADDRESS_BOOK_OPENSEA_PROXY_KEY = ethers.utils.formatBytes32String(
+  'OPENSEA_PROXY'
+);*/
 
 // ERC-1155 metadata URI
 const METADATA_URI = 'https://4travelers.de/wolves_assets/metadata/';

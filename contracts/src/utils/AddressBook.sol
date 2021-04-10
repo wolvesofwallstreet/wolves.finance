@@ -18,4 +18,5 @@ library AddressBook {
   bytes32 public constant WOWS_BOOSTER = 'WOWS_BOOSTER';
   bytes32 public constant REWARD_HANDLER = 'REWARD_HANDLER';
   bytes32 public constant SFT_HOLDER = 'SFT_HOLDER';
+  bytes32 public constant OPENSEA_PROXY = 'OPENSEA_PROXY';
 }
