@@ -321,17 +321,19 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     require(from != address(0), "Can't transfer from zero address");
     require(to != address(0), "Can't transfer to zero address");
 
-    // Look up minter
-    address minter = _tokenIdToMinter[tokenId];
-    require(minter != address(0), 'Invalid minter for token');
-
     // Call parent
     super.safeTransferFrom(from, to, tokenId, amount, data);
 
-    if ((tokenId >> 64) == 0)
+    if ((tokenId >> 64) == 0) {
       _relinkOwner(from, to, uint64(tokenId));
       // Invoke callback
-    else IMinterCallback(minter).onTransferFrom(from, to, tokenId, amount);
+    } else {
+      // Look up minter
+      address minter = _tokenIdToMinter[tokenId];
+      require(minter != address(0), 'Invalid minter for token');
+
+      IMinterCallback(minter).onTransferFrom(from, to, tokenId, amount);
+    }
   }
 
   /**
