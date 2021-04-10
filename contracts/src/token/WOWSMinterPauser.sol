@@ -32,9 +32,6 @@ contract WOWSMinterPauser is
   // Constants
   //////////////////////////////////////////////////////////////////////////////
 
-  // Role to pause token transfers
-  bytes32 public constant PAUSER_ROLE = keccak256('PAUSER_ROLE');
-
   // Role to mint new tokens
   bytes32 public constant MINTER_ROLE = keccak256('MINTER_ROLE');
 
