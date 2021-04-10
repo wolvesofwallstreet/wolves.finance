@@ -17,6 +17,10 @@ import '../utils/interfaces/IAddressRegistry.sol';
 import './interfaces/IMinterCallback.sol';
 import './WOWSMinterPauser.sol';
 
+abstract contract OpenSeaProxyRegistry {
+  mapping(address => address) public proxies;
+}
+
 /**
  * @dev Implementation of https://eips.ethereum.org/EIPS/eip-1155[ERC1155]
  * Multi Token Standard, including the Metadata URI extension.
@@ -93,6 +97,8 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   uint256 private _fee;
   address private _feeRecipient;
 
+  address private immutable _openSeaProxies;
+
   // Rarible events
   // solhint-disable-next-line event-name-camelcase
   event CreateERC1155_v1(address indexed creator, string name, string symbol);
@@ -118,6 +124,11 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     address marketingWallet =
       addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
     _setupRole(DEFAULT_ADMIN_ROLE, marketingWallet);
+    // get the platform specific OS proxy registry
+    _openSeaProxies = addressRegistry.getRegistryEntry(
+      AddressBook.OPENSEA_PROXY
+    );
+    // pause this instance
     _pause(true);
   }
 
@@ -353,6 +364,24 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
         IMinterCallback(minter).onTransferFrom(from, to, tokenId, amounts[i]);
       }
     }
+  }
+
+  /**
+   * Override isApprovedForAll to whitelist user's OpenSea proxy accounts to enable gas-free listings.
+   */
+  function isApprovedForAll(address account, address operator)
+    public
+    view
+    override
+    returns (bool)
+  {
+    // Whitelist OpenSea proxy contract for easy trading.
+    OpenSeaProxyRegistry proxyRegistry = OpenSeaProxyRegistry(_openSeaProxies);
+    if (proxyRegistry.proxies(account) == operator) {
+      return true;
+    }
+
+    return ERC1155.isApprovedForAll(account, operator);
   }
 
   //////////////////////////////////////////////////////////////////////////////
