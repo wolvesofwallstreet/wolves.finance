@@ -12,11 +12,11 @@ import '@openzeppelin/contracts/access/AccessControl.sol';
 import '@openzeppelin/contracts/math/SafeMath.sol';
 import '@openzeppelin/contracts/utils/Context.sol';
 
-import 'contracts/interfaces/uniswap/IUniswapV2Router02.sol';
-import 'contracts/src/investment/interfaces/IRewardHandler.sol';
-import 'contracts/src/token/interfaces/IERC20WowsMintable.sol';
-import 'contracts/src/utils/AddressBook.sol';
-import 'contracts/src/utils/interfaces/IAddressRegistry.sol';
+import '../../interfaces/uniswap/IUniswapV2Router02.sol';
+import '../../src/investment/interfaces/IRewardHandler.sol';
+import '../../src/token/interfaces/IERC20WowsMintable.sol';
+import '../../src/utils/AddressBook.sol';
+import '../../src/utils/interfaces/IAddressRegistry.sol';
 
 contract RewardHandler is Context, AccessControl, IRewardHandler {
   using SafeMath for uint256;
@@ -45,6 +45,9 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
 
   // Amount to distribute?
   uint256 private _distributeAmount;
+
+  // fired if we receive Ether
+  event Received(address, uint256);
 
   /**
    * @dev Constructor
@@ -164,6 +167,11 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
         );
       _distributeAmount = _distributeAmount.add(amounts[route.length - 1]);
     }
+  }
+
+  // We can receive ether and swap it later to rewardToken
+  receive() external payable {
+    emit Received(_msgSender(), msg.value);
   }
 
   //////////////////////////////////////////////////////////////////////////////
