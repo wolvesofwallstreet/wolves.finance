@@ -162,7 +162,7 @@ contract WOWSMinterPauser is
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev See {ERC1155-_beforeBatchTokenTransfer}.
+   * @dev See {ERC1155-_beforeTokenTransfer}.
    *
    * This function is necessary due to diamond inheritance.
    */
