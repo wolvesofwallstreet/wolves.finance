@@ -37,15 +37,16 @@ const GENERATED_ADDRESSES = `${__dirname}/../../src/config/generated-addresses.j
 let addresses = null;
 
 // Utility function to get addresses from the address registry file
-function getAddresses() {
+async function getAddresses() {
   if (addresses === null) {
+    // Get chain ID
+    const chainId = await hardhat.getChainId();
+
     // Load contract addresses
-    const addressRegistry = JSON.parse(
+    const generatedNetworks = JSON.parse(
       fs.readFileSync(GENERATED_ADDRESSES).toString()
     );
-
-    // TODO: Detect network
-    addresses = addressRegistry.hardhat;
+    addresses = generatedNetworks[chainId] || {};
   }
 
   return addresses;
@@ -60,7 +61,7 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
   const [_, marketingWallet] = await hardhat.ethers.getSigners();
 
   // Get contract addresses
-  const addresses = getAddresses();
+  const addresses = await getAddresses();
 
   // Construct the contracts
   const tokenContract = new ethers.Contract(
