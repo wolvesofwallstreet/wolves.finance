@@ -317,7 +317,7 @@ describe('Reward handler', function () {
     // Second call to terminate should revert
     chai.expect(teamWallet.address).to.be.properAddress;
     tx = rewardHandlerContract.terminate(teamWallet.address, false);
-    await chai.expect(tx).to.be.revertedWith('nothing to distribute'); // TODO
+    await chai.expect(tx).to.not.be.reverted;
 
     // Verify contract still exists
     const amount = await rewardHandlerContract.getMinimalMintAmount();
