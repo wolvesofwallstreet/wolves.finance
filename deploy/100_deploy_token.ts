@@ -15,9 +15,6 @@ require('hardhat-deploy');
 require('hardhat-deploy-ethers');
 
 // TODO: Fully qualified contract names
-const WETH_CONTRACT = 'WETH9';
-const UNI_V2_FACTORY_CONTRACT = 'UniswapV2Factory';
-const UNI_V2_ROUTER_CONTRACT = 'UniswapV2Router02';
 const ADDRESS_REGISTRY_CONTRACT = 'AddressRegistry';
 const TOKEN_CONTRACT = 'WowsToken';
 const CONTROLLER_CONTRACT = 'Controller';
@@ -26,7 +23,8 @@ const BOOSTER_CONTRACT = 'Booster';
 const REWARD_HANDLER_CONTRACT = 'RewardHandler';
 const PRESALE_CONTRACT = 'Crowdsale';
 
-// Path to generated addresses file
+// Path to address files
+const CONFIG_ADDRESSES = `${__dirname}/../src/config/addresses.json`;
 const GENERATED_ADDRESSES = `${__dirname}/../src/config/generated-addresses.json`;
 
 // Addressbook constants
@@ -103,45 +101,19 @@ const func = async function (hardhat_re) {
   const { deploy, execute } = deployments;
   const { deployer, marketingWallet, teamWallet } = await getNamedAccounts();
 
-  //////////////////////////////////////////////////////////////////////////////
-  //
-  // Deploy dependencies
-  //
-  // TODO: Use existing contracts on public testnets
-  //
-  //////////////////////////////////////////////////////////////////////////////
+  // Get chain ID
+  const chainId = await hardhat_re.getChainId();
 
-  log_step('Deploying W-ETH contract');
+  // Load contract addresses
+  const configNetworks = JSON.parse(
+    fs.readFileSync(CONFIG_ADDRESSES).toString()
+  );
+  const generatedNetworks = JSON.parse(
+    fs.readFileSync(GENERATED_ADDRESSES).toString()
+  );
 
-  const wethReceipt = await deploy(WETH_CONTRACT, {
-    from: deployer,
-    log: true,
-    deterministicDeployment: true,
-  });
-
-  const WETH_ADDRESS = wethReceipt.address;
-
-  log_step('Deploying UNI-V2 factory');
-
-  const univ2FactoryReceipt = await deploy(UNI_V2_FACTORY_CONTRACT, {
-    from: deployer,
-    args: [deployer],
-    log: true,
-    deterministicDeployment: true,
-  });
-
-  const UNI_V2_FACTORY_ADDRESS = univ2FactoryReceipt.address;
-
-  log_step('Deploying UNI-V2 router');
-
-  const univ2RouterReceipt = await deploy(UNI_V2_ROUTER_CONTRACT, {
-    from: deployer,
-    args: [UNI_V2_FACTORY_ADDRESS, WETH_ADDRESS],
-    log: true,
-    deterministicDeployment: true,
-  });
-
-  const UNI_V2_ROUTER_ADDRESS = univ2RouterReceipt.address;
+  const configAddresses = configNetworks[chainId] || {};
+  const generatedAddresses = generatedNetworks[chainId] || {};
 
   //////////////////////////////////////////////////////////////////////////////
   //
@@ -149,32 +121,41 @@ const func = async function (hardhat_re) {
   //
   //////////////////////////////////////////////////////////////////////////////
 
-  log_step('Deploying address registry');
+  if (configAddresses.addressRegistry) {
+    log_step(
+      `Using deployed address registry: ${configAddresses.addressRegistry}`
+    );
+    generatedAddresses.addressRegistry = configAddresses.addressRegistry;
+  } else {
+    log_step('Deploying address registry');
 
-  const addressRegistryReceipt = await deploy(ADDRESS_REGISTRY_CONTRACT, {
-    from: deployer,
-    args: [deployer],
-    log: true,
-    deterministicDeployment: true,
+    const addressRegistryReceipt = await deploy(ADDRESS_REGISTRY_CONTRACT, {
+      from: deployer,
+      args: [deployer],
+      log: true,
+      deterministicDeployment: true,
 
-    /* TODO: Diamond upgradeability support
-    owner: deployer,
+      /* TODO: Diamond upgradeability support
+      owner: deployer,
 
-    facets: [ADDRESS_REGISTRY_CONTRACT],
+      facets: [ADDRESS_REGISTRY_CONTRACT],
 
-    // Has to be a non-zero 32bytes string (in hex format)
-    // TODO
-    deterministicSalt:
-      '0x0000000000000000000000000000000000000000000000000000000000000001',
+      // Has to be a non-zero 32bytes string (in hex format)
+      // TODO
+      deterministicSalt:
+        '0x0000000000000000000000000000000000000000000000000000000000000001',
 
-    execute: {
-      methodName: 'postUpgrade',
-      args: [],
-    },
-    */
-  });
+      execute: {
+        methodName: 'postUpgrade',
+        args: [],
+      },
+      */
+    });
 
-  const ADDRESS_REGISTRY_ADDRESS = addressRegistryReceipt.address;
+    generatedAddresses.addressRegistry = addressRegistryReceipt.address;
+  }
+
+  const ADDRESS_REGISTRY_ADDRESS = generatedAddresses.addressRegistry;
   const ADDRESS_REGISTRY_INSTANCE = await hardhat_re.ethers.getContract(
     ADDRESS_REGISTRY_CONTRACT
   );
@@ -213,7 +194,7 @@ const func = async function (hardhat_re) {
     execute,
     ADDRESS_REGISTRY_INSTANCE,
     ADDRESS_BOOK_UNISWAP_V2_ROUTER02_KEY,
-    UNI_V2_ROUTER_ADDRESS
+    generatedAddresses.uniV2Router
   );
 
   //////////////////////////////////////////////////////////////////////////////
@@ -222,16 +203,23 @@ const func = async function (hardhat_re) {
   //
   //////////////////////////////////////////////////////////////////////////////
 
-  log_step('Deploying token');
+  if (configAddresses.token) {
+    log_step(`Using deployed token: ${configAddresses.token}`);
+    generatedAddresses.token = configAddresses.token;
+  } else {
+    log_step('Deploying token');
 
-  const tokenReceipt = await deploy(TOKEN_CONTRACT, {
-    from: deployer,
-    args: [ADDRESS_REGISTRY_ADDRESS],
-    log: true,
-    deterministicDeployment: true,
-  });
+    const tokenReceipt = await deploy(TOKEN_CONTRACT, {
+      from: deployer,
+      args: [ADDRESS_REGISTRY_ADDRESS],
+      log: true,
+      deterministicDeployment: true,
+    });
 
-  const TOKEN_ADDRESS = tokenReceipt.address;
+    generatedAddresses.token = tokenReceipt.address;
+  }
+
+  const TOKEN_ADDRESS = generatedAddresses.token;
   const TOKEN_INSTANCE = await hardhat_re.ethers.getContract(TOKEN_CONTRACT);
 
   //////////////////////////////////////////////////////////////////////////////
@@ -256,21 +244,28 @@ const func = async function (hardhat_re) {
   //
   //////////////////////////////////////////////////////////////////////////////
 
-  log_step('Deploying controller');
+  if (configAddresses.token) {
+    log_step(`Using deployed controller: ${configAddresses.controller}`);
+    generatedAddresses.controller = configAddresses.controller;
+  } else {
+    log_step('Deploying controller');
 
-  // Reward handler - right now it's WOWSErc20.sol
-  const REWARD_HANDLER = TOKEN_ADDRESS;
-  // Previous controller: 0 address / only for later updates
-  const PREVIOUS_CONTROLLER = '0x0000000000000000000000000000000000000000';
+    // Reward handler - right now it's WOWSErc20.sol
+    const REWARD_HANDLER = generatedAddresses.token;
+    // Previous controller: 0 address / only for later updates
+    const PREVIOUS_CONTROLLER = '0x0000000000000000000000000000000000000000';
 
-  const controllerReceipt = await deploy(CONTROLLER_CONTRACT, {
-    from: deployer,
-    args: [ADDRESS_REGISTRY_ADDRESS, REWARD_HANDLER, PREVIOUS_CONTROLLER],
-    log: true,
-    deterministicDeployment: true,
-  });
+    const controllerReceipt = await deploy(CONTROLLER_CONTRACT, {
+      from: deployer,
+      args: [ADDRESS_REGISTRY_ADDRESS, REWARD_HANDLER, PREVIOUS_CONTROLLER],
+      log: true,
+      deterministicDeployment: true,
+    });
 
-  const CONTROLLER_ADDRESS = controllerReceipt.address;
+    generatedAddresses.controller = controllerReceipt.address;
+  }
+
+  const CONTROLLER_ADDRESS = generatedAddresses.controller;
 
   //////////////////////////////////////////////////////////////////////////////
   //
@@ -278,29 +273,36 @@ const func = async function (hardhat_re) {
   //
   //////////////////////////////////////////////////////////////////////////////
 
-  log_step('Deploying stake farm');
+  if (configAddresses.stakeFarm) {
+    log_step(`Using deployed Uni-V2 stake farm: ${configAddresses.stakeFarm}`);
+    generatedAddresses.stakeFarm = configAddresses.stakeFarm;
+  } else {
+    log_step('Deploying stake farm');
 
-  const STAKE_FARM_NAME = 'WETH/WOWS LP Farm';
-  const STAKING_TOKEN = await TOKEN_INSTANCE.uniV2Pair();
-  const REWARD_TOKEN = TOKEN_ADDRESS;
-  // Address of UniV2 WETH/USDT pool, can be 0 for test
-  const ROUTE = '0x0000000000000000000000000000000000000000';
+    const STAKE_FARM_NAME = 'WETH/WOWS LP Farm';
+    const STAKING_TOKEN = await TOKEN_INSTANCE.uniV2Pair();
+    const REWARD_TOKEN = generatedAddresses.token;
+    // Address of UniV2 WETH/USDT pool, can be 0 for test
+    const ROUTE = '0x0000000000000000000000000000000000000000';
 
-  const univ2StakeFarmReceipt = await deploy(UNIV2_STAKE_FARM_CONTRACT, {
-    from: deployer,
-    args: [
-      deployer,
-      STAKE_FARM_NAME,
-      STAKING_TOKEN,
-      REWARD_TOKEN,
-      CONTROLLER_ADDRESS,
-      ROUTE,
-    ],
-    log: true,
-    deterministicDeployment: true,
-  });
+    const univ2StakeFarmReceipt = await deploy(UNIV2_STAKE_FARM_CONTRACT, {
+      from: deployer,
+      args: [
+        deployer,
+        STAKE_FARM_NAME,
+        STAKING_TOKEN,
+        REWARD_TOKEN,
+        CONTROLLER_ADDRESS,
+        ROUTE,
+      ],
+      log: true,
+      deterministicDeployment: true,
+    });
 
-  const UNIV2_STAKE_FARM_ADDRESS = univ2StakeFarmReceipt.address;
+    generatedAddresses.stakeFarm = univ2StakeFarmReceipt.address;
+  }
+
+  const UNIV2_STAKE_FARM_ADDRESS = generatedAddresses.stakeFarm;
 
   //////////////////////////////////////////////////////////////////////////////
   //
@@ -324,16 +326,23 @@ const func = async function (hardhat_re) {
   //
   //////////////////////////////////////////////////////////////////////////////
 
-  log_step('Deploying booster');
+  if (configAddresses.booster) {
+    log_step(`Using deployed booster: ${configAddresses.booster}`);
+    generatedAddresses.booster = configAddresses.booster;
+  } else {
+    log_step('Deploying booster');
 
-  const boosterReceipt = await deploy(BOOSTER_CONTRACT, {
-    from: deployer,
-    log: true,
-    args: [deployer],
-    deterministicDeployment: true,
-  });
+    const boosterReceipt = await deploy(BOOSTER_CONTRACT, {
+      from: deployer,
+      log: true,
+      args: [deployer],
+      deterministicDeployment: true,
+    });
 
-  const BOOSTER_ADDRESS = boosterReceipt.address;
+    generatedAddresses.booster = boosterReceipt.address;
+  }
+
+  const BOOSTER_ADDRESS = generatedAddresses.booster;
 
   //////////////////////////////////////////////////////////////////////////////
   //
@@ -357,16 +366,23 @@ const func = async function (hardhat_re) {
   //
   //////////////////////////////////////////////////////////////////////////////
 
-  log_step('Deploying RewardHandler');
+  if (configAddresses.booster) {
+    log_step(`Using deployed RewardHandler: ${configAddresses.rewardHandler}`);
+    generatedAddresses.rewardHandler = configAddresses.rewardHandler;
+  } else {
+    log_step('Deploying RewardHandler');
 
-  const rewardHandlerReceipt = await deploy(REWARD_HANDLER_CONTRACT, {
-    from: deployer,
-    log: true,
-    args: [ADDRESS_REGISTRY_ADDRESS],
-    deterministicDeployment: true,
-  });
+    const rewardHandlerReceipt = await deploy(REWARD_HANDLER_CONTRACT, {
+      from: deployer,
+      log: true,
+      args: [ADDRESS_REGISTRY_ADDRESS],
+      deterministicDeployment: true,
+    });
 
-  const REWARD_HANDLER_ADDRESS = rewardHandlerReceipt.address;
+    generatedAddresses.rewardHandler = rewardHandlerReceipt.address;
+  }
+
+  const REWARD_HANDLER_ADDRESS = generatedAddresses.rewardHandler;
 
   //////////////////////////////////////////////////////////////////////////////
   //
@@ -390,36 +406,41 @@ const func = async function (hardhat_re) {
   //
   //////////////////////////////////////////////////////////////////////////////
 
-  log_step('Deploying presale');
+  if (configAddresses.presale) {
+    log_step(`Using deployed RewardHandler: ${configAddresses.presale}`);
+    generatedAddresses.presale = configAddresses.presale;
+  } else {
+    log_step('Deploying presale');
 
-  const RATE = 80; // Token units per Wei
-  const CAP = ethers.BigNumber.from('75000000000000000000'); // 75 * 1e18 Wei
-  const INVEST_MIN = ethers.BigNumber.from('200000000000000000'); // 2 * 1e17 Wei (0.2 ETH)
-  const WALLET_CAP = ethers.BigNumber.from('3000000000000000000'); // 3 * 1e18 Wei (3 ETH)
-  const LP_ETH = 3750; // Token units
-  const LP_TOKEN = 240_000; // Token units
-  const OPENING_TIME = Math.round(Date.now() / 1000) + 300; // Now + 5 min
-  const CLOSING_TIME = Math.round(Date.now() / 1000) + 600; // Now + 10 min
+    const RATE = 80; // Token units per Wei
+    const CAP = ethers.BigNumber.from('75000000000000000000'); // 75 * 1e18 Wei
+    const INVEST_MIN = ethers.BigNumber.from('200000000000000000'); // 2 * 1e17 Wei (0.2 ETH)
+    const WALLET_CAP = ethers.BigNumber.from('3000000000000000000'); // 3 * 1e18 Wei (3 ETH)
+    const LP_ETH = 3750; // Token units
+    const LP_TOKEN = 240_000; // Token units
+    const OPENING_TIME = Math.round(Date.now() / 1000) + 300; // Now + 5 min
+    const CLOSING_TIME = Math.round(Date.now() / 1000) + 600; // Now + 10 min
 
-  const presaleReceipt = await deploy(PRESALE_CONTRACT, {
-    from: deployer,
-    args: [
-      ADDRESS_REGISTRY_ADDRESS,
-      RATE,
-      TOKEN_ADDRESS,
-      CAP,
-      INVEST_MIN,
-      WALLET_CAP,
-      LP_ETH,
-      LP_TOKEN,
-      OPENING_TIME,
-      CLOSING_TIME,
-    ],
-    log: true,
-    deterministicDeployment: true,
-  });
+    const presaleReceipt = await deploy(PRESALE_CONTRACT, {
+      from: deployer,
+      args: [
+        ADDRESS_REGISTRY_ADDRESS,
+        RATE,
+        TOKEN_ADDRESS,
+        CAP,
+        INVEST_MIN,
+        WALLET_CAP,
+        LP_ETH,
+        LP_TOKEN,
+        OPENING_TIME,
+        CLOSING_TIME,
+      ],
+      log: true,
+      deterministicDeployment: true,
+    });
 
-  const PRESALE_ADDRESS = presaleReceipt.address;
+    generatedAddresses.presale = presaleReceipt.address;
+  }
 
   //////////////////////////////////////////////////////////////////////////////
   //
@@ -429,19 +450,12 @@ const func = async function (hardhat_re) {
 
   log_step(`Writing ${GENERATED_ADDRESSES}`);
 
-  const addresses = {
-    hardhat: {
-      addressRegistry: ADDRESS_REGISTRY_ADDRESS,
-      token: TOKEN_ADDRESS,
-      controller: CONTROLLER_ADDRESS,
-      stakeFarm: UNIV2_STAKE_FARM_ADDRESS,
-      booster: BOOSTER_ADDRESS,
-      presale: PRESALE_ADDRESS,
-      rewardHandler: REWARD_HANDLER_ADDRESS,
-    },
-  };
+  generatedNetworks[chainId] = generatedAddresses;
 
-  fs.writeFileSync(GENERATED_ADDRESSES, JSON.stringify(addresses, null, '  '));
+  fs.writeFileSync(
+    GENERATED_ADDRESSES,
+    JSON.stringify(generatedNetworks, null, '  ')
+  );
 };
 
 module.exports = func;

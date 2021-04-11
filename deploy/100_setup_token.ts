@@ -20,7 +20,7 @@ const CONTROLLER_CONTRACT = 'Controller';
 const REWARD_HANDLER_CONTRACT = 'RewardHandler';
 
 // Path to generated addresses file
-const ADDRESS_REGISTRY = `${__dirname}/../src/config/generated-addresses.json`;
+const GENERATED_ADDRESSES = `${__dirname}/../src/config/generated-addresses.json`;
 
 // Helper function
 function log_step(step_string) {
@@ -36,11 +36,16 @@ const func = async function (hardhat_re) {
   const { execute } = deployments;
   const { marketingWallet } = await getNamedAccounts();
 
-  // Load contract addresses
-  const addressRegistry = JSON.parse(
-    fs.readFileSync(ADDRESS_REGISTRY).toString()
-  );
+  // Get chain ID
+  const chainId = await hardhat_re.getChainId();
 
+  // Load contract addresses
+  const generatedNetworks = JSON.parse(
+    fs.readFileSync(GENERATED_ADDRESSES).toString()
+  );
+  const generatedAddresses = generatedNetworks[chainId] || {};
+
+  // Load deployed contract instances
   const TOKEN_INSTANCE = await hardhat_re.ethers.getContract(TOKEN_CONTRACT);
   const REWARD_HANDLER_INSTANCE = await hardhat_re.ethers.getContract(
     REWARD_HANDLER_CONTRACT
@@ -68,7 +73,7 @@ const func = async function (hardhat_re) {
     },
     'grantRole',
     await REWARD_HANDLER_INSTANCE.REWARD_ROLE(),
-    addressRegistry.hardhat.controller
+    generatedAddresses.controller
   );
 
   //
@@ -85,7 +90,7 @@ const func = async function (hardhat_re) {
     },
     'grantRole',
     await TOKEN_INSTANCE.MINTER_ROLE(),
-    addressRegistry.hardhat.rewardHandler
+    generatedAddresses.rewardHandler
   );
 
   //
@@ -98,7 +103,7 @@ const func = async function (hardhat_re) {
   //       * rewardFee           2 * 1e4 (0.02 == 2%)
   //
 
-  const FARM_ADDRESS = addressRegistry.hardhat.stakeFarm;
+  const FARM_ADDRESS = generatedAddresses.stakeFarm;
   const REWARD_CAP = ethers.BigNumber.from('15000000000000000000000');
   const REWARD_PER_DURATION = ethers.BigNumber.from('192307692300000000000');
   const REWARD_PROVIDED = 0;
@@ -131,7 +136,7 @@ const func = async function (hardhat_re) {
     },
     'grantRole',
     await TOKEN_INSTANCE.MINTER_ROLE(),
-    addressRegistry.hardhat.presale
+    generatedAddresses.presale
   );
 
   //
@@ -147,4 +152,3 @@ const func = async function (hardhat_re) {
 
 module.exports = func;
 module.exports.tags = ['TokenSetup'];
-module.exports.dependencies = ['Token'];
