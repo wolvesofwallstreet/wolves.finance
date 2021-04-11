@@ -109,7 +109,7 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
       rewardToken.transfer(newRewardHandler, amountRewards);
 
     // Destroy contract
-    if (destroy) selfdestruct(payable(address(this)));
+    if (destroy) selfdestruct(_msgSender());
   }
 
   /**
