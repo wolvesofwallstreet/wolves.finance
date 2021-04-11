@@ -12,6 +12,7 @@ import '@openzeppelin/contracts/access/AccessControl.sol';
 import '@openzeppelin/contracts/math/SafeMath.sol';
 import '@openzeppelin/contracts/utils/Context.sol';
 
+import 'contracts/interfaces/uniswap/IUniswapV2Router02.sol';
 import 'contracts/src/investment/interfaces/IRewardHandler.sol';
 import 'contracts/src/token/interfaces/IERC20WowsMintable.sol';
 import 'contracts/src/utils/AddressBook.sol';
@@ -112,23 +113,57 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
   }
 
   /**
-   * @dev Withdraw tokenAddress ERC20token to destiation
+   * @dev Swap ETH or ERC20 token into rewardToken
    * tokenAddress cannot be rewardToken.
-   * TODO: provide the possibility to swap into WOWS
    *
-   * @param tokenAddress the address of the token to transfer
+   * @param route path containing ERC20 token addresses
+   * to swap route[0] into reward tokens.
+   * The last address must be rewardToken address
    */
-  function collectGarbage(address tokenAddress) external {
+  function swapIntoRewardToken(address[] calldata route) external {
     // Validate access
     require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admins');
     address rewardToken =
       _addressRegistry.getRegistryEntry(AddressBook.WOWS_TOKEN);
-    require(tokenAddress != address(rewardToken), 'rewardToken not allowed');
+    // get the UniV2 Router
+    IUniswapV2Router02 router =
+      IUniswapV2Router02(
+        _addressRegistry.getRegistryEntry(AddressBook.UNISWAP_V2_ROUTER02)
+      );
 
-    // Transfer token to msg.sender
-    uint256 amountToken = IERC20(tokenAddress).balanceOf(address(this));
-    if (amountToken > 0)
-      IERC20(tokenAddress).transfer(_msgSender(), amountToken);
+    // Check for ETH swap (no route given)
+    if (route.length == 0) {
+      uint256 amountETH = payable(address(this)).balance;
+      require(amountETH > 0, 'insufficient amount');
+      address[] memory ethRoute = new address[](2);
+      ethRoute[0] = router.WETH();
+      ethRoute[1] = rewardToken;
+      uint256[] memory amounts =
+        router.swapExactETHForTokens{ value: amountETH }(
+          0,
+          ethRoute,
+          address(this),
+          block.timestamp + 3600
+        );
+      _distributeAmount = _distributeAmount.add(amounts[1]);
+    } else {
+      require(route.length >= 2, 'invalid route');
+      require(
+        route[route.length - 1] == address(rewardToken),
+        'route terminator != rewardToken'
+      );
+      uint256 amountToken = IERC20(route[0]).balanceOf(address(this));
+      require(amountToken > 0, 'insufficient amount');
+      uint256[] memory amounts =
+        router.swapExactTokensForTokens(
+          amountToken,
+          0,
+          route,
+          address(this),
+          block.timestamp + 3600
+        );
+      _distributeAmount = _distributeAmount.add(amounts[route.length - 1]);
+    }
   }
 
   //////////////////////////////////////////////////////////////////////////////
