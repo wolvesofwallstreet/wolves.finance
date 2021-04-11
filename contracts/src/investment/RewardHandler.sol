@@ -149,6 +149,7 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
           0,
           ethRoute,
           address(this),
+          // solhint-disable-next-line not-rely-on-time
           block.timestamp + 3600
         );
       _distributeAmount = _distributeAmount.add(amounts[1]);
@@ -166,6 +167,7 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
           0,
           route,
           address(this),
+          // solhint-disable-next-line not-rely-on-time
           block.timestamp + 3600
         );
       _distributeAmount = _distributeAmount.add(amounts[route.length - 1]);
