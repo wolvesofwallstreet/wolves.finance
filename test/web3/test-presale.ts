@@ -128,13 +128,14 @@ describe('Presale contract', function () {
     // Create the initial fixture, this will generate the address registry
     await hardhat.deployments.fixture();
 
+    // Get chain ID
+    const chainId = await hardhat.getChainId();
+
     // Load contract addresses
-    const addressRegistry = JSON.parse(
+    const generatedNetworks = JSON.parse(
       fs.readFileSync(GENERATED_ADDRESSES).toString()
     );
-
-    // TODO: Detect network
-    const addresses = addressRegistry.hardhat;
+    const addresses = generatedNetworks[chainId] || {};
 
     tokenContract = new ethers.Contract(addresses.token, WowsTokenAbi, signer);
 
