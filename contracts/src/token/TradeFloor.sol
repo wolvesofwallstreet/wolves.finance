@@ -76,9 +76,12 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   IAddressRegistry private _addressRegistry;
 
   // solhint-disable-next-line const-name-snakecase
-  string public constant name = 'WolvesOfWallStreet NFT';
+  string public constant name = 'Wolves of Wall Street - C-Folio NFTs';
   // solhint-disable-next-line const-name-snakecase
-  string public constant symbol = 'WOWS NFT';
+  string public constant symbol = 'WOWSCFNFT';
+
+  // Only OPERATORS can approve when trading is restricted
+  bytes32 public constant OPERATOR_ROLE = keccak256('OPERATOR_ROLE');
 
   // OpenSea Compatibility
   event OwnershipTransferred(
@@ -97,7 +100,12 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   uint256 private _fee;
   address private _feeRecipient;
 
-  address private immutable _openSeaProxies;
+  // OpenSea per-account proxy registry.
+  // Used to whitelist Approvals and save GAS
+  address private immutable _openSeaProxyRegistry;
+
+  // Restrict approvals to OPERATOR_ROLE members
+  bool private _tradingRestricted;
 
   // Rarible events
   // solhint-disable-next-line event-name-camelcase
@@ -125,7 +133,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
       addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
     _setupRole(DEFAULT_ADMIN_ROLE, marketingWallet);
     // get the platform specific OS proxy registry
-    _openSeaProxies = addressRegistry.getRegistryEntry(
+    _openSeaProxyRegistry = addressRegistry.getRegistryEntry(
       AddressBook.OPENSEA_PROXY
     );
     // pause this instance
@@ -369,6 +377,21 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   }
 
   /**
+   * Override setApprovalForAll to be able to restrict to known operators.
+   */
+  function setApprovalForAll(address operator, bool approved)
+    public
+    virtual
+    override
+  {
+    require(
+      !_tradingRestricted || hasRole(OPERATOR_ROLE, operator),
+      'forbidden'
+    );
+    super.setApprovalForAll(operator, approved);
+  }
+
+  /**
    * Override isApprovedForAll to whitelist user's OpenSea proxy accounts to enable gas-free listings.
    */
   function isApprovedForAll(address account, address operator)
@@ -377,10 +400,13 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     override
     returns (bool)
   {
-    // Whitelist OpenSea proxy contract for easy trading.
-    OpenSeaProxyRegistry proxyRegistry = OpenSeaProxyRegistry(_openSeaProxies);
-    if (proxyRegistry.proxies(account) == operator) {
-      return true;
+    if (!_tradingRestricted && _openSeaProxyRegistry != address(0)) {
+      // Whitelist OpenSea proxy contract for easy trading.
+      OpenSeaProxyRegistry proxyRegistry =
+        OpenSeaProxyRegistry(_openSeaProxyRegistry);
+      if (proxyRegistry.proxies(account) == operator) {
+        return true;
+      }
     }
 
     return ERC1155.isApprovedForAll(account, operator);
@@ -559,6 +585,14 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   function testSelfDestroy() external {
     require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admins');
     selfdestruct(_msgSender());
+  }
+
+  /**
+   * Restrict trading to OPERATOR_ROLE (see setApprovalForAll)
+   */
+  function restrictTrading(bool restrict) external {
+    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admins');
+    _tradingRestricted = restrict;
   }
 
   //////////////////////////////////////////////////////////////////////////////
