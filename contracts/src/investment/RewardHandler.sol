@@ -85,6 +85,9 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
    * @dev Distribute _distributeAmount to internal targets
    */
   function distributeAll() external {
+    // Validate state
+    require(_distributeAmount > 0, 'nothing to distribute');
+
     _distribute();
   }
 
@@ -112,7 +115,7 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
       rewardToken.transfer(newRewardHandler, amountRewards);
 
     // Destroy contract
-    if (destroy) selfdestruct(_msgSender());
+    if (destroy) selfdestruct(payable(newRewardHandler));
   }
 
   /**
@@ -250,47 +253,45 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
    * @return The WOWS token
    */
   function _distribute() internal returns (IERC20WowsMintable) {
-    // Validate state
-    require(_distributeAmount > 0, 'nothing to distribute');
-
     IERC20WowsMintable rewardToken =
       IERC20WowsMintable(
         _addressRegistry.getRegistryEntry(AddressBook.WOWS_TOKEN)
       );
 
-    // Load addresses
-    address marketingWallet =
-      _addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
-    address teamWallet =
-      _addressRegistry.getRegistryEntry(AddressBook.TEAM_WALLET);
-    address booster =
-      _addressRegistry.getRegistryEntry(AddressBook.WOWS_BOOSTER);
+    if (_distributeAmount > 0) {
+      // Load addresses
+      address marketingWallet =
+        _addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
+      address teamWallet =
+        _addressRegistry.getRegistryEntry(AddressBook.TEAM_WALLET);
+      address booster =
+        _addressRegistry.getRegistryEntry(AddressBook.WOWS_BOOSTER);
 
-    // Load state
-    uint256 distributeAmount = _distributeAmount;
+      // Load state
+      uint256 distributeAmount = _distributeAmount;
 
-    // Update state
-    _distributeAmount = 0;
+      // Update state
+      _distributeAmount = 0;
 
-    // Check how much / if we have to mint
-    uint256 balance = rewardToken.balanceOf(address(this));
-    if (balance < distributeAmount)
-      rewardToken.mint(address(this), distributeAmount.sub(balance));
+      // Check how much / if we have to mint
+      uint256 balance = rewardToken.balanceOf(address(this));
+      if (balance < distributeAmount)
+        rewardToken.mint(address(this), distributeAmount.sub(balance));
 
-    // Distribute the fee
-    rewardToken.transfer(
-      teamWallet,
-      distributeAmount.mul(FEE_TO_TEAM).div(1e6)
-    );
-    rewardToken.transfer(
-      marketingWallet,
-      distributeAmount.mul(FEE_TO_MARKETING).div(1e6)
-    );
-    rewardToken.transfer(
-      booster,
-      distributeAmount.mul(FEE_TO_BOOSTER).div(1e6)
-    );
-
+      // Distribute the fee
+      rewardToken.transfer(
+        teamWallet,
+        distributeAmount.mul(FEE_TO_TEAM).div(1e6)
+      );
+      rewardToken.transfer(
+        marketingWallet,
+        distributeAmount.mul(FEE_TO_MARKETING).div(1e6)
+      );
+      rewardToken.transfer(
+        booster,
+        distributeAmount.mul(FEE_TO_BOOSTER).div(1e6)
+      );
+    }
     return rewardToken;
   }
 
