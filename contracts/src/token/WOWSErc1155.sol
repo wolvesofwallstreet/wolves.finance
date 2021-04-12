@@ -298,14 +298,14 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
     // Custom token
     if (_isCustomToken(tokenId)) {
       if (bytes(_customCards[tokenId].uri).length == 0) {
-        return super.uri(tokenId);
+        return _uri(tokenId, 0);
       } else {
         return _customCards[tokenId].uri;
       }
     }
 
     // WOWS token
-    return super.uri(tokenId >> 16);
+    return _uri(tokenId >> 16, 4);
   }
 
   //////////////////////////////////////////////////////////////////////////////
