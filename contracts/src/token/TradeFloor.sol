@@ -100,12 +100,12 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   uint256 private _fee;
   address private _feeRecipient;
 
-  // OpenSea per-account proxy registry.
-  // Used to whitelist Approvals and save GAS
-  address private immutable _openSeaProxyRegistry;
-
   // Restrict approvals to OPERATOR_ROLE members
   bool private _tradingRestricted;
+
+  // OpenSea per-account proxy registry.
+  // Used to whitelist Approvals and save GAS
+  address private _openSeaProxyRegistry;
 
   // Rarible events
   // solhint-disable-next-line event-name-camelcase
@@ -132,10 +132,6 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     address marketingWallet =
       addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
     _setupRole(DEFAULT_ADMIN_ROLE, marketingWallet);
-    // get the platform specific OS proxy registry
-    _openSeaProxyRegistry = addressRegistry.getRegistryEntry(
-      AddressBook.OPENSEA_PROXY
-    );
     // pause this instance
     _pause(true);
   }
@@ -483,6 +479,14 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
 
   function owner() public view returns (address) {
     return _addressRegistry.getRegistryEntry(AddressBook.DEPLOYER);
+  }
+
+  function setOpenSeaProxyRegistry(address openSeaProxyRegistry) external {
+    // Validate access
+    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admin');
+
+    // Update state
+    _openSeaProxyRegistry = openSeaProxyRegistry;
   }
 
   //////////////////////////////////////////////////////////////////////////////
