@@ -34,7 +34,9 @@ const ADDRESS_BOOK_SFT_HOLDER_KEY = ethers.utils.formatBytes32String(
 const METADATA_URI = 'https://4travelers.de/wolves_assets/metadata/';
 
 // Filename for contract metadata, will be prefixed with METADATA_URI
-const CONTRACT_METADATA_NAME = 'mainnet_contract.json';
+// TODO: replace mainnet_contract.json with something from config!!!
+const CONTRACT_METADATA_NAME =
+  'https://4travelers.de/wolves_assets/metadata/mainnet_contract.json';
 
 // Path to address files
 const CONFIG_ADDRESSES = `${__dirname}/../src/config/addresses.json`;
