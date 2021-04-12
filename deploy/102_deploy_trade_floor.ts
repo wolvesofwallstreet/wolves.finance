@@ -129,7 +129,7 @@ const func = async function (hardhat_re) {
     execute,
     ADDRESS_REGISTRY_INSTANCE,
     ADDRESS_BOOK_OPENSEA_PROXY_KEY,
-    deployer
+    '0x0000000000000000000000000000000000000000'
   );
 
   //////////////////////////////////////////////////////////////////////////////

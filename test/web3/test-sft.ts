@@ -362,15 +362,20 @@ describe('SFT contracts', function () {
     this.timeout(30 * 1000);
 
     const { sftHolderContract } = await setupTest();
+    const MINTER_ROLE = await sftHolderContract.MINTER_ROLE();
 
     // Default URI of first custom token should be empty initially
     const tokenId = ethers.BigNumber.from('0x100000000');
     let uri = await sftHolderContract.uri(tokenId);
     chai.expect(uri).to.equal(METADATA_URI + '0100000000.json');
 
+    // Grant minter role
+    let tx = sftHolderContract.grantRole(MINTER_ROLE, marketingWallet.address);
+    await chai.expect(tx).to.not.be.reverted;
+
     // Set default URI for custom tokens
     const referenceUri = METADATA_URI + 'custom.json';
-    const tx = sftHolderContract.setCustomURI(tokenId, referenceUri);
+    tx = sftHolderContract.setCustomURI(tokenId, referenceUri);
     await chai.expect(tx).to.not.be.reverted;
 
     // Check the default URI for custom tokens
@@ -393,7 +398,7 @@ describe('SFT contracts', function () {
 
     // Set the URI of (level = 1, card ID = 1)
     const referenceUri = METADATA_URI + 'custom.json';
-    let tx = sftHolderContract.setURI(tokenId, referenceUri);
+    let tx = sftHolderContract.setCustomURI(tokenId, referenceUri);
     await chai.expect(tx).to.be.revertedWith('Access denied');
 
     // Check roles (marketing wallet should be admin but not minter)
@@ -447,7 +452,7 @@ describe('SFT contracts', function () {
     const customTokenId = ethers.BigNumber.from('0x100000000');
 
     // Test access control
-    let tx = sftHolderContract.setURI(customTokenId, customReferenceUri);
+    let tx = sftHolderContract.setCustomURI(customTokenId, customReferenceUri);
     await chai.expect(tx).to.be.revertedWith('Access denied');
 
     // Check roles (marketing wallet should be admin but not minter)
@@ -478,7 +483,7 @@ describe('SFT contracts', function () {
 
     // Check the current URI of custom token
     let uri = await sftHolderContract.uri(customTokenId);
-    chai.expect(uri).to.equal('');
+    chai.expect(uri).to.equal(METADATA_URI + '0100000000.json');
 
     // Set the URI of custom token
     tx = sftHolderContract.setCustomURI(customTokenId, customReferenceUri);
