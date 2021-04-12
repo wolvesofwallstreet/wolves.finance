@@ -428,7 +428,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
       'Token not minted'
     );
 
-    return super.uri(tokenId);
+    return _uri(tokenId, 0);
   }
 
   //////////////////////////////////////////////////////////////////////////////

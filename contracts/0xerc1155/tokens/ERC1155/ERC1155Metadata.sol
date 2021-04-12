@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.7.4;
+
 import '../../interfaces/IERC1155Metadata.sol';
 import '../../utils/ERC165.sol';
 
@@ -38,7 +39,7 @@ contract ERC1155Metadata is IERC1155Metadata, ERC165 {
     override
     returns (string memory)
   {
-    return _uri(_id);
+    return _uri(_id, 0);
   }
 
   /**
@@ -60,7 +61,7 @@ contract ERC1155Metadata is IERC1155Metadata, ERC165 {
    */
   function _logURIs(uint256[] memory _tokenIDs) internal {
     for (uint256 i = 0; i < _tokenIDs.length; i++) {
-      emit URI(_uri(_tokenIDs[i]), _tokenIDs[i]);
+      emit URI(_uri(_tokenIDs[i], 0), _tokenIDs[i]);
     }
   }
 
@@ -111,20 +112,29 @@ contract ERC1155Metadata is IERC1155Metadata, ERC165 {
    * @notice returns uri
    * @param tokenId Unsigned integer to convert to string
    */
-  function _uri(uint256 tokenId) private view returns (string memory) {
+  function _uri(uint256 tokenId, uint256 minLength)
+    internal
+    view
+    returns (string memory)
+  {
     // Calculate URI
     string memory baseURL = _baseMetadataURI;
     uint256 temp = tokenId;
-    uint256 length = tokenId == 0 ? 1 : 0;
+    uint256 length = tokenId == 0 ? 2 : 0;
     while (temp != 0) {
-      length++;
+      length += 2;
       temp >>= 8;
     }
-    bytes memory buffer = new bytes(2 * length);
-    for (uint256 i = 2 * length; i > 0; --i) {
+    if (length > minLength) minLength = length;
+
+    bytes memory buffer = new bytes(minLength);
+    for (uint256 i = minLength; i > minLength - length; --i) {
       buffer[i - 1] = HEX_MAP[tokenId & 0xf];
       tokenId >>= 4;
     }
+    minLength -= length;
+    while (minLength > 0) buffer[--minLength] = '0';
+
     return string(abi.encodePacked(baseURL, buffer, '.json'));
   }
 }
