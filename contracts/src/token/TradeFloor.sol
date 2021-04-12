@@ -408,8 +408,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
         return true;
       }
     }
-
-    return ERC1155.isApprovedForAll(account, operator);
+    return super.isApprovedForAll(account, operator);
   }
 
   //////////////////////////////////////////////////////////////////////////////
