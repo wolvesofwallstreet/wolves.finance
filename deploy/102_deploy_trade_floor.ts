@@ -15,7 +15,6 @@ require('hardhat-deploy');
 require('hardhat-deploy-ethers');
 
 // TODO: Fully qualified contract names
-const ADDRESS_REGISTRY_CONTRACT = 'AddressRegistry';
 const TRADE_FLOOR_CONTRACT = 'TradeFloor';
 const TRADE_FLOOR_PROXY_CONTRACT = 'TradeFloorProxy';
 const TEST_STAKING_CONTRACT = 'TestStakingContract';
@@ -33,50 +32,9 @@ const CONTRACT_METADATA_URI =
 const CONFIG_ADDRESSES = `${__dirname}/../src/config/addresses.json`;
 const GENERATED_ADDRESSES = `${__dirname}/../src/config/generated-addresses.json`;
 
-// Addressbook constants
-const ADDRESS_BOOK_OPENSEA_PROXY_KEY = ethers.utils.formatBytes32String(
-  'OPENSEA_PROXY'
-);
-
 // Helper function
 function log_step(step_string) {
   console.log(`\n==> ${step_string}\n`);
-}
-
-/**
- * Utility function to register contract addresses in the address registry
- *
- * @param deployer The account used to deploy contracts
- * @param execute The contract execution function from the hardhat-deploy plugin
- * @param registryInstance The instance of the deployed address registry contract
- * @param key The name of the contract
- * @param value The address of the contract
- */
-async function setRegistryKey(deployer, execute, registryInstance, key, value) {
-  // Check existing value
-  try {
-    const existingValue = await registryInstance.getRegistryEntry(key);
-    if (existingValue === value) {
-      console.log(`Registry value for ${key} already set`);
-      return;
-    }
-  } catch (err) {
-    console.log(`No registry value for ${key}`);
-  }
-
-  console.log(`Settings registry value for ${key}`);
-
-  // Assign new value
-  await execute(
-    ADDRESS_REGISTRY_CONTRACT,
-    {
-      from: deployer,
-      log: true,
-    },
-    'setRegistryEntry',
-    key,
-    value
-  );
 }
 
 /**
@@ -85,7 +43,7 @@ async function setRegistryKey(deployer, execute, registryInstance, key, value) {
 const func = async function (hardhat_re) {
   const { deployments, getNamedAccounts } = hardhat_re;
 
-  const { get, deploy, execute } = deployments;
+  const { get, deploy } = deployments;
   const { deployer } = await getNamedAccounts();
 
   // Get chain ID
@@ -112,25 +70,6 @@ const func = async function (hardhat_re) {
   //////////////////////////////////////////////////////////////////////////////
 
   const ADDRESS_REGISTRY_ADDRESS = generatedAddresses.addressRegistry;
-  const ADDRESS_REGISTRY_INSTANCE = await hardhat_re.ethers.getContract(
-    ADDRESS_REGISTRY_CONTRACT
-  );
-
-  //////////////////////////////////////////////////////////////////////////////
-  //
-  // Register address for OpenSea proxy
-  //
-  //////////////////////////////////////////////////////////////////////////////
-
-  log_step('Setting addresses in address registry');
-
-  await setRegistryKey(
-    deployer,
-    execute,
-    ADDRESS_REGISTRY_INSTANCE,
-    ADDRESS_BOOK_OPENSEA_PROXY_KEY,
-    '0x0000000000000000000000000000000000000000'
-  );
 
   //////////////////////////////////////////////////////////////////////////////
   //
