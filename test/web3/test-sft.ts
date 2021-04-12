@@ -345,7 +345,7 @@ describe('SFT contracts', function () {
     // The result should be empty because no default has been set
     tokenId = ethers.BigNumber.from('0x100000000');
     uri = await sftHolderContract.uri(tokenId);
-    chai.expect(uri).to.equal('');
+    chai.expect(uri).to.equal(METADATA_URI + '0100000000.json');
   });
 
   it('should have a contract metadata URI', async function () {
@@ -366,11 +366,11 @@ describe('SFT contracts', function () {
     // Default URI of first custom token should be empty initially
     const tokenId = ethers.BigNumber.from('0x100000000');
     let uri = await sftHolderContract.uri(tokenId);
-    chai.expect(uri).to.equal('');
+    chai.expect(uri).to.equal(METADATA_URI + '0100000000.json');
 
     // Set default URI for custom tokens
     const referenceUri = METADATA_URI + 'custom.json';
-    const tx = sftHolderContract.setCustomDefaultURI(referenceUri);
+    const tx = sftHolderContract.setCustomURI(tokenId, referenceUri);
     await chai.expect(tx).to.not.be.reverted;
 
     // Check the default URI for custom tokens
@@ -423,7 +423,7 @@ describe('SFT contracts', function () {
     ).to.be.true;
 
     // Set the URI of (level = 1, card ID = 1)
-    tx = sftHolderContract.setURI(tokenId, referenceUri);
+    tx = sftHolderContract.setCustomURI(tokenId, referenceUri);
     await chai.expect(tx).to.be.revertedWith('invalid tokenId');
 
     // Check the URI of (level = 1, card ID = 1)
@@ -442,6 +442,7 @@ describe('SFT contracts', function () {
     // Test parameters
     const wowsReferenceUri = METADATA_URI + '0101.json';
     const customReferenceUri = METADATA_URI + 'custom.json';
+    const baseMetadataUri = METADATA_URI + 'custom/';
     const wowsTokenId = ethers.BigNumber.from('0x01010000');
     const customTokenId = ethers.BigNumber.from('0x100000000');
 
@@ -480,7 +481,7 @@ describe('SFT contracts', function () {
     chai.expect(uri).to.equal('');
 
     // Set the URI of custom token
-    tx = sftHolderContract.setURI(customTokenId, customReferenceUri);
+    tx = sftHolderContract.setCustomURI(customTokenId, customReferenceUri);
     await chai.expect(tx).to.not.be.reverted;
 
     // Check the new URI of custom token
@@ -492,7 +493,7 @@ describe('SFT contracts', function () {
     chai.expect(uri).to.equal(wowsReferenceUri);
 
     // Set the URI of WOWS token (should fail)
-    tx = sftHolderContract.setURI(wowsTokenId, customReferenceUri);
+    tx = sftHolderContract.setCustomURI(wowsTokenId, customReferenceUri);
     await chai.expect(tx).to.be.revertedWith('invalid tokenId');
 
     // Check the default URI of WOWS token
@@ -500,12 +501,12 @@ describe('SFT contracts', function () {
     chai.expect(uri).to.equal(METADATA_URI + '0000.json');
 
     // Set the default URI of WOWS token
-    tx = sftHolderContract.setURI(0, customReferenceUri);
+    tx = sftHolderContract.setBaseMetadataURI(baseMetadataUri);
     await chai.expect(tx).to.not.be.reverted;
 
-    // Check the new URI of custom token
-    uri = await sftHolderContract.uri(customTokenId);
-    chai.expect(uri).to.equal(customReferenceUri);
+    // Check the new URI of WOWS token
+    uri = await sftHolderContract.uri(wowsTokenId);
+    chai.expect(uri).to.equal(baseMetadataUri + '0101.json');
   });
 
   it('should get card data', async function () {
