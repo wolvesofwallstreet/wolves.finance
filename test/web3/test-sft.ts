@@ -27,6 +27,9 @@ import { hardhat } from '../../src/web3/hardhat';
 
 chai.use(solidity);
 
+// Contract ABIs
+const TRADE_FLOOR_ABI = `${__dirname}/../../src/abi/contracts/src/token/TradeFloor.sol/TradeFloor.json`;
+
 // ERC-1155 metadata URI
 const METADATA_URI = 'https://4travelers.de/wolves_assets/metadata/';
 
@@ -99,6 +102,23 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
     TestStakingContractAbi,
     marketingWallet
   );
+
+  // Load ABIs
+  const tradeFloorAbi = JSON.parse(fs.readFileSync(TRADE_FLOOR_ABI).toString());
+
+  // Create {grantRole} calldata
+  const tradefloorInterface = new ethers.utils.Interface(tradeFloorAbi);
+  const proxyCallData = tradefloorInterface.encodeFunctionData('grantRole', [
+    await tradeFloorContract.MINTER_ROLE(),
+    stakingContract.address,
+  ]);
+
+  // Grant MINTER_ROLE to staking contract via proxy
+  const tx = {
+    to: tradeFloorProxyContract.address,
+    data: proxyCallData,
+  };
+  await marketingWallet.sendTransaction(tx);
 
   return {
     tokenContract,
@@ -748,9 +768,7 @@ describe('SFT contracts', function () {
 
     // Mint an NFT in the contract for the clone address
     const tradeFloorTokenId = ethers.BigNumber.from('0x10000000000000000');
-
     tx = stakingContract.stake(cryptofolioAddress, tradeFloorTokenId);
-
     /*
     // TODO
     await chai
@@ -764,8 +782,6 @@ describe('SFT contracts', function () {
         1
       );
     */
-    await chai.expect(tx).to.not.be.reverted;
-
     await chai
       .expect(tx)
       .to.emit(cryptofolioContract, 'CryptoFolioAdded')

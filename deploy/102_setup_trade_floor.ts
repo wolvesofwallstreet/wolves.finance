@@ -8,7 +8,6 @@
 
 /* eslint @typescript-eslint/no-var-requires: "off" */
 
-//const ethers = require('ethers');
 const fs = require('fs');
 
 require('hardhat-deploy');
@@ -16,7 +15,6 @@ require('hardhat-deploy-ethers');
 
 // TODO: Fully qualified contract names
 const SFT_HOLDER_CONTRACT = 'WOWSERC1155';
-const TRADE_FLOOR_CONTRACT = 'TradeFloor';
 
 // Path to generated addresses file
 const GENERATED_ADDRESSES = `${__dirname}/../src/config/generated-addresses.json`;
@@ -48,9 +46,6 @@ const func = async function (hardhat_re) {
   const SFT_HOLDER_INSTANCE = await hardhat_re.ethers.getContract(
     SFT_HOLDER_CONTRACT
   );
-  const TRADE_FLOOR_INSTANCE = await hardhat_re.ethers.getContract(
-    TRADE_FLOOR_CONTRACT
-  );
 
   //////////////////////////////////////////////////////////////////////////////
   //
@@ -61,7 +56,6 @@ const func = async function (hardhat_re) {
   log_step('Marketing wallet calls for SFT testing');
 
   const TRADE_FLOOR_PROXY_ADDRESS = generatedAddresses.tradeFloorProxy;
-  const STAKING_TEST_ADDRESS = generatedAddresses.stakingTest;
 
   //
   // 1.) Call WowsERC1155.sol::grantRole(TRADEFLOOR_ROLE, TradeFloorProxy.sol)
@@ -79,20 +73,10 @@ const func = async function (hardhat_re) {
   );
 
   //
-  // 2.) Call TradeFloor.sol::grantRole(MINTER_ROLE, TestStakingContract.sol)
+  // 2.) Call TradeFloorProxy.sol::grantRole(MINTER_ROLE, TestStakingContract.sol)
   //
-
-  await execute(
-    TRADE_FLOOR_CONTRACT,
-    {
-      from: marketingWallet,
-      to: TRADE_FLOOR_PROXY_ADDRESS,
-      log: true,
-    },
-    'grantRole',
-    await TRADE_FLOOR_INSTANCE.MINTER_ROLE(),
-    STAKING_TEST_ADDRESS
-  );
+  // This must be done manually. See {test-sft.ts}.
+  //
 };
 
 module.exports = func;
