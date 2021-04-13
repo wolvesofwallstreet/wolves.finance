@@ -18,6 +18,7 @@ require('hardhat-deploy-ethers');
 const TRADE_FLOOR_CONTRACT = 'TradeFloor';
 const TRADE_FLOOR_PROXY_CONTRACT = 'TradeFloorProxy';
 const TEST_STAKING_CONTRACT = 'TestStakingContract';
+const TRADEFLOOR_CLIENTLP_CONTRACT = 'TradeFloorClientLP';
 
 // Contract ABIs
 const TRADE_FLOOR_ABI = `${__dirname}/../src/abi/contracts/src/token/TradeFloor.sol/TradeFloor.json`;
@@ -170,6 +171,39 @@ const func = async function (hardhat_re) {
     });
 
     generatedAddresses.stakingTest = testStakingContractReceipt.address;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // Deploy TradeFloorClientLP
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  if (configAddresses.tradeFloorClientLP) {
+    log_step(
+      `Using tradeFloorClientLP contract: ${configAddresses.tradeFloorClientLP}`
+    );
+    generatedAddresses.tradeFloorClientLP = configAddresses.tradeFloorClientLP;
+  } else {
+    log_step('Deploying tradeFloorClientLP contract');
+
+    const tradeFloorClientLPContractReceipt = await deploy(
+      TRADEFLOOR_CLIENTLP_CONTRACT,
+      {
+        from: deployer,
+        args: [
+          ADDRESS_REGISTRY_ADDRESS,
+          TRADE_FLOOR_PROXY_ADDRESS,
+          generatedAddresses.uniV2Pair,
+          ethers.BigNumber.from('0x10000000000000000'),
+        ],
+        log: true,
+        deterministicDeployment: true,
+      }
+    );
+
+    generatedAddresses.tradeFloorClientLP =
+      tradeFloorClientLPContractReceipt.address;
   }
 
   //////////////////////////////////////////////////////////////////////////////
