@@ -38,13 +38,13 @@ contract TradeFloorClientLP is ITradefloorClient {
   // The SFT contract needed to check if address is cfolio
   IWOWSERC1155 private immutable _sftHolder;
 
-  // The tradefloor contract which provides cfolio NFTs
-  // This tradefloor contract calls this IMinterCallback interface functions
-  IERC1155BurnMintable public immutable tradefloor;
+  // The tradeFloor contract which provides cfolio NFTs
+  // This tradeFloor contract calls this IMinterCallback interface functions
+  IERC1155BurnMintable public immutable tradeFloor;
 
-  // The fungible NFT tokenId minted in tradefloor contract
+  // The fungible NFT tokenId minted in tradeFloor contract
   // We mint 1:1 incoming LP <-> NFT but only reward a part
-  uint256 public immutable tradefloorTokenId;
+  uint256 public immutable tradeFloorTokenId;
 
   // The reward token
   IERC20 public immutable stakingToken;
@@ -59,8 +59,8 @@ contract TradeFloorClientLP is ITradefloorClient {
    * @param addressRegistry registry containing our system addresses
    * We will use SFTHolder and Rewardhandler from this registry
    * @param stakingToken_ The token we stake in this contract
-   * @param tradefloor_ The tradefloor which manages our NFT representations
-   * @param tradefloorTokenId_ our fixed cfolio tokenId in tradefloor contract
+   * @param tradeFloor_ The tradeFloor which manages our NFT representations
+   * @param tradeFloorTokenId_ our fixed cfolio tokenId in tradeFloor contract
    * cfolio tokenIds must be >= 0x10000000000000000;
    *
    * Note: Pause operation in this context. Only calls from Proxy allowed
@@ -68,8 +68,8 @@ contract TradeFloorClientLP is ITradefloorClient {
   constructor(
     IAddressRegistry addressRegistry,
     IERC20 stakingToken_,
-    IERC1155BurnMintable tradefloor_,
-    uint256 tradefloorTokenId_
+    IERC1155BurnMintable tradeFloor_,
+    uint256 tradeFloorTokenId_
   ) {
     // The SFT holder
     _sftHolder = IWOWSERC1155(
@@ -77,10 +77,10 @@ contract TradeFloorClientLP is ITradefloorClient {
     );
     // The ERC20 token we stake
     stakingToken = stakingToken_;
-    // The tradefloor we are interacting with
-    tradefloor = tradefloor_;
+    // The tradeFloor we are interacting with
+    tradeFloor = tradeFloor_;
     // Fixed tokenId for this investment contract
-    tradefloorTokenId = tradefloorTokenId_;
+    tradeFloorTokenId = tradeFloorTokenId_;
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -95,10 +95,10 @@ contract TradeFloorClientLP is ITradefloorClient {
   function deposit(address recipient, uint256 amount) external {
     // Transfer LP token to this contract
     stakingToken.transferFrom(msg.sender, address(this), amount);
-    // mint tradefloor NFT's into recipient
-    tradefloor.mint(
+    // mint tradeFloor NFT's into recipient
+    tradeFloor.mint(
       recipient,
-      tradefloorTokenId,
+      tradeFloorTokenId,
       amount,
       _toBytes(address(this))
     );
@@ -161,8 +161,8 @@ contract TradeFloorClientLP is ITradefloorClient {
     uint256 tokenId,
     uint256 amount
   ) external override {
-    require(msg.sender == address(tradefloor), 'onBurn: only TF');
-    require(tokenId == tradefloorTokenId, 'onBurn: wrong tokenId');
+    require(msg.sender == address(tradeFloor), 'onBurn: only TF');
+    require(tokenId == tradeFloorTokenId, 'onBurn: wrong tokenId');
 
     // Transfer lpTokens back to to recipient
     stakingToken.transferFrom(address(this), recipient, amount);
