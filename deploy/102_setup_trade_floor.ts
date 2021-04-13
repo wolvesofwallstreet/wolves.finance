@@ -15,6 +15,7 @@ require('hardhat-deploy-ethers');
 
 // TODO: Fully qualified contract names
 const SFT_HOLDER_CONTRACT = 'WOWSERC1155';
+const TRADE_FLOOR_CONTRACT = 'TradeFloor';
 
 // Path to generated addresses file
 const GENERATED_ADDRESSES = `${__dirname}/../src/config/generated-addresses.json`;
@@ -46,6 +47,13 @@ const func = async function (hardhat_re) {
   const SFT_HOLDER_INSTANCE = await hardhat_re.ethers.getContract(
     SFT_HOLDER_CONTRACT
   );
+  const TRADE_FLOOR_INSTANCE = await hardhat_re.ethers.getContractFactory(
+    TRADE_FLOOR_CONTRACT
+  );
+  // attach the proxy and set marketing wallet signer
+  const TRADE_FLOOR_PROXY_INSTANCE = TRADE_FLOOR_INSTANCE.attach(
+    generatedAddresses.tradeFloorProxy
+  ).connect(TRADE_FLOOR_INSTANCE.signer.provider.getSigner(marketingWallet));
 
   //////////////////////////////////////////////////////////////////////////////
   //
@@ -54,8 +62,6 @@ const func = async function (hardhat_re) {
   //////////////////////////////////////////////////////////////////////////////
 
   log_step('Marketing wallet calls for SFT testing');
-
-  const TRADE_FLOOR_PROXY_ADDRESS = generatedAddresses.tradeFloorProxy;
 
   //
   // 1.) Call WowsERC1155.sol::grantRole(TRADEFLOOR_ROLE, TradeFloorProxy.sol)
@@ -69,14 +75,24 @@ const func = async function (hardhat_re) {
     },
     'grantRole',
     await SFT_HOLDER_INSTANCE.TRADEFLOOR_ROLE(),
-    TRADE_FLOOR_PROXY_ADDRESS
+    generatedAddresses.tradeFloorProxy
   );
 
   //
   // 2.) Call TradeFloorProxy.sol::grantRole(MINTER_ROLE, TestStakingContract.sol)
   //
-  // This must be done manually. See {test-sft.ts}.
+  await TRADE_FLOOR_PROXY_INSTANCE.grantRole(
+    await TRADE_FLOOR_PROXY_INSTANCE.MINTER_ROLE(),
+    generatedAddresses.stakingTest
+  );
+
   //
+  // 3.) Call TradeFloorProxy.sol::grantRole(MINTER_ROLE, TradingFloorClientLP.sol)
+  //
+  await TRADE_FLOOR_PROXY_INSTANCE.grantRole(
+    await TRADE_FLOOR_PROXY_INSTANCE.MINTER_ROLE(),
+    generatedAddresses.tradeFloorClientLP
+  );
 };
 
 module.exports = func;

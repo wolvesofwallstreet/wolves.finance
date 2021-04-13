@@ -223,6 +223,9 @@ const func = async function (hardhat_re) {
   const TOKEN_ADDRESS = generatedAddresses.token;
   const TOKEN_INSTANCE = await hardhat_re.ethers.getContract(TOKEN_CONTRACT);
 
+  const UNIV2_PAIR_ADDRESS = await TOKEN_INSTANCE.uniV2Pair();
+  generatedAddresses.uniV2Pair = UNIV2_PAIR_ADDRESS;
+
   //////////////////////////////////////////////////////////////////////////////
   //
   // Register address for token
@@ -281,7 +284,6 @@ const func = async function (hardhat_re) {
     log_step('Deploying stake farm');
 
     const STAKE_FARM_NAME = 'WETH/WOWS LP Farm';
-    const STAKING_TOKEN = await TOKEN_INSTANCE.uniV2Pair();
     const REWARD_TOKEN = generatedAddresses.token;
     // Address of UniV2 WETH/USDT pool, can be 0 for test
     const ROUTE = '0x0000000000000000000000000000000000000000';
@@ -291,7 +293,7 @@ const func = async function (hardhat_re) {
       args: [
         deployer,
         STAKE_FARM_NAME,
-        STAKING_TOKEN,
+        UNIV2_PAIR_ADDRESS,
         REWARD_TOKEN,
         CONTROLLER_ADDRESS,
         ROUTE,

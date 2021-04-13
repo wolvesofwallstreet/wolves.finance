@@ -103,23 +103,6 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
     marketingWallet
   );
 
-  // Load ABIs
-  const tradeFloorAbi = JSON.parse(fs.readFileSync(TRADE_FLOOR_ABI).toString());
-
-  // Create {grantRole} calldata
-  const tradefloorInterface = new ethers.utils.Interface(tradeFloorAbi);
-  const proxyCallData = tradefloorInterface.encodeFunctionData('grantRole', [
-    await tradeFloorContract.MINTER_ROLE(),
-    stakingContract.address,
-  ]);
-
-  // Grant MINTER_ROLE to staking contract via proxy
-  const tx = {
-    to: tradeFloorProxyContract.address,
-    data: proxyCallData,
-  };
-  await marketingWallet.sendTransaction(tx);
-
   return {
     tokenContract,
     rewardHandlerContract,
