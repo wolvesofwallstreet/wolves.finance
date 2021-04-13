@@ -11,6 +11,7 @@ pragma solidity >=0.7.0 <0.8.0;
 import '../../0xerc1155/interfaces/IERC20.sol';
 import '../../0xerc1155/tokens/ERC1155/ERC1155Holder.sol';
 
+import '../token/interfaces/IWOWSERC1155.sol';
 import '../utils/AddressBook.sol';
 import '../utils/interfaces/IAddressRegistry.sol';
 
@@ -70,10 +71,11 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   }
   mapping(address => Owned) private _owned;
 
-  /**
-   * @dev the registry to get the required addreeses from
-   */
-  IAddressRegistry private _addressRegistry;
+  //The registry to get the required addreeses from
+  IAddressRegistry private immutable _addressRegistry;
+
+  // Our SFT contract, needed to check for locked transfers
+  IWOWSERC1155 private immutable _sftHolder;
 
   // solhint-disable-next-line const-name-snakecase
   string public constant name = 'Wolves of Wall Street - C-Folio NFTs';
@@ -105,7 +107,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
 
   // OpenSea per-account proxy registry.
   // Used to whitelist Approvals and save GAS
-  address private _openSeaProxyRegistry;
+  OpenSeaProxyRegistry private immutable _openSeaProxyRegistry;
 
   // Rarible events
   // solhint-disable-next-line event-name-camelcase
@@ -127,11 +129,26 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
    *
    * Note: Pause operation in this context. Only calls from Proxy allowed
    */
-  constructor(IAddressRegistry addressRegistry) {
+  constructor(
+    IAddressRegistry addressRegistry,
+    OpenSeaProxyRegistry openSeaProxyRegistry
+  ) {
     // Initialize {AccessControl}
     address marketingWallet =
       addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
     _setupRole(DEFAULT_ADMIN_ROLE, marketingWallet);
+
+    // Immutable, visible for all contexts
+    _addressRegistry = addressRegistry;
+
+    // Immutable, visible for all contexts
+    _sftHolder = IWOWSERC1155(
+      addressRegistry.getRegistryEntry(AddressBook.SFT_HOLDER)
+    );
+
+    // Immutable, visible for all contexts
+    _openSeaProxyRegistry = openSeaProxyRegistry;
+
     // pause this instance
     _pause(true);
   }
@@ -139,34 +156,30 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   /**
    * @dev One time contract initializer
    *
-   * @param addressRegistry registry containing our system addresses
    * @param tokenUriPrefix The ERC-1155 metadata URI Prefix
    * @param contractUri The contract metadata URI
    */
-  function initialize(
-    IAddressRegistry addressRegistry,
-    string memory tokenUriPrefix,
-    string memory contractUri
-  ) public {
-    require(address(_addressRegistry) == address(0), 'already initialized');
+  function initialize(string memory tokenUriPrefix, string memory contractUri)
+    public
+  {
+    require(_feeRecipient == address(0), 'already initialized');
     // Set tokenURIPrefix
     _setBaseMetadataURI(tokenUriPrefix);
 
     // Initialize {AccessControl}
     address marketingWallet =
-      addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
+      _addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
     _setupRole(DEFAULT_ADMIN_ROLE, marketingWallet);
 
-    _feeRecipient = addressRegistry.getRegistryEntry(
+    _feeRecipient = _addressRegistry.getRegistryEntry(
       AddressBook.REWARD_HANDLER
     );
     _fee = 1000; // 10%
 
-    _addressRegistry = addressRegistry;
     _setContractMetadataURI(contractUri);
 
     // Rarible: Need a real wallet for setting up storefront
-    address deployer = addressRegistry.getRegistryEntry(AddressBook.DEPLOYER);
+    address deployer = _addressRegistry.getRegistryEntry(AddressBook.DEPLOYER);
     // This event initializes Rarible storefront
     emit CreateERC1155_v1(deployer, name, symbol);
     // OpenSea enable storefront editing
@@ -396,7 +409,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     override
     returns (bool)
   {
-    if (!_tradingRestricted && _openSeaProxyRegistry != address(0)) {
+    if (!_tradingRestricted && address(_openSeaProxyRegistry) != address(0)) {
       // Whitelist OpenSea proxy contract for easy trading.
       OpenSeaProxyRegistry proxyRegistry =
         OpenSeaProxyRegistry(_openSeaProxyRegistry);
@@ -405,6 +418,45 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
       }
     }
     return super.isApprovedForAll(account, operator);
+  }
+
+  /**
+   * @notice overrideable hook for single transfers.
+   */
+  function _beforeTokenTransfer(
+    address operator,
+    address from,
+    address to,
+    uint256 tokenId,
+    uint256 amount,
+    bytes memory data
+  ) internal override {
+    // Note: from must not be checked because in locked state owner is this contract.
+    require(_notLocked(to), 'destination locked');
+    super._beforeTokenTransfer(operator, from, to, tokenId, amount, data);
+  }
+
+  /**
+   * @notice overrideable hook for batch transfers.
+   */
+  function _beforeBatchTokenTransfer(
+    address operator,
+    address from,
+    address to,
+    uint256[] memory tokenIds,
+    uint256[] memory amounts,
+    bytes memory data
+  ) internal override {
+    // Note: from must not be checked because in locked state owner is this contract.
+    require(_notLocked(to), 'destination locked');
+    super._beforeBatchTokenTransfer(
+      operator,
+      from,
+      to,
+      tokenIds,
+      amounts,
+      data
+    );
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -479,14 +531,6 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
 
   function owner() public view returns (address) {
     return _addressRegistry.getRegistryEntry(AddressBook.DEPLOYER);
-  }
-
-  function setOpenSeaProxyRegistry(address openSeaProxyRegistry) external {
-    // Validate access
-    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admin');
-
-    // Update state
-    _openSeaProxyRegistry = openSeaProxyRegistry;
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -598,6 +642,17 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     _tradingRestricted = restrict;
   }
 
+  /**
+   * Set the minter of an cfolio Item. This has to be done
+   * if for example a tradefloorclient has to be updated.
+   */
+  function setMinter(uint256 tokenId, address newMinter) external {
+    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admins');
+    require(tokenId >= 0x10000000000000000, 'only tfclients');
+
+    _tokenIdToMinter[tokenId] = newMinter;
+  }
+
   //////////////////////////////////////////////////////////////////////////////
   // Internal details
   //////////////////////////////////////////////////////////////////////////////
@@ -622,7 +677,12 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
         address minter = _tokenIdToMinter[tokenId];
         require(minter != address(0), 'Token has no minter');
 
-        IMinterCallback(minter).onBurn(account, tokenId, amounts[i]);
+        IMinterCallback(minter).onBurn(
+          _msgSender(),
+          account,
+          tokenId,
+          amounts[i]
+        );
       }
     }
 
@@ -774,5 +834,22 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     assembly {
       addr := mload(add(data, 20))
     }
+  }
+
+  /**
+   * @dev Check if the address is a cfolio from a locked SFT
+   *
+   * @param test the address to test
+   *
+   * If sftHolder returns a valid tokenId, it must be < 64bit.
+   * Even Cryptofolio supports multiple Tradefloors, the main
+   * SFT lock handling happens only in this contract instance.
+   */
+  function _notLocked(address test) private view returns (bool) {
+    uint256 tokenId;
+    return
+      test == address(0) ||
+      (tokenId = _sftHolder.addressToTokenId(test)) == uint256(-1) ||
+      _tokenInfos[uint64(tokenId)].minted == false;
   }
 }

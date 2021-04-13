@@ -31,6 +31,7 @@ const CONTRACT_METADATA_URI =
 // Path to address files
 const CONFIG_ADDRESSES = `${__dirname}/../src/config/addresses.json`;
 const GENERATED_ADDRESSES = `${__dirname}/../src/config/generated-addresses.json`;
+const FORCE_REBUILD = process.env.FORCE_REBUILD !== undefined;
 
 // Helper function
 function log_step(step_string) {
@@ -57,7 +58,7 @@ const func = async function (hardhat_re) {
     fs.readFileSync(GENERATED_ADDRESSES).toString()
   );
 
-  const configAddresses = configNetworks[chainId] || {};
+  const configAddresses = (!FORCE_REBUILD && configNetworks[chainId]) || {};
   const generatedAddresses = generatedNetworks[chainId] || {};
 
   // Load ABIs
@@ -85,7 +86,11 @@ const func = async function (hardhat_re) {
 
     const tradeFloorReceipt = await deploy(TRADE_FLOOR_CONTRACT, {
       from: deployer,
-      args: [ADDRESS_REGISTRY_ADDRESS],
+      args: [
+        ADDRESS_REGISTRY_ADDRESS,
+        configAddresses.openSeaProxy ||
+          '0x0000000000000000000000000000000000000000',
+      ],
       log: true,
       deterministicDeployment: true,
     });
