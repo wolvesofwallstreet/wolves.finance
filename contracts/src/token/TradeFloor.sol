@@ -300,7 +300,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     tokenIds[0] = tokenId;
     values[0] = value;
 
-    _onBurn(account, tokenIds, values);
+    _onBatchBurn(account, tokenIds, values);
   }
 
   /**
@@ -317,7 +317,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
 
     // Call parent
     super.burnBatch(account, tokenIds, values);
-    _onBurn(account, tokenIds, values);
+    _onBatchBurn(account, tokenIds, values);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -342,14 +342,19 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     super.safeTransferFrom(from, to, tokenId, amount, data);
 
     if ((tokenId >> 64) == 0) {
+      // Update state
       _relinkOwner(from, to, uint64(tokenId));
-      // Invoke callback
     } else {
       // Look up minter
       address minter = _tokenIdToMinter[tokenId];
       require(minter != address(0), 'Invalid minter for token');
 
-      IMinterCallback(minter).onTransferFrom(from, to, tokenId, amount);
+      // Invoke callback
+      uint256[] memory tokenIds = new uint256[](1);
+      uint256[] memory amounts = new uint256[](1);
+      tokenIds[0] = tokenId;
+      amounts[0] = amount;
+      IMinterCallback(minter).onBatchTransferFrom(from, to, tokenIds, amounts);
     }
   }
 
@@ -371,17 +376,32 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     // Call parent
     super.safeBatchTransferFrom(from, to, tokenIds, amounts, data);
 
-    // Invoke callbacks
-    for (uint256 i = 0; i < tokenIds.length; i++) {
-      uint256 tokenId = tokenIds[i];
-      if ((tokenId >> 64) == 0) {
-        _relinkOwner(from, to, uint64(tokenId));
-      } else {
-        address minter = _tokenIdToMinter[tokenId];
-        require(minter != address(0), 'Invalid minter for token');
-
-        IMinterCallback(minter).onTransferFrom(from, to, tokenId, amounts[i]);
+    if (tokenIds.length > 0) {
+      // Validate parameters
+      address firstMinter = _tokenIdToMinter[tokenIds[0]];
+      require(firstMinter != address(0), 'Invalid minter of tokens');
+      for (uint256 i = 1; i < tokenIds.length; i++) {
+        require(
+          firstMinter == _tokenIdToMinter[tokenIds[i]],
+          'All tokens must have same minter'
+        );
       }
+
+      // Update state
+      for (uint256 i = 0; i < tokenIds.length; i++) {
+        uint256 tokenId = tokenIds[i];
+        if ((tokenId >> 64) == 0) {
+          _relinkOwner(from, to, uint64(tokenId));
+        }
+      }
+
+      // Invoke callback
+      IMinterCallback(firstMinter).onBatchTransferFrom(
+        from,
+        to,
+        tokenIds,
+        amounts
+      );
     }
   }
 
@@ -549,7 +569,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     tokenIds[0] = tokenId;
     uint256[] memory amounts = new uint256[](1);
     amounts[0] = amount;
-    _onTokensReceived(from, tokenIds, amounts);
+    _onBatchTokensReceived(from, tokenIds, amounts);
 
     return super.onERC1155Received(operator, from, tokenId, amount, data);
   }
@@ -561,7 +581,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     uint256[] memory amounts,
     bytes memory data
   ) public override returns (bytes4) {
-    _onTokensReceived(from, tokenIds, amounts);
+    _onBatchTokensReceived(from, tokenIds, amounts);
 
     // This contract supports safe ERC-1155 transfers
     return
@@ -657,33 +677,46 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   // Internal details
   //////////////////////////////////////////////////////////////////////////////
 
-  function _onBurn(
+  /**
+   * @dev Handle a batch burn
+   *
+   * Precondition: All tokens must have the same minter.
+   *
+   * @param account The account owning the tokens
+   * @param tokenIds The token IDs being burned
+   * @param amounts The amounts of tokens being burned
+   */
+  function _onBatchBurn(
     address account,
     uint256[] memory tokenIds,
     uint256[] memory amounts
   ) private {
-    // Count tokenIds < 64 Bit
     uint256 numStakes = 0;
 
-    // Invoke callbacks / count SFT's
     for (uint256 i = 0; i < tokenIds.length; i++) {
       uint256 tokenId = tokenIds[i];
 
-      // Unstake SFT on burn
+      // Count tokenIds < 64 Bit
       if ((tokenId >> 64) == 0) {
         ++numStakes;
-        _relinkOwner(account, address(0), uint64(tokenId));
-      } else {
-        address minter = _tokenIdToMinter[tokenId];
-        require(minter != address(0), 'Token has no minter');
-
-        IMinterCallback(minter).onBurn(
-          _msgSender(),
-          account,
-          tokenId,
-          amounts[i]
-        );
       }
+
+      // Unstake SFT on burn
+      if ((tokenId >> 64) == 0) {
+        _relinkOwner(account, address(0), uint64(tokenId));
+      }
+    }
+
+    // Invoke callbacks
+    if (tokenIds.length > 0) {
+      address minter = _tokenIdToMinter[tokenIds[0]];
+
+      IMinterCallback(minter).onBatchBurn(
+        _msgSender(),
+        account,
+        tokenIds,
+        amounts
+      );
     }
 
     // Unstake SFTs if required
@@ -698,10 +731,12 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
           unstakeAmounts[numStakes] = 1;
         }
       }
+
       // Load address
       IERC1155 sftContract =
         IERC1155(_addressRegistry.getRegistryEntry(AddressBook.SFT_HOLDER));
 
+      // Update state
       sftContract.safeBatchTransferFrom(
         address(this),
         _msgSender(),
@@ -739,7 +774,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   /**
    * @dev SFT Token arrived, provide a NFT
    */
-  function _onTokensReceived(
+  function _onBatchTokensReceived(
     address from,
     uint256[] memory tokenIds,
     uint256[] memory amounts

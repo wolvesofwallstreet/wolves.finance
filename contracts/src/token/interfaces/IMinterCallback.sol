@@ -9,36 +9,37 @@
 pragma solidity >=0.7.0 <0.8.0;
 
 /**
- * @dev Interface to receive callbacks when minted tokens are burnt
+ * @dev Interface to receive callbacks when minted tokens are transfered or
+ * burnt
  */
 interface IMinterCallback {
   /**
-   * @dev Called when a token minted by a minter is transferred
+   * @dev Called when tokens minted by a minter are transferred
    *
    * @param from The account sending the token
    * @param to The account receiving the token
-   * @param tokenId The ERC-1155 token ID
-   * @param amount The amount of tokens transfered
+   * @param tokenIds The ERC-1155 token IDs
+   * @param amounts The amounts of tokens being transfered
    */
-  function onTransferFrom(
+  function onBatchTransferFrom(
     address from,
     address to,
-    uint256 tokenId,
-    uint256 amount
+    uint256[] memory tokenIds,
+    uint256[] memory amounts
   ) external;
 
   /**
-   * @dev Called when a token minted by a minter is burned
+   * @dev Called when tokens minted by a minter are burned
    *
    * @param recipient The account used for payback investments
    * @param account The account owning the token
-   * @param tokenId The ERC-1155 token ID
-   * @param amount The amount of tokens burned
+   * @param tokenIds The ERC-1155 token IDs
+   * @param amounts The amounts of tokens being burned
    */
-  function onBurn(
+  function onBatchBurn(
     address recipient,
     address account,
-    uint256 tokenId,
-    uint256 amount
+    uint256[] memory tokenIds,
+    uint256[] memory amounts
   ) external;
 }

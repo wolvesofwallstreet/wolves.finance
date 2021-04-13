@@ -132,16 +132,16 @@ contract TradeFloorClientLP is ITradefloorClient {
   /**
    * @dev Called from Tradefloor of tokens have been transfered.
    *
-   * See {IMinterCallback-_onTransferFrom}.
+   * See {IMinterCallback-_onBatchTransferFrom}.
    *
    * We have to transfer / remove reward shares here
    * depending if from / to is a c-folio or not
    */
-  function onTransferFrom(
+  function onBatchTransferFrom(
     address from,
     address to,
-    uint256 tokenId,
-    uint256 amount
+    uint256[] memory tokenIds,
+    uint256[] memory amounts
   ) external override {
     // TODO: transfer elements from -> to
     // -> remove / add reward share in case from/to is c-folio
@@ -150,24 +150,31 @@ contract TradeFloorClientLP is ITradefloorClient {
   /**
    * @dev Called from Tradefloor if tokens have been burned.
    *
-   * See {IMinterCallback-_onBurn}.
+   * See {IMinterCallback-_onBatchBurn}.
    *
    * We have to remove reward shares here, and payout underlying
    * assets. Pending rewards can be left inside SFT.
    */
-  function onBurn(
+  function onBatchBurn(
     address recipient,
     address, /* account*/
-    uint256 tokenId,
-    uint256 amount
+    uint256[] memory tokenIds,
+    uint256[] memory amounts
   ) external override {
+    // Validate sender
     require(msg.sender == address(tradeFloor), 'onBurn: only TF');
-    require(tokenId == tradeFloorTokenId, 'onBurn: wrong tokenId');
 
-    // Transfer lpTokens back to to recipient
-    stakingToken.transferFrom(address(this), recipient, amount);
+    for (uint256 i = 0; i < tokenIds.length; ++i) {
+      uint256 tokenId = tokenIds[i];
+      uint256 amount = amounts[i];
 
-    // TODO: handle rewards
+      require(tokenId == tradeFloorTokenId, 'onBurn: wrong tokenId');
+
+      // Transfer lpTokens back to to recipient
+      stakingToken.transferFrom(address(this), recipient, amount);
+
+      // TODO: handle rewards
+    }
   }
 
   //////////////////////////////////////////////////////////////////////////////

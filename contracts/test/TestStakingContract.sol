@@ -26,23 +26,23 @@ contract TestStakingContract is IMinterCallback, ERC1155Holder {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev See {IMinterCallback-onTransferFrom}.
+   * @dev See {IMinterCallback-onBatchTransferFrom}.
    */
-  function onTransferFrom(
+  function onBatchTransferFrom(
     address from,
     address to,
-    uint256 tokenId,
-    uint256 amount
+    uint256[] memory tokenIds,
+    uint256[] memory amounts
   ) public override {}
 
   /**
-   * @dev See {IMinterCallback-onBurn}.
+   * @dev See {IMinterCallback-onBatchBurn}.
    */
-  function onBurn(
+  function onBatchBurn(
     address recipient,
     address account,
-    uint256 tokenId,
-    uint256 amount
+    uint256[] memory tokenIds,
+    uint256[] memory amounts
   ) public override {}
 
   //////////////////////////////////////////////////////////////////////////////

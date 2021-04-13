@@ -190,7 +190,7 @@ contract WOWSCryptofolio is ERC1155Holder, IWOWSCryptofolio {
     amounts[0] = amount;
 
     // Update state
-    _onTokensReceived(tokenIds, amounts);
+    _onBatchTokensReceived(tokenIds, amounts);
 
     // This contract supports safe ERC-1155 transfers
     return super.onERC1155Received(operator, from, tokenId, amount, data);
@@ -204,7 +204,7 @@ contract WOWSCryptofolio is ERC1155Holder, IWOWSCryptofolio {
     bytes memory data
   ) public override returns (bytes4) {
     // Update state
-    _onTokensReceived(tokenIds, amounts);
+    _onBatchTokensReceived(tokenIds, amounts);
 
     // This contract supports safe ERC-1155 transfers
     return
@@ -221,7 +221,7 @@ contract WOWSCryptofolio is ERC1155Holder, IWOWSCryptofolio {
    * This function is only allowed to be called from one of our pseudo
    * TokenReceiver contracts.
    */
-  function _onTokensReceived(
+  function _onBatchTokensReceived(
     uint256[] memory tokenIds,
     uint256[] memory amounts
   ) internal {
