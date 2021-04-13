@@ -30,11 +30,13 @@ interface IMinterCallback {
   /**
    * @dev Called when a token minted by a minter is burned
    *
+   * @param recipient The account used for payback investments
    * @param account The account owning the token
    * @param tokenId The ERC-1155 token ID
    * @param amount The amount of tokens burned
    */
   function onBurn(
+    address recipient,
     address account,
     uint256 tokenId,
     uint256 amount

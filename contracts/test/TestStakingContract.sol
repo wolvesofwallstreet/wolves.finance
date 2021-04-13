@@ -39,6 +39,7 @@ contract TestStakingContract is IMinterCallback, ERC1155Holder {
    * @dev See {IMinterCallback-onBurn}.
    */
   function onBurn(
+    address recipient,
     address account,
     uint256 tokenId,
     uint256 amount
