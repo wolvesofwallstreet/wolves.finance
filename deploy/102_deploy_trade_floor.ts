@@ -108,7 +108,6 @@ const func = async function (hardhat_re) {
 
   const tradefloorInterface = new ethers.utils.Interface(tradeFloorAbi);
   const proxyCallData = tradefloorInterface.encodeFunctionData('initialize', [
-    ADDRESS_REGISTRY_ADDRESS,
     METADATA_URI,
     CONTRACT_METADATA_URI,
   ]);
