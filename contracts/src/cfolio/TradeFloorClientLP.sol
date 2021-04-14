@@ -25,7 +25,7 @@ import '../utils/interfaces/IAddressRegistry.sol';
  * In case the recipient is an SFT Cryptofolio, we add shares
  * to the Rewardpool depending the value of the Cryptofolio.
  *
- * No rewards are provided if the recipient is not a cfolio
+ * No rewards are provided if the recipient is not a c-folio
  *
  * We only implement deposit(), transfer and burn are performed
  * with burning / transfering the TF NFT's in TF contract
@@ -35,10 +35,10 @@ contract TradeFloorClientLP is ITradefloorClient {
   // State
   //////////////////////////////////////////////////////////////////////////////
 
-  // The SFT contract needed to check if address is cfolio
+  // The SFT contract needed to check if address is c-folio
   IWOWSERC1155 private immutable _sftHolder;
 
-  // The tradeFloor contract which provides cfolio NFTs
+  // The tradeFloor contract which provides c-folio NFTs
   // This tradeFloor contract calls this IMinterCallback interface functions
   IERC1155BurnMintable public immutable tradeFloor;
 
@@ -60,8 +60,8 @@ contract TradeFloorClientLP is ITradefloorClient {
    * We will use SFTHolder and Rewardhandler from this registry
    * @param stakingToken_ The token we stake in this contract
    * @param tradeFloor_ The tradeFloor which manages our NFT representations
-   * @param tradeFloorTokenId_ our fixed cfolio tokenId in tradeFloor contract
-   * cfolio tokenIds must be >= 0x10000000000000000;
+   * @param tradeFloorTokenId_ our fixed c-folio tokenId in tradeFloor contract
+   * c-folio tokenIds must be >= 0x10000000000000000;
    *
    * Note: Pause operation in this context. Only calls from Proxy allowed
    */
@@ -144,7 +144,7 @@ contract TradeFloorClientLP is ITradefloorClient {
     uint256 amount
   ) external override {
     // TODO: transfer elements from -> to
-    // -> remove / add reward share in case from/to is cfolio
+    // -> remove / add reward share in case from/to is c-folio
   }
 
   /**

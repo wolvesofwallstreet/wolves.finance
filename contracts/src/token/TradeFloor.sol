@@ -643,7 +643,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   }
 
   /**
-   * Set the minter of an cfolio Item. This has to be done
+   * Set the minter of an c-folio Item. This has to be done
    * if for example a tradefloorclient has to be updated.
    */
   function setMinter(uint256 tokenId, address newMinter) external {
@@ -837,7 +837,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   }
 
   /**
-   * @dev Check if the address is a cfolio from a locked SFT
+   * @dev Check if the address is a c-folio from a locked SFT
    *
    * @param test the address to test
    *
