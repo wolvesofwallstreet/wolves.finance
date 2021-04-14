@@ -1,0 +1,33 @@
+/*
+ * Copyright (C) 2020 wolves.finance developers
+ * This file is part of wolves.finance - https://github.com/peak3d/wolves.finance
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * See LICENSE.txt for more information.
+ */
+
+.tk-vincente-bold {
+  font-family: 'vincente', serif;
+  font-weight: bold;
+}
+
+.tk-vincente-lightbold {
+  font-family: 'vincente', serif;
+  font-weight: 500;
+}
+
+.tk-grotesk-bold {
+  font-family: 'aktiv-grotesk-condensed';
+  font-weight: bold;
+  line-height: 1.4;
+}
+
+.tk-grotesk-lightbold {
+  font-family: 'aktiv-grotesk-condensed';
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.font24 {
+  font-size: 24px;
+}

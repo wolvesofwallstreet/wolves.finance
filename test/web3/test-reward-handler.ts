@@ -1,0 +1,388 @@
+/*
+ * Copyright (C) 2021 The Wolfpack
+ * This file is part of wolves.finance - https://github.com/wolvesofwallstreet/wolves.finance
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * See LICENSE.txt for more information.
+ */
+
+/* eslint @typescript-eslint/no-unused-expressions: "off" */
+/* eslint @typescript-eslint/no-unused-vars: "off" */
+
+import type { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
+import chai from 'chai';
+import { solidity } from 'ethereum-waffle';
+import { ethers } from 'ethers';
+import fs from 'fs';
+
+import BoosterAbi from '../../src/abi/contracts/src/booster/Booster.sol/Booster.json';
+import RewardHandlerAbi from '../../src/abi/contracts/src/investment/RewardHandler.sol/RewardHandler.json';
+import WOWSTokenAbi from '../../src/abi/contracts/src/token/WOWSErc20.sol/WowsToken.json';
+import { hardhat } from '../../src/web3/hardhat';
+
+chai.use(solidity);
+
+// Path to generated address registry file
+const GENERATED_ADDRESSES = `${__dirname}/../../src/config/generated-addresses.json`;
+
+// Useful constant
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+
+// Addresses are lazy-loaded
+let addresses = null;
+
+// Utility function to get addresses from the address registry file
+async function getAddresses() {
+  if (addresses === null) {
+    // Get chain ID
+    const chainId = await hardhat.getChainId();
+
+    // Load contract addresses
+    const generatedNetworks = JSON.parse(
+      fs.readFileSync(GENERATED_ADDRESSES).toString()
+    );
+    addresses = generatedNetworks[chainId] || {};
+  }
+
+  return addresses;
+}
+
+// Fixture setup
+const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
+  // Ensure we start from a fresh deployment
+  await deployments.fixture();
+
+  // Get the Signers
+  const [_, marketingWallet] = await hardhat.ethers.getSigners();
+
+  // Get contract addresses
+  const addresses = await getAddresses();
+
+  // Construct the contracts
+  const tokenContract = new ethers.Contract(
+    addresses.token,
+    WOWSTokenAbi,
+    marketingWallet
+  );
+  const boosterContract = new ethers.Contract(
+    addresses.booster,
+    BoosterAbi,
+    marketingWallet
+  );
+  const rewardHandlerContract = new ethers.Contract(
+    addresses.rewardHandler,
+    RewardHandlerAbi,
+    marketingWallet
+  );
+
+  // Grant permissions
+  const TESTER_ROLE = await rewardHandlerContract.TESTER_ROLE();
+
+  const tx = rewardHandlerContract.grantRole(
+    TESTER_ROLE, // Role
+    marketingWallet.address // Account
+  );
+  await chai.expect(tx).to.emit(rewardHandlerContract, 'RoleGranted').withArgs(
+    TESTER_ROLE, // Role
+    marketingWallet.address, // Account
+    marketingWallet.address // Sender
+  );
+
+  return {
+    tokenContract,
+    boosterContract,
+    rewardHandlerContract,
+  };
+});
+
+// Extended fixture that grants the rewarder role
+async function setupTestForRewarder(marketingWalletAddress: string) {
+  const {
+    tokenContract,
+    boosterContract,
+    rewardHandlerContract,
+  } = await setupTest();
+
+  const REWARD_ROLE = await rewardHandlerContract.REWARD_ROLE();
+
+  const tx = rewardHandlerContract.grantRole(
+    REWARD_ROLE, // Role
+    marketingWalletAddress // Account
+  );
+  await chai.expect(tx).to.emit(rewardHandlerContract, 'RoleGranted').withArgs(
+    REWARD_ROLE, // Role
+    marketingWalletAddress, // Account
+    marketingWalletAddress // Sender
+  );
+
+  return {
+    tokenContract,
+    boosterContract,
+    rewardHandlerContract,
+  };
+}
+
+describe('Reward handler', function () {
+  let signer: SignerWithAddress;
+  let marketingWallet: SignerWithAddress;
+  let teamWallet: SignerWithAddress;
+
+  before(async function () {
+    this.timeout(30 * 1000);
+
+    // Get the Signers
+    [signer, marketingWallet, teamWallet] = await hardhat.ethers.getSigners();
+  });
+
+  it('should set minimal mint amount', async function () {
+    this.timeout(30 * 1000);
+
+    const { rewardHandlerContract } = await setupTest();
+
+    // Test parameters
+    const minimalMintAmount = '100000000000000000'; // 0.1 WOWS
+
+    // Check initial value using private testing API
+    let amount = await rewardHandlerContract.getMinimalMintAmount();
+    chai.expect(amount).to.equal('100000000000000000000'); // 100 WOWS
+
+    // Set amount using public API
+    const tx = rewardHandlerContract.setMinimalMintAmount(minimalMintAmount);
+    await chai.expect(tx).to.not.be.reverted;
+
+    // Check updated amount using private testing API
+    amount = await rewardHandlerContract.getMinimalMintAmount();
+    chai.expect(amount).to.equal(minimalMintAmount);
+  });
+
+  it('should distribute to targets', async function () {
+    this.timeout(30 * 1000);
+
+    const {
+      tokenContract,
+      boosterContract,
+      rewardHandlerContract,
+    } = await setupTest();
+
+    // Test parameters
+    const amountToDistribute = '1000000000000000000'; // 1 WOWS
+
+    // Verify no initial funds
+    let distributeAmount = await rewardHandlerContract.getDistributeAmount();
+    chai.expect(distributeAmount).to.equal('0');
+
+    // Distribute with no funds should fail
+    let tx = rewardHandlerContract.distributeAll();
+    await chai.expect(tx).to.be.revertedWith('nothing to distribute');
+
+    // Adding funds without role should revert
+    tx = rewardHandlerContract.distribute2(
+      teamWallet.address,
+      amountToDistribute,
+      10 * 1e6
+    );
+    await chai.expect(tx).to.be.revertedWith('Only rewarders');
+
+    // Grant permissions
+    const REWARD_ROLE = await rewardHandlerContract.REWARD_ROLE();
+
+    tx = rewardHandlerContract.grantRole(
+      REWARD_ROLE, // Role
+      marketingWallet.address // Account
+    );
+    await chai
+      .expect(tx)
+      .to.emit(rewardHandlerContract, 'RoleGranted')
+      .withArgs(
+        REWARD_ROLE, // Role
+        marketingWallet.address, // Account
+        marketingWallet.address // Sender
+      );
+
+    // Adding funds with invalid fee should revert
+    tx = rewardHandlerContract.distribute2(
+      teamWallet.address,
+      amountToDistribute,
+      1 * 1e7
+    );
+    await chai.expect(tx).to.be.revertedWith('subtraction overflow');
+
+    // Add funds to the reward handler
+    tx = rewardHandlerContract.distribute2(
+      teamWallet.address,
+      amountToDistribute,
+      1 * 1e5
+    );
+
+    // Check logs for tokens being minted
+    await chai.expect(tx).to.emit(tokenContract, 'Transfer').withArgs(
+      ZERO_ADDRESS,
+      rewardHandlerContract.address,
+      '100000000000000000000' // 100 WOWS
+    );
+
+    // Check logs for tokens being transfered
+    await chai.expect(tx).to.emit(tokenContract, 'Transfer').withArgs(
+      rewardHandlerContract.address,
+      teamWallet.address,
+      '900000000000000000' // 0.9 WOWS
+    );
+
+    // Check that distribute amount was updated
+    distributeAmount = await rewardHandlerContract.getDistributeAmount();
+    chai.expect(distributeAmount).to.equal('100000000000000000'); // 0.1 WOWS
+
+    // Distribute with funds now should succeed
+    tx = rewardHandlerContract.distributeAll();
+
+    // Check logs for tokens being transfered
+    await chai.expect(tx).to.emit(tokenContract, 'Transfer').withArgs(
+      rewardHandlerContract.address,
+      teamWallet.address,
+      '15000000000000000' // 0.015 WOWS
+    );
+    await chai.expect(tx).to.emit(tokenContract, 'Transfer').withArgs(
+      rewardHandlerContract.address,
+      marketingWallet.address,
+      '15000000000000000' // 0.015 WOWS
+    );
+    await chai.expect(tx).to.emit(tokenContract, 'Transfer').withArgs(
+      rewardHandlerContract.address,
+      boosterContract.address,
+      '40000000000000000' // 0.04 WOWS
+    );
+
+    // Check that distribute amount was reset
+    distributeAmount = await rewardHandlerContract.getDistributeAmount();
+    chai.expect(distributeAmount).to.equal('0');
+  });
+
+  it('should terminate contract without selfdestruct', async function () {
+    this.timeout(30 * 1000);
+
+    const {
+      tokenContract,
+      boosterContract,
+      rewardHandlerContract,
+    } = await setupTestForRewarder(marketingWallet.address);
+
+    // Test parameters
+    const amountToDistribute = '1000000000000000000'; // 1 WOWS
+
+    // Add funds to the reward handler
+    let tx = rewardHandlerContract.distribute2(
+      teamWallet.address,
+      amountToDistribute,
+      1 * 1e5
+    );
+    await chai.expect(tx).to.emit(tokenContract, 'Transfer').withArgs(
+      ZERO_ADDRESS,
+      rewardHandlerContract.address,
+      '100000000000000000000' // 100 WOWS
+    );
+    await chai.expect(tx).to.emit(tokenContract, 'Transfer').withArgs(
+      rewardHandlerContract.address,
+      teamWallet.address,
+      '900000000000000000' // 0.9 WOWS
+    );
+
+    // Transfer to address 0 should revert
+    tx = rewardHandlerContract.terminate(ZERO_ADDRESS, false);
+    await chai.expect(tx).to.be.revertedWith("Can't transfer to address 0");
+
+    // Transfer to self should revert
+    //tx = rewardHandlerContract.terminate(rewardHandlerContract.address, false); // TODO
+
+    // In production, this must be a contract that inherits from IRewardHandler
+    const newRewardHandler = marketingWallet.address;
+
+    // Terminate and transfer funds
+    tx = rewardHandlerContract.terminate(newRewardHandler, false);
+    await chai.expect(tx).to.emit(tokenContract, 'Transfer').withArgs(
+      rewardHandlerContract.address,
+      teamWallet.address,
+      '15000000000000000' // 0.015 WOWS
+    );
+    await chai.expect(tx).to.emit(tokenContract, 'Transfer').withArgs(
+      rewardHandlerContract.address,
+      marketingWallet.address,
+      '15000000000000000' // 0.015 WOWS
+    );
+    await chai.expect(tx).to.emit(tokenContract, 'Transfer').withArgs(
+      rewardHandlerContract.address,
+      boosterContract.address,
+      '40000000000000000' // 0.04 WOWS
+    );
+
+    // Second call to terminate should revert
+    chai.expect(teamWallet.address).to.be.properAddress;
+    tx = rewardHandlerContract.terminate(teamWallet.address, false);
+    await chai.expect(tx).to.not.be.reverted;
+
+    // Verify contract still exists
+    const amount = await rewardHandlerContract.getMinimalMintAmount();
+    chai.expect(amount).to.equal('100000000000000000000'); // 100 WOWS
+  });
+
+  it('should terminate contract with selfdestruct', async function () {
+    this.timeout(30 * 1000);
+
+    const {
+      tokenContract,
+      boosterContract,
+      rewardHandlerContract,
+    } = await setupTestForRewarder(marketingWallet.address);
+
+    // Test parameters
+    const amountToDistribute = '1000000000000000000'; // 1 WOWS
+
+    // Add funds to the reward handler
+    let tx = rewardHandlerContract.distribute2(
+      teamWallet.address,
+      amountToDistribute,
+      1 * 1e5
+    );
+    await chai.expect(tx).to.emit(tokenContract, 'Transfer').withArgs(
+      ZERO_ADDRESS,
+      rewardHandlerContract.address,
+      '100000000000000000000' // 100 WOWS
+    );
+    await chai.expect(tx).to.emit(tokenContract, 'Transfer').withArgs(
+      rewardHandlerContract.address,
+      teamWallet.address,
+      '900000000000000000' // 0.9 WOWS
+    );
+
+    // Transfer to address 0 should revert
+    tx = rewardHandlerContract.terminate(ZERO_ADDRESS, true);
+    await chai.expect(tx).to.be.revertedWith("Can't transfer to address 0");
+
+    // Transfer to self should revert
+    //tx = rewardHandlerContract.terminate(rewardHandlerContract.address, true); // TODO
+
+    // In production, this must be a contract that inherits from IRewardHandler
+    const newRewardHandler = marketingWallet.address;
+
+    // Terminate and transfer funds
+    tx = rewardHandlerContract.terminate(newRewardHandler, true);
+    await chai.expect(tx).to.emit(tokenContract, 'Transfer').withArgs(
+      rewardHandlerContract.address,
+      teamWallet.address,
+      '15000000000000000' // 0.015 WOWS
+    );
+    await chai.expect(tx).to.emit(tokenContract, 'Transfer').withArgs(
+      rewardHandlerContract.address,
+      marketingWallet.address,
+      '15000000000000000' // 0.015 WOWS
+    );
+    await chai.expect(tx).to.emit(tokenContract, 'Transfer').withArgs(
+      rewardHandlerContract.address,
+      boosterContract.address,
+      '40000000000000000' // 0.04 WOWS
+    );
+
+    // Verify contract doesn't exist
+    tx = rewardHandlerContract.getMinimalMintAmount();
+    chai.expect(tx).to.be.reverted;
+  });
+});

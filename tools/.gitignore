@@ -1,0 +1,8 @@
+# Dependency build files
+build/
+
+# Dependency repos
+repos/
+
+# Build system stamps
+stamps/

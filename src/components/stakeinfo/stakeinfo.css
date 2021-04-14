@@ -1,0 +1,57 @@
+/*
+ * Copyright (C) 2020 wolves.finance developers
+ * This file is part of wolves.finance - https://github.com/peak3d/wolves.finance
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * See the file LICENSES/README.md for more information.
+ */
+
+.info-hint {
+  color: white;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.info-progress {
+  position: absolute;
+  display: block;
+  height: 2px;
+  bottom: 2px;
+  background-color: whitesmoke;
+  animation: progressBar 30s linear;
+  animation-fill-mode: both;
+  animation-iteration-count: infinite;
+  -webkit-animation: progressBar 30s linear;
+  -webkit-animation-fill-mode: both;
+  -webkit-animation-iteration-count: infinite;
+  -moz-animation: progressBar 30s linear;
+  -moz-animation-fill-mode: both;
+  -moz-animation-iteration-count: infinite;
+}
+
+@keyframes progressBar {
+  0% {
+    width: calc(100% - 4px);
+  }
+  100% {
+    width: 0;
+  }
+}
+
+@-webkit-keyframes progressBar {
+  0% {
+    width: calc(100% - 4px);
+  }
+  100% {
+    width: 0;
+  }
+}
+
+@-moz-keyframes progressBar {
+  0% {
+    width: calc(100% - 4px);
+  }
+  100% {
+    width: 0;
+  }
+}

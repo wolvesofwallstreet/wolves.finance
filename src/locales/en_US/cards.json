@@ -1,0 +1,264 @@
+{
+  "levelNames": ["PRODIGY", "PHENOM", "ELITE", "ALPHA"],
+  "myPackLevelDescriptions": [
+    "1/20 RARITY - 25% PROFIT SHARE",
+    "1/20 RARITY - 50% PROFIT SHARE",
+    "1/0 RARITY - 75% PROFIT SHARE",
+    "1/0 RARITY - 100% PROFIT SHARE"
+  ],
+
+  "levels": [
+    {
+      "levelId": 0,
+      "chainRef": 0,
+      "type": "bois",
+      "quantity": 0,
+      "price": 1,
+      "autoUpgrade": "2 MONTHS",
+      "profitReward": 25,
+      "header": "1/{Q} RARITY - 25% PROFIT SHARE",
+      "cards": [
+        {
+          "id": "bugsey",
+          "chainRef": 0,
+          "minted": 0,
+          "name": "BUGSEY EYES",
+          "motto": "I’M ABOUT TO SELL YOU A SAUSAGE WITH JUST THE SIZZLE",
+          "description": "He has sure-fire ways to build anticipation and excitement for his multiple businesses. Our Bugsey has an intense stare over there and is hungry for that sizzle. By the time the product’s launched, he’s found the hype somewhere else. On a never-ending quest for thrills, he’s the hound with hunger running through his blood.",
+          "type": "image",
+          "url": "https://4travelers.de/wolves_assets/cards/bois/level1/BUGSEY-{res}.jpg"
+        },
+        {
+          "id": "dobey",
+          "chainRef": 1,
+          "minted": 0,
+          "name": "DREW DOBEY",
+          "motto": "HE’LL RUN YOU AND YOUR IDEA UP THE FLAGPOLE",
+          "description": "An aggressive disposition ensures Drew goes hard at his game. He’s the boi who’ll sell your Mum for a profit. Cutting razor sharp deals with a cheeky smile, he uses his OTT tactics to win at safeguarding his future investments.",
+          "type": "image",
+          "url": "https://4travelers.de/wolves_assets/cards/bois/level1/DOBEY-{res}.jpg"
+        },
+        {
+          "id": "kwai",
+          "chainRef": 2,
+          "minted": 0,
+          "name": "KWAI PUGLEY",
+          "motto": "HE PULLED AN ALL-NIGHTER AND IS READY TO POWWOW YOUR PROJECT IDEA OFF PISTE",
+          "description": "Son of famous Chinese nobility who rejected his family’s wealth to make it on his own, Kwai came to Britain after spending his youth in pointless rebellion. To make up for lost time and to save face, he proves himself by pulling all-nighters and takes your projects to places you've only ever dreamed of.",
+          "type": "image",
+          "url": "https://4travelers.de/wolves_assets/cards/bois/level1/KWAI-{res}.jpg"
+        },
+        {
+          "id": "lucy",
+          "chainRef": 3,
+          "minted": 0,
+          "name": "LUCY LAPPLEY",
+          "motto": "TO FIND THE SECRET SAUCE, FIRST YOU NEED TO STIR THE POT",
+          "description": "With more ideas than you can shake a stick at, Lucy has a keen nose for creative juices and always finds the core USP of any business. She won’t stop until she’s wowed her crowd and smelt out that secret sauce.",
+          "type": "image",
+          "url": "https://4travelers.de/wolves_assets/cards/bois/level1/LUCY-{res}.jpg"
+        }
+      ]
+    },
+    {
+      "levelId": 1,
+      "chainRef": 1,
+      "type": "bois",
+      "quantity": 0,
+      "price": 3,
+      "autoUpgrade": "2 MONTHS",
+      "profitReward": 50,
+      "header": "1/{Q} RARITY - 50% PROFIT SHARE",
+      "cards": [
+        {
+          "id": "barkley",
+          "chainRef": 0,
+          "minted": 0,
+          "name": "BRYANT BARKLEY",
+          "motto": "NEVER DRINK THE KOOL-AID",
+          "description": "This Brooklyn born business bois manages a tight team of ten. Bryant has formulated an intense growth and development plan. He takes no shit, is the typical strong and silent type but watch your P’s & Q’s around him as the smallest mistake will make him growl in anger.",
+          "type": "movie",
+          "url": "https://4travelers.de/wolves_assets/cards/bois/level2/BRYANT-{res}.mp4"
+        },
+        {
+          "id": "dasch",
+          "chainRef": 1,
+          "minted": 0,
+          "name": "JOHNNY DASCH",
+          "motto": "THE FIRST ONE GETS THE OYSTER, THE SECOND ONE GETS THE SHELL",
+          "description": "This snappy young thing is an up and coming, super slick music producer. Johnny is setting up his own record label and knows perseverance in this industry, works. He is hot on the heels of the top talent about town and is recruiting all the edgy artists before they get signed somewhere else.",
+          "type": "movie",
+          "url": "https://4travelers.de/wolves_assets/cards/bois/level2/JOHNNY-{res}.mp4"
+        },
+        {
+          "id": "hound",
+          "chainRef": 2,
+          "minted": 0,
+          "name": "ETHAN T-HOUND",
+          "motto": "DON'T DEVELOP PERFECTION, DEVELOP FIRST",
+          "description": "This sharp business bois is all about the lifelong learning. As a disciple of one of the top tech gurus, Ethan’s philosophical approach is all about learning, supporting others and ensuring his idea comes first. He set up his own research lab designing AI assistants for business. He knows how to make the cash flow and he loves a beyond meat burger - woof.",
+          "type": "movie",
+          "url": "https://4travelers.de/wolves_assets/cards/bois/level2/ETHAN-{res}.mp4"
+        },
+        {
+          "id": "nole",
+          "chainRef": 3,
+          "minted": 0,
+          "name": "KSUM NOLE",
+          "motto": "I AM INEVITABLE",
+          "description": "An iconic entrepreneur and visionary, Ksum can run four businesses simultaneously. His impressive portfolio boasts space projects that move at the speed of light, electric cars and the audacity to inhabit new planets. Smashing through new frontiers and paradigms of both space and time, Ksum is the ultimate innovator. Not short of a dollar, he is revolutionising trillion-dollar industries at the drop of hat.",
+          "type": "movie",
+          "url": "https://4travelers.de/wolves_assets/cards/bois/level2/NOLE-{res}.mp4"
+        }
+      ]
+    },
+    {
+      "levelId": 2,
+      "chainRef": 2,
+      "type": "bois",
+      "quantity": 0,
+      "price": 0,
+      "autoUpgrade": "2 MONTHS",
+      "profitReward": 75,
+      "header": "1/{Q} RARITY - 75% PROFIT REWARD",
+      "cards": []
+    },
+    {
+      "levelId": 3,
+      "chainRef": 3,
+      "type": "bois",
+      "quantity": 0,
+      "price": 0,
+      "autoUpgrade": "2 MONTHS",
+      "profitReward": 100,
+      "header": "1/{Q} RARITY - 100% PROFIT REWARD",
+      "cards": []
+    },
+    {
+      "levelId": 0,
+      "chainRef": 4,
+      "type": "wolves",
+      "quantity": 0,
+      "price": 1,
+      "autoUpgrade": "2 MONTHS",
+      "profitReward": 25,
+      "header": "1/{Q} RARITY - 25% PROFIT SHARE",
+      "cards": [
+        {
+          "id": "aksinia",
+          "chainRef": 0,
+          "minted": 0,
+          "name": "AKSINIA HUNTLEY",
+          "motto": "TRADING ISN’T DANGEROUS, TRADING WITHOUT KNOWLEDGE IS",
+          "description": "This vixen wolf hunts for the dangerous trades and treads the fine line between risk and reward. Algorithms give Aksinia life. She’ll research the shit out of a trade and won't bet her bottom dollar until she’s done all of her homework.",
+          "type": "image",
+          "url": "https://4travelers.de/wolves_assets/cards/wolves/level1/AKSINIA-{res}.jpg"
+        },
+        {
+          "id": "axel",
+          "chainRef": 1,
+          "minted": 0,
+          "name": "AXEL  FUURRLEY",
+          "motto": "TRADE AHEAD, SO YOU DREAM IN GREEN",
+          "description": "He’s the pre-market pro, hailing from Conneticut. Axle made his billions by maintaining his liquidity in the market by offsetting trades from others. Working nights and sleeping in the day is how he gets ahead of the game. Don’t be deceived by his sleepy face, this nocturnal nightmare will bite your hand off if you so much as touch his trades.",
+          "type": "image",
+          "url": "https://4travelers.de/wolves_assets/cards/wolves/level1/AXEL-{res}.jpg"
+        },
+        {
+          "id": "kurt",
+          "chainRef": 2,
+          "minted": 0,
+          "name": "KURT SCHWARTZ",
+          "motto": "PLAY AS HARD AS YOU TRADE, ESPECIALLY IF IT’S NOT HELD",
+          "description": "This slick son of a gun works hard and plays harder. Kurt is a sucker for security and takes his time to work the floor-brokers so he’s able to secure the best possible price on his stock. When he’s not finding ways to schmooze the brokers, he makes his own sort of trouble. Those late-night full moon parties often lead to howls of criminal activity.",
+          "type": "image",
+          "url": "https://4travelers.de/wolves_assets/cards/wolves/level1/KURT-{res}.jpg"
+        },
+        {
+          "id": "pawly",
+          "chainRef": 3,
+          "minted": 0,
+          "name": "PAWLY SINATRO",
+          "motto": "HE’S JUNKED UP ON THE NEXT TRADE AND GOING LONG ON COCKTAILS",
+          "description": "Fierce on the trading floor, Pawly shorts his stocks with zero conscience. He’s unapproachable unless he gets his adrenaline fix and makes bank. Salivating over his pack-mates’ losses, he’s built to win and often celebrates with a strong, long Harvey Wallbanger after he’s made his gains.",
+          "type": "image",
+          "url": "https://4travelers.de/wolves_assets/cards/wolves/level1/PAWLY-{res}.jpg"
+        }
+      ]
+    },
+    {
+      "levelId": 1,
+      "chainRef": 5,
+      "type": "wolves",
+      "quantity": 0,
+      "price": 3,
+      "autoUpgrade": "2 MONTHS",
+      "profitReward": 50,
+      "header": "1/{Q} RARITY - 50% PROFIT SHARE",
+      "cards": [
+        {
+          "id": "decko",
+          "chainRef": 0,
+          "minted": 0,
+          "name": "GORGAN DECKO",
+          "motto": "DEFI NEVER SLEEPS",
+          "description": "Driven, successful and dapper, this OG Wall Street trader Gorgan still lives in the 80’s. He loves a polished leather briefcase; a Rolodex and his daily long lunch routine enforces his ‘greed is good’ motto. He's sniffed out the DeFi hype and is ready to short the whole shebang. Get Vitalik on the line, he wants to tell him the good news.",
+          "type": "movie",
+          "url": "https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-{res}.mp4"
+        },
+        {
+          "id": "knight",
+          "chainRef": 1,
+          "minted": 0,
+          "name": "LAYLA KNIGHT",
+          "motto": "WE HUNT FOR THE MOON",
+          "description": "This she-wolf warrior loves to chase the moon in the cloak of darkness when she’s trading those red-hot Russian markets. Layla slays the Oligarchs with her ice queen trades. It’s enough to make your blood run cold.",
+          "type": "movie",
+          "url": "https://4travelers.de/wolves_assets/cards/wolves/level2/LAYLA-{res}.mp4"
+        },
+        {
+          "id": "fang",
+          "chainRef": 2,
+          "minted": 0,
+          "name": "MAX FANG",
+          "motto": "BUY WHEN THERE IS BLOOD ON THE STREETS",
+          "description": "With maximum skin in the game, Max is ruthless and loves it when the trading wolves around him are bleeding out. Contrarian in nature, he goes against the crowd to snap up his deals. He laughs in the face of fear and showcases it in the money he’s made from those FUD losers.",
+          "type": "movie",
+          "url": "https://4travelers.de/wolves_assets/cards/wolves/level2/MAX-{res}.mp4"
+        },
+        {
+          "id": "watcher",
+          "chainRef": 3,
+          "minted": 0,
+          "name": "WARG THE WATCHER",
+          "motto": "FILL IT OR KILL IT",
+          "description": "He watches trades like a hunter, our Warg is always ready to pounce. You won't see him coming until it's too late! His fearless and substantial trades will make anything go green but if you stop the train before he strikes, you’ll be sheepishly left behind.",
+          "type": "movie",
+          "url": "https://4travelers.de/wolves_assets/cards/wolves/level2/WARG-{res}.mp4"
+        }
+      ]
+    },
+    {
+      "levelId": 2,
+      "chainRef": 6,
+      "type": "wolves",
+      "quantity": 0,
+      "price": 0,
+      "autoUpgrade": "2 MONTHS",
+      "profitReward": 75,
+      "header": "1/{Q} RARITY - 25% PROFIT SHARE",
+      "cards": []
+    },
+    {
+      "levelId": 3,
+      "chainRef": 7,
+      "type": "wolves",
+      "quantity": 0,
+      "price": 0,
+      "autoUpgrade": "2 MONTHS",
+      "profitReward": 100,
+      "header": "1/{Q} RARITY - 25% PROFIT SHARE",
+      "cards": []
+    }
+  ]
+}

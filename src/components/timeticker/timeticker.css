@@ -1,0 +1,44 @@
+/*
+ * Copyright (C) 2020 wolves.finance developers
+ * This file is part of wolves.finance - https://github.com/peak3d/wolves.finance
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * See the file LICENSES/README.md for more information.
+ */
+
+.ticker-container {
+  line-height: 1.1;
+  display: flex;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.ticker-inner {
+  flex: 1 1;
+  align-self: center;
+  min-width: 340px;
+}
+
+.ticker-text {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 40px;
+}
+
+.ticker-description {
+  display: inline-block;
+  font-size: 13px;
+  padding: 8px 0px 10px 0px;
+}
+
+.time-ticker {
+  padding-top: 10px;
+  font-size: 30px;
+  font-weight: 500;
+  width: 316px;
+  height: 60px;
+  border: solid 1px white;
+  background-color: black;
+  display: table;
+  margin: 0 auto;
+}
