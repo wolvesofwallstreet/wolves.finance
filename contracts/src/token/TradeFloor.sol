@@ -16,6 +16,7 @@ import '../utils/AddressBook.sol';
 import '../utils/interfaces/IAddressRegistry.sol';
 
 import './interfaces/IMinterCallback.sol';
+import './interfaces/ITradeFloor.sol';
 import './WOWSMinterPauser.sol';
 
 abstract contract OpenSeaProxyRegistry {
@@ -647,8 +648,8 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
    * if for example a tradefloorclient has to be updated.
    */
   function setMinter(uint256 tokenId, address newMinter) external {
-    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admins');
-    require(tokenId >= 0x10000000000000000, 'only tfclients');
+    require(_tokenIdToMinter[tokenId] == _msgSender(), 'Only tfclient');
+    require(tokenId >= 0x10000000000000000, 'Only tfclients tokenIds');
 
     _tokenIdToMinter[tokenId] = newMinter;
   }

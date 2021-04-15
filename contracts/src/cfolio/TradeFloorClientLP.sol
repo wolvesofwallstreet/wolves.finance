@@ -11,11 +11,15 @@ pragma solidity >=0.7.0 <0.8.0;
 import '../../0xerc1155/interfaces/IERC20.sol';
 
 import './interfaces/ITradefloorClient.sol'; // Callbacks into this contract
+import './interfaces/ISftEvaluator.sol';
 
+import '../token/interfaces/ITradeFloor.sol'; // Tradefloor
 import '../token/interfaces/IERC1155BurnMintable.sol'; // Tradefloor
 import '../token/interfaces/IWOWSERC1155.sol'; // SFT contract
 import '../utils/AddressBook.sol';
 import '../utils/interfaces/IAddressRegistry.sol';
+
+interface ITradeFloorBurnMint is ITradeFloor, IERC1155BurnMintable {}
 
 /**
  * @dev Contract which handles Liquidity Pool token staking.
@@ -30,7 +34,7 @@ import '../utils/interfaces/IAddressRegistry.sol';
  * We only implement deposit(), transfer and burn are performed
  * with burning / transfering the TF NFT's in TF contract
  */
-contract TradeFloorClientLP is ITradefloorClient {
+contract TradeFloorClientLP is ITradeFloorClient {
   //////////////////////////////////////////////////////////////////////////////
   // State
   //////////////////////////////////////////////////////////////////////////////
@@ -40,7 +44,7 @@ contract TradeFloorClientLP is ITradefloorClient {
 
   // The tradeFloor contract which provides c-folio NFTs
   // This tradeFloor contract calls this IMinterCallback interface functions
-  IERC1155BurnMintable public immutable tradeFloor;
+  ITradeFloorBurnMint public immutable tradeFloor;
 
   // The fungible NFT tokenId minted in tradeFloor contract
   // We mint 1:1 incoming LP <-> NFT but only reward a part
@@ -48,6 +52,12 @@ contract TradeFloorClientLP is ITradefloorClient {
 
   // The reward token
   IERC20 public immutable stakingToken;
+
+  // SFT evaluator
+  ISftEvaluator public immutable sftEvaluator;
+
+  // admin
+  address public immutable admin;
 
   //////////////////////////////////////////////////////////////////////////////
   // Initialization
@@ -68,13 +78,19 @@ contract TradeFloorClientLP is ITradefloorClient {
   constructor(
     IAddressRegistry addressRegistry,
     IERC20 stakingToken_,
-    IERC1155BurnMintable tradeFloor_,
+    ITradeFloorBurnMint tradeFloor_,
     uint256 tradeFloorTokenId_
   ) {
     // The SFT holder
     _sftHolder = IWOWSERC1155(
       addressRegistry.getRegistryEntry(AddressBook.SFT_HOLDER)
     );
+    // admin
+    admin = addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
+    // TODO: SftEvaluator
+    // addressRegistry.getRegistryEntry(AddressBook.SFT_EVALUATOR);
+    sftEvaluator = ISftEvaluator(address(0)); 
+
     // The ERC20 token we stake
     stakingToken = stakingToken_;
     // The tradeFloor we are interacting with
@@ -114,18 +130,32 @@ contract TradeFloorClientLP is ITradefloorClient {
     emit Deposit(msg.sender, recipient, amount, rewardRate);
   }
 
+  /**
+   * @dev upgrade contract callback, call if this contract gets upgraded
+   */
+   function upgradeContract(TradeFloorClientLP newContract) external {
+     require(msg.sender == admin, 'admin only');
+     require(newContract.tradeFloorTokenId() == tradeFloorTokenId, 'tokenId mismatch');
+
+     stakingToken.transfer(address(newContract), stakingToken.balanceOf(address(this)));
+     tradeFloor.setMinter(tradeFloorTokenId, address(newContract));
+
+     selfdestruct(payable(address(newContract)));
+   }
+
+
   //////////////////////////////////////////////////////////////////////////////
   // Implementation of ITradefloorClient
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev upgrade callback, called from SFT evaluator contract if
+   * @dev sftUpgrade callback, called from SFT evaluator contract if
    * the value of an SFT has (potentially) changed.
    *
    * For this contract we will add more shares into the reward contract.
    */
-  function upgrade(uint256 tokenId) external override {
-    tokenId;
+  function sftUpgrade(uint256 tokenId, uint32 prevRate, uint32 newRate) external override {
+    require(msg.sender == address(sftEvaluator), 'invalid caller');
     // TODO: adjust rewardrate
   }
 
@@ -165,7 +195,7 @@ contract TradeFloorClientLP is ITradefloorClient {
     require(tokenId == tradeFloorTokenId, 'onBurn: wrong tokenId');
 
     // Transfer lpTokens back to to recipient
-    stakingToken.transferFrom(address(this), recipient, amount);
+    stakingToken.transfer(recipient, amount);
 
     // TODO: handle rewards
   }
@@ -179,7 +209,7 @@ contract TradeFloorClientLP is ITradefloorClient {
   }
 
   //////////////////////////////////////////////////////////////////////////////
-  // Internal details
+  // Events
   //////////////////////////////////////////////////////////////////////////////
 
   event Deposit(
