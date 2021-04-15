@@ -22,5 +22,9 @@ interface ITradeFloorClient is IMinterCallback {
    * @param prevRate previous value rate
    * @param newRate new value rate
    */
-  function sftUpgrade(uint256 tokenId, uint32 prevRate, uint32 newRate) external;
+  function sftUpgrade(
+    uint256 tokenId,
+    uint32 prevRate,
+    uint32 newRate
+  ) external;
 }

@@ -89,7 +89,7 @@ contract TradeFloorClientLP is ITradeFloorClient {
     admin = addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
     // TODO: SftEvaluator
     // addressRegistry.getRegistryEntry(AddressBook.SFT_EVALUATOR);
-    sftEvaluator = ISftEvaluator(address(0)); 
+    sftEvaluator = ISftEvaluator(address(0));
 
     // The ERC20 token we stake
     stakingToken = stakingToken_;
@@ -133,16 +133,21 @@ contract TradeFloorClientLP is ITradeFloorClient {
   /**
    * @dev upgrade contract callback, call if this contract gets upgraded
    */
-   function upgradeContract(TradeFloorClientLP newContract) external {
-     require(msg.sender == admin, 'admin only');
-     require(newContract.tradeFloorTokenId() == tradeFloorTokenId, 'tokenId mismatch');
+  function upgradeContract(TradeFloorClientLP newContract) external {
+    require(msg.sender == admin, 'admin only');
+    require(
+      newContract.tradeFloorTokenId() == tradeFloorTokenId,
+      'tokenId mismatch'
+    );
 
-     stakingToken.transfer(address(newContract), stakingToken.balanceOf(address(this)));
-     tradeFloor.setMinter(tradeFloorTokenId, address(newContract));
+    stakingToken.transfer(
+      address(newContract),
+      stakingToken.balanceOf(address(this))
+    );
+    tradeFloor.setMinter(tradeFloorTokenId, address(newContract));
 
-     selfdestruct(payable(address(newContract)));
-   }
-
+    selfdestruct(payable(address(newContract)));
+  }
 
   //////////////////////////////////////////////////////////////////////////////
   // Implementation of ITradefloorClient
@@ -154,7 +159,11 @@ contract TradeFloorClientLP is ITradeFloorClient {
    *
    * For this contract we will add more shares into the reward contract.
    */
-  function sftUpgrade(uint256 tokenId, uint32 prevRate, uint32 newRate) external override {
+  function sftUpgrade(
+    uint256 tokenId,
+    uint32 prevRate,
+    uint32 newRate
+  ) external override {
     require(msg.sender == address(sftEvaluator), 'invalid caller');
     // TODO: adjust rewardrate
   }

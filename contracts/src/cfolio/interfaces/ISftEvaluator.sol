@@ -9,5 +9,5 @@
 pragma solidity >=0.7.0 <0.8.0;
 
 interface ISftEvaluator {
-  function calculateRate(uint256 sftTokenId) external view returns(uint32);
+  function calculateRate(uint256 sftTokenId) external view returns (uint32);
 }
