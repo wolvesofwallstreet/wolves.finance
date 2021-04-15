@@ -193,8 +193,8 @@ const func = async function (hardhat_re) {
         from: deployer,
         args: [
           ADDRESS_REGISTRY_ADDRESS,
-          TRADE_FLOOR_PROXY_ADDRESS,
           generatedAddresses.uniV2Pair,
+          TRADE_FLOOR_PROXY_ADDRESS,
           ethers.BigNumber.from('0x10000000000000000'),
         ],
         log: true,
