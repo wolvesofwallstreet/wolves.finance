@@ -343,6 +343,11 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     super.safeTransferFrom(from, to, tokenId, amount, data);
 
     if ((tokenId >> 64) == 0) {
+      // Dont allow locked SFT's as C-Folio items
+      require(
+        _sftHolder.addressToTokenId(to) == uint256(-1),
+        "Can't add SFT to c-folio"
+      );
       _relinkOwner(from, to, uint64(tokenId));
       // Invoke callback
     } else {
@@ -372,10 +377,16 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     // Call parent
     super.safeBatchTransferFrom(from, to, tokenIds, amounts, data);
 
+    // look if to is an c-folio item
+    bool toIsNotCFolio = _sftHolder.addressToTokenId(to) == uint256(-1);
+
     // Invoke callbacks
     for (uint256 i = 0; i < tokenIds.length; i++) {
       uint256 tokenId = tokenIds[i];
       if ((tokenId >> 64) == 0) {
+        // Dont allow locked SFT's as C-Folio items
+        require(toIsNotCFolio, "Can't add SFT to c-folio");
+        // relink token to new owner
         _relinkOwner(from, to, uint64(tokenId));
       } else {
         address minter = _tokenIdToMinter[tokenId];
