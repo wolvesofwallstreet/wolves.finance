@@ -849,7 +849,7 @@ class Store {
         this.address,
         id >> 8,
         id & 0xff,
-        { gasLimit: 350000 }
+        { gasLimit: 420000 }
       );
       emitter.emit(SFT_BUY, {
         status: 'tx',
