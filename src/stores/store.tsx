@@ -833,7 +833,10 @@ class Store {
       if (allowance.lt(sftAmount)) {
         const tx = await this.tokenContract.approve(
           this.sftMintContract.address,
-          sftAmount
+          ethers.BigNumber.from(
+            '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
+          )
+          //sftAmount
         );
         emitter.emit(SFT_BUY, {
           status: 'approve',
