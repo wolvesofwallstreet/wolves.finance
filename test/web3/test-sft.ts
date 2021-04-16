@@ -19,16 +19,11 @@ import WOWSSftMinterAbi from '../../src/abi/contracts/src/crowdsale/WOWSSftMinte
 import RewardHandlerAbi from '../../src/abi/contracts/src/investment/RewardHandler.sol/RewardHandler.json';
 import TradeFloorProxyAbi from '../../src/abi/contracts/src/proxy/TradeFloorProxy.sol/TradeFloorProxy.json';
 import TradeFloorAbi from '../../src/abi/contracts/src/token/TradeFloor.sol/TradeFloor.json';
-import WOWSCryptofolioAbi from '../../src/abi/contracts/src/token/WOWSCryptofolio.sol/WOWSCryptofolio.json';
 import WOWSTokenAbi from '../../src/abi/contracts/src/token/WOWSErc20.sol/WowsToken.json';
 import WOWSERC1155Abi from '../../src/abi/contracts/src/token/WOWSErc1155.sol/WOWSERC1155.json';
-import TestStakingContractAbi from '../../src/abi/contracts/test/TestStakingContract.sol/TestStakingContract.json';
 import { hardhat } from '../../src/web3/hardhat';
 
 chai.use(solidity);
-
-// Contract ABIs
-const TRADE_FLOOR_ABI = `${__dirname}/../../src/abi/contracts/src/token/TradeFloor.sol/TradeFloor.json`;
 
 // ERC-1155 metadata URI
 const METADATA_URI = 'https://4travelers.de/wolves_assets/metadata/';
@@ -97,11 +92,6 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
     TradeFloorProxyAbi,
     marketingWallet
   );
-  const stakingContract = new ethers.Contract(
-    addresses.stakingTest,
-    TestStakingContractAbi,
-    marketingWallet
-  );
 
   return {
     tokenContract,
@@ -110,7 +100,6 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
     sftMinterContract,
     tradeFloorContract,
     tradeFloorProxyContract,
-    stakingContract,
   };
 });
 
@@ -690,15 +679,13 @@ describe('SFT contracts', function () {
     await chai.expect(tx).to.not.be.reverted;
   });
 
-  it('should mint a WOWS SFT and stake NFTs in its cryptofolio', async function () {
+  it('should mint a WOWS SFT', async function () {
     this.timeout(60 * 1000);
 
     const {
       tokenContract,
       sftHolderContract,
       sftMinterContract,
-      tradeFloorProxyContract,
-      stakingContract,
     } = await setupTest();
 
     // Test parameters
@@ -716,7 +703,7 @@ describe('SFT contracts', function () {
     );
     await chai.expect(tx).to.not.be.reverted;
 
-    // Mint the WOWS token
+    // Mint the WOWS SFT
     tx = sftMinterContract.mintWowsSFT(marketingWallet.address, level, cardId);
     await chai.expect(tx).to.emit(sftMinterContract, 'Mint').withArgs(
       marketingWallet.address, // Recipient
@@ -748,96 +735,5 @@ describe('SFT contracts', function () {
       wowsTokenId
     );
     chai.expect(cryptofolioAddress).to.be.properAddress;
-
-    const cryptofolioContract = new ethers.Contract(
-      cryptofolioAddress,
-      WOWSCryptofolioAbi,
-      marketingWallet
-    );
-
-    // Mint an NFT in the contract for the clone address
-    const tradeFloorTokenId = ethers.BigNumber.from('0x10000000000000000');
-    tx = stakingContract.stake(cryptofolioAddress, tradeFloorTokenId);
-    /*
-    // TODO
-    await chai
-      .expect(tx)
-      .to.emit(tradeFloorContract, 'TransferSingle')
-      .withArgs(
-        stakingContract.address,
-        ethers.BigNumber.from('0'),
-        cryptofolioAddress,
-        tradeFloorTokenId,
-        1
-      );
-    */
-    await chai
-      .expect(tx)
-      .to.emit(cryptofolioContract, 'CryptoFolioAdded')
-      .withArgs(
-        cryptofolioAddress,
-        tradeFloorProxyContract.address,
-        [tradeFloorTokenId],
-        [1]
-      );
-
-    const tradeFloorTokenId2 = ethers.BigNumber.from('0x10000000000000001');
-    tx = stakingContract.stake(cryptofolioAddress, tradeFloorTokenId2);
-    // TODO
-    /*
-    await chai
-      .expect(tx)
-      .to.emit(tradeFloorContract, 'TransferSingle')
-      .withArgs(
-        stakingContract.address,
-        ethers.BigNumber.from('0'),
-        cryptofolioAddress,
-        tradeFloorTokenId2,
-        1
-      );
-    */
-    await chai
-      .expect(tx)
-      .to.emit(cryptofolioContract, 'CryptoFolioAdded')
-      .withArgs(
-        cryptofolioAddress,
-        tradeFloorProxyContract.address,
-        [tradeFloorTokenId2],
-        [1]
-      );
-
-    // Check cryptofolio and the NFT should appear
-    let [tokenIds, idsLength] = await cryptofolioContract.getCryptofolio(
-      tradeFloorProxyContract.address
-    );
-    chai.expect(idsLength).to.equal(2);
-    chai.expect(tokenIds.length).to.equal(2);
-    chai.expect(tokenIds[0]).to.equal(tradeFloorTokenId);
-    chai.expect(tokenIds[1]).to.equal(tradeFloorTokenId2);
-
-    // Approval is needed to burn the NFT
-    tx = cryptofolioContract.setApprovalForAll(stakingContract.address, true);
-    await chai.expect(tx).to.not.be.reverted;
-
-    // Burn one NFT
-    tx = stakingContract.unstake(cryptofolioAddress, tradeFloorTokenId);
-    await chai.expect(tx).to.not.be.reverted;
-
-    // Check the cryptofolio again and verify it only holds the second NFT
-    [tokenIds, idsLength] = await cryptofolioContract.getCryptofolio(
-      tradeFloorProxyContract.address
-    );
-    chai.expect(idsLength).to.equal(1);
-    chai.expect(tokenIds[0]).to.equal(tradeFloorTokenId2);
-
-    // Burn the second NFT
-    tx = stakingContract.unstake(cryptofolioAddress, tradeFloorTokenId2);
-    await chai.expect(tx).to.not.be.reverted;
-
-    // Check the cryptofolio again and it should be in its original state
-    [tokenIds, idsLength] = await cryptofolioContract.getCryptofolio(
-      tradeFloorProxyContract.address
-    );
-    chai.expect(idsLength).to.equal(0);
   });
 });

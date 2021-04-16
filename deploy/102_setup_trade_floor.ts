@@ -79,28 +79,14 @@ const func = async function (hardhat_re) {
   );
 
   //
-  // 2.) Call TradeFloorProxy.sol::grantRole(MINTER_ROLE, TestStakingContract.sol)
-  //
-
-  console.log(
-    'TradeFloorProxy.sol::grantRole(MINTER_ROLE, TestStakingContract.sol'
-  );
-
-  let tx = await TRADE_FLOOR_PROXY_INSTANCE.grantRole(
-    await TRADE_FLOOR_PROXY_INSTANCE.MINTER_ROLE(),
-    generatedAddresses.stakingTest
-  );
-  await tx.wait();
-
-  //
-  // 3.) Call TradeFloorProxy.sol::grantRole(MINTER_ROLE, TradingFloorClientLP.sol)
+  // 2.) Call TradeFloorProxy.sol::grantRole(MINTER_ROLE, TradingFloorClientLP.sol)
   //
 
   console.log(
     'TradeFloorProxy.sol::grantRole(MINTER_ROLE, TradingFloorClientLP.sol'
   );
 
-  tx = await TRADE_FLOOR_PROXY_INSTANCE.grantRole(
+  const tx = await TRADE_FLOOR_PROXY_INSTANCE.grantRole(
     await TRADE_FLOOR_PROXY_INSTANCE.MINTER_ROLE(),
     generatedAddresses.tradeFloorClientLP
   );
