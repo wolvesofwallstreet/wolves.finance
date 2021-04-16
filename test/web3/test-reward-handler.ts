@@ -383,6 +383,6 @@ describe('Reward handler', function () {
 
     // Verify contract doesn't exist
     tx = rewardHandlerContract.getMinimalMintAmount();
-    chai.expect(tx).to.be.reverted;
+    await chai.expect(tx).to.be.reverted;
   });
 });
