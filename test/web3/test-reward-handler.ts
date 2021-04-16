@@ -12,7 +12,7 @@
 import type { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
 import chai from 'chai';
 import { solidity } from 'ethereum-waffle';
-import { ethers } from 'ethers';
+import { ethers, utils } from 'ethers';
 import fs from 'fs';
 
 import BoosterAbi from '../../src/abi/contracts/src/booster/Booster.sol/Booster.json';
@@ -30,6 +30,18 @@ const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 // Addresses are lazy-loaded
 let addresses = null;
+
+// Helper function
+function toEth(wei: ethers.BigNumber): number {
+  // Scale to 4 decimal places for integer division
+  const weiScaled = wei.mul(1e4);
+
+  const ethScaled = weiScaled.div(1e9).div(1e9);
+
+  const eth = ethScaled.toNumber() / 1e4;
+
+  return eth;
+}
 
 // Utility function to get addresses from the address registry file
 async function getAddresses() {
@@ -293,6 +305,23 @@ describe('Reward handler', function () {
     // Transfer to self should revert
     //tx = rewardHandlerContract.terminate(rewardHandlerContract.address, false); // TODO
 
+    // selfdestruct() on the EthereumJS EVM seems to noop, so check ETH balances
+    let marketingBalance = toEth(
+      await hardhat.ethers.provider.getBalance(marketingWallet.address)
+    );
+    let rewardHandlerBalance = toEth(
+      await hardhat.ethers.provider.getBalance(rewardHandlerContract.address)
+    );
+    chai.expect(marketingBalance).to.be.closeTo(10000, 1);
+    chai.expect(rewardHandlerBalance).to.equal(0);
+
+    // Send an amount to reward handler for testing self-destruct
+    tx = {
+      to: rewardHandlerContract.address,
+      value: utils.parseEther('10.0'),
+    };
+    await marketingWallet.sendTransaction(tx);
+
     // In production, this must be a contract that inherits from IRewardHandler
     const newRewardHandler = marketingWallet.address;
 
@@ -314,14 +343,20 @@ describe('Reward handler', function () {
       '40000000000000000' // 0.04 WOWS
     );
 
+    // Check new balances to make sure selfdestruct() wasn't called
+    marketingBalance = toEth(
+      await hardhat.ethers.provider.getBalance(marketingWallet.address)
+    );
+    rewardHandlerBalance = toEth(
+      await hardhat.ethers.provider.getBalance(rewardHandlerContract.address)
+    );
+    chai.expect(marketingBalance).to.be.closeTo(9990, 1);
+    chai.expect(rewardHandlerBalance).to.be.closeTo(10, 1);
+
     // Second call to terminate should revert
     chai.expect(teamWallet.address).to.be.properAddress;
     tx = rewardHandlerContract.terminate(teamWallet.address, false);
     await chai.expect(tx).to.not.be.reverted;
-
-    // Verify contract still exists
-    const amount = await rewardHandlerContract.getMinimalMintAmount();
-    chai.expect(amount).to.equal('100000000000000000000'); // 100 WOWS
   });
 
   it('should terminate contract with selfdestruct', async function () {
@@ -360,6 +395,23 @@ describe('Reward handler', function () {
     // Transfer to self should revert
     //tx = rewardHandlerContract.terminate(rewardHandlerContract.address, true); // TODO
 
+    // selfdestruct() on the EthereumJS EVM seems to noop, so check ETH balances
+    let marketingBalance = toEth(
+      await hardhat.ethers.provider.getBalance(marketingWallet.address)
+    );
+    let rewardHandlerBalance = toEth(
+      await hardhat.ethers.provider.getBalance(rewardHandlerContract.address)
+    );
+    chai.expect(marketingBalance).to.be.closeTo(10000, 1);
+    chai.expect(rewardHandlerBalance).to.equal(0);
+
+    // Send an amount to reward handler for testing self-destruct
+    tx = {
+      to: rewardHandlerContract.address,
+      value: utils.parseEther('10.0'),
+    };
+    await marketingWallet.sendTransaction(tx);
+
     // In production, this must be a contract that inherits from IRewardHandler
     const newRewardHandler = marketingWallet.address;
 
@@ -381,8 +433,14 @@ describe('Reward handler', function () {
       '40000000000000000' // 0.04 WOWS
     );
 
-    // Verify contract doesn't exist
-    tx = rewardHandlerContract.getMinimalMintAmount();
-    await chai.expect(tx).to.be.reverted;
+    // Check new balances for self-destruct balance transfer
+    marketingBalance = toEth(
+      await hardhat.ethers.provider.getBalance(marketingWallet.address)
+    );
+    rewardHandlerBalance = toEth(
+      await hardhat.ethers.provider.getBalance(rewardHandlerContract.address)
+    );
+    chai.expect(marketingBalance).to.be.closeTo(10000, 1);
+    chai.expect(rewardHandlerBalance).to.equal(0);
   });
 });
