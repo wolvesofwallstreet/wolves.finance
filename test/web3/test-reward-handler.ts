@@ -128,14 +128,14 @@ describe('Reward handler', function () {
   let teamWallet: SignerWithAddress;
 
   before(async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     // Get the Signers
     [signer, marketingWallet, teamWallet] = await hardhat.ethers.getSigners();
   });
 
   it('should set minimal mint amount', async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     const { rewardHandlerContract } = await setupTest();
 
@@ -156,7 +156,7 @@ describe('Reward handler', function () {
   });
 
   it('should distribute to targets', async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     const {
       tokenContract,
@@ -258,7 +258,7 @@ describe('Reward handler', function () {
   });
 
   it('should terminate contract without selfdestruct', async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     const {
       tokenContract,
@@ -325,7 +325,7 @@ describe('Reward handler', function () {
   });
 
   it('should terminate contract with selfdestruct', async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     const {
       tokenContract,

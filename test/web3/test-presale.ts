@@ -116,7 +116,7 @@ describe('Presale contract', function () {
   }
 
   before(async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     // Get the Signers
     [signer] = await hardhat.ethers.getSigners();
@@ -160,13 +160,13 @@ describe('Presale contract', function () {
   });
 
   beforeEach(async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     await hardhat.deployments.fixture();
   });
 
   it('should open and close the presale', async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     // TODO: "Increase to" function
     // See:
@@ -210,14 +210,14 @@ describe('Presale contract', function () {
   });
 
   it("cap shouldn't been reached", async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     const capReached = await presaleContract.capReached();
     chai.expect(capReached).to.be.false;
   });
 
   it('should buy too few tokens', async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     // Open the presale
     await hardhat.network.provider.send('evm_increaseTime', [5 * 60]); // 5 mins
@@ -245,7 +245,7 @@ describe('Presale contract', function () {
   });
 
   it('should buy too many tokens', async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     // Open the presale
     await hardhat.network.provider.send('evm_increaseTime', [5 * 60]); // 5 mins
@@ -269,7 +269,7 @@ describe('Presale contract', function () {
   });
 
   it('should buy past the limit', async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     // Open the presale
     await hardhat.network.provider.send('evm_increaseTime', [5 * 60]); // 5 mins
@@ -387,7 +387,7 @@ describe('Presale contract', function () {
   });
 
   it('should buy tokens and liquidity from the presale contract', async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     // Open the presale
     await hardhat.network.provider.send('evm_increaseTime', [5 * 60]); // 5 mins
@@ -448,7 +448,7 @@ describe('Presale contract', function () {
   });
 
   it('should transfer stake', async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     // Open the presale
     await hardhat.network.provider.send('evm_increaseTime', [5 * 60]); // 5 mins
