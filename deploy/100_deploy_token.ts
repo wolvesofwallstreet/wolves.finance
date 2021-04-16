@@ -244,6 +244,30 @@ const func = async function (hardhat_re) {
 
   //////////////////////////////////////////////////////////////////////////////
   //
+  // Deploy RewardHandler
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  if (configAddresses.booster) {
+    log_step(`Using deployed RewardHandler: ${configAddresses.rewardHandler}`);
+    generatedAddresses.rewardHandler = configAddresses.rewardHandler;
+  } else {
+    log_step('Deploying RewardHandler');
+
+    const rewardHandlerReceipt = await deploy(REWARD_HANDLER_CONTRACT, {
+      from: deployer,
+      log: true,
+      args: [ADDRESS_REGISTRY_ADDRESS],
+      deterministicDeployment: true,
+    });
+
+    generatedAddresses.rewardHandler = rewardHandlerReceipt.address;
+  }
+
+  const REWARD_HANDLER_ADDRESS = generatedAddresses.rewardHandler;
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
   // Deploy controller
   //
   //////////////////////////////////////////////////////////////////////////////
@@ -254,14 +278,12 @@ const func = async function (hardhat_re) {
   } else {
     log_step('Deploying controller');
 
-    // Reward handler - right now it's WOWSErc20.sol
-    const REWARD_HANDLER = generatedAddresses.token;
     // Previous controller: 0 address / only for later updates
     const PREVIOUS_CONTROLLER = '0x0000000000000000000000000000000000000000';
 
     const controllerReceipt = await deploy(CONTROLLER_CONTRACT, {
       from: deployer,
-      args: [ADDRESS_REGISTRY_ADDRESS, REWARD_HANDLER, PREVIOUS_CONTROLLER],
+      args: [ADDRESS_REGISTRY_ADDRESS, REWARD_HANDLER_ADDRESS, PREVIOUS_CONTROLLER],
       log: true,
       deterministicDeployment: true,
     });
@@ -362,30 +384,6 @@ const func = async function (hardhat_re) {
     ADDRESS_BOOK_WOWS_BOOSTER_KEY,
     BOOSTER_ADDRESS
   );
-
-  //////////////////////////////////////////////////////////////////////////////
-  //
-  // Deploy RewardHandler
-  //
-  //////////////////////////////////////////////////////////////////////////////
-
-  if (configAddresses.booster) {
-    log_step(`Using deployed RewardHandler: ${configAddresses.rewardHandler}`);
-    generatedAddresses.rewardHandler = configAddresses.rewardHandler;
-  } else {
-    log_step('Deploying RewardHandler');
-
-    const rewardHandlerReceipt = await deploy(REWARD_HANDLER_CONTRACT, {
-      from: deployer,
-      log: true,
-      args: [ADDRESS_REGISTRY_ADDRESS],
-      deterministicDeployment: true,
-    });
-
-    generatedAddresses.rewardHandler = rewardHandlerReceipt.address;
-  }
-
-  const REWARD_HANDLER_ADDRESS = generatedAddresses.rewardHandler;
 
   //////////////////////////////////////////////////////////////////////////////
   //
