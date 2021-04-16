@@ -160,8 +160,11 @@ contract TradeFloorClientLP is ITradeFloorClient {
    * For this contract we will add more shares into the reward contract.
    */
   function sftUpgrade(
+    // solhint-disable-next-line no-unused-vars
     uint256 tokenId,
+    // solhint-disable-next-line no-unused-vars
     uint32 prevRate,
+    // solhint-disable-next-line no-unused-vars
     uint32 newRate
   ) external override {
     require(msg.sender == address(sftEvaluator), 'invalid caller');
