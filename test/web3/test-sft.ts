@@ -639,12 +639,12 @@ describe('SFT contracts', function () {
     const { sftMinterContract } = await setupTest();
 
     // Test parameters
-    const levels = [0, 1, 2, 3];
+    const levels = [0, 1, 4, 5];
     const referencePrices = [
-      '500000000000000000',
       '1000000000000000000',
-      '2000000000000000000',
-      '4000000000000000000',
+      '3000000000000000000',
+      '1000000000000000000',
+      '3000000000000000000',
     ];
 
     // Check initial prices
@@ -663,7 +663,7 @@ describe('SFT contracts', function () {
 
     // Test parameters
     const levels = [0, 1, 2, 3];
-    const referencePrices = ['50', '100', '200', '400'];
+    const referencePrices = ['100', '300', '100', '300'];
 
     // Set prices
     const tx = sftMinterContract.setPrices(levels, referencePrices);
@@ -705,7 +705,7 @@ describe('SFT contracts', function () {
     const level = 1;
     const cardId = 2;
     const wowsTokenId = ethers.BigNumber.from('0x01020000');
-    const level1Price = '1000000000000000000';
+    const level1Price = '3000000000000000000';
 
     // Approve SFT minter spending WOWS
     let tx = tokenContract.approve(
