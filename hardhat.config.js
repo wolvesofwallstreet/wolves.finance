@@ -48,7 +48,7 @@ const config = {
           evmVersion: 'berlin',
           optimizer: {
             enabled: true,
-            runs: 10000,
+            runs: 1000,
             details: {
               yul: true,
               deduplicate: true,
