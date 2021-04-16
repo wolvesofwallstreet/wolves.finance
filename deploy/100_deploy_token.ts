@@ -283,7 +283,11 @@ const func = async function (hardhat_re) {
 
     const controllerReceipt = await deploy(CONTROLLER_CONTRACT, {
       from: deployer,
-      args: [ADDRESS_REGISTRY_ADDRESS, REWARD_HANDLER_ADDRESS, PREVIOUS_CONTROLLER],
+      args: [
+        ADDRESS_REGISTRY_ADDRESS,
+        REWARD_HANDLER_ADDRESS,
+        PREVIOUS_CONTROLLER,
+      ],
       log: true,
       deterministicDeployment: true,
     });
