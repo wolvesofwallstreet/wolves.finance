@@ -30,7 +30,7 @@ describe('Token contract', function () {
   let teamWalletAddress: string;
 
   before(async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     // Get the Signers
     [owner] = await hardhat.ethers.getSigners();
@@ -41,7 +41,7 @@ describe('Token contract', function () {
   });
 
   beforeEach(async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     await hardhat.deployments.fixture();
   });

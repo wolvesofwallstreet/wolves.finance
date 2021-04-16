@@ -119,7 +119,7 @@ describe('SFT contracts', function () {
   let marketingWallet: SignerWithAddress;
 
   before(async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     // Get the Signers
     [signer, marketingWallet] = await hardhat.ethers.getSigners();
@@ -130,7 +130,7 @@ describe('SFT contracts', function () {
   //////////////////////////////////////////////////////////////////////////////
 
   it('should check access', async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     const {
       sftHolderContract,
@@ -241,7 +241,7 @@ describe('SFT contracts', function () {
   });
 
   it('should have a trade floor', async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     const {
       sftHolderContract,
@@ -261,7 +261,7 @@ describe('SFT contracts', function () {
   });
 
   it('should know the next WOWS token ID', async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     const { sftHolderContract } = await setupTest();
 
@@ -286,7 +286,7 @@ describe('SFT contracts', function () {
   });
 
   it('should know the next custom token ID', async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     const { sftHolderContract } = await setupTest();
 
@@ -296,7 +296,7 @@ describe('SFT contracts', function () {
   });
 
   it('should have a WOWS URI', async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     const { sftHolderContract } = await setupTest();
 
@@ -332,7 +332,7 @@ describe('SFT contracts', function () {
   });
 
   it('should have a contract metadata URI', async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     const { sftHolderContract } = await setupTest();
 
@@ -342,7 +342,7 @@ describe('SFT contracts', function () {
   });
 
   it('should set custom default URI', async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     const { sftHolderContract } = await setupTest();
     const MINTER_ROLE = await sftHolderContract.MINTER_ROLE();
@@ -367,7 +367,7 @@ describe('SFT contracts', function () {
   });
 
   it('should set WOWS URI', async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     const { sftHolderContract } = await setupTest();
 
@@ -420,7 +420,7 @@ describe('SFT contracts', function () {
   });
 
   it('should set custom URI', async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     const { sftHolderContract } = await setupTest();
 
@@ -498,7 +498,7 @@ describe('SFT contracts', function () {
   });
 
   it('should get card data', async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     const { sftHolderContract } = await setupTest();
 
@@ -513,7 +513,7 @@ describe('SFT contracts', function () {
   });
 
   it('should get card data by batch', async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     const { sftHolderContract } = await setupTest();
 
@@ -535,7 +535,7 @@ describe('SFT contracts', function () {
   });
 
   it('should get token data', async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     const { sftHolderContract } = await setupTest();
 
@@ -559,7 +559,7 @@ describe('SFT contracts', function () {
   });
 
   it('should get token IDs', async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     const { sftHolderContract } = await setupTest();
 
@@ -572,7 +572,7 @@ describe('SFT contracts', function () {
   });
 
   it('should set WOWS level cap', async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     const { sftHolderContract } = await setupTest();
 
@@ -600,7 +600,7 @@ describe('SFT contracts', function () {
   //////////////////////////////////////////////////////////////////////////////
 
   it('should have an owner', async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     const { sftMinterContract } = await setupTest();
 
@@ -611,7 +611,7 @@ describe('SFT contracts', function () {
   });
 
   it('should have reward role for Reward handler', async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     const { rewardHandlerContract, sftMinterContract } = await setupTest();
 
@@ -634,7 +634,7 @@ describe('SFT contracts', function () {
   });
 
   it('should get SFT prices', async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     const { sftMinterContract } = await setupTest();
 
@@ -657,7 +657,7 @@ describe('SFT contracts', function () {
   });
 
   it('should set SFT prices', async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     const { sftMinterContract } = await setupTest();
 
@@ -679,7 +679,7 @@ describe('SFT contracts', function () {
   });
 
   it('should set reward handler', async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     const { rewardHandlerContract, sftMinterContract } = await setupTest();
 
@@ -691,7 +691,7 @@ describe('SFT contracts', function () {
   });
 
   it('should mint a WOWS SFT and stake NFTs in its cryptofolio', async function () {
-    this.timeout(30 * 1000);
+    this.timeout(60 * 1000);
 
     const {
       tokenContract,
