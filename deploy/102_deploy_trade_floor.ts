@@ -17,7 +17,6 @@ require('hardhat-deploy-ethers');
 // TODO: Fully qualified contract names
 const TRADE_FLOOR_CONTRACT = 'TradeFloor';
 const TRADE_FLOOR_PROXY_CONTRACT = 'TradeFloorProxy';
-const TEST_STAKING_CONTRACT = 'TestStakingContract';
 const TRADEFLOOR_CLIENTLP_CONTRACT = 'TradeFloorClientLP';
 
 // Contract ABIs
@@ -150,28 +149,6 @@ const func = async function (hardhat_re) {
   }
 
   const TRADE_FLOOR_PROXY_ADDRESS = generatedAddresses.tradeFloorProxy;
-
-  //////////////////////////////////////////////////////////////////////////////
-  //
-  // Deploy test staking contract
-  //
-  //////////////////////////////////////////////////////////////////////////////
-
-  if (configAddresses.stakingTest) {
-    log_step(`Using test staking contract: ${configAddresses.stakingTest}`);
-    generatedAddresses.stakingTest = configAddresses.stakingTest;
-  } else {
-    log_step('Deploying test staking contract');
-
-    const testStakingContractReceipt = await deploy(TEST_STAKING_CONTRACT, {
-      from: deployer,
-      args: [TRADE_FLOOR_PROXY_ADDRESS],
-      log: true,
-      deterministicDeployment: true,
-    });
-
-    generatedAddresses.stakingTest = testStakingContractReceipt.address;
-  }
 
   //////////////////////////////////////////////////////////////////////////////
   //
