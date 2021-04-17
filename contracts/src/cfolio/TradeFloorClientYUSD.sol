@@ -101,7 +101,6 @@ contract TradeFloorClientLP is ITradefloorClient {
    */
   function deposit(address recipient, uint256 amount) external {
 
-
     // Transfer LP token to this contract
     stakingToken.transferFrom(msg.sender, address(this), amount);
     // mint tradeFloor NFT's into recipient
