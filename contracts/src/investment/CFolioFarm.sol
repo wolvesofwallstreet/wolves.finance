@@ -21,9 +21,9 @@ import './interfaces/IFarm.sol';
 
 /**
  * @notice Farm is owned by an CFolio contract.
+ *
  * All state modifing calls are only allowed from this owner.
  */
-
 contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
   using SafeMath for uint256;
   using SafeERC20 for IERC20;

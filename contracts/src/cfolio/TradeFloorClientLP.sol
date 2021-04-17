@@ -37,6 +37,7 @@ interface ITradeFloorBurnMint is ITradeFloor, IERC1155BurnMintable {}
  */
 contract TradeFloorClientLP is ITradeFloorClient {
   using SafeMath for uint256;
+
   //////////////////////////////////////////////////////////////////////////////
   // State
   //////////////////////////////////////////////////////////////////////////////
@@ -51,6 +52,7 @@ contract TradeFloorClientLP is ITradeFloorClient {
   // The fungible NFT tokenId minted in tradeFloor contract
   // We mint 1:1 incoming LP <-> NFT but only reward a part
   uint256 public immutable tradeFloorTokenId;
+
   // The number of NFT tokens we allocate for this client
   uint16 public numTradeFloorTokenIds;
 
@@ -60,7 +62,7 @@ contract TradeFloorClientLP is ITradeFloorClient {
   // SFT evaluator
   ISftEvaluator public immutable sftEvaluator;
 
-  // admin
+  // Admin
   address public immutable admin;
 
   //////////////////////////////////////////////////////////////////////////////
@@ -123,8 +125,10 @@ contract TradeFloorClientLP is ITradeFloorClient {
     _sftHolder = IWOWSERC1155(
       addressRegistry.getRegistryEntry(AddressBook.SFT_HOLDER)
     );
-    // admin
+
+    // Admin
     admin = addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
+
     // TODO: SftEvaluator
     // addressRegistry.getRegistryEntry(AddressBook.SFT_EVALUATOR);
     sftEvaluator = ISftEvaluator(address(0));
@@ -133,22 +137,32 @@ contract TradeFloorClientLP is ITradeFloorClient {
     stakingToken = IERC20(
       addressRegistry.getRegistryEntry(AddressBook.UNISWAP_V2_PAIR)
     );
+
     // The tradeFloor we are interacting with
     tradeFloor = tradeFloor_;
+
     // Fixed base tokenId for this investment contract
     tradeFloorTokenId = tradeFloorTokenId_;
+
     // Fixed number of tokenIds for this investment contract
     numTradeFloorTokenIds = numTradeFloorTokenIds_;
   }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Setters
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
    * @dev Increase possible tokenIds for this contract
    */
   function setNumTokenIds(uint16 newCount) external {
+    // Validate access
     require(msg.sender == admin, 'TFCLP: admin only');
+
+    // Validate parameters
     require(newCount > numTradeFloorTokenIds, 'TFCLP: increase only');
 
-    // Set state
+    // Update state
     numTradeFloorTokenIds = newCount;
 
     // Dispatch events
@@ -167,23 +181,25 @@ contract TradeFloorClientLP is ITradeFloorClient {
    * @param recipient will receive the nft's
    * @param tokenId the tokenId to mint
    * @param amount the fungible amount to mint
-
    */
   function deposit(
     address recipient,
     uint256 tokenId,
     uint256 amount
   ) external {
+    // Validate parameters
     require(_verifyTokenId(tokenId), 'TFCLP: wrong tokenId');
-    // revert if recipient is not a valid target
+
+    // Revert if recipient is not a valid target
     _transferAllowed(recipient);
 
     // Transfer LP token to this contract
     stakingToken.transferFrom(msg.sender, address(this), amount);
-    // mint tradeFloor NFT's into recipient
+
+    // Mint tradeFloor NFT's into recipient
     tradeFloor.mint(recipient, tokenId, amount, _toBytes(address(this)));
 
-    // only parts of the investment are inserted into rewardhandler
+    // Only parts of the investment are inserted into rewardhandler
     // in case recipient is an SFT
     // Note: transfers into locked SFT's are reverted in TF contract
     uint32 rewardRate = 0;
@@ -191,19 +207,25 @@ contract TradeFloorClientLP is ITradeFloorClient {
       // 1.) TODO: get the reward % by calling the card evaluator contract
       // 2.) TODO: invest the % into the reward contract / logic
     }
+
+    // Dispatch events
     emit Deposit(msg.sender, recipient, amount, rewardRate);
   }
 
   /**
-   * @dev upgrade contract callback, call if this contract gets upgraded
+   * @dev Upgrade contract callback, call if this contract gets upgraded
    */
   function upgradeContract(TradeFloorClientLP newContract) external {
-    require(msg.sender == admin, 'admin only');
+    // Valid access
+    require(msg.sender == admin, 'Admin only');
+
+    // Validate parameters
     require(
       newContract.tradeFloorTokenId() == tradeFloorTokenId,
       'tokenId mismatch'
     );
 
+    // Update state
     stakingToken.transfer(
       address(newContract),
       stakingToken.balanceOf(address(this))
@@ -232,17 +254,19 @@ contract TradeFloorClientLP is ITradeFloorClient {
     uint32, /* prevRate */
     uint32 /* newRate */
   ) external override {
-    require(msg.sender == address(sftEvaluator), 'invalid caller');
+    // Validate access
+    require(msg.sender == address(sftEvaluator), 'Invalid caller');
+
     // TODO: adjust rewardrate
   }
 
   /**
-   * @dev Called from Tradefloor of tokens have been transfered.
+   * @dev Called from Tradefloor when tokens have been transfered.
    *
    * See {IMinterCallback-_onTransferFrom}.
    *
-   * We have to transfer / remove reward shares here
-   * depending if from / to is a c-folio or not
+   * We have to transfer / remove reward shares here depending on whether
+   * `from` or `to` are a c-folio or not.
    */
   function onTransferFrom(
     address caller,
@@ -255,9 +279,10 @@ contract TradeFloorClientLP is ITradeFloorClient {
     // Validate parameters
     require(tokenIds.length == amounts.length, 'TFCLP: length mismatch');
 
-    // in case of transfer verify the target
+    // In case of transfer verify the target
     if (to != address(0)) _transferAllowed(to);
-    // sum amount of tokens which get transfered
+
+    // Sum amount of tokens which get transfered
     uint256 amountTransfered = 0;
     for (uint256 i = 0; i < tokenIds.length; ++i) {
       if (_verifyTokenId(tokenIds[i]))
@@ -268,6 +293,7 @@ contract TradeFloorClientLP is ITradeFloorClient {
       // Transfer lpTokens back to to recipient
       stakingToken.transfer(caller, amountTransfered);
     }
+
     // TODO: handle reward share
   }
 
@@ -289,7 +315,9 @@ contract TradeFloorClientLP is ITradeFloorClient {
    * @dev Reverts if NFT's from this contract can not be transfered to recipient.
    */
   function _transferAllowed(address recipient) private view {
+    // Validate parameters
     require(recipient != address(0), 'TFCLP: null address');
+
     // This NFT handler is only allowed for wolves
     uint256 sftTokenId = _sftHolder.addressToTokenId(recipient);
     if (sftTokenId != uint256(-1)) {

@@ -14,13 +14,14 @@ uint256 constant LEVEL2WOLF = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000000000000000
 
 interface ISftEvaluator {
   /**
-   * @dev Returns the reward with in 1e6 notation (1e6 = 100%)
+   * @dev Returns the reward in 1e6 factor notation (1e6 = 100%)
    */
   function rewardRate(uint256 sftTokenId) external view returns (uint32);
 
   /**
    * @dev Calculate the current reward rate, and notify TFC in case of change
-   * optional revert on unchange to save gas on external calls
+   *
+   * Optional revert on unchange to save gas on external calls.
    */
   function setRewardRate(uint256 tokenId, bool revertUnchanged) external;
 }
