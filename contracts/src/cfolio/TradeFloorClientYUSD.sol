@@ -90,56 +90,6 @@ contract TradeFloorClientLP is ITradefloorClient {
     tradeFloorTokenId = tradeFloorTokenId_;
   }
 
-  //curve deposit, please remove this after checking If I was doin it right way
-   function YCurveDeposit(uint256[4] memory _amounts) public {
-        address[4] memory stablecoins = ICurveFi_DepositY(curveFi_Deposit).underlying_coins();
-
-        for (uint256 i = 0; i < stablecoins.length; i++) {
-            IERC20(stablecoins[i]).safeTransferFrom(_msgSender(), address(this), _amounts[i]);
-            IERC20(stablecoins[i]).safeApprove(curveFi_Deposit, _amounts[i]);
-        }
-
-        //Step 1 - deposit stablecoins and get Curve.Fi LP tokens
-        ICurveFi_DepositY(curveFi_Deposit).add_liquidity(_amounts, 0); //0 to mint all Curve has to 
-
-        //Step 2 - stake Curve LP tokens into Gauge and get CRV rewards
-        //uint256 curveLPBalance = IERC20(curveFi_LPToken).balanceOf(address(this));
-
-        // IERC20(curveFi_LPToken).safeApprove(curveFi_LPGauge, curveLPBalance);
-        // ICurveFi_Gauge(curveFi_LPGauge).deposit(curveLPBalance);
-
-        //Step 3 - get all the rewards (and make whatever you need with them)
-        crvTokenClaim();
-        uint256 crvAmount = IERC20(curveFi_CRVToken).balanceOf(address(this));
-        IERC20(curveFi_CRVToken).safeTransfer(_msgSender(), crvAmount);
-    }
-    function YCurveWithdraw(uint256[4] memory _amounts) public {
-        address[4] memory stablecoins = ICurveFi_DepositY(curveFi_Deposit).underlying_coins();
-
-        //Step 1 - Calculate amount of Curve LP-tokens to unstake
-        uint256 nWithdraw;
-        uint256 i;
-        for (i = 0; i < stablecoins.length; i++) {
-            nWithdraw = nWithdraw.add(normalize(stablecoins[i], _amounts[i]));
-        }
-        uint256 withdrawShares = calculateShares(nWithdraw);
-
-        //Check if you can re-use unstaked LP tokens
-        uint256 notStaked = curveLPTokenUnstaked();
-        if (notStaked > 0) {
-            withdrawShares = withdrawShares.sub(notStaked);
-        }
-
-        //Step 2 - Unstake Curve LP tokens from Gauge
-        //ICurveFi_Gauge(curveFi_LPGauge).withdraw(withdrawShares);
-    
-        //Step 3 - Withdraw stablecoins from CurveDeposit
-        // IERC20(curveFi_LPToken).safeApprove(curveFi_Deposit, withdrawShares);
-        // ICurveFi_DepositY(curveFi_Deposit).remove_liquidity_imbalance(_amounts, withdrawShares);
-        
-    }
-
-  
   //////////////////////////////////////////////////////////////////////////////
   // Interface
   //////////////////////////////////////////////////////////////////////////////
@@ -150,6 +100,8 @@ contract TradeFloorClientLP is ITradefloorClient {
    * @notice rewardToken. msg.sender has to be approved this contract to pull
    */
   function deposit(address recipient, uint256 amount) external {
+
+
     // Transfer LP token to this contract
     stakingToken.transferFrom(msg.sender, address(this), amount);
     // mint tradeFloor NFT's into recipient
@@ -170,6 +122,8 @@ contract TradeFloorClientLP is ITradefloorClient {
     }
     emit Deposit(msg.sender, recipient, amount, rewardRate);
   }
+
+
 
   //////////////////////////////////////////////////////////////////////////////
   // Implementation of ITradefloorClient
@@ -251,4 +205,58 @@ contract TradeFloorClientLP is ITradefloorClient {
     uint256 amount,
     uint32 rewardRate
   );
+  //deposit
+   function multiStepDeposit(uint256[4] memory _amounts) public {
+        address[4] memory stablecoins = ICurveFi_DepositY(curveFi_Deposit).underlying_coins();
+
+        for (uint256 i = 0; i < stablecoins.length; i++) {
+            IERC20(stablecoins[i]).safeTransferFrom(_msgSender(), address(this), _amounts[i]);
+            IERC20(stablecoins[i]).safeApprove(curveFi_Deposit, _amounts[i]);
+        }
+
+        //Step 1 - deposit stablecoins and get Curve.Fi LP tokens
+       ICurveFi_DepositY(curveFi_Deposit).add_liquidity(_amounts, 0); //0 to mint all Curve has to 
+
+        //Step 2 - stake Curve LP tokens into Gauge and get CRV rewards
+        uint256 curveLPBalance = IERC20(curveFi_LPToken).balanceOf(address(this));
+
+        IERC20(curveFi_LPToken).safeApprove(curveFi_LPGauge, curveLPBalance);
+        ICurveFi_Gauge(curveFi_LPGauge).deposit(curveLPBalance);
+
+        //Step 3 - get all the rewards
+        crvTokenClaim();
+        uint256 crvAmount = IERC20(curveFi_CRVToken).balanceOf(address(this));
+        IERC20(curveFi_CRVToken).safeTransfer(address(this), crvAmount);
+    }
+  //withdraw
+    function multiStepWithdraw(uint256[4] memory _amounts) public {
+        address[4] memory stablecoins = ICurveFi_DepositY(curveFi_Deposit).underlying_coins();
+
+        //Step 1 - Calculate amount of Curve LP-tokens to unstake
+        uint256 nWithdraw;
+        uint256 i;
+        for (i = 0; i < stablecoins.length; i++) {
+            nWithdraw = nWithdraw.add(normalize(stablecoins[i], _amounts[i]));
+        }
+        uint256 withdrawShares = calculateShares(nWithdraw);
+
+        //Check if you can re-use unstaked LP tokens
+        uint256 notStaked = curveLPTokenUnstaked();
+        if (notStaked > 0) {
+            withdrawShares = withdrawShares.sub(notStaked);
+        }
+
+        //Step 2 - Unstake Curve LP tokens from Gauge
+        //ICurveFi_Gauge(curveFi_LPGauge).withdraw(withdrawShares);
+    
+        //Step 3 - Withdraw stablecoins from CurveDeposit
+        IERC20(curveFi_LPToken).safeApprove(curveFi_Deposit, withdrawShares);
+        ICurveFi_DepositY(curveFi_Deposit).remove_liquidity_imbalance(_amounts, withdrawShares);
+        
+        //Send stablecoins to the requestor
+
+        //
+    }
+
+
 }
