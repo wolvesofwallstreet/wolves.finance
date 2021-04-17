@@ -14,12 +14,20 @@ import '@openzeppelin/contracts/math/SafeMath.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
 
+import '../utils/ERC20Recovery.sol';
+
 import './interfaces/IController.sol';
 import './interfaces/IFarm.sol';
 import './interfaces/IStakeFarm.sol';
 import '../../interfaces/uniswap/IUniswapV2Pair.sol';
 
-contract UniV2StakeFarm is IFarm, IStakeFarm, Ownable, ReentrancyGuard {
+contract UniV2StakeFarm is
+  IFarm,
+  IStakeFarm,
+  Ownable,
+  ReentrancyGuard,
+  ERC20Recovery
+{
   using SafeMath for uint256;
   using SafeERC20 for IERC20;
 
@@ -302,8 +310,9 @@ contract UniV2StakeFarm is IFarm, IStakeFarm, Ownable, ReentrancyGuard {
       tokenAddress != address(stakingToken),
       'pool tokens not recoverable'
     );
-    IERC20(tokenAddress).safeTransfer(owner(), tokenAmount);
-    emit Recovered(tokenAddress, tokenAmount);
+
+    // Call ancestor
+    _recoverERC20(owner(), tokenAddress, tokenAmount);
   }
 
   function setRewardsDuration(uint256 _rewardsDuration)
@@ -320,12 +329,12 @@ contract UniV2StakeFarm is IFarm, IStakeFarm, Ownable, ReentrancyGuard {
     emit RewardsDurationUpdated(rewardsDuration);
   }
 
-  // Not yet implemented, but has to be overridden
+  // Not yet implemented
   function recoverERC20(
     address,
     address,
     uint256
-  ) public override {}
+  ) public {}
 
   /* ========== PRIVATE ========== */
 

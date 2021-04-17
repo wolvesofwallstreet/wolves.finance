@@ -13,6 +13,8 @@ import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import '@openzeppelin/contracts/math/SafeMath.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 
+import '../utils/ERC20Recovery.sol';
+
 import './interfaces/IController.sol';
 import './interfaces/IFarm.sol';
 import './interfaces/ICFolioFarm.sol';
@@ -22,7 +24,7 @@ import './interfaces/ICFolioFarm.sol';
  * All state modifing calls are only allowed from this owner.
  */
 
-contract CFolioFarm is IFarm, ICFolioFarm, Ownable {
+contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
   using SafeMath for uint256;
   using SafeERC20 for IERC20;
 
@@ -251,9 +253,9 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable {
     address recipient,
     address tokenAddress,
     uint256 tokenAmount
-  ) external override onlyController {
-    IERC20(tokenAddress).safeTransfer(recipient, tokenAmount);
-    emit Recovered(recipient, tokenAddress, tokenAmount);
+  ) external onlyController {
+    // Call ancestor
+    _recoverERC20(recipient, tokenAddress, tokenAmount);
   }
 
   function setRewardsDuration(uint256 _rewardsDuration)
@@ -299,6 +301,5 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable {
     uint256 reward
   );
   event RewardsDurationUpdated(uint256 newDuration);
-  event Recovered(address indexed recipient, address token, uint256 amount);
   event ControllerChanged(address newController);
 }
