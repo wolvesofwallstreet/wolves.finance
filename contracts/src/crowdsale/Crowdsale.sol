@@ -19,8 +19,9 @@ import '../../interfaces/uniswap/IUniswapV2Router02.sol';
 
 import '../investment/interfaces/IStakeFarm.sol';
 import '../token/interfaces/IERC20WowsMintable.sol';
-import '../utils/AddressBook.sol';
 import '../utils/interfaces/IAddressRegistry.sol';
+import '../utils/AddressBook.sol';
+import '../utils/ERC20Recovery.sol';
 
 /**
  * @title Crowdsale
@@ -38,7 +39,7 @@ import '../utils/interfaces/IAddressRegistry.sol';
  * crowdsales. Override the methods to add functionality. Consider using 'super'
  * where appropriate to concatenate behavior.
  */
-contract Crowdsale is Context, ReentrancyGuard {
+contract Crowdsale is Context, ReentrancyGuard, ERC20Recovery {
   using SafeMath for uint256;
   using SafeERC20 for IERC20;
   using SafeERC20 for IERC20WowsMintable;
@@ -445,7 +446,8 @@ contract Crowdsale is Context, ReentrancyGuard {
     // Cannot recover the staking token or the rewards token
     require(tokenAddress != address(token), 'native tokens unrecoverable');
 
-    IERC20(tokenAddress).safeTransfer(_wallet, tokenAmount);
+    // Call ancestor
+    _recoverERC20(_wallet, tokenAddress, tokenAmount);
   }
 
   /**
