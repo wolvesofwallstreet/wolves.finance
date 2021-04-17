@@ -37,6 +37,16 @@ interface IFarm {
   function setRewardsDuration(uint256 _rewardsDuration) external;
 
   /**
+   * @dev Recover ERC20 token from contract which have been transfered
+   * either by accident or via airdrop
+   */
+  function recoverERC20(
+    address recipient,
+    address tokenAddress,
+    uint256 tokenAmount
+  ) external;
+
+  /**
    * @dev Rebalance strategies (if implemented)
    */
   function rebalance() external;
