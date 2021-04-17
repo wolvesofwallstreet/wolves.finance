@@ -11,14 +11,14 @@ pragma solidity >=0.7.0 <0.8.0;
 import '../../0xerc1155/interfaces/IERC20.sol';
 import '../../0xerc1155/utils/SafeMath.sol';
 
-import './interfaces/ITradeFloorClient.sol'; // Callbacks into this contract
-import './interfaces/ISftEvaluator.sol';
-
-import '../token/interfaces/ITradeFloor.sol'; // Tradefloor
 import '../token/interfaces/IERC1155BurnMintable.sol'; // Tradefloor
+import '../token/interfaces/ITradeFloor.sol'; // Tradefloor
 import '../token/interfaces/IWOWSERC1155.sol'; // SFT contract
 import '../utils/AddressBook.sol';
 import '../utils/interfaces/IAddressRegistry.sol';
+
+import './interfaces/ISftEvaluator.sol';
+import './interfaces/ITradeFloorClient.sol'; // Callbacks into this contract
 
 interface ITradeFloorBurnMint is ITradeFloor, IERC1155BurnMintable {}
 

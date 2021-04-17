@@ -8,11 +8,11 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
+import '../../0xerc1155/tokens/ERC1155/ERC1155Holder.sol';
+
 import './interfaces/IERC1155BurnMintable.sol';
 import './interfaces/IWOWSCryptofolio.sol';
 import './interfaces/IWOWSERC1155.sol';
-
-import '../../0xerc1155/tokens/ERC1155/ERC1155Holder.sol';
 
 contract WOWSCryptofolio is ERC1155Holder, IWOWSCryptofolio {
   //////////////////////////////////////////////////////////////////////////////

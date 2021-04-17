@@ -8,12 +8,12 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
-import './interfaces/ISftEvaluator.sol';
-import './interfaces/ITradeFloorClient.sol';
-
 import '../token/interfaces/IWOWSERC1155.sol';
 import '../utils/AddressBook.sol';
 import '../utils/interfaces/IAddressRegistry.sol';
+
+import './interfaces/ISftEvaluator.sol';
+import './interfaces/ITradeFloorClient.sol';
 
 contract SftEvaluator is ISftEvaluator {
   //////////////////////////////////////////////////////////////////////////////
