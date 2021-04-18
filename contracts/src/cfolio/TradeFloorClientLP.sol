@@ -68,7 +68,6 @@ contract TradeFloorClientLP is ITradeFloorClient {
    *
    * @param addressRegistry registry containing our system addresses
    * We will use SFTHolder and Rewardhandler from this registry
-   * @param stakingToken_ The token we stake in this contract
    * @param tradeFloor_ The tradeFloor which manages our NFT representations
    * @param tradeFloorTokenId_ our fixed c-folio tokenId in tradeFloor contract
    * c-folio tokenIds must be >= 0x10000000000000000;
@@ -77,7 +76,6 @@ contract TradeFloorClientLP is ITradeFloorClient {
    */
   constructor(
     IAddressRegistry addressRegistry,
-    IERC20 stakingToken_,
     ITradeFloorBurnMint tradeFloor_,
     uint256 tradeFloorTokenId_
   ) {
@@ -92,7 +90,9 @@ contract TradeFloorClientLP is ITradeFloorClient {
     sftEvaluator = ISftEvaluator(address(0));
 
     // The ERC20 token we stake
-    stakingToken = stakingToken_;
+    stakingToken = IERC20(
+      addressRegistry.getRegistryEntry(AddressBook.UNISWAP_V2_PAIR)
+    );
     // The tradeFloor we are interacting with
     tradeFloor = tradeFloor_;
     // Fixed tokenId for this investment contract

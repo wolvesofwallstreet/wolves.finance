@@ -1,5 +1,6 @@
 Steps to setup the WOWS environment.
 
+<h1>****** DEPLOY ******</h1>
 <h2>****** MAIN DEPLOY ******</h2>
 
 1.) deploy AddressFactory\
@@ -14,16 +15,23 @@ Steps to setup the WOWS environment.
 4.) deploy WOWSErc20.sol\
 -> parameter:\
 
-> \- IAddressFactory address\ <- must contain UNISWAP_V2_ROUTER02, MARKETING_WALLET and TEAM_WALLET keys, (AddressBook.sol)\
+> \- IAddressFactory address\ <- must contain DEPLOYER, UNISWAP_V2_ROUTER02, MARKETING_WALLET, TEAM_WALLET and WOWS_TOKEN keys, (AddressBook.sol)\
 
-5.) deploy Controller.sol\
+5.) deploy RewardHandler.sol\
+-> parameter:\
+
+> \- \AddressRegistry address\
+
+6.) AddressFactory:: setRegistryEntry for RewardHandler (5.)
+
+7.) deploy Controller.sol\
 -> parameter:\
 
 > \- IAddressFactory address\
-> \- rewardHandler (right now its WOWSErc20.sol)\
+> \- rewardHandler (5.)\
 > \- previousController: 0 address / only for later updates\
 
-6.) deploy UniV2StakeFarm.sol\
+8.) deploy UniV2StakeFarm.sol\
 -> parameter:\
 
 > \- owner address\
@@ -33,17 +41,12 @@ Steps to setup the WOWS environment.
 > \- controller: address Controller.sol\
 > \- route: address of UniV2 WETH/USDT pool, can be 0 for test
 
-7.) AddressFactory:: setRegistryEntry for WethWowsStakeFarm (6.)
+9.) AddressFactory:: setRegistryEntry for WethWowsStakeFarm (6.)
 
-8.) deploy Booster.sol\
+10.) deploy Booster.sol\
 -> parameter:\
 
 > \- \_owner address\
-
-9.) deploy RewardHandler.sol\
--> parameter:\
-
-> \- \AddressRegistry address\
 
 <h2>****** PRESALE DEPLOY ******</h2>
 
@@ -66,7 +69,7 @@ Steps to setup the WOWS environment.
 <h3>From MultiSig marketing wallet call:</h3>
 
 1.) call RewardHander.sol::grantRole(RewardHandler.sol.REWARD_ROLE(), controller)\
--> This is to allow controller to call into WOWSErc20.sol to distribute rewards
+-> This is to allow controller to call into RewardHandler to distribute rewards
 
 2.) call WowsToken.sol::grantRole(WowsToken.sol.MINTER_ROLE(), RewardHandler)\
 -> This is to allow RewardHandler to mint rewards fro distributing
@@ -90,7 +93,9 @@ Steps to setup the WOWS environment.
 
 > \- uri the uri to the location where metadata lives
 
-2.) deploy WOWSSftMinter.sol
+2.) AddressFactory:: setRegistryEntry SFT_HOLDER (1.)
+
+3.) deploy WOWSSftMinter.sol
 -> parameter:\
 
 > \- address owner (multisig marketing)
@@ -101,5 +106,77 @@ Steps to setup the WOWS environment.
 Setup:
 
 > \- RewardHandler:: grantRole (RewardHandler.REWARD_ROLE, WOWSSftMinter.sol)
-> \- WOWSSftMinter:: setPrices (for test: ["0", "1", "2", "3"],["500000000000000000", "1000000000000000000", "2000000000000000000", "4000000000000000000"])
+> \- WOWSSftMinter:: setPrices (currently: ["0", "1", "4", "5"],["2500000000000000000", "4500000000000000000","2500000000000000000", "4500000000000000000"])
 > \- WowsERC1155:: grantRole (MINTER_ROLE, WOWSSftMinter.sol)
+
+<h2>****** TRADEFLOOR ******</h2>
+1.) deploy TradeFloor.sol (Proxy client)\
+-> parameter:\
+
+> \- addressRegistry\
+> \- openSeaRegistryProxy (available on rinkeby and mainnet, for other networks pass address(0))
+
+2.) prepare the initializationCall for the Proxy (TradeFloor::encodeFunctionData)
+-> parameter
+
+> \- 'initialize' (function name)
+> \- METADATA_URI
+> \- CONTRACT_METADATA_URI
+
+3.) deploy TradeFloorProxy.sol (Upgradeable Proxy)
+-> parameter
+
+> \- addressRegistry\
+> \- TradeFloor address (1.)
+> \- initialization data (2.)
+
+<h2>****** TRADEFLOORCLIENT ******</h2>
+
+1.) deploy CFolioFarm.sol\
+-> parameter:\
+
+> \- owner (deployer)
+> \- name (unique name)
+> \- controller
+
+2.) AddressFactory:: setRegistryEntry WOLVES_REWARDS (1.)
+
+3.) deploy TradeClientFloorLP.sol (for UNIV2 WOWS/ETH LP)\
+-> parameter:\
+
+> \- addressRegistry\
+> \- tradeFloorProxyAddress,
+> \- tradeFloorTokenId (unique and > 0x10000000000000000)
+
+4.) CFolioFarm.sol:: transferOwnership(TradeClientFloorLP)
+
+<h1>****** UPGRADE ******</h1>
+<h2>****** CONTROLLER ******</h2>
+1.) deploy Controller.sol\
+-> parameter:\
+
+> \- IAddressFactory address\
+> \- rewardHandler\
+> \- previousController\
+
+2.) call RewardHander.sol::grantRole(RewardHandler.sol.REWARD_ROLE(), controller)\
+-> This is to allow controller to call into RewardHandler to distribute rewards
+
+3.) call previousController transferFarm / transferAllFarms
+
+<h2>****** REWARDHANDLER ******</h2>
+
+1.) deploy RewardHandler.sol\
+-> parameter:\
+
+> \- \AddressRegistry address\
+
+2.) From MarketingWallet:
+
+> \- WowsToken.sol::grantRole(WowsToken.sol.MINTER_ROLE(), RewardHandler)\
+> \- RewardHander.sol::grantRole(RewardHandler.sol.REWARD_ROLE(), controller)\
+> \- RewardHandler:: grantRole (RewardHandler.REWARD_ROLE, WOWSSftMinter.sol)
+
+3.) Controller::setRewardhandler(1.)
+
+4.) WowsERC1155:: setRewardHandler (1.)

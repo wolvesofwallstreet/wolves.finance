@@ -52,6 +52,10 @@ const ADDRESS_BOOK_REWARD_HANDLER_KEY = ethers.utils.formatBytes32String(
 );
 const ADDRESS_BOOK_DEPLOYER_KEY = ethers.utils.formatBytes32String('DEPLOYER');
 
+const ADDRESS_BOOK_UNIV2_PAIR_KEY = ethers.utils.formatBytes32String(
+  'UNISWAP_V2_PAIR'
+);
+
 // Helper function
 function log_step(step_string) {
   console.log(`\n==> ${step_string}\n`);
@@ -240,6 +244,14 @@ const func = async function (hardhat_re) {
     ADDRESS_REGISTRY_INSTANCE,
     ADDRESS_BOOK_WOWS_TOKEN_KEY,
     TOKEN_ADDRESS
+  );
+
+  await setRegistryKey(
+    deployer,
+    execute,
+    ADDRESS_REGISTRY_INSTANCE,
+    ADDRESS_BOOK_UNIV2_PAIR_KEY,
+    UNIV2_PAIR_ADDRESS
   );
 
   //////////////////////////////////////////////////////////////////////////////
