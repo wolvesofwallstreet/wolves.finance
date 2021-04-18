@@ -30,16 +30,6 @@ contract Controller is IController, Ownable {
   // The address which is alowed to call service functions
   address public worker;
 
-  // The fee is distributed to 4 channels:
-  // 0.15 team
-  uint32 private constant FEE_TO_TEAM = 15 * 1e4;
-  // 0.15 marketing
-  uint32 private constant FEE_TO_MARKETING = 15 * 1e4;
-  // 0.4 booster
-  uint32 private constant FEE_TO_BOOSTER = 4 * 1e5;
-  // 0.3 back to reward pool
-  uint32 private constant FEE_TO_REWARDPOOL = 3 * 1e5;
-
   address private farmHead;
   struct Farm {
     address nextFarm;
@@ -160,15 +150,7 @@ contract Controller is IController, Ownable {
       'rewardCap reached'
     );
 
-    rewardHandler.distribute(
-      recipient,
-      amount,
-      farm.rewardFee,
-      FEE_TO_TEAM,
-      FEE_TO_MARKETING,
-      FEE_TO_BOOSTER,
-      FEE_TO_REWARDPOOL
-    );
+    rewardHandler.distribute2(recipient, amount, farm.rewardFee);
   }
 
   /* ========== FARM MANAGMENT ========== */
@@ -281,7 +263,7 @@ contract Controller is IController, Ownable {
   }
 
   function transferFarm(address _farmAddress, address _newController)
-    external
+    public
     onlyOwner
   {
     Farm storage farm = farms[_farmAddress];
@@ -309,6 +291,10 @@ contract Controller is IController, Ownable {
     }
     delete (farms[_farmAddress]);
     emit FarmTransfered(_farmAddress, _newController);
+  }
+
+  function transferAllFarms(address _newController) external onlyOwner {
+    while (farmHead != address(0)) transferFarm(farmHead, _newController);
   }
 
   /* ========== UTILITY FUNCTIONS ========== */
