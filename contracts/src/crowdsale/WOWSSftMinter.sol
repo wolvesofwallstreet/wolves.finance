@@ -31,15 +31,6 @@ contract WOWSSftMinter is Ownable {
   // Reward handler which distributes WOWS
   IRewardHandler private _rewardHandler;
 
-  // The fee is distributed to 4 channels:
-  // 0.15 team
-  uint32 private constant FEE_TO_TEAM = 15 * 1e4;
-  // 0.15 marketing
-  uint32 private constant FEE_TO_MARKETING = 15 * 1e4;
-  // 0.4 booster
-  uint32 private constant FEE_TO_BOOSTER = 4 * 1e5;
-  // 0.3 back to reward pool
-  uint32 private constant FEE_TO_REWARDPOOL = 3 * 1e5;
   // 1.0 of the rewards go to distribution
   uint32 private constant ALL = 1 * 1e6;
 
@@ -190,15 +181,7 @@ contract WOWSSftMinter is Ownable {
     IERC1155BurnMintable(address(_sftContract)).mint(recipient, tokenId, 1, '');
 
     // Distribute the rewards
-    _rewardHandler.distribute(
-      recipient,
-      price,
-      ALL,
-      FEE_TO_TEAM,
-      FEE_TO_MARKETING,
-      FEE_TO_BOOSTER,
-      FEE_TO_REWARDPOOL
-    );
+    _rewardHandler.distribute2(recipient, price, ALL);
 
     // Log event
     emit Mint(recipient, tokenId, price);
