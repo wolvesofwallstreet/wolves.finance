@@ -414,16 +414,12 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
   }
 
   /**
-   * @dev Return the level and the mint timestamp of tokenId
-   *
-   * @param tokenId The tokenId to query
-   *
-   * @return mintTimestamp The timestamp token was minted
-   * @return level The level token belongs to
+   * @dev See {IWOWSERC1155-getTokenData}.
    */
   function getTokenData(uint256 tokenId)
     external
     view
+    override
     returns (uint64 mintTimestamp, uint8 level)
   {
     // Decode token ID
