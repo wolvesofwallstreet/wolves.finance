@@ -171,12 +171,12 @@ Setup:
 
 > \- \AddressRegistry address\
 
-2.) From MarketingWallet:
+2.) AddressFactory:: setRegistryEntry for RewardHandler (1.)
+
+3.) From MarketingWallet:
 
 > \- WowsToken.sol::grantRole(WowsToken.sol.MINTER_ROLE(), RewardHandler)\
 > \- RewardHander.sol::grantRole(RewardHandler.sol.REWARD_ROLE(), controller)\
 > \- RewardHandler:: grantRole (RewardHandler.REWARD_ROLE, WOWSSftMinter.sol)
-
-3.) Controller::setRewardhandler(1.)
-
-4.) WowsERC1155:: setRewardHandler (1.)
+> \- Controller::setRewardhandler(1.)
+> \- WowsERC1155:: setRewardHandler (1.)

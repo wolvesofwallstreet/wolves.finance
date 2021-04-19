@@ -60,6 +60,26 @@ contract TradeFloorClientLP is ITradeFloorClient {
   address public immutable admin;
 
   //////////////////////////////////////////////////////////////////////////////
+  // Modifier
+  //////////////////////////////////////////////////////////////////////////////
+
+  modifier onlyTradeFloor(uint256 tokenId) {
+    require(msg.sender == address(tradeFloor), 'onTfer: only TF');
+    require(tokenId == tradeFloorTokenId, 'onTfer: wrong tokenId');
+    _;
+  }
+
+  modifier onlyWolves(address to) {
+    // This NFT handler is only allowed for wolves
+    uint256 sftTokenId = _sftHolder.addressToTokenId(to);
+    if (sftTokenId != uint256(-1)) {
+      (, uint8 level) = _sftHolder.getTokenData(sftTokenId);
+      require(level >= 4 && level <= 7, 'TFCLP: Wolves only');
+    }
+    _;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
   // Initialization
   //////////////////////////////////////////////////////////////////////////////
 
@@ -108,7 +128,10 @@ contract TradeFloorClientLP is ITradeFloorClient {
    *
    * @notice rewardToken. msg.sender has to be approved this contract to pull
    */
-  function deposit(address recipient, uint256 amount) external {
+  function deposit(address recipient, uint256 amount)
+    external
+    onlyWolves(recipient)
+  {
     // Transfer LP token to this contract
     stakingToken.transferFrom(msg.sender, address(this), amount);
     // mint tradeFloor NFT's into recipient
@@ -184,7 +207,7 @@ contract TradeFloorClientLP is ITradeFloorClient {
     address to,
     uint256 tokenId,
     uint256 amount
-  ) external override {
+  ) external override onlyTradeFloor(tokenId) onlyWolves(to) {
     // TODO: transfer elements from -> to
     // -> remove / add reward share in case from/to is c-folio
   }
@@ -202,10 +225,7 @@ contract TradeFloorClientLP is ITradeFloorClient {
     address, /* account*/
     uint256 tokenId,
     uint256 amount
-  ) external override {
-    require(msg.sender == address(tradeFloor), 'onBurn: only TF');
-    require(tokenId == tradeFloorTokenId, 'onBurn: wrong tokenId');
-
+  ) external override onlyTradeFloor(tokenId) {
     // Transfer lpTokens back to to recipient
     stakingToken.transfer(recipient, amount);
 

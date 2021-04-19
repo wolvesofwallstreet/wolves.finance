@@ -71,6 +71,19 @@ interface IWOWSERC1155 {
    */
   function getNextMintableCustomToken() external view returns (uint256);
 
+  /**
+   * @dev Return the level and the mint timestamp of tokenId
+   *
+   * @param tokenId The tokenId to query
+   *
+   * @return mintTimestamp The timestamp token was minted
+   * @return level The level token belongs to
+   */
+  function getTokenData(uint256 tokenId)
+    external
+    view
+    returns (uint64 mintTimestamp, uint8 level);
+
   //////////////////////////////////////////////////////////////////////////////
   // State modifiers
   //////////////////////////////////////////////////////////////////////////////
