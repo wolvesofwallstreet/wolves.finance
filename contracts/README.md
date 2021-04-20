@@ -147,8 +147,13 @@ Setup:
 > \- addressRegistry\
 > \- tradeFloorProxyAddress,
 > \- tradeFloorTokenId (unique and > 0x10000000000000000)
+> \- numTradeFloorTokenIds (we use 8 atm for known cards)
 
-4.) CFolioFarm.sol:: transferOwnership(TradeClientFloorLP)
+4.) TradeFloor::grantRole(MINTER_ROLE, TradeClientFloorLP)
+
+5.) CFolioFarm.sol:: transferOwnership(TradeClientFloorLP)
+
+6.) Controller::registerFarm
 
 <h1>****** UPGRADE ******</h1>
 <h2>****** CONTROLLER ******</h2>

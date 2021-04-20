@@ -288,20 +288,20 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   function burn(
     address account,
     uint256 tokenId,
-    uint256 value
+    uint256 amount
   ) public override {
     // Validate parameters
     require(account != address(0), 'Invalid zero address');
 
     // Call ancestor
-    super.burn(account, tokenId, value);
+    super.burn(account, tokenId, amount);
 
     uint256[] memory tokenIds = new uint256[](1);
-    uint256[] memory values = new uint256[](1);
+    uint256[] memory amounts = new uint256[](1);
     tokenIds[0] = tokenId;
-    values[0] = value;
+    amounts[0] = amount;
 
-    _onBurn(account, tokenIds, values);
+    _onTransfer(account, address(0), tokenIds, amounts, '');
   }
 
   /**
@@ -310,15 +310,16 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   function burnBatch(
     address account,
     uint256[] memory tokenIds,
-    uint256[] memory values
+    uint256[] memory amounts
   ) public virtual override {
     // Validate parameters
     require(account != address(0), 'Invalid zero address');
-    require(tokenIds.length == values.length, "Lengths don't match");
+    require(tokenIds.length == amounts.length, "Lengths don't match");
 
     // Call parent
-    super.burnBatch(account, tokenIds, values);
-    _onBurn(account, tokenIds, values);
+    super.burnBatch(account, tokenIds, amounts);
+    // Perform internal handling
+    _onTransfer(account, address(0), tokenIds, amounts, '');
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -342,21 +343,12 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     // Call parent
     super.safeTransferFrom(from, to, tokenId, amount, data);
 
-    if ((tokenId >> 64) == 0) {
-      // Dont allow locked SFT's as C-Folio items
-      require(
-        _sftHolder.addressToTokenId(to) == uint256(-1),
-        "Can't add SFT to c-folio"
-      );
-      _relinkOwner(from, to, uint64(tokenId));
-      // Invoke callback
-    } else {
-      // Look up minter
-      address minter = _tokenIdToMinter[tokenId];
-      require(minter != address(0), 'Invalid minter for token');
+    uint256[] memory tokenIds = new uint256[](1);
+    uint256[] memory amounts = new uint256[](1);
+    tokenIds[0] = tokenId;
+    amounts[0] = amount;
 
-      IMinterCallback(minter).onTransferFrom(from, to, tokenId, amount);
-    }
+    _onTransfer(from, to, tokenIds, amounts, data);
   }
 
   /**
@@ -377,24 +369,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     // Call parent
     super.safeBatchTransferFrom(from, to, tokenIds, amounts, data);
 
-    // look if to is an c-folio item
-    bool toIsNotCFolio = _sftHolder.addressToTokenId(to) == uint256(-1);
-
-    // Invoke callbacks
-    for (uint256 i = 0; i < tokenIds.length; i++) {
-      uint256 tokenId = tokenIds[i];
-      if ((tokenId >> 64) == 0) {
-        // Dont allow locked SFT's as C-Folio items
-        require(toIsNotCFolio, "Can't add SFT to c-folio");
-        // relink token to new owner
-        _relinkOwner(from, to, uint64(tokenId));
-      } else {
-        address minter = _tokenIdToMinter[tokenId];
-        require(minter != address(0), 'Invalid minter for token');
-
-        IMinterCallback(minter).onTransferFrom(from, to, tokenId, amounts[i]);
-      }
-    }
+    _onTransfer(from, to, tokenIds, amounts, data);
   }
 
   /**
@@ -658,56 +633,83 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
    * Set the minter of an c-folio Item. This has to be done
    * if for example a tradefloorclient has to be updated.
    */
-  function setMinter(uint256 tokenId, address newMinter) external {
-    require(_tokenIdToMinter[tokenId] == _msgSender(), 'Only tfclient');
+  function setMinter(
+    uint256 tokenId,
+    uint256 num,
+    address newMinter
+  ) external {
+    require(hasRole(MINTER_ROLE, _msgSender()), 'Only minter');
     require(tokenId >= 0x10000000000000000, 'Only tfclients tokenIds');
 
-    _tokenIdToMinter[tokenId] = newMinter;
+    for (uint256 i = tokenId; i < tokenId + num; ++i) {
+      address currentMinter = _tokenIdToMinter[tokenId];
+      if (currentMinter != address(0)) {
+        require(currentMinter == _msgSender(), 'setMinter: Forbidden');
+        _tokenIdToMinter[tokenId] = newMinter;
+      }
+    }
   }
 
   //////////////////////////////////////////////////////////////////////////////
   // Internal details
   //////////////////////////////////////////////////////////////////////////////
 
-  function _onBurn(
-    address account,
+  function _onTransfer(
+    address from,
+    address to,
     uint256[] memory tokenIds,
-    uint256[] memory amounts
+    uint256[] memory amounts,
+    bytes memory data
   ) private {
     // Count tokenIds < 64 Bit
-    uint256 numStakes = 0;
+    uint256 length = tokenIds.length;
+    uint256 numSft = 0;
+
+    uint256 numMinters = 0;
+    address[] memory minters = new address[](length);
 
     // Invoke callbacks / count SFT's
-    for (uint256 i = 0; i < tokenIds.length; i++) {
+    for (uint256 i = 0; i < length; i++) {
       uint256 tokenId = tokenIds[i];
 
       // Unstake SFT on burn
       if ((tokenId >> 64) == 0) {
-        ++numStakes;
-        _relinkOwner(account, address(0), uint64(tokenId));
+        ++numSft;
+        _relinkOwner(from, to, uint64(tokenId));
       } else {
         address minter = _tokenIdToMinter[tokenId];
         require(minter != address(0), 'Token has no minter');
-
-        IMinterCallback(minter).onBurn(
-          _msgSender(),
-          account,
-          tokenId,
-          amounts[i]
-        );
+        // Collect all minter we have tokenIds for
+        uint256 j = 0;
+        while (j < numMinters && minters[j] != minter) ++j;
+        if (j == numMinters) {
+          minters[numMinters++] = minter;
+        }
       }
     }
 
+    // Notify minters so they cab update internaly state
+    for (uint256 i = 0; i < numMinters; ++i) {
+      IMinterCallback(minters[i]).onTransferFrom(
+        _msgSender(),
+        from,
+        to,
+        tokenIds,
+        amounts,
+        data
+      );
+    }
+
     // Unstake SFTs if required
-    if (numStakes > 0) {
-      uint256[] memory unstakeIds = new uint256[](numStakes);
-      uint256[] memory unstakeAmounts = new uint256[](numStakes);
+    if (to == address(0) && numSft > 0) {
+      uint256[] memory unstakeIds = new uint256[](numSft);
+      uint256[] memory unstakeAmounts = new uint256[](numSft);
 
       for (uint256 i = 0; i < tokenIds.length; ++i) {
         uint256 tokenId = tokenIds[i];
         if ((tokenId >> 64) == 0) {
-          unstakeIds[--numStakes] = tokenId;
-          unstakeAmounts[numStakes] = 1;
+          unstakeIds[--numSft] = tokenId;
+          unstakeAmounts[numSft] = 1;
         }
       }
       // Load address
@@ -720,6 +722,12 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
         unstakeIds,
         unstakeAmounts,
         ''
+      );
+    } else if (numSft > 0) {
+      // Prevent transfer from SFT into cfolio
+      require(
+        _sftHolder.addressToTokenId(to) == uint256(-1),
+        'TF: SFT -> CFolio not allowed'
       );
     }
   }
