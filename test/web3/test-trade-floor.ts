@@ -452,7 +452,11 @@ describe('TradeFloorClientLP', function () {
     );
 
     // Deposit LP tokens again
-    tx = tradeFloorClientLP.deposit(cryptofolioAddress, lpBalance);
+    tx = tradeFloorClientLP.deposit(
+      cryptofolioAddress,
+      tradeFloorTokenId,
+      lpBalance
+    );
     await chai
       .expect(tx)
       .to.emit(uniV2PairContract, 'Transfer')
