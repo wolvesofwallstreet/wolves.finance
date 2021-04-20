@@ -72,21 +72,6 @@ contract TradeFloorClientLP is ITradeFloorClient {
     _;
   }
 
-  modifier validTokenId(uint256 tokenId) {
-    require(verifyTokenId(tokenId), 'TFCLP: wrong tokenId');
-    _;
-  }
-  modifier onlyWolves(address to) {
-    require(to != address(0), 'TFCLP: null address');
-    // This NFT handler is only allowed for wolves
-    uint256 sftTokenId = _sftHolder.addressToTokenId(to);
-    if (sftTokenId != uint256(-1)) {
-      (, uint8 level) = _sftHolder.getTokenData(sftTokenId);
-      require((LEVEL2WOLF & (uint256(1) << level)) > 0, 'TFCLP: Wolves only');
-    }
-    _;
-  }
-
   //////////////////////////////////////////////////////////////////////////////
   // Initialization
   //////////////////////////////////////////////////////////////////////////////
@@ -160,8 +145,11 @@ contract TradeFloorClientLP is ITradeFloorClient {
     address recipient,
     uint256 tokenId,
     uint256 amount
-  ) external onlyWolves(recipient) {
-    verifyTokenId(tokenId);
+  ) external {
+    require(_verifyTokenId(tokenId), 'TFCLP: wrong tokenId');
+    // revert if recipient is not a valid target
+    _transferAllowed(recipient);
+
     // Transfer LP token to this contract
     stakingToken.transferFrom(msg.sender, address(this), amount);
     // mint tradeFloor NFT's into recipient
@@ -235,12 +223,15 @@ contract TradeFloorClientLP is ITradeFloorClient {
     uint256[] calldata tokenIds,
     uint256[] calldata amounts,
     bytes calldata /* data*/
-  ) external override onlyTradeFloor onlyWolves(to) {
+  ) external override onlyTradeFloor {
+    // in case of transfer verify the target
+    if (to != address(0)) _transferAllowed(to);
+    // sum amount of tokens which get transfered
     uint256 length = tokenIds.length;
     uint256 amountTransfered = 0;
     require(length == amounts.length, 'TFCLP: length mismatch');
     for (uint256 i = 0; i < length; ++i) {
-      if (verifyTokenId(tokenIds[i]))
+      if (_verifyTokenId(tokenIds[i]))
         amountTransfered = amountTransfered.add(amounts[i]);
     }
 
@@ -259,10 +250,23 @@ contract TradeFloorClientLP is ITradeFloorClient {
     return abi.encodePacked(addr);
   }
 
-  function verifyTokenId(uint256 tokenId) private view returns (bool) {
+  function _verifyTokenId(uint256 tokenId) private view returns (bool) {
     return
       tokenId >= tradeFloorTokenId &&
       tokenId < tradeFloorTokenId + numTradeFloorTokenIds;
+  }
+
+  /**
+   * @dev Reverts if NFT's from this contract can not be transfered to recipient.
+   */
+  function _transferAllowed(address recipient) private view {
+    require(recipient != address(0), 'TFCLP: null address');
+    // This NFT handler is only allowed for wolves
+    uint256 sftTokenId = _sftHolder.addressToTokenId(recipient);
+    if (sftTokenId != uint256(-1)) {
+      (, uint8 level) = _sftHolder.getTokenData(sftTokenId);
+      require((LEVEL2WOLF & (uint256(1) << level)) > 0, 'TFCLP: Wolves only');
+    }
   }
 
   //////////////////////////////////////////////////////////////////////////////
