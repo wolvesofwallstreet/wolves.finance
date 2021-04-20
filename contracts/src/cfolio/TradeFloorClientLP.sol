@@ -9,8 +9,9 @@
 pragma solidity >=0.7.0 <0.8.0;
 
 import '../../0xerc1155/interfaces/IERC20.sol';
+import '../../0xerc1155/utils/SafeMath.sol';
 
-import './interfaces/ITradefloorClient.sol'; // Callbacks into this contract
+import './interfaces/ITradeFloorClient.sol'; // Callbacks into this contract
 import './interfaces/ISftEvaluator.sol';
 
 import '../token/interfaces/ITradeFloor.sol'; // Tradefloor
@@ -35,6 +36,7 @@ interface ITradeFloorBurnMint is ITradeFloor, IERC1155BurnMintable {}
  * with burning / transfering the TF NFT's in TF contract
  */
 contract TradeFloorClientLP is ITradeFloorClient {
+  using SafeMath for uint256;
   //////////////////////////////////////////////////////////////////////////////
   // State
   //////////////////////////////////////////////////////////////////////////////
@@ -49,6 +51,8 @@ contract TradeFloorClientLP is ITradeFloorClient {
   // The fungible NFT tokenId minted in tradeFloor contract
   // We mint 1:1 incoming LP <-> NFT but only reward a part
   uint256 public immutable tradeFloorTokenId;
+  // The number of NFT tokens we allocate for this client
+  uint16 public numTradeFloorTokenIds;
 
   // The reward token
   IERC20 public immutable stakingToken;
@@ -63,18 +67,21 @@ contract TradeFloorClientLP is ITradeFloorClient {
   // Modifier
   //////////////////////////////////////////////////////////////////////////////
 
-  modifier onlyTradeFloor(uint256 tokenId) {
-    require(msg.sender == address(tradeFloor), 'onTfer: only TF');
-    require(tokenId == tradeFloorTokenId, 'onTfer: wrong tokenId');
+  modifier onlyTradeFloor {
+    require(msg.sender == address(tradeFloor), 'TFCLP: only TF');
     _;
   }
 
+  modifier validTokenId(uint256 tokenId) {
+    require(verifyTokenId(tokenId), 'TFCLP: wrong tokenId');
+    _;
+  }
   modifier onlyWolves(address to) {
     // This NFT handler is only allowed for wolves
     uint256 sftTokenId = _sftHolder.addressToTokenId(to);
     if (sftTokenId != uint256(-1)) {
       (, uint8 level) = _sftHolder.getTokenData(sftTokenId);
-      require(level >= 4 && level <= 7, 'TFCLP: Wolves only');
+      require((LEVEL2WOLF & (uint256(1) << level)) > 0, 'TFCLP: Wolves only');
     }
     _;
   }
@@ -89,15 +96,17 @@ contract TradeFloorClientLP is ITradeFloorClient {
    * @param addressRegistry registry containing our system addresses
    * We will use SFTHolder and Rewardhandler from this registry
    * @param tradeFloor_ The tradeFloor which manages our NFT representations
-   * @param tradeFloorTokenId_ our fixed c-folio tokenId in tradeFloor contract
+   * @param tradeFloorTokenId_ our base c-folio tokenId in tradeFloor contract
    * c-folio tokenIds must be >= 0x10000000000000000;
+   * @param numTradeFloorTokenIds_ Number of tokenIds to allocate
    *
    * Note: Pause operation in this context. Only calls from Proxy allowed
    */
   constructor(
     IAddressRegistry addressRegistry,
     ITradeFloorBurnMint tradeFloor_,
-    uint256 tradeFloorTokenId_
+    uint256 tradeFloorTokenId_,
+    uint16 numTradeFloorTokenIds_
   ) {
     // The SFT holder
     _sftHolder = IWOWSERC1155(
@@ -115,8 +124,21 @@ contract TradeFloorClientLP is ITradeFloorClient {
     );
     // The tradeFloor we are interacting with
     tradeFloor = tradeFloor_;
-    // Fixed tokenId for this investment contract
+    // Fixed base tokenId for this investment contract
     tradeFloorTokenId = tradeFloorTokenId_;
+    // Fixed number of tokenIds for this investment contract
+    numTradeFloorTokenIds = numTradeFloorTokenIds_;
+  }
+
+  /**
+   * @dev Increase possible tokenIds for this contract
+   */
+  function setNumTokenIds(uint16 newCount) external {
+    require(msg.sender == admin, 'TFCLP: admin only');
+    require(newCount > numTradeFloorTokenIds, 'TFCLP: increase only');
+
+    // Set state
+    numTradeFloorTokenIds = newCount;
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -127,20 +149,22 @@ contract TradeFloorClientLP is ITradeFloorClient {
    * @dev deposits amount stakingToken into this contract
    *
    * @notice rewardToken. msg.sender has to be approved this contract to pull
+   *
+   * @param recipient will receive the nft's
+   * @param tokenId the tokenId to mint
+   * @param amount the fungible amount to mint
+
    */
-  function deposit(address recipient, uint256 amount)
-    external
-    onlyWolves(recipient)
-  {
+  function deposit(
+    address recipient,
+    uint256 tokenId,
+    uint256 amount
+  ) external onlyWolves(recipient) {
+    verifyTokenId(tokenId);
     // Transfer LP token to this contract
     stakingToken.transferFrom(msg.sender, address(this), amount);
     // mint tradeFloor NFT's into recipient
-    tradeFloor.mint(
-      recipient,
-      tradeFloorTokenId,
-      amount,
-      _toBytes(address(this))
-    );
+    tradeFloor.mint(recipient, tokenId, amount, _toBytes(address(this)));
 
     // only parts of the investment are inserted into rewardhandler
     // in case recipient is an SFT
@@ -167,7 +191,11 @@ contract TradeFloorClientLP is ITradeFloorClient {
       address(newContract),
       stakingToken.balanceOf(address(this))
     );
-    tradeFloor.setMinter(tradeFloorTokenId, address(newContract));
+    tradeFloor.setMinter(
+      tradeFloorTokenId,
+      numTradeFloorTokenIds,
+      address(newContract)
+    );
 
     selfdestruct(payable(address(newContract)));
   }
@@ -203,33 +231,26 @@ contract TradeFloorClientLP is ITradeFloorClient {
    * depending if from / to is a c-folio or not
    */
   function onTransferFrom(
+    address caller,
     address from,
     address to,
-    uint256 tokenId,
-    uint256 amount
-  ) external override onlyTradeFloor(tokenId) onlyWolves(to) {
-    // TODO: transfer elements from -> to
-    // -> remove / add reward share in case from/to is c-folio
-  }
+    uint256[] calldata tokenIds,
+    uint256[] calldata amounts,
+    bytes calldata data
+  ) external override onlyTradeFloor onlyWolves(to) {
+    uint256 length = tokenIds.length;
+    uint256 amountTransfered = 0;
+    require(length == amounts.length, 'TFCLP: length mismatch');
+    for (uint256 i = 0; i < length; ++i) {
+      if (verifyTokenId(tokenIds[i]))
+        amountTransfered = amountTransfered.add(amounts[i]);
+    }
 
-  /**
-   * @dev Called from Tradefloor if tokens have been burned.
-   *
-   * See {IMinterCallback-_onBurn}.
-   *
-   * We have to remove reward shares here, and payout underlying
-   * assets. Pending rewards can be left inside SFT.
-   */
-  function onBurn(
-    address recipient,
-    address, /* account*/
-    uint256 tokenId,
-    uint256 amount
-  ) external override onlyTradeFloor(tokenId) {
-    // Transfer lpTokens back to to recipient
-    stakingToken.transfer(recipient, amount);
-
-    // TODO: handle rewards
+    if (to == address(0)) {
+      // Transfer lpTokens back to to recipient
+      stakingToken.transfer(caller, amountTransfered);
+    }
+    // TODO: handle reward share
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -238,6 +259,12 @@ contract TradeFloorClientLP is ITradeFloorClient {
 
   function _toBytes(address addr) private pure returns (bytes memory) {
     return abi.encodePacked(addr);
+  }
+
+  function verifyTokenId(uint256 tokenId) private view returns (bool) {
+    return
+      tokenId >= tradeFloorTokenId &&
+      tokenId < tradeFloorTokenId + numTradeFloorTokenIds;
   }
 
   //////////////////////////////////////////////////////////////////////////////

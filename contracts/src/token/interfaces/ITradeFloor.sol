@@ -12,5 +12,9 @@ interface ITradeFloor {
   /**
    * @dev called from previous TradeFloorClient if it gets upgraded.
    */
-  function setMinter(uint256 tokenId, address newMinter) external;
+  function setMinter(
+    uint256 tokenId,
+    uint256 num,
+    address newMinter
+  ) external;
 }

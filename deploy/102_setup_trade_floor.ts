@@ -64,7 +64,7 @@ const func = async function (hardhat_re) {
   log_step('Marketing wallet calls for SFT testing');
 
   //
-  // 1.) Call WowsERC1155.sol::grantRole(TRADEFLOOR_ROLE, TradeFloorProxy.sol)
+  // 1.) Call WowsERC1155.sol::grantRole(TRADEFLOOR_ROLE, TradeFloorProxy)
   //
 
   await execute(
@@ -79,11 +79,11 @@ const func = async function (hardhat_re) {
   );
 
   //
-  // 2.) Call TradeFloorProxy.sol::grantRole(MINTER_ROLE, TradingFloorClientLP.sol)
+  // 2.) Call TradeFloorProxy::grantRole(MINTER_ROLE, TradingFloorClientLP.sol)
   //
 
   console.log(
-    'TradeFloorProxy.sol::grantRole(MINTER_ROLE, TradingFloorClientLP.sol'
+    'TradeFloorProxy::grantRole(MINTER_ROLE, TradingFloorClientLP.sol'
   );
 
   const tx = await TRADE_FLOOR_PROXY_INSTANCE.grantRole(

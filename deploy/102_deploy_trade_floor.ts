@@ -16,7 +16,7 @@ require('hardhat-deploy-ethers');
 
 // TODO: Fully qualified contract names
 const TRADE_FLOOR_CONTRACT = 'TradeFloor';
-const TRADE_FLOOR_PROXY_CONTRACT = 'TradeFloorProxy';
+const TRADE_FLOOR_PROXY_CONTRACT = 'UpgradeProxy';
 const TRADEFLOOR_CLIENTLP_CONTRACT = 'TradeFloorClientLP';
 
 // Contract ABIs
