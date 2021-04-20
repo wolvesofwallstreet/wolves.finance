@@ -59,8 +59,8 @@ contract SftEvaluator is ISftEvaluator {
     external
     override
   {
-    // solhint-disable-next-line not-rely-on-time
     (uint32 untimed, uint32 timed) =
+      // solhint-disable-next-line not-rely-on-time
       _baseRates(tokenId, uint64(block.timestamp - 60 days));
     // first implementation, check timed auto upgrade only
     if (untimed != timed) {
