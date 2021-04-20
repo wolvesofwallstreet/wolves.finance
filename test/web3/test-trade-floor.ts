@@ -20,7 +20,7 @@ import UniswapV2ERC20Abi from '../../src/abi/contracts/depends/uniswap-v2-core/U
 import TradeFloorClientLpAbi from '../../src/abi/contracts/src/cfolio/TradeFloorClientLP.sol/TradeFloorClientLP.json';
 import PresaleAbi from '../../src/abi/contracts/src/crowdsale/Crowdsale.sol/Crowdsale.json';
 import WOWSSftMinterAbi from '../../src/abi/contracts/src/crowdsale/WOWSSftMinter.sol/WOWSSftMinter.json';
-import TradeFloorProxyAbi from '../../src/abi/contracts/src/proxy/TradeFloorProxy.sol/TradeFloorProxy.json';
+import TradeFloorProxyAbi from '../../src/abi/contracts/src/proxy/UpgradeProxy.sol/UpgradeProxy.json';
 import TradeFloorAbi from '../../src/abi/contracts/src/token/TradeFloor.sol/TradeFloor.json';
 import WOWSCryptofolioAbi from '../../src/abi/contracts/src/token/WOWSCryptofolio.sol/WOWSCryptofolio.json';
 import WOWSTokenAbi from '../../src/abi/contracts/src/token/WOWSErc20.sol/WowsToken.json';
@@ -143,9 +143,12 @@ describe('TradeFloorClientLP', function () {
     const { tokenContract, sftHolderContract, sftMinterContract } = contracts;
 
     // Test parameters
-    const level = 1;
-    const cardId = 2;
-    const wowsTokenId = ethers.BigNumber.from('0x01020000');
+    const levelBoi = 1;
+    const cardIdBoi = 2;
+    const levelWolf = 5;
+    const cardIdWolf = 2;
+    const wowsTokenIdBoi = ethers.BigNumber.from('0x01020000');
+    const wowsTokenIdWolf = ethers.BigNumber.from('0x05020000');
     const level1Price = '3000000000000000000';
 
     // Approve SFT minter spending WOWS
@@ -157,38 +160,83 @@ describe('TradeFloorClientLP', function () {
     );
     await chai.expect(tx).to.not.be.reverted;
 
-    // Mint the WOWS SFT
-    tx = sftMinterContract.mintWowsSFT(marketingWallet.address, level, cardId);
+    // Mint the Bois WOWS SFT
+    tx = sftMinterContract.mintWowsSFT(
+      marketingWallet.address,
+      levelBoi,
+      cardIdBoi
+    );
     await chai.expect(tx).to.emit(sftMinterContract, 'Mint').withArgs(
       marketingWallet.address, // Recipient
-      wowsTokenId, // Token ID
+      wowsTokenIdBoi, // Token ID
+      level1Price // Price
+    );
+
+    // Mint the Wolf WOWS SFT
+    tx = sftMinterContract.mintWowsSFT(
+      marketingWallet.address,
+      levelWolf,
+      cardIdWolf
+    );
+    await chai.expect(tx).to.emit(sftMinterContract, 'Mint').withArgs(
+      marketingWallet.address, // Recipient
+      wowsTokenIdWolf, // Token ID
       level1Price // Price
     );
 
     // Check the token's ownership (NFT balance is always 1)
-    const balance = await sftHolderContract.balanceOf(
+    const balanceBoi = await sftHolderContract.balanceOf(
       marketingWallet.address,
-      wowsTokenId
+      wowsTokenIdBoi
     );
-    chai.expect(balance).to.equal(1);
+    chai.expect(balanceBoi).to.equal(1);
+
+    // Check the token's ownership (NFT balance is always 1)
+    const balanceWolf = await sftHolderContract.balanceOf(
+      marketingWallet.address,
+      wowsTokenIdWolf
+    );
+    chai.expect(balanceWolf).to.equal(1);
 
     // Check the owner's token count
     const result = await sftHolderContract.getTokenIds(marketingWallet.address);
-    chai.expect(result.length).to.equal(1);
-    chai.expect(result[0]).to.equal(wowsTokenId);
+    chai.expect(result.length).to.equal(2);
+    chai.expect(result[0]).to.equal(wowsTokenIdWolf);
+    chai.expect(result[1]).to.equal(wowsTokenIdBoi);
 
     // Query the token ID in the SFT contract
-    const [mintTimestamp, tokenLevel] = await sftHolderContract.getTokenData(
-      wowsTokenId
-    );
-    chai.expect(mintTimestamp).to.not.equal(0);
-    chai.expect(tokenLevel).to.equal(level);
+    const [
+      mintTimestampBoi,
+      tokenLevelBoi,
+    ] = await sftHolderContract.getTokenData(wowsTokenIdBoi);
+    chai.expect(mintTimestampBoi).to.not.equal(0);
+    chai.expect(tokenLevelBoi).to.equal(levelBoi);
+
+    // Query the token ID in the SFT contract
+    const [
+      mintTimestampWolf,
+      tokenLevelWolf,
+    ] = await sftHolderContract.getTokenData(wowsTokenIdWolf);
+    chai.expect(mintTimestampWolf).to.not.equal(0);
+    chai.expect(tokenLevelWolf).to.equal(levelWolf);
 
     // Get the address of the clone contract
-    const cryptofolioAddress = await sftHolderContract.tokenIdToAddress(
-      wowsTokenId
+    const cryptofolioAddressBoi = await sftHolderContract.tokenIdToAddress(
+      wowsTokenIdBoi
     );
-    chai.expect(cryptofolioAddress).to.be.properAddress;
+    chai.expect(cryptofolioAddressBoi).to.be.properAddress;
+    chai
+      .expect(cryptofolioAddressBoi)
+      .to.not.equal('0x0000000000000000000000000000000000000000');
+
+    // Get the address of the clone contract
+    const cryptofolioAddressWolf = await sftHolderContract.tokenIdToAddress(
+      wowsTokenIdWolf
+    );
+    chai.expect(cryptofolioAddressWolf).to.be.properAddress;
+    chai
+      .expect(cryptofolioAddressBoi)
+      .to.not.equal('0x0000000000000000000000000000000000000000');
   });
 
   it('should get LP tokens', async function () {
@@ -253,7 +301,7 @@ describe('TradeFloorClientLP', function () {
     } = contracts;
 
     // Test parameters
-    const wowsTokenId = ethers.BigNumber.from('0x01020000');
+    const wowsTokenId = ethers.BigNumber.from('0x05020000');
     const tradeFloorTokenId = ethers.BigNumber.from('0x10000000000000000');
 
     // Get the address of the clone contract
@@ -261,6 +309,9 @@ describe('TradeFloorClientLP', function () {
       wowsTokenId
     );
     chai.expect(cryptofolioAddress).to.be.properAddress;
+    chai
+      .expect(cryptofolioAddress)
+      .to.not.equal('0x0000000000000000000000000000000000000000');
 
     // Get wallet balance
     const lpBalance = await uniV2PairContract.balanceOf(
@@ -286,7 +337,11 @@ describe('TradeFloorClientLP', function () {
     );
 
     // Deposit LP tokens
-    tx = tradeFloorClientLP.deposit(cryptofolioAddress, lpBalance);
+    tx = tradeFloorClientLP.deposit(
+      cryptofolioAddress,
+      tradeFloorTokenId,
+      lpBalance
+    );
     await chai
       .expect(tx)
       .to.emit(uniV2PairContract, 'Transfer')
