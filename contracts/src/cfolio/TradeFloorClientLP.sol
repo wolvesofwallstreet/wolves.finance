@@ -77,6 +77,7 @@ contract TradeFloorClientLP is ITradeFloorClient {
     _;
   }
   modifier onlyWolves(address to) {
+    require(to != address(0), 'TFCLP: null address');
     // This NFT handler is only allowed for wolves
     uint256 sftTokenId = _sftHolder.addressToTokenId(to);
     if (sftTokenId != uint256(-1)) {
@@ -211,12 +212,9 @@ contract TradeFloorClientLP is ITradeFloorClient {
    * For this contract we will add more shares into the reward contract.
    */
   function sftUpgrade(
-    // solhint-disable-next-line no-unused-vars
-    uint256 tokenId,
-    // solhint-disable-next-line no-unused-vars
-    uint32 prevRate,
-    // solhint-disable-next-line no-unused-vars
-    uint32 newRate
+    uint256, /* tokenId */
+    uint32, /* prevRate */
+    uint32 /* newRate */
   ) external override {
     require(msg.sender == address(sftEvaluator), 'invalid caller');
     // TODO: adjust rewardrate
@@ -232,11 +230,11 @@ contract TradeFloorClientLP is ITradeFloorClient {
    */
   function onTransferFrom(
     address caller,
-    address from,
+    address, /* from*/
     address to,
     uint256[] calldata tokenIds,
     uint256[] calldata amounts,
-    bytes calldata data
+    bytes calldata /* data*/
   ) external override onlyTradeFloor onlyWolves(to) {
     uint256 length = tokenIds.length;
     uint256 amountTransfered = 0;
