@@ -21,5 +21,5 @@ library AddressBook {
   bytes32 public constant SFT_HOLDER = 'SFT_HOLDER';
   bytes32 public constant BOIS_REWARDS = 'BOIS_REWARDS';
   bytes32 public constant WOLVES_REWARDS = 'WOLVES_REWARDS';
-  bytes32 public constant SFT_EVALUATOR = 'SFT_EVALUATOR';
+  bytes32 public constant SFT_EVALUATOR_PROXY = 'SFT_EVALUATOR_PROXY';
 }

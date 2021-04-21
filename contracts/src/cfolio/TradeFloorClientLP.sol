@@ -18,7 +18,7 @@ import '../token/interfaces/IWOWSERC1155.sol'; // SFT contract
 import '../utils/AddressBook.sol';
 import '../utils/interfaces/IAddressRegistry.sol';
 
-import './interfaces/ISftEvaluator.sol';
+import './interfaces/ISFTEvaluator.sol';
 import './interfaces/ITradeFloorClient.sol'; // Callbacks into this contract
 
 interface ITradeFloorBurnMint is ITradeFloor, IERC1155BurnMintable {}
@@ -61,7 +61,7 @@ contract TradeFloorClientLP is ITradeFloorClient {
   IERC20 public immutable stakingToken;
 
   // SFT evaluator
-  ISftEvaluator public immutable sftEvaluator;
+  ISFTEvaluator public immutable sftEvaluator;
 
   // Rewarder
   ICFolioFarm public immutable cfolioFarm;
@@ -134,8 +134,8 @@ contract TradeFloorClientLP is ITradeFloorClient {
     admin = addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
 
     // SftEvaluator
-    sftEvaluator = ISftEvaluator(
-      addressRegistry.getRegistryEntry(AddressBook.SFT_EVALUATOR)
+    sftEvaluator = ISFTEvaluator(
+      addressRegistry.getRegistryEntry(AddressBook.SFT_EVALUATOR_PROXY)
     );
 
     // The ERC20 token we stake

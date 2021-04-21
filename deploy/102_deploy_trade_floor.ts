@@ -16,8 +16,8 @@ require('hardhat-deploy-ethers');
 
 // TODO: Fully qualified contract names
 const TRADE_FLOOR_CONTRACT = 'TradeFloor';
-const TRADE_FLOOR_PROXY_CONTRACT = 'UpgradeProxy';
-const TRADEFLOOR_CLIENTLP_CONTRACT = 'TradeFloorClientLP';
+const TRADE_FLOOR_PROXY_CONTRACT = 'TradeFloorProxy';
+const TRADE_FLOOR_CLIENTLP_CONTRACT = 'TradeFloorClientLP';
 
 // Contract ABIs
 const TRADE_FLOOR_ABI = `${__dirname}/../src/abi/contracts/src/token/TradeFloor.sol/TradeFloor.json`;
@@ -165,7 +165,7 @@ const func = async function (hardhat_re) {
     log_step('Deploying tradeFloorClientLP contract');
 
     const tradeFloorClientLPContractReceipt = await deploy(
-      TRADEFLOOR_CLIENTLP_CONTRACT,
+      TRADE_FLOOR_CLIENTLP_CONTRACT,
       {
         from: deployer,
         args: [
