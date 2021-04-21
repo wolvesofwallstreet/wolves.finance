@@ -15,6 +15,11 @@ pragma solidity >=0.6.0 <0.8.0;
  */
 interface ICFolioFarm {
   /**
+   * @dev Return invested balance of account
+   */
+  function balanceOf(address account) external view returns (uint256);
+
+  /**
    * @dev Increase amount of shares and earn rewards
    */
   function addShares(address account, uint256 amount) external;
