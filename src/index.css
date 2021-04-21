@@ -6,11 +6,17 @@
  * See LICENSE.txt for more information.
  */
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+  sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -30,12 +36,16 @@ label {
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  monospace;
 }
 
 :root {
+  --wolves-white: #fff;
   --wolves-black: #0a1016;
   --wolves-blue-dk: #152738;
   --wolves-orange: #cc8a6d;
+  --wolves-orange-transparent: rgba(204, 138, 109, 0.43);
+  --wolves-orange-light: #f3b698;
   --primary-color: #032042;
+  /* font-size: 16px; */
 }

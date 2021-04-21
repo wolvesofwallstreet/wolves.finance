@@ -5,6 +5,9 @@
  * SPDX-License-Identifier: Apache-2.0
  * See LICENSE.txt for more information.
  */
+.tk-vincente {
+  font-family: 'vincente', serif !important;
+}
 
 .tk-vincente-bold {
   font-family: 'vincente', serif;

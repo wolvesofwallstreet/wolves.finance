@@ -26,15 +26,20 @@
   min-height: 300px;
 }
 
-.wolves-container.bg-wolves {
+.bg-wolves {
   background-image: url(./assets/background_wolves.png);
 }
 
-.wolves-container.bg-bois {
+.bg-bois {
   background-image: url(./assets/background_bois.jpg);
 }
 
-.wolves-container.bg-myPack {
+.bg-myPack {
+  background-image: url(./assets/background_bois.jpg);
+}
+
+.bg-flat2 {
+  /* TODO::ASK bg asset */
   background-image: url(./assets/background_bois.jpg);
 }
 

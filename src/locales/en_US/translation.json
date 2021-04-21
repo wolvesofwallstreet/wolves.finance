@@ -49,7 +49,8 @@
     "bois1": "STABLE COIN YIELD FARMERS",
     "bois2": "BOIS CRYPTOFOLIOS",
     "bois3": "OR ARE YOU ONE OF THE BOIS?",
-    "click": "CLICK ABOVE TO VIEW YOUR CHOICES"
+    "click": "CLICK ABOVE TO VIEW YOUR CHOICES",
+    "buyWows": "BUY WOWS"
   },
   "page3": {
     "welcome-wolves": "WELCOME TO THE WOLFPACK",
@@ -72,5 +73,35 @@
     "tokenId": "TOKEN ID",
     "noQuantity": "NO CARDS AVAILABLE",
     "txPending": "TRANSACTION PENDING"
+  },
+  
+  "page5": {
+    "welcome-wolves": "WELCOME TO YOUR PACK",
+    "header-wolves": "THIS BOIS CRYPTOFOLIO, WILL IN TIME, ALLOW YOU TO YIELD FARM, DEFEND THE BOOSTER POOL, HOLD NFT UPGRADES, HOLD OTHER NFTS AND BUNDLE THEM TOGETHER TO SELL, AND MUCH MORE.",
+    "prodigy": "PRODIGY",
+    "card-title": "GORGAN DECKO",
+    "card-motto": "BUY WHEN THERE IS BLOOD ON THE STREET",
+    "btn-stack": "STAKE WITH MAX FANG",
+    "card-description": "Wall Street Hustler - He’s worked his way up from the actual street. Learning the hustle on the street has given him the perfect grounding for working the trade floor. Forget rough diamond this trader is a blood diamond, and isnt afraid to step on toes and ears to make the deals he needs. \n \n This is a staker card and allows to stake Wolf on the tradefloor and also Raid. You can sell this character licence at any point wither on our platform or on opensea"
+  },
+
+  "page6": {
+    "welcome-wolves": "WELCOME TO THE WOLF STAKING",
+    "header-wolves": "CHOOSE YOUR CRYPTOFOLIO YOU WANT TO USE"
+  },
+
+  "page7": {
+    "welcome-wolves": "WELCOME TO THE TRADEFLOOR",
+    "header-wolves": "NEW WOLF STAKING LIQUIDITY POOL NFTS"
+  },
+
+  "page8": {
+    "welcome-wolves": "WELCOME TO YOUR PACK",
+    "header-wolves": "THIS BOIS CRYPTOFOLIO, WILL IN TIME, ALLOW YOU TO YIELD FARM, DEFEND THE BOOSTER POOL, HOLD NFT UPGRADES, HOLD OTHER NFTS AND BUNDLE THEM TOGETHER TO SELL, AND MUCH MORE.",
+    "prodigy": "PRODIGY",
+    "card-title": "GORGAN DECKO",
+    "card-motto": " BUY WHEN THERE IS BLOOD ON THE STREET",
+    "btn-stack": "STAKE WITH MAX FANG",
+    "card-description": "Wall Street Hustler - He’s worked his way up from the actual street. Learning the hustle on the street has given him the perfect grounding for working the trade floor. Forget rough diamond this trader is a blood diamond, and isnt afraid to step on toes and ears to make the deals he needs.  \n\n This is a staker card and allows to stake Wolf on the tradefloor and also Raid. You can sell this character licence at any point wither on our platform or on opensea"
   }
 }

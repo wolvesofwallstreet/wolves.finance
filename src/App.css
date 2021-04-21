@@ -16,6 +16,7 @@
 html,
 body {
   overflow: overlay;
+  font-size: 10px;
 }
 
 .no-margin {
@@ -26,8 +27,16 @@ body {
   line-height: 1em;
 }
 
+.font-10 {
+  font-size: 10px;
+}
+
 .font-14 {
   font-size: 14px;
+}
+
+.font-16 {
+  font-size: 16px;
 }
 
 .font-20 {
@@ -46,6 +55,10 @@ body {
   font-size: 32px;
 }
 
+.font-48 {
+  font-size: 48px;
+}
+
 .ellipsis {
   width: 100%;
   white-space: nowrap;
@@ -55,6 +68,14 @@ body {
 
 .wolves-orange {
   color: var(--wolves-orange);
+}
+
+.bg-orange-transparent {
+  background-color: var(--wolves-orange-transparent);
+}
+
+.wolves-orange-light {
+  color: var(--wolves-orange-light);
 }
 
 hr.wolves {
@@ -74,4 +95,25 @@ span a:hover {
 
 .link {
   cursor: pointer;
+}
+
+.text-white {
+  color: var(--color-white);
+}
+
+.triangle-down {
+  width: 0;
+  height: 0;
+  border-left: 18px solid transparent;
+  border-right: 18px solid transparent;
+  border-top: 10px solid var(--wolves-orange);
+  margin: 0 auto;
+}
+
+.--text-left {
+  text-align: left !important;
+}
+
+.bg-blue-transparent {
+  background-color: rgba(4, 29, 52, 0.44);
 }

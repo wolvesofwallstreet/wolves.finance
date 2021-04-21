@@ -26,3 +26,4 @@
 
 # Secret environment variables. Don't commit this to git
 .env
+.idea
