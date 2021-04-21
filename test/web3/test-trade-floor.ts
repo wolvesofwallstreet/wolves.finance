@@ -32,6 +32,24 @@ chai.use(solidity);
 // Path to generated address registry file
 const GENERATED_ADDRESSES = `${__dirname}/../../src/config/generated-addresses.json`;
 
+// The following gas prices are available
+//
+//   - 'SLOW'
+//   - 'AVERAGE'
+//   - 'FAST'
+//   - 'FASTEST'
+//
+const GAS_PRICE = 'AVERAGE';
+
+// Current price API URL
+const CURRENT_PRICE_URL =
+  'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=ethereum';
+
+// Gas estimator API URL
+// TODO: Move API key to GitHub Actions secret
+const GAS_ESTIMATOR_URL =
+  'https://data-api.defipulse.com/api/v1/egs/api/ethgasAPI.json?api-key=53be2a60f8bc0bb818ad161f034286d709a9c4ccb1362054b0543df78e27';
+
 // Helper function
 function toWei(n: number, decimals = 18) {
   const parsed = typeof n === 'number' ? n.toFixed(decimals) : n;
@@ -147,6 +165,50 @@ describe('TradeFloorClientLP', function () {
   const tradeFloorTokenIdBoi = ethers.BigNumber.from('0x10000000000000000');
   const tradeFloorTokenIdWolf = ethers.BigNumber.from('0x10000000000000001');
 
+  // Lazily-initialized variables
+  let ethUsd = 0;
+  let gasPrice = 0;
+
+  // Helper function
+  async function toUsd(eth: number): Promise<number> {
+    if (ethUsd === 0) {
+      // Query current price API
+      const response = await fetch(CURRENT_PRICE_URL);
+
+      // Parse response
+      const responseJson = await response.json();
+      if (responseJson) {
+        ethUsd = responseJson[0].current_price;
+      }
+    }
+
+    return parseFloat((eth * ethUsd).toFixed(2));
+  }
+
+  // Helper function
+  async function getGasPrice() {
+    if (gasPrice === 0) {
+      // Lookup table for JSON keys
+      const JSON_KEY = {
+        SLOW: 'safeLow',
+        AVERAGE: 'average',
+        FAST: 'fast',
+        FASTEST: 'fastest',
+      };
+
+      // Query current price API
+      const response = await fetch(GAS_ESTIMATOR_URL);
+
+      // Parse response
+      const responseJson = await response.json();
+      if (responseJson) {
+        gasPrice = (responseJson[JSON_KEY[GAS_PRICE]] * 1e9) / 10;
+      }
+    }
+
+    return gasPrice;
+  }
+
   before(async function () {
     this.timeout(60 * 1000);
 
@@ -155,6 +217,13 @@ describe('TradeFloorClientLP', function () {
 
     // A single fixture is used for the test suite
     contracts = await setupTest();
+
+    // Query API providers
+    const ethUsd = await toUsd(1);
+    const gasPrice = await getGasPrice();
+
+    console.log(`ETH price is $${ethUsd}`);
+    console.log(`Using '${GAS_PRICE}' gas at ${gasPrice / 1e9} Gwei`);
   });
 
   it('should approve spending WOWS', async function () {
@@ -197,6 +266,19 @@ describe('TradeFloorClientLP', function () {
       wowsTokenIdBoi, // Token ID
       level1Price // Price
     );
+
+    // Log gas cost
+    const receipt = await (await tx).wait();
+    const gasUsedGwei = receipt.gasUsed;
+    const gasCost =
+      gasUsedGwei
+        .mul(await getGasPrice())
+        .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
+    console.log(
+      `Mint boi gas used: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+        gasCost
+      )})`
+    );
   });
 
   it('should mint wolf SFT', async function () {
@@ -214,6 +296,19 @@ describe('TradeFloorClientLP', function () {
       marketingWallet.address, // Recipient
       wowsTokenIdWolf, // Token ID
       level1Price // Price
+    );
+
+    // Log gas cost
+    const receipt = await (await tx).wait();
+    const gasUsedGwei = receipt.gasUsed;
+    const gasCost =
+      gasUsedGwei
+        .mul(await getGasPrice())
+        .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
+    console.log(
+      `Mint wolf gas used: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+        gasCost
+      )})`
     );
   });
 
@@ -406,6 +501,19 @@ describe('TradeFloorClientLP', function () {
       tradeFloorClientLP.address, // spender
       lpBalance // balance
     );
+
+    // Log gas cost
+    const receipt = await (await tx).wait();
+    const gasUsedGwei = receipt.gasUsed;
+    const gasCost =
+      gasUsedGwei
+        .mul(await getGasPrice())
+        .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
+    console.log(
+      `Approve LP gas used: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+        gasCost
+      )})`
+    );
   });
 
   it('should increase possible token IDs', async function () {
@@ -496,6 +604,19 @@ describe('TradeFloorClientLP', function () {
     );
     chai.expect(idsLength).to.equal(1);
     chai.expect(tokenIds[0]).to.equal(tradeFloorTokenIdWolf);
+
+    // Log gas cost
+    const receipt = await (await tx).wait();
+    const gasUsedGwei = receipt.gasUsed;
+    const gasCost =
+      gasUsedGwei
+        .mul(await getGasPrice())
+        .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
+    console.log(
+      `Deposit LP gas used: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+        gasCost
+      )})`
+    );
   });
 
   it('should attach the trade floor proxy', async function () {
@@ -545,6 +666,19 @@ describe('TradeFloorClientLP', function () {
     );
     chai.expect(idsLength).to.equal(1);
     chai.expect(tokenIds[0]).to.equal(tradeFloorTokenIdWolf);
+
+    // Log gas cost
+    const receipt = await (await tx).wait();
+    const gasUsedGwei = receipt.gasUsed;
+    const gasCost =
+      gasUsedGwei
+        .mul(await getGasPrice())
+        .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
+    console.log(
+      `Burn LP NFT gas used: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+        gasCost
+      )})`
+    );
   });
 
   it('should burn almost the other half of the LP NFT', async function () {
