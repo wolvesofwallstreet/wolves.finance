@@ -64,6 +64,24 @@ contract TradeFloorClientLP is ITradeFloorClient {
   address public immutable admin;
 
   //////////////////////////////////////////////////////////////////////////////
+  // Events
+  //////////////////////////////////////////////////////////////////////////////
+
+  event Deposit(
+    address indexed user,
+    address indexed recipient,
+    uint256 amount,
+    uint32 rewardRate
+  );
+
+  event Withdraw(
+    address indexed user,
+    address indexed recipient,
+    uint256 amount,
+    uint32 rewardRate
+  );
+
+  //////////////////////////////////////////////////////////////////////////////
   // Modifier
   //////////////////////////////////////////////////////////////////////////////
 
@@ -268,21 +286,4 @@ contract TradeFloorClientLP is ITradeFloorClient {
       require((LEVEL2WOLF & (uint256(1) << level)) > 0, 'TFCLP: Wolves only');
     }
   }
-
-  //////////////////////////////////////////////////////////////////////////////
-  // Events
-  //////////////////////////////////////////////////////////////////////////////
-
-  event Deposit(
-    address indexed user,
-    address indexed recipient,
-    uint256 amount,
-    uint32 rewardRate
-  );
-  event Withdraw(
-    address indexed user,
-    address indexed recipient,
-    uint256 amount,
-    uint32 rewardRate
-  );
 }
