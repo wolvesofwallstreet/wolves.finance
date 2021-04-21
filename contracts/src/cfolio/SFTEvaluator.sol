@@ -12,10 +12,10 @@ import '../token/interfaces/IWOWSERC1155.sol';
 import '../utils/AddressBook.sol';
 import '../utils/interfaces/IAddressRegistry.sol';
 
-import './interfaces/ISftEvaluator.sol';
+import './interfaces/ISFTEvaluator.sol';
 import './interfaces/ITradeFloorClient.sol';
 
-contract SftEvaluator is ISftEvaluator {
+contract SFTEvaluator is ISFTEvaluator {
   //////////////////////////////////////////////////////////////////////////////
   // State
   //////////////////////////////////////////////////////////////////////////////

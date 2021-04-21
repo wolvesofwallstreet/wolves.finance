@@ -12,7 +12,7 @@ pragma solidity >=0.7.0 <0.8.0;
 uint256 constant LEVEL2BOIS = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000000000000000000000000000000F;
 uint256 constant LEVEL2WOLF = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF000000000000000000000000000000F0;
 
-interface ISftEvaluator {
+interface ISFTEvaluator {
   /**
    * @dev Returns the reward in 1e6 factor notation (1e6 = 100%)
    */
