@@ -212,7 +212,7 @@ const sft_func = async function (hardhat_re) {
   //
   //////////////////////////////////////////////////////////////////////////////
 
-  if (configAddresses.sftMinter) {
+  if (configAddresses.sftEvaluator) {
     log_step(`Using SFT evaluator: ${configAddresses.sftEvaluator}`);
     generatedAddresses.sftEvaluator = configAddresses.sftEvaluator;
   } else {
