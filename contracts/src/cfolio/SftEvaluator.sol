@@ -54,8 +54,8 @@ contract SftEvaluator is ISftEvaluator {
    * @dev See {ISftEvaluator-rewardRate}.
    */
   function rewardRate(uint256 tokenId) external view override returns (uint32) {
-    uint32 rate = _rewardRate[tokenId];
-    return rate == 0 ? _baseRate(tokenId) : rate;
+    return
+      _rewardRate[tokenId] == 0 ? _baseRate(tokenId) : _rewardRate[tokenId];
   }
 
   /**
@@ -77,7 +77,7 @@ contract SftEvaluator is ISftEvaluator {
       // Notify all TradeFloorClients
       uint256 length = tradeFloorClients.length;
       for (uint256 i = 0; i < length; ++i)
-        tradeFloorClients[i].sftUpgrade(tokenId, untimed, timed);
+        tradeFloorClients[i].sftUpgrade(tokenId, timed);
     } else {
       // Revert if requested
       require(!revertUnchanged, 'Rate unchenged');

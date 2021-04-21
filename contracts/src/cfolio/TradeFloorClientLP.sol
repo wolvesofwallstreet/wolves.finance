@@ -11,6 +11,7 @@ pragma solidity >=0.7.0 <0.8.0;
 import '../../0xerc1155/interfaces/IERC20.sol';
 import '../../0xerc1155/utils/SafeMath.sol';
 
+import '../investment/interfaces/ICFolioFarm.sol'; // Wolves rewards
 import '../token/interfaces/IERC1155BurnMintable.sol'; // Tradefloor
 import '../token/interfaces/ITradeFloor.sol'; // Tradefloor
 import '../token/interfaces/IWOWSERC1155.sol'; // SFT contract
@@ -61,6 +62,9 @@ contract TradeFloorClientLP is ITradeFloorClient {
 
   // SFT evaluator
   ISftEvaluator public immutable sftEvaluator;
+
+  // Rewarder
+  ICFolioFarm public immutable cfolioFarm;
 
   // Admin
   address public immutable admin;
@@ -129,13 +133,19 @@ contract TradeFloorClientLP is ITradeFloorClient {
     // Admin
     admin = addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
 
-    // TODO: SftEvaluator
-    // addressRegistry.getRegistryEntry(AddressBook.SFT_EVALUATOR);
-    sftEvaluator = ISftEvaluator(address(0));
+    // SftEvaluator
+    sftEvaluator = ISftEvaluator(
+      addressRegistry.getRegistryEntry(AddressBook.SFT_EVALUATOR)
+    );
 
     // The ERC20 token we stake
     stakingToken = IERC20(
       addressRegistry.getRegistryEntry(AddressBook.UNISWAP_V2_PAIR)
+    );
+
+    // WOWS reward farm
+    cfolioFarm = ICFolioFarm(
+      addressRegistry.getRegistryEntry(AddressBook.WOLVES_REWARDS)
     );
 
     // The tradeFloor we are interacting with
@@ -203,9 +213,11 @@ contract TradeFloorClientLP is ITradeFloorClient {
     // in case recipient is an SFT
     // Note: transfers into locked SFT's are reverted in TF contract
     uint32 rewardRate = 0;
-    if (_sftHolder.addressToTokenId(recipient) != uint256(-1)) {
-      // 1.) TODO: get the reward % by calling the card evaluator contract
-      // 2.) TODO: invest the % into the reward contract / logic
+    uint256 sftTokenId = _sftHolder.addressToTokenId(recipient);
+    if (sftTokenId != uint256(-1)) {
+      rewardRate = sftEvaluator.rewardRate(sftTokenId);
+      uint256 rewardAmount = amount.mul(rewardRate).div(1E6);
+      cfolioFarm.addShares(recipient, rewardAmount);
     }
 
     // Dispatch events
@@ -249,15 +261,14 @@ contract TradeFloorClientLP is ITradeFloorClient {
    *
    * For this contract we will add more shares into the reward contract.
    */
-  function sftUpgrade(
-    uint256, /* tokenId */
-    uint32, /* prevRate */
-    uint32 /* newRate */
-  ) external override {
+  function sftUpgrade(uint256 tokenId, uint32 newRate) external override {
     // Validate access
     require(msg.sender == address(sftEvaluator), 'Invalid caller');
 
-    // TODO: adjust rewardrate
+    // CFolio address
+    address cfolio = _sftHolder.tokenIdToAddress(tokenId);
+
+    _updateRewards(cfolio, newRate);
   }
 
   /**
@@ -270,7 +281,7 @@ contract TradeFloorClientLP is ITradeFloorClient {
    */
   function onTransferFrom(
     address caller,
-    address, /* from*/
+    address from,
     address to,
     uint256[] calldata tokenIds,
     uint256[] calldata amounts,
@@ -289,12 +300,15 @@ contract TradeFloorClientLP is ITradeFloorClient {
         amountTransfered = amountTransfered.add(amounts[i]);
     }
 
+    uint256 sftTokenId;
     if (to == address(0)) {
       // Transfer lpTokens back to to recipient
       stakingToken.transfer(caller, amountTransfered);
+    } else if ((sftTokenId = _sftHolder.addressToTokenId(to)) != uint256(-1)) {
+      _updateRewards(to, sftEvaluator.rewardRate(sftTokenId));
     }
-
-    // TODO: handle reward share
+    if ((sftTokenId = _sftHolder.addressToTokenId(from)) != uint256(-1))
+      _updateRewards(from, sftEvaluator.rewardRate(sftTokenId));
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -323,6 +337,25 @@ contract TradeFloorClientLP is ITradeFloorClient {
     if (sftTokenId != uint256(-1)) {
       (, uint8 level) = _sftHolder.getTokenData(sftTokenId);
       require((LEVEL2WOLF & (uint256(1) << level)) > 0, 'TFCLP: Wolves only');
+    }
+  }
+
+  function _updateRewards(address cfolio, uint32 newRate) private {
+    // count NFT available
+    uint256 tokenIdEnd = tradeFloorTokenId + numTradeFloorTokenIds;
+    uint256 newRewardAmount = 0;
+    for (uint256 i = tradeFloorTokenId; i < tokenIdEnd; ++i)
+      newRewardAmount = newRewardAmount.add(tradeFloor.balanceOf(cfolio, i));
+    if (newRewardAmount > 0) {
+      newRewardAmount = newRewardAmount.mul(newRate).div(1E6);
+      uint256 exitingRewardAmount = cfolioFarm.balanceOf(cfolio);
+      if (newRewardAmount > exitingRewardAmount)
+        cfolioFarm.addShares(cfolio, newRewardAmount.sub(exitingRewardAmount));
+      else
+        cfolioFarm.removeShares(
+          cfolio,
+          exitingRewardAmount.sub(newRewardAmount)
+        );
     }
   }
 }
