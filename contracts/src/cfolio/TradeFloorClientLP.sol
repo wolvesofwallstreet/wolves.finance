@@ -242,13 +242,14 @@ contract TradeFloorClientLP is ITradeFloorClient {
     uint256[] calldata amounts,
     bytes calldata /* data*/
   ) external override onlyTradeFloor {
+    // Validate parameters
+    require(tokenIds.length == amounts.length, 'TFCLP: length mismatch');
+
     // in case of transfer verify the target
     if (to != address(0)) _transferAllowed(to);
     // sum amount of tokens which get transfered
-    uint256 length = tokenIds.length;
     uint256 amountTransfered = 0;
-    require(length == amounts.length, 'TFCLP: length mismatch');
-    for (uint256 i = 0; i < length; ++i) {
+    for (uint256 i = 0; i < tokenIds.length; ++i) {
       if (_verifyTokenId(tokenIds[i]))
         amountTransfered = amountTransfered.add(amounts[i]);
     }
