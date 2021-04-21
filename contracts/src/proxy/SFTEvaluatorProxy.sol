@@ -13,7 +13,7 @@ import '@openzeppelin/contracts/proxy/UpgradeableProxy.sol';
 import '../utils/AddressBook.sol';
 import '../utils/interfaces/IAddressRegistry.sol';
 
-contract UpgradeProxy is UpgradeableProxy {
+contract SFTEvaluatorProxy is UpgradeableProxy {
   /**
    * @dev Storage slot with the admin of the contract.
    * This is the keccak-256 hash of "eip1967.proxy.admin" subtracted by 1, and is
