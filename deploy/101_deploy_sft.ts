@@ -244,7 +244,7 @@ const sft_func = async function (hardhat_re) {
       SFT_EVALUATOR_PROXY_CONTRACT,
       {
         from: deployer,
-        args: [generatedAddresses.sftEvaluator],
+        args: [ADDRESS_REGISTRY_ADDRESS, generatedAddresses.sftEvaluator, []],
         log: true,
         deterministicDeployment: true,
       }
