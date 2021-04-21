@@ -81,6 +81,13 @@ contract TradeFloorClientLP is ITradeFloorClient {
     uint32 rewardRate
   );
 
+  /**
+   * @dev Emitted when the number of allocated token IDs changes
+   *
+   * @param newCount The new number of NFT tokens we have allocated for this client
+   */
+  event TokenIdCountChanged(uint256 newCount);
+
   //////////////////////////////////////////////////////////////////////////////
   // Modifier
   //////////////////////////////////////////////////////////////////////////////
@@ -143,6 +150,9 @@ contract TradeFloorClientLP is ITradeFloorClient {
 
     // Set state
     numTradeFloorTokenIds = newCount;
+
+    // Dispatch events
+    emit TokenIdCountChanged(newCount);
   }
 
   //////////////////////////////////////////////////////////////////////////////
