@@ -777,7 +777,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     for (uint256 i = 0; i < tokenIds.length; ++i) {
       uint256 tokenId = tokenIds[i];
       require((tokenId >> 64) == 0, 'Invalid TokenId');
-      require(amounts[i] == 1, 'Amount != 0 not alowed');
+      require(amounts[i] == 1, 'Amount != 1 not alowed');
       require(
         _tokenInfos[uint64(tokenId)].minted == false,
         'Token already minted'
