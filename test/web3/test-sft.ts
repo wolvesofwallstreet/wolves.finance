@@ -17,7 +17,7 @@ import fs from 'fs';
 
 import WOWSSftMinterAbi from '../../src/abi/contracts/src/crowdsale/WOWSSftMinter.sol/WOWSSftMinter.json';
 import RewardHandlerAbi from '../../src/abi/contracts/src/investment/RewardHandler.sol/RewardHandler.json';
-import TradeFloorProxyAbi from '../../src/abi/contracts/src/proxy/UpgradeProxy.sol/UpgradeProxy.json';
+import TradeFloorProxyAbi from '../../src/abi/contracts/src/proxy/TradeFloorProxy.sol/TradeFloorProxy.json';
 import TradeFloorAbi from '../../src/abi/contracts/src/token/TradeFloor.sol/TradeFloor.json';
 import WOWSTokenAbi from '../../src/abi/contracts/src/token/WOWSErc20.sol/WowsToken.json';
 import WOWSERC1155Abi from '../../src/abi/contracts/src/token/WOWSErc1155.sol/WOWSERC1155.json';
