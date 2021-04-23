@@ -57,14 +57,10 @@ describe('Token contract', function () {
     const marketingBalance = await tokenContract.balanceOf(
       marketingWalletAddress
     );
-    console.log(
-      `Marketing wallet ${marketingWalletAddress} has ${marketingBalance} tokens`
-    );
     chai.expect(marketingBalance).to.equal(MARKETING_BALANCE);
 
     // Test team balance
     const teamBalance = await tokenContract.balanceOf(teamWalletAddress);
-    console.log(`Team wallet ${teamWalletAddress} has ${teamBalance} tokens`);
     chai.expect(teamBalance).to.equal(TEAM_BALANCE);
   });
 });
