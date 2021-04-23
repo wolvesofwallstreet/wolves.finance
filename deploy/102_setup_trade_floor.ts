@@ -15,7 +15,6 @@ require('hardhat-deploy-ethers');
 
 // TODO: Fully qualified contract names
 const SFT_HOLDER_CONTRACT = 'WOWSERC1155';
-const TRADE_FLOOR_CONTRACT = 'TradeFloor';
 
 // Path to generated addresses file
 const GENERATED_ADDRESSES = `${__dirname}/../src/config/generated-addresses.json`;
@@ -47,13 +46,6 @@ const func = async function (hardhat_re) {
   const SFT_HOLDER_INSTANCE = await hardhat_re.ethers.getContract(
     SFT_HOLDER_CONTRACT
   );
-  const TRADE_FLOOR_INSTANCE = await hardhat_re.ethers.getContractFactory(
-    TRADE_FLOOR_CONTRACT
-  );
-  // attach the proxy and set marketing wallet signer
-  const TRADE_FLOOR_PROXY_INSTANCE = TRADE_FLOOR_INSTANCE.attach(
-    generatedAddresses.tradeFloorProxy
-  ).connect(TRADE_FLOOR_INSTANCE.signer.provider.getSigner(marketingWallet));
 
   //////////////////////////////////////////////////////////////////////////////
   //
@@ -77,20 +69,6 @@ const func = async function (hardhat_re) {
     await SFT_HOLDER_INSTANCE.TRADEFLOOR_ROLE(),
     generatedAddresses.tradeFloorProxy
   );
-
-  //
-  // 2.) Call TradeFloorProxy::grantRole(MINTER_ROLE, TradingFloorClientLP.sol)
-  //
-
-  console.log(
-    'TradeFloorProxy::grantRole(MINTER_ROLE, TradingFloorClientLP.sol'
-  );
-
-  const tx = await TRADE_FLOOR_PROXY_INSTANCE.grantRole(
-    await TRADE_FLOOR_PROXY_INSTANCE.MINTER_ROLE(),
-    generatedAddresses.tradeFloorClientLP
-  );
-  await tx.wait();
 };
 
 module.exports = func;
