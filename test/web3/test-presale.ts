@@ -18,7 +18,7 @@ import fs from 'fs';
 import PresaleAbi from '../../src/abi/contracts/src/crowdsale/Crowdsale.sol/Crowdsale.json';
 import UniV2StakeFarm from '../../src/abi/contracts/src/investment/UniV2StakeFarm.sol/UniV2StakeFarm.json';
 import WowsTokenAbi from '../../src/abi/contracts/src/token/WOWSErc20.sol/WowsToken.json';
-import { hardhat } from '../../src/web3/hardhat';
+import { hardhat } from '../utils/hardhat';
 
 chai.use(solidity);
 

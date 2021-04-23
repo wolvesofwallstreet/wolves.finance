@@ -14,7 +14,7 @@ import chai from 'chai';
 import { solidity } from 'ethereum-waffle';
 import { ethers } from 'ethers';
 
-import { hardhat } from '../../src/web3/hardhat';
+import { hardhat } from '../utils/hardhat';
 
 chai.use(solidity);
 

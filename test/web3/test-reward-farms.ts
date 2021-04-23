@@ -25,7 +25,7 @@ import TradeFloorAbi from '../../src/abi/contracts/src/token/TradeFloor.sol/Trad
 import WOWSCryptofolioAbi from '../../src/abi/contracts/src/token/WOWSCryptofolio.sol/WOWSCryptofolio.json';
 import WOWSTokenAbi from '../../src/abi/contracts/src/token/WOWSErc20.sol/WowsToken.json';
 import WOWSERC1155Abi from '../../src/abi/contracts/src/token/WOWSErc1155.sol/WOWSERC1155.json';
-import { hardhat } from '../../src/web3/hardhat';
+import { hardhat } from '../utils/hardhat';
 
 chai.use(solidity);
 
