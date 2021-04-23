@@ -28,9 +28,6 @@ const GENERATED_ADDRESSES = `${__dirname}/../src/config/generated-addresses.json
 const FORCE_REBUILD = process.env.FORCE_REBUILD !== undefined;
 
 // Addressbook constants
-const SFT_EVALUATOR_PROXY_KEY = ethers.utils.formatBytes32String(
-  'SFT_EVALUATOR_PROXY'
-);
 //const BOIS_REWARDS_KEY = ethers.utils.formatBytes32String('BOIS_REWARDS');
 const WOLVES_REWARDS_KEY = ethers.utils.formatBytes32String('WOLVES_REWARDS');
 
@@ -106,7 +103,6 @@ const func = async function (hardhat_re) {
 
   const ADDRESS_REGISTRY_ADDRESS = generatedAddresses.addressRegistry;
   const CONTROLLER_ADDRESS = generatedAddresses.controller;
-  const SFT_EVALUATOR_PROXY_ADDRESS = generatedAddresses.sftEvaluatorProxy;
   const TRADE_FLOOR_PROXY_ADDRESS = generatedAddresses.tradeFloorProxy;
 
   //////////////////////////////////////////////////////////////////////////////
