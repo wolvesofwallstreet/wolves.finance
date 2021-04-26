@@ -134,6 +134,9 @@ function Page12({t}: PROPS) {
         1200: {
           perView: 6,
         },
+        900: {
+          perView: 3,
+        },
         800: {
           perView: 2,
         },
@@ -141,7 +144,7 @@ function Page12({t}: PROPS) {
           perView: 2,
         },
         400: {
-          perView: 1,
+          perView: 2,
         },
       },
     }).mount({
@@ -172,7 +175,7 @@ function Page12({t}: PROPS) {
           perView: 2,
         },
         400: {
-          perView: 1,
+          perView: 2,
         },
       },
     }).mount({
@@ -197,13 +200,13 @@ function Page12({t}: PROPS) {
           perView: 7,
         },
         800: {
-          perView: 2,
+          perView: 4,
         },
         600: {
-          perView: 2,
+          perView: 3,
         },
         400: {
-          perView: 1,
+          perView: 2,
         },
       },
     }).mount({

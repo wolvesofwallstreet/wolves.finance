@@ -6,23 +6,22 @@
  * See the file LICENSES/README.md for more information.
  */
 
-
 import './glidejs/glide.core.min.css';
 import './glidejs/glide.theme.min.css';
 import './glideJs.css';
 
-import GlideJS from '@glidejs/glide'
+import GlideJS from '@glidejs/glide';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import {Breakpoints, Controls} from "@glidejs/glide/dist/glide.modular.esm";
-import React, {Fragment} from "react";
-import {TFunction, withTranslation} from 'react-i18next';
-import {RouteComponentProps} from "react-router-dom";
+import { Breakpoints, Controls } from '@glidejs/glide/dist/glide.modular.esm';
+import React, { Fragment } from 'react';
+import { TFunction, withTranslation } from 'react-i18next';
+import { RouteComponentProps } from 'react-router-dom';
 
 // import IMG_ETH_WOWS_LP_TOKEN_500 from '../../../assets/eth_wows_lp_token-500.jpg'
 // import Logo from '../../../assets/logo.png';
 import IMG_ETH_WOWS_LP_TOKEN_GREEN_500 from '../../../assets/wolfd_app_devs_flat2_136_500.jpg';
-import PageHeader from "../../theme/pageHeader/PageHeader";
+import PageHeader from '../../theme/pageHeader/PageHeader';
 
 type PROPS = {
   t: TFunction;
@@ -30,7 +29,7 @@ type PROPS = {
   history: RouteComponentProps['history'];
 };
 
-const Page4 = ({t, location, history,}: PROPS) => {
+const Page4 = ({ t, location, history }: PROPS) => {
   const [input1, setInput1] = React.useState('ETH 2300');
   const [input2, setInput2] = React.useState('ETH 2300');
 
@@ -48,29 +47,28 @@ const Page4 = ({t, location, history,}: PROPS) => {
       rewind: true,
       breakpoints: {
         1200: {
-          perView: 5
+          perView: 5,
         },
         800: {
-          perView: 2
+          perView: 2,
         },
         600: {
-          perView: 2
-        }
+          perView: 2,
+        },
       },
     }).mount({
       Controls,
       Breakpoints,
-    })
-  }
+    });
+  };
 
   React.useEffect(() => {
-    initGlide()
-  })
+    initGlide();
+  });
 
   return (
     <>
       <div className={'wolves-container-fluid bg-flat2 text-white text-center'}>
-
         {/* Title & heading */}
         <div>
           <PageHeader
@@ -90,28 +88,36 @@ const Page4 = ({t, location, history,}: PROPS) => {
                       <Fragment key={i + Math.random()}>
                         <div className="glide__slide">
                           <div className="slide-count"> {i} </div>
-                          <img className={'responsive-img slide-img img-bryant_bark-300'} src="https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-300.mp4.jpg" alt=""/>
+                          <img
+                            className={
+                              'responsive-img slide-img img-bryant_bark-300'
+                            }
+                            src="https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-300.mp4.jpg"
+                            alt=""
+                          />
                         </div>
                       </Fragment>
-                    )
+                    );
                   })}
                 </ul>
               </div>
               <div className="glide__arrows" data-glide-el="controls">
-                <button className="glide__arrow glide__arrow--left"
-                        data-glide-dir="<"
-                        style={{
-                          ['--left' as string]: '-15%',
-                        }}
+                <button
+                  className="glide__arrow glide__arrow--left"
+                  data-glide-dir="<"
+                  style={{
+                    ['--left' as string]: '-15%',
+                  }}
                 >
                   {/*<i className="fas fa-arrow-left"/>*/}
                 </button>
 
-                <button className="glide__arrow glide__arrow--right"
-                        data-glide-dir=">"
-                        style={{
-                          ['--right' as string]: '-15%',
-                        }}
+                <button
+                  className="glide__arrow glide__arrow--right"
+                  data-glide-dir=">"
+                  style={{
+                    ['--right' as string]: '-15%',
+                  }}
                 >
                   {/*<i className="fas fa-arrow-right"/>*/}
                 </button>
@@ -122,24 +128,33 @@ const Page4 = ({t, location, history,}: PROPS) => {
 
         {/* Content */}
         <div className={'two-column-container w-80 center-container my-5'}>
-          <div className={''}>
-            <img className={'responsive-img'} src={IMG_ETH_WOWS_LP_TOKEN_GREEN_500} alt={'IMG_ETH_WOWS_LP_TOKEN_500'} style={{maxWidth: '500px'}}/>
+          <div className="d-flex align-items-center justify-content-around">
+            <button className="arrow_left m-0 mr-3" />
+            <img
+              className={'responsive-img'}
+              src={IMG_ETH_WOWS_LP_TOKEN_GREEN_500}
+              alt={'IMG_ETH_WOWS_LP_TOKEN_500'}
+              style={{ maxWidth: '500px' }}
+            />
+            <button className="arrow_right m-0 ml-3" />
           </div>
 
           <div className={'t-left mx-lg-5-5 px-lg-5'}>
-
             <h1 className={'f-vincente h-1'}> WOLVES WOWS/ETH NFT </h1>
 
             <div className={'tk-grotesk-lightbold font-20 line-break-enable'}>
               <p>
-                Wall Street Hustler - He’s worked his way up from the actual street. Learning the hustle on the street
-                has given him the perfect grounding for working the trade floor. Forget rough diamond this trader is a
-                blood diamond, and isnt afraid to step on toes and ears to make the deals he needs.
+                Wall Street Hustler - He’s worked his way up from the actual
+                street. Learning the hustle on the street has given him the
+                perfect grounding for working the trade floor. Forget rough
+                diamond this trader is a blood diamond, and isnt afraid to step
+                on toes and ears to make the deals he needs.
               </p>
-              <br/>
+              <br />
               <p>
-                This is a staker card and allows to stake Wolf on the tradefloor and also Raid.
-                You can sell this character licence at any point wither on our platform or on opensea
+                This is a staker card and allows to stake Wolf on the tradefloor
+                and also Raid. You can sell this character licence at any point
+                wither on our platform or on opensea
               </p>
             </div>
 
@@ -173,14 +188,12 @@ const Page4 = ({t, location, history,}: PROPS) => {
             {/*    DIRECT INVEST - EARN GAS*/}
             {/*  </button>*/}
             {/*</div>*/}
-
           </div>
         </div>
-
       </div>
     </>
   );
-}
+};
 
 export default withTranslation()(Page4);
 

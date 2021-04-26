@@ -104,7 +104,7 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
         id: t('header.stake'),
         to: '/stake',
         disabled: location.pathname === '/stake',
-      },
+      }
     ];
 
     return result;
@@ -129,7 +129,75 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
               </Link>
             );
           })}
+
+          <span className="nav-item dropdown">
+            <span
+              className="nav-link dropdown-toggle "
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+            >
+              UI Pages
+            </span>
+            <ul className="dropdown-menu bg-blue-transparent">
+              <li>
+                <Link className="dropdown-item" to="/update/page4">
+                  Page 4
+                </Link>
+              </li>
+              <li>
+                <Link className="dropdown-item" to="/update/page5">
+                  Page 5
+                </Link>
+              </li>
+              <li>
+                <Link className="dropdown-item" to="/update/page6">
+                  Page 6
+                </Link>
+              </li>
+              <li>
+                <Link className="dropdown-item" to="/update/page7">
+                  Page 7
+                </Link>
+              </li>
+              <li>
+                <Link className="dropdown-item" to="/update/page8">
+                  Page 8
+                </Link>
+              </li>
+              <li>
+                <Link className="dropdown-item" to="/update/page9">
+                  Page 9
+                </Link>
+              </li>
+              <li>
+                <Link className="dropdown-item" to="/update/page11">
+                  Page 11
+                </Link>
+              </li>
+              <li>
+                <Link className="dropdown-item" to="/update/page12">
+                  Page 12
+                </Link>
+              </li>
+              <li>
+                <Link className="dropdown-item" to="/update/page13">
+                  Page 13
+                </Link>
+              </li>
+              <li>
+                <Link className="dropdown-item" to="/update/page14">
+                  Page 14
+                </Link>
+              </li>
+              <li>
+                <Link className="dropdown-item" to="/update/page15">
+                  Page 15
+                </Link>
+              </li>
+            </ul>
+          </span>
         </Navbar.Collapse>
+
         <Form className="dp-conn-form" onSubmit={this.handleSubmit} inline>
           <input
             className="wolves-btn dp-conn-btn"

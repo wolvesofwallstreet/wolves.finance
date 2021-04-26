@@ -13,11 +13,11 @@ import './glideJs.css';
 import GlideJS from '@glidejs/glide';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import {Breakpoints, Controls} from '@glidejs/glide/dist/glide.modular.esm';
+import { Breakpoints, Controls } from '@glidejs/glide/dist/glide.modular.esm';
 import Modal from 'components/theme/modal/Modal';
-import React, {Fragment} from 'react';
-import {TFunction, withTranslation} from 'react-i18next';
-import {RouteComponentProps} from 'react-router-dom';
+import React, { Fragment } from 'react';
+import { TFunction, withTranslation } from 'react-i18next';
+import { RouteComponentProps } from 'react-router-dom';
 
 import IMG_ETH_WOWS_LP_TOKEN_500 from '../../../assets/eth_wows_lp_token-500.jpg';
 import Logo from '../../../assets/logo.png';
@@ -29,7 +29,7 @@ type PROPS = {
   history: RouteComponentProps['history'];
 };
 
-const Page9 = ({t, location, history}: PROPS) => {
+const Page9 = ({ t, location, history }: PROPS) => {
   const [activeCard, setActiveCard] = React.useState<number>(0);
   const [show, setShow] = React.useState(false);
 
@@ -154,7 +154,7 @@ const Page9 = ({t, location, history}: PROPS) => {
                         <div
                           className="glide__slide"
                           onClick={() => {
-                            setModalContent({card});
+                            setModalContent({ card });
                             setActiveCard(i);
                           }}
                         >
@@ -173,20 +173,22 @@ const Page9 = ({t, location, history}: PROPS) => {
                 </ul>
               </div>
               <div className="glide__arrows" data-glide-el="controls">
-                <button className="glide__arrow glide__arrow--left"
-                        data-glide-dir="<"
-                        style={{
-                          ['--left' as string]: '-15%',
-                        }}
+                <button
+                  className="glide__arrow glide__arrow--left"
+                  data-glide-dir="<"
+                  style={{
+                    ['--left' as string]: '-15%',
+                  }}
                 >
                   {/*<i className="fas fa-arrow-left"/>*/}
                 </button>
 
-                <button className="glide__arrow glide__arrow--right"
-                        data-glide-dir=">"
-                        style={{
-                          ['--right' as string]: '-15%',
-                        }}
+                <button
+                  className="glide__arrow glide__arrow--right"
+                  data-glide-dir=">"
+                  style={{
+                    ['--right' as string]: '-15%',
+                  }}
                 >
                   {/*<i className="fas fa-arrow-right"/>*/}
                 </button>
@@ -197,13 +199,15 @@ const Page9 = ({t, location, history}: PROPS) => {
 
         {/* Content */}
         <div className={'two-column-container w-80 center-container my-5'}>
-          <div className={''}>
+          <div className="d-flex align-items-center justify-content-around">
+            <button className="arrow_left m-0 mr-3" />
             <img
               className={'responsive-img'}
               src={IMG_ETH_WOWS_LP_TOKEN_500}
               alt={'IMG_ETH_WOWS_LP_TOKEN_500'}
-              style={{maxWidth: '400px'}}
+              style={{ maxWidth: '470px' }}
             />
+            <button className="arrow_right m-0 ml-3" />
           </div>
 
           <div className={'t-left mx-lg-5-5 px-lg-5'}>
@@ -268,7 +272,7 @@ const Page9 = ({t, location, history}: PROPS) => {
 
             {/* img + Title */}
             <div className={'d-flex align-items-center'}>
-              <img src={Logo} alt="Logo" width="30px" height="30px"/>
+              <img src={Logo} alt="Logo" width="30px" height="30px" />
               <span className="f-vincente font-24 ml-2">PACK STRENGTH : 3</span>
             </div>
 

@@ -53,6 +53,15 @@
   height: auto;
 }
 
+.dropdown:hover .dropdown-menu {
+  display: block;
+}
+.dropdown-menu,
+.dropdown-item:focus,
+.dropdown-item:hover {
+  background-color: transparent;
+}
+
 .triangle-up {
   width: 0;
   height: 0;
@@ -150,7 +159,7 @@
   min-height: 35rem;
   padding: 3rem 4rem;
   background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5), transparent),
-  url('../../assets/wolfd_app_devs_flat2_162.png');
+    url('../../assets/wolfd_app_devs_flat2_162.png');
   background-size: cover;
 }
 
@@ -175,25 +184,25 @@
 
 .card-page7-bg-1 {
   background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5), transparent),
-  url('../../assets/wolfd_app_devs_flat2_162.png');
+    url('../../assets/wolfd_app_devs_flat2_162.png');
   background-size: cover;
 }
 
 .card-page7-bg-2 {
   background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5), transparent),
-  url('../../assets/wolfd_app_devs_flat2_163.png');
+    url('../../assets/wolfd_app_devs_flat2_163.png');
   background-size: cover;
 }
 
 .card-page7-bg-3 {
   background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5), transparent),
-  url('../../assets/wolfd_app_devs_flat2_162.png');
+    url('../../assets/wolfd_app_devs_flat2_162.png');
   background-size: cover;
 }
 
 .card-page7-bg-4 {
   background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5), transparent),
-  url('../../assets/wolfd_app_devs_flat2_162.png');
+    url('../../assets/wolfd_app_devs_flat2_162.png');
   background-size: cover;
 }
 
@@ -337,14 +346,6 @@
 
 /* --- */
 
-.arrow_down {
-  width: 0;
-  height: 0;
-  border-style: solid;
-  border-width: 15px 25px 0 25px;
-  border-color: var(--wolves-orange-light) transparent transparent transparent;
-}
-
 .h-line {
   border-top: 1.5px solid var(--wolves-orange-light);
   margin-top: 10px;
@@ -442,4 +443,40 @@
   }
 }
 
-/* --- */
+/* --- START ARROWS */
+/* Src http://apps.eky.hk/css-triangle-generator/ */
+
+.arrow_up,
+.arrow_down,
+.arrow_left,
+.arrow_right {
+  width: 0;
+  height: 0;
+  border-style: solid;
+  background-color: transparent;
+  border-color: transparent;
+}
+
+.arrow_down {
+  border-width: 15px 25px 0 25px;
+  border-top-color: var(--wolves-orange-light);
+}
+
+.arrow_left {
+  border-width: 20px 15px 20px 0;
+  border-right-color: var(--wolves-orange-light);
+}
+
+.arrow_right {
+  border-width: 20px 0 20px 15px;
+  border-left-color: var(--wolves-orange-light);
+}
+
+.arrow_left:hover {
+  border-right-color: var(--wolves-orange);
+}
+
+.arrow_right:hover {
+  border-left-color: var(--wolves-orange);
+}
+/* --- ARROWS END*/
