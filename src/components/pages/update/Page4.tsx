@@ -7,16 +7,22 @@
  */
 
 
-// import './page4.css'; // TODO
+import './glidejs/glide.core.min.css';
+import './glidejs/glide.theme.min.css';
+import './glideJs.css';
 
-import React from "react";
+import GlideJS from '@glidejs/glide'
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import {Breakpoints, Controls} from "@glidejs/glide/dist/glide.modular.esm";
+import React, {Fragment} from "react";
 import {TFunction, withTranslation} from 'react-i18next';
-import {Link, RouteComponentProps} from "react-router-dom";
+import {RouteComponentProps} from "react-router-dom";
 
-import Hr from "../../theme/hr";
-import HorizontalLine from "../../theme/line";
-import PageHeader from "../../theme/pageHeader";
-import WolveCard from "../../theme/wolveCard";
+// import IMG_ETH_WOWS_LP_TOKEN_500 from '../../../assets/eth_wows_lp_token-500.jpg'
+// import Logo from '../../../assets/logo.png';
+import IMG_ETH_WOWS_LP_TOKEN_GREEN_500 from '../../../assets/wolfd_app_devs_flat2_136_500.jpg';
+import PageHeader from "../../theme/pageHeader/PageHeader";
 
 type PROPS = {
   t: TFunction;
@@ -24,146 +30,151 @@ type PROPS = {
   history: RouteComponentProps['history'];
 };
 
-type QueryLevelTypes = 'PRODIGY' | 'PHENOM';
-
-const levelTypes = {
-  PRODIGY: 'PRODIGY',
-  PHENOM: 'PHENOM'
-}
-
 const Page4 = ({t, location, history,}: PROPS) => {
-  const [currentLevelType, setCurrentLevelType] = React.useState(levelTypes.PHENOM);
+  const [input1, setInput1] = React.useState('ETH 2300');
+  const [input2, setInput2] = React.useState('ETH 2300');
+
+  const initGlide = () => {
+    new GlideJS('.images', {
+      classes: {
+        activeSlide: 'slider_active_slide',
+      },
+      gap: 35,
+      peek: 10,
+      type: 'slider', // carousel
+      perView: 5,
+      startAt: 1,
+      focusAt: 'center',
+      rewind: true,
+      breakpoints: {
+        1200: {
+          perView: 5
+        },
+        800: {
+          perView: 2
+        },
+        600: {
+          perView: 2
+        }
+      },
+    }).mount({
+      Controls,
+      Breakpoints,
+    })
+  }
 
   React.useEffect(() => {
-    const query = new URLSearchParams(location.search);
-    setCurrentLevelType(query.get('levelType') as QueryLevelTypes)
-  }, [history, location]);
-
-  const cards = [
-    {
-      levelType: levelTypes.PRODIGY,
-      moto: 'FILL IT OR KILL IT',
-      title: 'WARG THE WATCHER',
-      src: 'x-special/nautilus-clipboardx-special/nautilus-clipboardbryant_bark.png',
-      quantity: '1/100 - 20 WOLF'
-    },
-    {
-      levelType: levelTypes.PHENOM,
-      title: 'WARG THE WATCHER',
-      moto: 'FILL IT OR KILL IT  [P]',
-      src: 'bryant_bark.png',
-      quantity: '1/100 - 20 WOLF'
-    }, {
-      levelType: levelTypes.PRODIGY,
-      moto: 'FILL IT OR KILL IT',
-      title: 'WARG THE WATCHER',
-      src: 'x-special/nautilus-clipboardx-special/nautilus-clipboardbryant_bark.png',
-      quantity: '1/100 - 20 WOLF'
-    },
-    {
-      levelType: levelTypes.PHENOM,
-      title: 'WARG THE WATCHER',
-      moto: 'FILL IT OR KILL IT  [P]',
-      src: 'bryant_bark.png',
-      quantity: '1/100 - 20 WOLF'
-    }, {
-      levelType: levelTypes.PRODIGY,
-      moto: 'FILL IT OR KILL IT',
-      title: 'WARG THE WATCHER',
-      src: 'x-special/nautilus-clipboardx-special/nautilus-clipboardbryant_bark.png',
-      quantity: '1/100 - 20 WOLF'
-    },
-    {
-      levelType: levelTypes.PHENOM,
-      title: 'WARG THE WATCHER',
-      moto: 'FILL IT OR KILL IT  [P]',
-      src: 'bryant_bark.png',
-      quantity: '1/100 - 20 WOLF'
-    }, {
-      levelType: levelTypes.PRODIGY,
-      moto: 'FILL IT OR KILL IT',
-      title: 'WARG THE WATCHER',
-      src: 'x-special/nautilus-clipboardx-special/nautilus-clipboardbryant_bark.png',
-      quantity: '1/100 - 20 WOLF'
-    },
-    {
-      levelType: levelTypes.PHENOM,
-      title: 'WARG THE WATCHER',
-      moto: 'FILL IT OR KILL IT  [P]',
-      src: 'bryant_bark.png',
-      quantity: '1/100 - 20 WOLF'
-    },
-  ]
+    initGlide()
+  })
 
   return (
     <>
-      <div className={'wolves-container bg-wolves text-white'}>
+      <div className={'wolves-container-fluid bg-flat2 text-white text-center'}>
 
-        {/* Title, heading */}
+        {/* Title & heading */}
         <div>
           <PageHeader
-            logoSrc="/static/media/logo.ac917530.png"
-            heading="WELCOME TO THE BOIS"
-            headingSecondry="IN ORDER TO STAKE WITH WOLVES ON THE WOLF TRADEFLOOR YOU WILL NEED TO PURCHASE YOUR SFT CHARACTER CRYPTO LICENCE"
+            heading="WOLF TRADE FLOOR - CHOOSE YOUR C-FOLIO TO STAKE WITH"
+            headingSecondry="PICK YOUR HIGHEST LEVEL WORK TO STAKE"
           />
         </div>
 
-        {/* H-line */}
-        <div style={{width: '85%'}}>
-          <HorizontalLine/>
+        {/* Card slider */}
+        <div className={'slider-wrap-bar bg-transparent-orange'}>
+          <div className={'wrap'}>
+            <div className="images glide wolves-orange-border-t  wolves-orange-border-b">
+              <div className="glide__track" data-glide-el="track">
+                <ul className="glide__slides">
+                  {[1, 2, 3, 4, 5].map((card, i) => {
+                    return (
+                      <Fragment key={i + Math.random()}>
+                        <div className="glide__slide">
+                          <div className="slide-count"> {i} </div>
+                          <img className={'responsive-img slide-img img-bryant_bark-300'} src="https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-300.mp4.jpg" alt=""/>
+                        </div>
+                      </Fragment>
+                    )
+                  })}
+                </ul>
+              </div>
+              <div className="glide__arrows" data-glide-el="controls">
+                <button className="glide__arrow glide__arrow--left"
+                        data-glide-dir="<"
+                        style={{
+                          ['--left' as string]: '-15%',
+                        }}
+                >
+                  {/*<i className="fas fa-arrow-left"/>*/}
+                </button>
+
+                <button className="glide__arrow glide__arrow--right"
+                        data-glide-dir=">"
+                        style={{
+                          ['--right' as string]: '-15%',
+                        }}
+                >
+                  {/*<i className="fas fa-arrow-right"/>*/}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Nav-bar */}
-        <div>
-            <span className="tk-vincente-lightbold font-24  single-line wolves-orange fixed-pos">
-              {/* TODO:: margin-top */}
-              <Link
-                to={`?levelType=${levelTypes.PRODIGY}`}
-                className={`text-white mt-5 m-4 ${levelTypes.PRODIGY === currentLevelType && 'nav-link-active'}`}>
-                {levelTypes.PRODIGY}
-              </Link>
-              <Link
-                to={`?levelType=${levelTypes.PHENOM}`}
-                className={`text-white mt-5 m-4 ${levelTypes.PHENOM === currentLevelType && 'nav-link-active'}`}>
-                {levelTypes.PHENOM}
-              </Link>
-            </span>
-        </div>
+        {/* Content */}
+        <div className={'two-column-container w-80 center-container my-5'}>
+          <div className={''}>
+            <img className={'responsive-img'} src={IMG_ETH_WOWS_LP_TOKEN_GREEN_500} alt={'IMG_ETH_WOWS_LP_TOKEN_500'} style={{maxWidth: '500px'}}/>
+          </div>
 
-        {/* Cards */}
-        <div className="page4-card-container">
-          {cards
-            // .filter((card) => card.levelType === currentLevelType)
-            .map((card, i) => {
-              return (
-                <WolveCard
-                  key={i + Math.random()}
-                  cardLink={`?levelType=PHENOM&cardType=${i}`} // CARD URL
-                  linkType="image"
-                  // src={`${process.env.PUBLIC_URL}/assets/bryant_bark.png`} // CARD IMG/VIDEO
-                  // TODO::SRC-IMG
-                  // src={`https://4travelers.de/wolves_assets/cards/wolves/level1/AXEL-300.jpg`} // CARD IMG/VIDEO
-                  media_className={'img-bryant_bark-300'}
-                  bottomContent={
-                    <>
-                  <span
-                    className="tk-vincente-lightbold font-32 mt-3s"
-                    style={{lineHeight: 0.8}}
-                  >
-                    {card.title}
-                  </span>
-                      <span className="tk-grotesk-lightbold font-14 ellipsis">
-                    MOTTO: {card.moto}
-                  </span>
-                      <Hr/>
-                      <h2 className="tk-vincente-lightbold ellipsis">
-                        {card.quantity}
-                      </h2>
-                    </>
-                  }
-                />
-              )
-            })}
+          <div className={'t-left mx-lg-5-5 px-lg-5'}>
+
+            <h1 className={'f-vincente h-1'}> WOLVES WOWS/ETH NFT </h1>
+
+            <div className={'tk-grotesk-lightbold font-20 line-break-enable'}>
+              <p>
+                Wall Street Hustler - He’s worked his way up from the actual street. Learning the hustle on the street
+                has given him the perfect grounding for working the trade floor. Forget rough diamond this trader is a
+                blood diamond, and isnt afraid to step on toes and ears to make the deals he needs.
+              </p>
+              <br/>
+              <p>
+                This is a staker card and allows to stake Wolf on the tradefloor and also Raid.
+                You can sell this character licence at any point wither on our platform or on opensea
+              </p>
+            </div>
+
+            <div className={'d-flex flex-wrap'}>
+              {/* left */}
+              <input
+                className={'page4-text-input font-14 mr-3 '}
+                name={'input1'}
+                id={'input1'}
+                onChange={(e) => setInput1(e.target.value)}
+                value={input1}
+              />
+              {/* Right */}
+              <input
+                className={'page4-text-input font-14 mr-3 '}
+                name={'input2'}
+                id={'input2'}
+                onChange={(e) => setInput2(e.target.value)}
+                value={input2}
+              />
+            </div>
+
+            <div className={'w-80 mt-4'}>
+              <button className={'m-0 page5-btn-stack'}>
+                BUY STAKED ETH/WOWS NFT
+              </button>
+            </div>
+
+            {/*<div className="d-flex w-100">*/}
+            {/*  <button className={'w-25 m-0 page5-btn-stack'}>*/}
+            {/*    DIRECT INVEST - EARN GAS*/}
+            {/*  </button>*/}
+            {/*</div>*/}
+
+          </div>
         </div>
 
       </div>
@@ -173,7 +184,7 @@ const Page4 = ({t, location, history,}: PROPS) => {
 
 export default withTranslation()(Page4);
 
-
-// const t = () => {
-//   history.push(`${window.location.pathname}&page=${1}`)
-// }
+/*
+var style = { "--my-css-var": 10 } as React.CSSProperties;
+return <div style={style}>...</div>
+*/

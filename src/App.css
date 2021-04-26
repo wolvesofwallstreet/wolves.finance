@@ -20,7 +20,7 @@ body {
 }
 
 .no-margin {
-  margin: 0px;
+  margin: 0;
 }
 
 .single-line {
@@ -114,6 +114,14 @@ span a:hover {
   text-align: left !important;
 }
 
+.--text-gray {
+  color: gray !important;
+}
+
 .bg-blue-transparent {
-  background-color: rgba(4, 29, 52, 0.44);
+  background-color: rgba(4, 29, 52, 0.44) !important;
+}
+
+.bg-blue-dark {
+  background-color: rgba(4, 29, 52, 0.95) !important;
 }

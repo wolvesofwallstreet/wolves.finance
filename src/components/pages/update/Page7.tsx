@@ -6,13 +6,11 @@
  * See the file LICENSES/README.md for more information.
  */
 
-
-// import './page4.css'; // TODO
-
 import React from "react";
 import {TFunction, withTranslation} from 'react-i18next';
 import { RouteComponentProps} from "react-router-dom";
 
+// import Logo from '../../../assets/logo.png'
 import PageHeader from "../../theme/pageHeader/PageHeader";
 
 type PROPS = {

@@ -6,7 +6,7 @@
  * See LICENSE.txt for more information.
  */
 
- .content-wrapper-container {
+.content-wrapper-container {
   margin-top: 1.5rem;
   margin-bottom: 5rem;
   display: flex;
@@ -41,7 +41,7 @@
 .content-details-btn {
   min-width: 15rem;
   margin-top: 1rem;
-  padding: 1.7rem 5rem;
+  padding: 1.3rem 4rem;
   text-align: center;
   font-weight: bold;
   color: var(--wolves-blue-dk);

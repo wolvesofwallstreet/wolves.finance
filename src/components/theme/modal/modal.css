@@ -1,0 +1,38 @@
+/*
+ * Copyright (C) 2020-2021 The Wolfpack
+ * This file is part of wolves.finance - https://github.com/wolvesofwallstreet/wolves.finance
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * See LICENSE.txt for more information.
+ */
+
+.wolve_modal {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  background-color: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transition: all 0.03s ease-in;
+  pointer-events: none;
+}
+
+.wolve_modal_show {
+  opacity: 1;
+  pointer-events: visible;
+}
+
+.wolve_modal_content {
+  /* background-color: var(--wolves-orange-transparent); */
+  background-color: rgba(243, 182, 152, 0.8);
+  color: var(--wolves-white);
+
+  padding: 1rem 8rem;
+  max-width: 740px;
+  border: 1px solid rgba(255, 255, 255, 0.74);
+}

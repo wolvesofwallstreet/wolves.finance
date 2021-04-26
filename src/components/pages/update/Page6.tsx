@@ -8,16 +8,15 @@
 // import './contentWrapper.css';
 
 import ContentWrapper from 'components/theme/contentWrapper/ContentWrapper';
-import {withTranslation} from 'react-i18next';
-import {Link} from 'react-router-dom';
+import { withTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 
-import HorizontalLine from '../../theme/line/HorizontalLine';
-import Navigation from '../../theme/navigation/Navigation';
+// import HorizontalLine from '../../theme/line/HorizontalLine';
+// import Navigation from '../../theme/navigation/Navigation';
 import PageContainer from '../../theme/pageContainer/PageContainer';
 import PageHeader from '../../theme/pageHeader/PageHeader';
 
-function Page10() {
-
+function Page6() {
   return (
     <>
       <PageContainer bgClass="bg-bois">
@@ -33,13 +32,13 @@ function Page10() {
           <div>
             <span className="w-nav-center tk-vincente-lightbold">
               <Link
-                to={'temp?item=Back'}
+                to={'page6?item=Back'}
                 className={'w-nav-section text-white'}
               >
                 Back
               </Link>
               <Link
-                to={'temp?item=Front'}
+                to={'page6?item=Front'}
                 className={'w-nav-section text-white'}
               >
                 PRODIGY
@@ -47,13 +46,21 @@ function Page10() {
             </span>
           </div>
 
-          <HorizontalLine/>
+          {/* Line */}
+          <span className="line-container">
+            <span id="left" className="dot" />
+            <span className="line" />
+            <span id="right" className="dot" />
+          </span>
 
-          <Navigation
-            leftLink={{href: 'temp?java=2', name: 'Previos Element'}}
-          />
+          <div id="page8-section-header">
+            <span className="tk-vincente-lightbold font-24 single-line wolves-orange fixed-pos">
+              &lt;
+              <Link to="?page6=previousCard">PREVIOUS CARD</Link>
+            </span>
+          </div>
 
-          <br/>
+          <br />
 
           <ContentWrapper
             src="https://4travelers.de/wolves_assets/cards/bois/level2/BRYANT-500.mp4"
@@ -62,7 +69,7 @@ function Page10() {
             <h1 className="tk-vincente-bold font-48 ">BRYANT BARKLEY</h1>
             <h2 className="tk-vincente-lightbold font-24">
               <span className="wolves-orange">MOTO:</span>
-              MOTTO: BUY WHEN THERE IS BLOOD ON THE STREET
+              BUY WHEN THERE IS BLOOD ON THE STREET
             </h2>
             <span className="tk-grotesk-lightbold font-20 line-break-enable">
               Wall Street Hustler - He’s worked his way up from the actual
@@ -81,20 +88,17 @@ function Page10() {
                 <h2>RARITY : 1/120</h2>
               </li>
               <li>
-                <h2>PROFIT SHARING : 55%</h2>
-              </li>
-              <li>
-                <h2>RAIDABILITY : 50%</h2>
+                <h2>SKILL 55%</h2>
               </li>
               <li>
                 <h2>STARTING APY : 120%</h2>
               </li>
               <li>
-                <h2 className="text-uppercase">AUTO UPGRADE 2 MONTHS </h2>
+                <h2>AUTO UPGRADE 2 MONTHS</h2>
               </li>
             </ul>
             <div>
-              <button className="content-details-btn ">BUY MAX FANG</button>
+              <button className="content-details-btn ">LEND WITH BRYANT BARKLEY</button>
             </div>
           </ContentWrapper>
           {/* </PageContainer> */}
@@ -104,7 +108,7 @@ function Page10() {
   );
 }
 
-export default withTranslation()(Page10);
+export default withTranslation()(Page6);
 
 /*
 

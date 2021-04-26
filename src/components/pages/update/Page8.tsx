@@ -10,9 +10,8 @@ import { Component } from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { Link, RouteComponentProps } from 'react-router-dom';
 
-import Logo from '../../../../assets/logo.png';
-
-
+import IMG_GREEN_ETH_WOWS_LP_TOKEN_300 from '../../../assets/wolfd_app_devs_flat2_136_300.jpg';
+import IMG_BLUE_ETH_WOWS_LP_TOKEN_300 from '../../../assets/wolfd_app_devs_flat231_300.jpg';
 
 interface ICard {
   title: string;
@@ -40,10 +39,8 @@ const INITIAL_PAGE7_STATE: PAGE7_STATE = {
     {
       title: 'MINT NFT',
       moto: 'FILL IT OR KILL IT',
-      image:
-        'https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-300.mp4.jpg',
-      poster:
-        'https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-300.mp4.jpg',
+      image: IMG_GREEN_ETH_WOWS_LP_TOKEN_300,
+      poster: IMG_GREEN_ETH_WOWS_LP_TOKEN_300,
       video:
         'https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-300.mp4',
       bucket: '1/100',
@@ -53,10 +50,8 @@ const INITIAL_PAGE7_STATE: PAGE7_STATE = {
     {
       title: 'MINT NFT',
       moto: 'FILL IT OR KILL IT',
-      image:
-        'https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-300.mp4.jpg',
-      poster:
-        'https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-300.mp4.jpg',
+      image: IMG_GREEN_ETH_WOWS_LP_TOKEN_300,
+      poster: IMG_GREEN_ETH_WOWS_LP_TOKEN_300,
       video:
         'https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-300.mp4',
       bucket: '1/100',
@@ -66,27 +61,69 @@ const INITIAL_PAGE7_STATE: PAGE7_STATE = {
     {
       title: 'MINT NFT',
       moto: 'FILL IT OR KILL IT',
-      image:
-        'https://4travelers.de/wolves_assets/cards/wolves/level1/AKSINIA-300.jpg',
-      poster:
-        'https://4travelers.de/wolves_assets/cards/wolves/level1/AKSINIA-300.jpg',
+      image: IMG_BLUE_ETH_WOWS_LP_TOKEN_300,
+      poster: IMG_BLUE_ETH_WOWS_LP_TOKEN_300,
       video:
-        'https://4travelers.de/wolves_assets/cards/wolves/level1/AKSINIA-300.mp4',
+        'https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-300.mp4',
       bucket: '1/100',
-      cardId: 'aksinia',
+      cardId: 'gorgan',
       levelId: '1',
     },
     {
       title: 'MINT NFT',
       moto: 'FILL IT OR KILL IT',
-      image:
-        'https://4travelers.de/wolves_assets/cards/wolves/level1/PAWLY-300.jpg',
-      poster:
-        'https://4travelers.de/wolves_assets/cards/wolves/level1/PAWLY-300.jpg',
+      image: IMG_BLUE_ETH_WOWS_LP_TOKEN_300,
+      poster: IMG_BLUE_ETH_WOWS_LP_TOKEN_300,
       video:
-        'https://4travelers.de/wolves_assets/cards/wolves/level1/PAWLY-300.mp4',
+        'https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-300.mp4',
       bucket: '1/100',
-      cardId: 'pawly',
+      cardId: 'gorgan',
+      levelId: '1',
+    },
+
+    {
+      title: 'MINT NFT',
+      moto: 'FILL IT OR KILL IT',
+      image: IMG_GREEN_ETH_WOWS_LP_TOKEN_300,
+      poster: IMG_GREEN_ETH_WOWS_LP_TOKEN_300,
+      video:
+        'https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-300.mp4',
+      bucket: '1/100',
+      cardId: 'gorgan',
+      levelId: '1',
+    },
+    {
+      title: 'MINT NFT',
+      moto: 'FILL IT OR KILL IT',
+      image: IMG_GREEN_ETH_WOWS_LP_TOKEN_300,
+      poster: IMG_GREEN_ETH_WOWS_LP_TOKEN_300,
+      video:
+        'https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-300.mp4',
+      bucket: '1/100',
+      cardId: 'gorgan',
+      levelId: '1',
+    },
+
+    {
+      title: 'MINT NFT',
+      moto: 'FILL IT OR KILL IT',
+      image: IMG_BLUE_ETH_WOWS_LP_TOKEN_300,
+      poster: IMG_BLUE_ETH_WOWS_LP_TOKEN_300,
+      video:
+        'https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-300.mp4',
+      bucket: '1/100',
+      cardId: 'gorgan',
+      levelId: '1',
+    },
+    {
+      title: 'MINT NFT',
+      moto: 'FILL IT OR KILL IT',
+      image: IMG_BLUE_ETH_WOWS_LP_TOKEN_300,
+      poster: IMG_BLUE_ETH_WOWS_LP_TOKEN_300,
+      video:
+        'https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-300.mp4',
+      bucket: '1/100',
+      cardId: 'gorgan',
       levelId: '1',
     },
   ],
@@ -99,19 +136,19 @@ class Page7 extends Component<PAGE7_PROPS, PAGE7_STATE> {
   }
 
   render(): JSX.Element {
-    const { t } = this.props;
+    // const { t } = this.props;
     const { cards } = this.state;
 
     const cardRender =
       cards?.length &&
       cards.map((card) => {
         return (
-          <div className="page7-card">
+          <div className="page8-card">
             <Link
               to={`detail?type=wolves&levelId=${card?.levelId}&cardId=${card.cardId}`}
             >
               <video
-                className="card-visual"
+                className="card-media"
                 src={card.image}
                 poster={card.poster}
                 autoPlay
@@ -119,16 +156,16 @@ class Page7 extends Component<PAGE7_PROPS, PAGE7_STATE> {
                 playsInline
               />
             </Link>
-            <span className="tk-vincente-lightbold font-32">{card?.title}</span>
-            <div className="wrapper">
-              <span className="tk-grotesk-lightbold font-14 ellipsis">
-                MOTTO: {card?.moto}
-              </span>
-              <hr className="wolves" />
-              <span className="tk-grotesk-lightbold font-14 ellipsis">
-                {card?.bucket}
-              </span>
-            </div>
+            <span className="tk-vincente-lightbold font-32 m-0 mt-2 line-h">
+              {card?.title}
+            </span>
+            <span className="tk-grotesk-lightbold font-14 ellipsis">
+              MOTTO: {card?.moto}
+            </span>
+            <hr className="wolves" />
+            <span className="f-vincente font-32 m-0 line-h ellipsis">
+              {card?.bucket}
+            </span>
           </div>
         );
       });
@@ -138,17 +175,16 @@ class Page7 extends Component<PAGE7_PROPS, PAGE7_STATE> {
         <div id="top" className={'wolves-container bg-wolves'}>
           {/* Hero heading */}
           <div className="mb-3">
-            <img src={Logo} alt="WOWS" width="50px" height="50px" />
             <h2 className="tk-vincente-lightbold no-margin">
-              {t('page7.welcome-wolves')}
+              WELCOME TO THE YEARN CRV POOL NFTs
             </h2>
             <h3 className="tk-grotesk-lightbold no-margin">
-              {t('page7.header-wolves')}
+              YEARN NFTs FOR YOUR LENDING FOR DAI / USDT / USDC / TUSD
             </h3>
           </div>
 
           {/* Line */}
-          <span className="line-container page7-line-w-80">
+          <span className="line-container page8-line-w-80">
             <span id="left" className="dot" />
             <span className="line" />
             <span id="right" className="dot" />
@@ -163,7 +199,7 @@ class Page7 extends Component<PAGE7_PROPS, PAGE7_STATE> {
           </span>
 
           {/* Cards listing */}
-          <div className="page7-card-container">{cardRender}</div>
+          <div className="page8-card-container mt-5">{cardRender}</div>
         </div>
       </>
     );
