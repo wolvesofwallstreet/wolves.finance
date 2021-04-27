@@ -18,7 +18,7 @@ import fs from 'fs';
 import BoosterAbi from '../../src/abi/contracts/src/booster/Booster.sol/Booster.json';
 import RewardHandlerAbi from '../../src/abi/contracts/src/investment/RewardHandler.sol/RewardHandler.json';
 import WOWSTokenAbi from '../../src/abi/contracts/src/token/WOWSErc20.sol/WowsToken.json';
-import { hardhat } from '../../src/web3/hardhat';
+import { hardhat } from '../utils/hardhat';
 
 chai.use(solidity);
 

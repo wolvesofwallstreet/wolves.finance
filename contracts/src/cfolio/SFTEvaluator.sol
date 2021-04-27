@@ -8,14 +8,14 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
-import './interfaces/ISftEvaluator.sol';
-import './interfaces/ITradeFloorClient.sol';
-
 import '../token/interfaces/IWOWSERC1155.sol';
 import '../utils/AddressBook.sol';
 import '../utils/interfaces/IAddressRegistry.sol';
 
-contract SftEvaluator is ISftEvaluator {
+import './interfaces/ISFTEvaluator.sol';
+import './interfaces/ITradeFloorClient.sol';
+
+contract SFTEvaluator is ISFTEvaluator {
   //////////////////////////////////////////////////////////////////////////////
   // State
   //////////////////////////////////////////////////////////////////////////////
@@ -29,7 +29,7 @@ contract SftEvaluator is ISftEvaluator {
   // The SFT contract we need for level
   IWOWSERC1155 private immutable _sftHolder;
 
-  // admin
+  // Admin
   address public immutable admin;
 
   //////////////////////////////////////////////////////////////////////////////
@@ -42,19 +42,25 @@ contract SftEvaluator is ISftEvaluator {
       addressRegistry.getRegistryEntry(AddressBook.SFT_HOLDER)
     );
 
-    // admin
+    // Admin
     admin = addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
   }
 
   //////////////////////////////////////////////////////////////////////////////
-  // Implementation
+  // Implementation of {ISftEvaluator}
   //////////////////////////////////////////////////////////////////////////////
 
+  /**
+   * @dev See {ISftEvaluator-rewardRate}.
+   */
   function rewardRate(uint256 tokenId) external view override returns (uint32) {
-    uint32 rate = _rewardRate[tokenId];
-    return rate == 0 ? _baseRate(tokenId) : rate;
+    return
+      _rewardRate[tokenId] == 0 ? _baseRate(tokenId) : _rewardRate[tokenId];
   }
 
+  /**
+   * @dev See {ISftEvaluator-setRewardRate}.
+   */
   function setRewardRate(uint256 tokenId, bool revertUnchanged)
     external
     override
@@ -62,15 +68,20 @@ contract SftEvaluator is ISftEvaluator {
     (uint32 untimed, uint32 timed) =
       // solhint-disable-next-line not-rely-on-time
       _baseRates(tokenId, uint64(block.timestamp - 60 days));
-    // first implementation, check timed auto upgrade only
+
+    // First implementation, check timed auto upgrade only
     if (untimed != timed) {
-      // Change state
+      // Update state
       _rewardRate[tokenId] = timed;
+
       // Notify all TradeFloorClients
       uint256 length = tradeFloorClients.length;
       for (uint256 i = 0; i < length; ++i)
-        tradeFloorClients[i].sftUpgrade(tokenId, untimed, timed);
-    } else require(!revertUnchanged, 'Rate unchenged');
+        tradeFloorClients[i].sftUpgrade(tokenId, timed);
+    } else {
+      // Revert if requested
+      require(!revertUnchanged, 'Rate unchenged');
+    }
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -89,7 +100,10 @@ contract SftEvaluator is ISftEvaluator {
   {
     uint32[4] memory rates =
       [uint32(25e4), uint32(50e4), uint32(75e4), uint32(1e6)];
+
+    // Load state
     (uint64 time, uint8 level) = _sftHolder.getTokenData(tokenId);
+
     uint8 update = (level & 3) < 3 && time <= upgradeTime ? 1 : 0;
 
     return (rates[(level & 3)], rates[(level & 3) + update]);

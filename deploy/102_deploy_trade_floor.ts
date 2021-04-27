@@ -16,8 +16,7 @@ require('hardhat-deploy-ethers');
 
 // TODO: Fully qualified contract names
 const TRADE_FLOOR_CONTRACT = 'TradeFloor';
-const TRADE_FLOOR_PROXY_CONTRACT = 'UpgradeProxy';
-const TRADEFLOOR_CLIENTLP_CONTRACT = 'TradeFloorClientLP';
+const TRADE_FLOOR_PROXY_CONTRACT = 'TradeFloorProxy';
 
 // Contract ABIs
 const TRADE_FLOOR_ABI = `${__dirname}/../src/abi/contracts/src/token/TradeFloor.sol/TradeFloor.json`;
@@ -106,8 +105,8 @@ const func = async function (hardhat_re) {
   //
   //////////////////////////////////////////////////////////////////////////////
 
-  const tradefloorInterface = new ethers.utils.Interface(tradeFloorAbi);
-  const proxyCallData = tradefloorInterface.encodeFunctionData('initialize', [
+  const tradeFloorInterface = new ethers.utils.Interface(tradeFloorAbi);
+  const proxyCallData = tradeFloorInterface.encodeFunctionData('initialize', [
     METADATA_URI,
     CONTRACT_METADATA_URI,
   ]);
@@ -146,41 +145,6 @@ const func = async function (hardhat_re) {
     }
 
     generatedAddresses.tradeFloorProxy = tradeFloorProxyReceipt.address;
-  }
-
-  const TRADE_FLOOR_PROXY_ADDRESS = generatedAddresses.tradeFloorProxy;
-
-  //////////////////////////////////////////////////////////////////////////////
-  //
-  // Deploy TradeFloorClientLP
-  //
-  //////////////////////////////////////////////////////////////////////////////
-
-  if (configAddresses.tradeFloorClientLP) {
-    log_step(
-      `Using tradeFloorClientLP contract: ${configAddresses.tradeFloorClientLP}`
-    );
-    generatedAddresses.tradeFloorClientLP = configAddresses.tradeFloorClientLP;
-  } else {
-    log_step('Deploying tradeFloorClientLP contract');
-
-    const tradeFloorClientLPContractReceipt = await deploy(
-      TRADEFLOOR_CLIENTLP_CONTRACT,
-      {
-        from: deployer,
-        args: [
-          ADDRESS_REGISTRY_ADDRESS,
-          TRADE_FLOOR_PROXY_ADDRESS,
-          ethers.BigNumber.from('0x10000000000000000'),
-          8,
-        ],
-        log: true,
-        deterministicDeployment: true,
-      }
-    );
-
-    generatedAddresses.tradeFloorClientLP =
-      tradeFloorClientLPContractReceipt.address;
   }
 
   //////////////////////////////////////////////////////////////////////////////

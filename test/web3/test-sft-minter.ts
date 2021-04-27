@@ -118,15 +118,15 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
   };
 });
 
-describe('Trade Floor', function () {
+describe('SFT minter', function () {
   let signer: SignerWithAddress;
   let marketingWallet: SignerWithAddress;
   let contracts: any;
 
-  let tradeFloorProxyInstance: ethers.Contract;
-
   let cryptofolioAddressBoi: string;
   let cryptofolioAddressWolf: string;
+
+  let tradeFloorProxyInstance: ethers.Contract;
 
   // Test parameters
   const level1Price = '3000000000000000000';
@@ -213,6 +213,7 @@ describe('Trade Floor', function () {
   // Setup: WOWS
   //////////////////////////////////////////////////////////////////////////////
 
+  /**/
   it('should approve spending WOWS', async function () {
     this.timeout(60 * 1000);
 
@@ -238,7 +239,7 @@ describe('Trade Floor', function () {
   });
 
   //////////////////////////////////////////////////////////////////////////////
-  // Setup: SFTs
+  // Mint SFTs
   //////////////////////////////////////////////////////////////////////////////
 
   it('should mint boi SFT', async function () {
@@ -256,6 +257,19 @@ describe('Trade Floor', function () {
       marketingWallet.address, // Recipient
       wowsTokenIdBoi, // Token ID
       level1Price // Price
+    );
+
+    // Log gas cost
+    const receipt = await (await tx).wait();
+    const gasUsedGwei = receipt.gasUsed;
+    const gasCost =
+      gasUsedGwei
+        .mul(await getGasPrice())
+        .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
+    console.log(
+      `Mint boi gas used: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+        gasCost
+      )})`
     );
   });
 
@@ -275,6 +289,79 @@ describe('Trade Floor', function () {
       wowsTokenIdWolf, // Token ID
       level1Price // Price
     );
+
+    // Log gas cost
+    const receipt = await (await tx).wait();
+    const gasUsedGwei = receipt.gasUsed;
+    const gasCost =
+      gasUsedGwei
+        .mul(await getGasPrice())
+        .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
+    console.log(
+      `Mint wolf gas used: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+        gasCost
+      )})`
+    );
+  });
+
+  it('should check token ownership', async function () {
+    this.timeout(60 * 1000);
+
+    const { sftHolderContract } = contracts;
+
+    // Check the token's ownership (NFT balance is always 1)
+    const balanceBoi = await sftHolderContract.balanceOf(
+      marketingWallet.address,
+      wowsTokenIdBoi
+    );
+    chai.expect(balanceBoi).to.equal(1);
+
+    // Check the token's ownership (NFT balance is always 1)
+    const balanceWolf = await sftHolderContract.balanceOf(
+      marketingWallet.address,
+      wowsTokenIdWolf
+    );
+    chai.expect(balanceWolf).to.equal(1);
+  });
+
+  it('should check token IDs', async function () {
+    this.timeout(60 * 1000);
+
+    const { sftHolderContract } = contracts;
+
+    // Check the owner's token IDs
+    const result = await sftHolderContract.getTokenIds(marketingWallet.address);
+    chai.expect(result.length).to.equal(2);
+    chai.expect(result[0]).to.equal(wowsTokenIdWolf);
+    chai.expect(result[1]).to.equal(wowsTokenIdBoi);
+  });
+
+  it('should query boi token ID', async function () {
+    this.timeout(60 * 1000);
+
+    const { sftHolderContract } = contracts;
+
+    // Query the token ID in the SFT contract
+    const [
+      mintTimestampBoi,
+      tokenLevelBoi,
+    ] = await sftHolderContract.getTokenData(wowsTokenIdBoi);
+    chai.expect(mintTimestampBoi).to.not.equal(0);
+    chai.expect(tokenLevelBoi).to.equal(levelBoi);
+  });
+
+  it('should query wolf token ID', async function () {
+    this.timeout(60 * 1000);
+
+    const { sftHolderContract } = contracts;
+
+    // Query the token ID in the SFT contract
+    const [
+      mintTimestampWolf,
+      tokenLevelWolf,
+    ] = await sftHolderContract.getTokenData(wowsTokenIdWolf);
+    chai.expect(mintTimestampWolf).to.not.equal(0);
+    chai.expect(tokenLevelWolf).to.equal(levelWolf);
   });
 
   it('should get addresses of clone contracts', async function () {
@@ -301,227 +388,21 @@ describe('Trade Floor', function () {
       .to.not.equal('0x0000000000000000000000000000000000000000');
   });
 
-  //////////////////////////////////////////////////////////////////////////////
-  // Test locking cryptofolios
-  //////////////////////////////////////////////////////////////////////////////
-
-  it('should lock a cryptofolio', async function () {
-    this.timeout(60 * 1000);
-
-    const { sftHolderContract, tradeFloorProxyContract } = contracts;
-
-    // Check that we have the cryptofolio
-    const balanceWolf = await sftHolderContract.balanceOf(
-      marketingWallet.address,
-      wowsTokenIdWolf
-    );
-    chai.expect(balanceWolf).to.equal(1);
-
-    // Lock wolf cryptofolio
-    const tx = sftHolderContract.safeTransferFrom(
-      marketingWallet.address,
-      tradeFloorProxyContract.address,
-      wowsTokenIdWolf,
-      1,
-      []
-    );
-    await chai
-      .expect(tx)
-      .to.emit(sftHolderContract, 'TransferSingle')
-      .withArgs(
-        marketingWallet.address,
-        marketingWallet.address,
-        tradeFloorProxyContract.address,
-        wowsTokenIdWolf,
-        1
-      );
-
-    // Log gas cost
-    const receipt = await (await tx).wait();
-    const gasUsedGwei = receipt.gasUsed;
-    const gasCost =
-      gasUsedGwei
-        .mul(await getGasPrice())
-        .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
-    console.log(
-      `Lock cryptofolio gas used: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
-        gasCost
-      )})`
-    );
-  });
-
-  it('should check cryptofolio balances', async function () {
+  it('should know the token IDs of clone contracts', async function () {
     this.timeout(60 * 1000);
 
     const { sftHolderContract } = contracts;
 
-    // Check that we don't have the cryptofolio
-    let balanceWolf = await sftHolderContract.balanceOf(
-      marketingWallet.address,
-      wowsTokenIdWolf
+    // Get the token ID of the clone contract
+    const tokenIdBoi = await sftHolderContract.addressToTokenId(
+      cryptofolioAddressBoi
     );
-    chai.expect(balanceWolf).to.equal(0);
+    chai.expect(tokenIdBoi).to.equal(wowsTokenIdBoi);
 
-    // Check that we have the locked cryptofolio NFT
-    balanceWolf = await tradeFloorProxyInstance.balanceOf(
-      marketingWallet.address,
-      wowsTokenIdWolf
+    // Get the token ID of the clone contract
+    const tokenIdWolf = await sftHolderContract.addressToTokenId(
+      cryptofolioAddressWolf
     );
-    chai.expect(balanceWolf).to.equal(1);
-  });
-
-  it('should transfer locked cryptofolio NFT', async function () {
-    this.timeout(60 * 1000);
-
-    // Transfer locked cryptofolio NFT
-    const tx = tradeFloorProxyInstance.safeTransferFrom(
-      marketingWallet.address,
-      signer.address,
-      wowsTokenIdWolf,
-      1,
-      []
-    );
-    await chai.expect(tx).to.not.be.reverted;
-
-    // Log gas cost
-    const receipt = await (await tx).wait();
-    const gasUsedGwei = receipt.gasUsed;
-    const gasCost =
-      gasUsedGwei
-        .mul(await getGasPrice())
-        .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
-    console.log(
-      `Transfer locked cryptofolio NFT gas used: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
-        gasCost
-      )})`
-    );
-  });
-
-  it('should check NFT balances', async function () {
-    this.timeout(60 * 1000);
-
-    // Check that we don't have the locked cryptofolio NFT
-    let balanceWolf = await tradeFloorProxyInstance.balanceOf(
-      marketingWallet.address,
-      wowsTokenIdWolf
-    );
-    chai.expect(balanceWolf).to.equal(0);
-
-    // Check that signer has the locked cryptofolio NFT
-    balanceWolf = await tradeFloorProxyInstance.balanceOf(
-      signer.address,
-      wowsTokenIdWolf
-    );
-    chai.expect(balanceWolf).to.equal(1);
-  });
-
-  it('should burn locked cryptofolio NFT', async function () {
-    this.timeout(60 * 1000);
-
-    // Burn locked cryptofolio NFT
-    const tx = tradeFloorProxyInstance
-      .connect(signer)
-      .burn(signer.address, wowsTokenIdWolf, 1);
-    await chai.expect(tx).to.not.be.reverted;
-
-    // Log gas cost
-    const receipt = await (await tx).wait();
-    const gasUsedGwei = receipt.gasUsed;
-    const gasCost =
-      gasUsedGwei
-        .mul(await getGasPrice())
-        .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
-    console.log(
-      `Burn locked cryptofolio NFT gas used: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
-        gasCost
-      )})`
-    );
-  });
-
-  it('should check cryptofolio balances', async function () {
-    this.timeout(60 * 1000);
-
-    const { sftHolderContract } = contracts;
-
-    // Check that we don't have unlocked cryptofolio
-    let balanceWolf = await sftHolderContract.balanceOf(
-      marketingWallet.address,
-      wowsTokenIdWolf
-    );
-    chai.expect(balanceWolf).to.equal(0);
-
-    // Check that signer has unlocked cryptofolio
-    balanceWolf = await sftHolderContract.balanceOf(
-      signer.address,
-      wowsTokenIdWolf
-    );
-    chai.expect(balanceWolf).to.equal(1);
-  });
-
-  it('should return cryptofolio', async function () {
-    this.timeout(60 * 1000);
-
-    const { sftHolderContract, tradeFloorProxyContract } = contracts;
-
-    // Check that signer has the cryptofolio
-    let balanceWolf = await sftHolderContract.balanceOf(
-      signer.address,
-      wowsTokenIdWolf
-    );
-    chai.expect(balanceWolf).to.equal(1);
-
-    // Lock wolf cryptofolio
-    let tx = sftHolderContract
-      .connect(signer)
-      .safeTransferFrom(
-        signer.address,
-        tradeFloorProxyContract.address,
-        wowsTokenIdWolf,
-        1,
-        []
-      );
-    await chai
-      .expect(tx)
-      .to.emit(sftHolderContract, 'TransferSingle')
-      .withArgs(
-        signer.address,
-        signer.address,
-        tradeFloorProxyContract.address,
-        wowsTokenIdWolf,
-        1
-      );
-
-    // Transfer locked cryptofolio NFT back to marketing wallet
-    tx = tradeFloorProxyInstance
-      .connect(signer)
-      .safeTransferFrom(
-        signer.address,
-        marketingWallet.address,
-        wowsTokenIdWolf,
-        1,
-        []
-      );
-    await chai.expect(tx).to.not.be.reverted;
-
-    // Check that we have the cryptofolio
-    balanceWolf = await tradeFloorProxyInstance.balanceOf(
-      marketingWallet.address,
-      wowsTokenIdWolf
-    );
-    chai.expect(balanceWolf).to.equal(1);
-  });
-
-  it('should fail to add locked cryptofolio NFT to cryptofolio', async function () {
-    this.timeout(60 * 1000);
-
-    // Transfer locked cryptofolio NFT into Boi cryptofolio
-    const tx = tradeFloorProxyInstance.safeTransferFrom(
-      marketingWallet.address,
-      cryptofolioAddressBoi,
-      wowsTokenIdWolf,
-      1,
-      []
-    );
-    await chai.expect(tx).to.be.revertedWith('TF: SFT -> CFolio not allowed');
+    chai.expect(tokenIdWolf).to.equal(wowsTokenIdWolf);
   });
 });

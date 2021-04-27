@@ -8,22 +8,22 @@
 
 pragma solidity >=0.6.0 <0.8.0;
 
+import '@openzeppelin/contracts/access/Ownable.sol';
+import '@openzeppelin/contracts/math/SafeMath.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
-import '@openzeppelin/contracts/math/SafeMath.sol';
-import '@openzeppelin/contracts/access/Ownable.sol';
 
 import '../utils/ERC20Recovery.sol';
 
+import './interfaces/ICFolioFarm.sol';
 import './interfaces/IController.sol';
 import './interfaces/IFarm.sol';
-import './interfaces/ICFolioFarm.sol';
 
 /**
  * @notice Farm is owned by an CFolio contract.
+ *
  * All state modifing calls are only allowed from this owner.
  */
-
 contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
   using SafeMath for uint256;
   using SafeERC20 for IERC20;
@@ -70,7 +70,7 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
     return _totalSupply;
   }
 
-  function balanceOf(address account) external view returns (uint256) {
+  function balanceOf(address account) external view override returns (uint256) {
     return _balances[account];
   }
 

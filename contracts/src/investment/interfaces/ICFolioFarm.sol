@@ -11,10 +11,14 @@ pragma solidity >=0.6.0 <0.8.0;
 /**
  * @title ICFolioFarm
  *
- * @dev ICFolioFarm is the business logic interface to cfolio farms.
+ * @dev ICFolioFarm is the business logic interface to c-folio farms.
  */
-
 interface ICFolioFarm {
+  /**
+   * @dev Return invested balance of account
+   */
+  function balanceOf(address account) external view returns (uint256);
+
   /**
    * @dev Increase amount of shares and earn rewards
    */

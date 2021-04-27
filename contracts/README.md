@@ -146,7 +146,7 @@ Setup:
 
 > \- addressRegistry\
 > \- tradeFloorProxyAddress,
-> \- tradeFloorTokenId (unique and > 0x10000000000000000)
+> \- tradeFloorTokenId (unique and >= 0x10000000000000000)
 > \- numTradeFloorTokenIds (we use 8 atm for known cards)
 
 4.) TradeFloor::grantRole(MINTER_ROLE, TradeClientFloorLP)

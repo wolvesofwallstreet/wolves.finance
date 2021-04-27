@@ -10,7 +10,7 @@
 
 import chai from 'chai';
 
-import { hardhat } from '../../src/web3/hardhat';
+import { hardhat } from '../utils/hardhat';
 
 describe('hardhat', function () {
   it('should be imported without error', async function () {

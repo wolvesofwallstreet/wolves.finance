@@ -18,13 +18,8 @@ interface ITradeFloorClient is IMinterCallback {
    * @dev Called when a SFT tokens grade needs re-evaluation
    *
    * @param tokenId The ERC-1155 token ID
-   * Rates in 1E6 convention: 1E6 = 100%
-   * @param prevRate previous value rate
+   * Rate is in 1E6 convention: 1E6 = 100%
    * @param newRate new value rate
    */
-  function sftUpgrade(
-    uint256 tokenId,
-    uint32 prevRate,
-    uint32 newRate
-  ) external;
+  function sftUpgrade(uint256 tokenId, uint32 newRate) external;
 }

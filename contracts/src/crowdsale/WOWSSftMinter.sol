@@ -13,8 +13,8 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 
 import '../investment/interfaces/IRewardHandler.sol';
-import '../token/interfaces/IWOWSERC1155.sol';
 import '../token/interfaces/IERC1155BurnMintable.sol';
+import '../token/interfaces/IWOWSERC1155.sol';
 
 contract WOWSSftMinter is Ownable {
   using SafeERC20 for IERC20;
