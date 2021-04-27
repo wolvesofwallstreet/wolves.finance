@@ -307,10 +307,9 @@ function Page12({t}: PROPS) {
                             <div className="glide__slide d-flex flex-column align-items-center">
                               <h5 className={'font-13 font-weight-normal'}> {title} </h5>
                               <img className={'responsive-img'} style={{width: '85px', height: '100px'}} src={src} alt={'img-' + title}/>
-                              <br/>
                               <span className={'font-13 font-weight-bold'}>
-                              <label className="control mt-2 control-checkbox" form={`slide-${id}`}>
-                                  SELECT
+                              <label className="control font-13 mt-2 control-checkbox" form={`slide-${id}`}>
+                                  <span className={'font-10'}>SELECT</span>
                                   <input type="checkbox" id={`slide-${id}`} name={`slide-${id}`} defaultChecked={checked}/>
                                   <div className="control_indicator"/>
                               </label>
