@@ -86,6 +86,13 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   // Only OPERATORS can approve when trading is restricted
   bytes32 public constant OPERATOR_ROLE = keccak256('OPERATOR_ROLE');
 
+  // Owner handling of cfolio items (tokenId > 64Bit)
+  struct CFolioOwner {
+    uint128 numOwner;
+    mapping(address => bool) owners;
+  }
+  mapping(uint256 => CFolioOwner) _cfolioOwners;
+
   // OpenSea Compatibility
   event OwnershipTransferred(
     address indexed previousOwner,
@@ -767,7 +774,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     // We only support tokens from our SFT Holder contract
     require(
       _msgSender() == _addressRegistry.getRegistryEntry(AddressBook.SFT_HOLDER),
-      'Invald sender'
+      'Invalid sender'
     );
 
     // Validate parameters
@@ -777,7 +784,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     for (uint256 i = 0; i < tokenIds.length; ++i) {
       uint256 tokenId = tokenIds[i];
       require((tokenId >> 64) == 0, 'Invalid TokenId');
-      require(amounts[i] == 1, 'Amount != 1 not alowed');
+      require(amounts[i] == 1, 'Amount != 1 not allowed');
       require(
         _tokenInfos[uint64(tokenId)].minted == false,
         'Token already minted'
@@ -788,7 +795,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
       // Even the tokenId has not changed we fire URI to
       // let clients know that Metadata has to be refreshed
       emit URI(uri(tokenId), tokenId);
-      // Rarible needs to be informed abiut fees
+      // Rarible needs to be informed about fees
       emit SecondarySaleFees(tokenId, getFeeRecipients(0), getFeeBps(0));
     }
   }

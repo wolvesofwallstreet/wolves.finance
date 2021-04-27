@@ -33,6 +33,12 @@ contract SFTEvaluator is ISFTEvaluator {
   address public immutable admin;
 
   //////////////////////////////////////////////////////////////////////////////
+  // Events
+  //////////////////////////////////////////////////////////////////////////////
+
+  event RewardRate(uint256 indexed tokenId, uint32 rate);
+
+  //////////////////////////////////////////////////////////////////////////////
   // Initialization
   //////////////////////////////////////////////////////////////////////////////
 
@@ -78,6 +84,9 @@ contract SFTEvaluator is ISFTEvaluator {
       uint256 length = tradeFloorClients.length;
       for (uint256 i = 0; i < length; ++i)
         tradeFloorClients[i].sftUpgrade(tokenId, timed);
+
+      // Fire an event
+      emit RewardRate(tokenId, timed);
     } else {
       // Revert if requested
       require(!revertUnchanged, 'Rate unchenged');
