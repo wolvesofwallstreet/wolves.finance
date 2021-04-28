@@ -41,10 +41,7 @@ function Page14({ t }: PROPS) {
             >
               <span className={'lpipe  m-1 mr-1'}> Earned: 2.000000 WOWS,</span>
               <span className={'lpipe  m-1 mr-1'}> 10.34 $</span>
-              <span className={'lpipe  m-1 mr-1'}>
-                {' '}
-                12 DAI = $303.00 TOTAL{' '}
-              </span>
+              <span className={'lpipe  m-1 mr-1'}> 12 DAI = $303.00 TOTAL</span>
             </div>
 
             <div className={'d-grid text-left mb-4'}>
@@ -108,6 +105,7 @@ function Page14({ t }: PROPS) {
               })}
             </div>
           </div>
+
           <HorizontalLine />
 
           <div className="w-nav-container">
@@ -119,7 +117,7 @@ function Page14({ t }: PROPS) {
                 className="w-nav-section mx-4 w-nav-link-active"
                 to="?item=PHENOM"
               >
-                PHENOM<div className="triangle-down"></div>
+                PHENOM <div className="triangle-down"></div>
               </Link>
               <Link className="w-nav-section mx-4 " to="?item=NFTs">
                 NFTs

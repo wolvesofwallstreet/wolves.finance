@@ -106,17 +106,16 @@ class Page11 extends Component<PAGE8_PROPS, PAGE8_STATE> {
             <span id="right" className="dot"/>
           </span>
 
-          <div id="page8-section-header">
+          <div id="page11-section-header">
             <span className="tk-vincente-lightbold font-24 single-line wolves-orange fixed-pos">
               &lt;
               <Link to="?page8=previousCard">{t('page.previousCard')}</Link>
             </span>
           </div>
-
-          <div id="page8-content-container" className="">
-            <div id="page8-content-image">
+          <div id="page11-content-container" className="">
+            <div id="page11-content-image">
               <video
-                id="page8-content-image-inner"
+                id="page11-content-image-inner"
                 disableRemotePlayback={true}
                 className="card-visual"
                 autoPlay={true}
@@ -125,11 +124,11 @@ class Page11 extends Component<PAGE8_PROPS, PAGE8_STATE> {
                 poster={"https://4travelers.de/wolves_assets/cards/bois/level2/BRYANT-300.mp4".replace('{res}', '500') + '.jpg'}
                 playsInline
               />
-              <img className="page8-content-small-image" src={wolfd_app_devs_flat231_300} alt={"BRYANT_BARK_500"}/>
-              {/*<img className="page8-content-small-image" src={currentCard?.relative_img.replace('{res}', '500') + '.jpg'} alt={"img8"}/>*/}
+              <img className="page11-content-small-image" src={wolfd_app_devs_flat231_300} alt={"BRYANT_BARK_500"}/>
+              {/*<img className="page11-content-small-image" src={currentCard?.relative_img.replace('{res}', '500') + '.jpg'} alt={"img8"}/>*/}
             </div>
 
-            <div className="page8-content-text">
+            <div className="page11-content-text">
               <div>
                 <div>
                   <ul className="info-ribbon tk-grotesk-lightbold ">
@@ -197,7 +196,7 @@ class Page11 extends Component<PAGE8_PROPS, PAGE8_STATE> {
               </div>
             </div>
 
-            <div id="page8-content-image">
+            <div id="page11-content-image">
               <button className={'w-100 m-0 page5-btn-stack bg-blue-transparent text-white'}>
                 AUTO UPGRADE : 15 PROWESS 43 : 21 : 56
               </button>
