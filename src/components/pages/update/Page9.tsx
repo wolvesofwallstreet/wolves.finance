@@ -6,9 +6,9 @@
  * See the file LICENSES/README.md for more information.
  */
 
-import './glidejs/glide.core.min.css';
-import './glidejs/glide.theme.min.css';
-import './glideJs.css';
+import './../../theme/glidejs/glide.core.min.css'
+import './../../theme/glidejs/glide.theme.min.css'
+import './../../theme/glidejs/glide_custom.css'
 
 import GlideJS from '@glidejs/glide';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment

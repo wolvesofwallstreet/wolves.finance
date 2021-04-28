@@ -6,17 +6,17 @@
  * See the file LICENSES/README.md for more information.
  */
 
-import './glidejs/glide.core.min.css';
-import './glidejs/glide.theme.min.css';
-import './glideJs.css';
+import './../../theme/glidejs/glide.core.min.css';
+import './../../theme/glidejs/glide.theme.min.css';
+import './../../theme/glidejs/glide_custom.css';
 
 import GlideJS from '@glidejs/glide';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import {Breakpoints, Controls} from '@glidejs/glide/dist/glide.modular.esm';
-import React, {Fragment} from 'react';
-import {TFunction, withTranslation} from 'react-i18next';
-import {RouteComponentProps} from 'react-router-dom';
+import { Breakpoints, Controls } from '@glidejs/glide/dist/glide.modular.esm';
+import React, { Fragment } from 'react';
+import { TFunction, withTranslation } from 'react-i18next';
+import { RouteComponentProps } from 'react-router-dom';
 
 import IMG_BRYANT_500 from '../../../assets/bryant_bark_500.jpg';
 import IMG_ETH_WOWS_LP_TOKEN_GREEN_500 from '../../../assets/wolfd_app_devs_flat2_136_500.jpg';
@@ -29,10 +29,14 @@ type PROPS = {
   history: RouteComponentProps['history'];
 };
 
-const Page4 = ({t, location, history}: PROPS) => {
+const Page4 = ({ t, location, history }: PROPS) => {
   const [input1, setInput1] = React.useState('ETH 2300');
   const [input2, setInput2] = React.useState('ETH 2300');
-  const [images, /*setImages*/] = React.useState([IMG_ETH_WOWS_LP_TOKEN_GREEN_500, IMG_ETH_WOWS_LP_TOKEN_BLUE_500, IMG_BRYANT_500]);
+  const [images /*setImages*/] = React.useState([
+    IMG_ETH_WOWS_LP_TOKEN_GREEN_500,
+    IMG_ETH_WOWS_LP_TOKEN_BLUE_500,
+    IMG_BRYANT_500,
+  ]);
   const [currentImage, setCurrentImage] = React.useState(0);
 
   const initGlide = () => {
@@ -69,20 +73,20 @@ const Page4 = ({t, location, history}: PROPS) => {
   });
 
   React.useEffect(() => {
-    console.log("Page4 72 currentImage ", currentImage)
+    console.log('Page4 72 currentImage ', currentImage);
   }, [currentImage]);
 
   const handleImageChange = (change: number) => {
     if (currentImage + change < 0) {
-      return setCurrentImage(images.length - 1)
+      return setCurrentImage(images.length - 1);
     }
 
     if (currentImage + change >= images.length) {
-      return setCurrentImage(0)
+      return setCurrentImage(0);
     }
 
-    return setCurrentImage(currentImage + change)
-  }
+    return setCurrentImage(currentImage + change);
+  };
 
   return (
     <>
@@ -147,14 +151,20 @@ const Page4 = ({t, location, history}: PROPS) => {
         {/* Content */}
         <div className={'two-column-container w-80 center-container my-5'}>
           <div className="d-flex align-items-center justify-content-around">
-            <button className="arrow_left m-0 mr-3" onClick={() => handleImageChange(-1)}/>
+            <button
+              className="arrow_left m-0 mr-3"
+              onClick={() => handleImageChange(-1)}
+            />
             <img
               className={'responsive-img'}
               src={images[currentImage]}
               alt={images[currentImage]}
-              style={{maxWidth: '500px'}}
+              style={{ maxWidth: '500px' }}
             />
-            <button className="arrow_right m-0 ml-3" onClick={() => handleImageChange(1)}/>
+            <button
+              className="arrow_right m-0 ml-3"
+              onClick={() => handleImageChange(1)}
+            />
           </div>
 
           <div className={'t-left mx-lg-5-5 px-lg-5'}>
@@ -168,7 +178,7 @@ const Page4 = ({t, location, history}: PROPS) => {
                 diamond this trader is a blood diamond, and isnt afraid to step
                 on toes and ears to make the deals he needs.
               </p>
-              <br/>
+              <br />
               <p>
                 This is a staker card and allows to stake Wolf on the tradefloor
                 and also Raid. You can sell this character licence at any point
