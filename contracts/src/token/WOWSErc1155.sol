@@ -371,6 +371,10 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
   /**
    * @dev Return information about a wows card
    *
+   * NOTE: The implementation in the initial deployment was incorrect. If you
+   * are interacting with contract 0x64B3342dB643f3Fb4da5781b6D09B44Ab4668dE4,
+   * you must use {getCardDataBatch}!
+   *
    * @param level The level of the card
    * @param cardId The id of the card
    *
