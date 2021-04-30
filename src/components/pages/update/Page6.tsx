@@ -71,14 +71,14 @@ function Page6() {
               <span className="wolves-orange">MOTO:</span>
               BUY WHEN THERE IS BLOOD ON THE STREET
             </h2>
-            <span className="tk-grotesk-lightbold font-20 line-break-enable">
+            <span className="tk-grotesk-lightbold line-h font-20 line-break-enable">
               Wall Street Hustler - He’s worked his way up from the actual
               street. Learning the hustle on the street has given him the
               perfect grounding for working the trade floor. Forget rough
               diamond this trader is a blood diamond, and isnt afraid to step on
               toes and ears to make the deals he needs.
             </span>
-            <span className="tk-grotesk-lightbold font-20 line-break-enable wolves-orange">
+            <span className="tk-grotesk-lightbold line-h font-20 line-break-enable wolves-orange">
               This is a staker card and allows to stake Wolf on the tradefloor
               and also Raid. You can sell this character licence at any point
               wither on our platform or on opensea
@@ -98,7 +98,9 @@ function Page6() {
               </li>
             </ul>
             <div>
-              <button className="content-details-btn ">LEND WITH BRYANT BARKLEY</button>
+              <button className="content-details-btn font-12">
+                LEND WITH BRYANT BARKLEY
+              </button>
             </div>
           </ContentWrapper>
           {/* </PageContainer> */}

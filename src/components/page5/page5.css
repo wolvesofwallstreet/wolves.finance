@@ -22,8 +22,8 @@
 }
 
 #page5-content-container {
-  margin-top: 1.5rem;
-  margin-bottom: 5rem;
+  margin-top: 15px;
+  margin-bottom: 5px;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
@@ -59,12 +59,12 @@
 
 .page5-btn-stack {
   background-color: var(--wolves-orange);
-  padding: 1.3rem 3rem;
-  border: 0.6px solid var(--wolves-white);
+  padding: 13px 30px;
+  border: .6px solid var(--wolves-white);
   text-align: center;
   font-weight: bold;
   color: var(--wolves-blue-dk);
-  margin-top: 1rem;
+  margin-top: 10px;
 }
 
 @media all and (max-width: 800px) {

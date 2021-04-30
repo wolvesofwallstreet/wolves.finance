@@ -1,6 +1,6 @@
 .wrap {
   max-width: 750px;
-  margin: -13px auto;
+  margin: -22px auto;
   position: relative;
   /* background-color: gainsboro; */
 }
@@ -40,13 +40,13 @@
 .slider-wrap-bar:before {
   border-width: 10px 15px 0 15px;
   border-top-color: var(--wolves-orange-light);
-  top: 12px;
+  top: 10px;
 }
 
 .slider-wrap-bar:after {
   border-width: 0 15px 10px 15px;
   border-bottom-color: var(--wolves-orange-light);
-  top: -12px;
+  top: -10px;
 }
 
 .slider-wrap-bar {
@@ -54,18 +54,19 @@
   /*height: 220px;*/
 }
 
-/*.glide__track {*/
-/*  background-color: rgba(255, 216, 99, 0.43);*/
-/*}*/
+.glide__track {
+  /* background-color: rgba(255, 216, 99, 0.43); */
+  padding: 10px 0;
+}
 
 .glide__slides {
   width: 100%;
   overflow: visible !important;
-  margin: 1.5rem 0;
+  margin: 15px 0;
 }
 
 .glide__slide {
-  margin: 1rem auto;
+  margin: 1px auto;
   text-align: center;
   position: relative;
   opacity: 0.7;
@@ -87,7 +88,6 @@
 }
 
 /* END- Custom Box */
-
 
 .slide-img {
   position: relative;
@@ -112,9 +112,9 @@
 }
 
 .slide-count {
-  width: 2.09rem;
-  height: 2.09rem;
-  line-height: 2.09rem;
+  width: 20.9px;
+  height: 20.9px;
+  line-height: 20.9px;
   text-align: center;
   border-radius: 50%;
   background-color: #ffb89f;

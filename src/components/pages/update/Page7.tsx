@@ -77,11 +77,11 @@ const Page7 = ({t, location, history,}: PROPS) => {
                   {card.subTitle}
                 </h5>
 
-                <div className={`page7-card-box-description`}>
+                <div className={`page7-card-box-description font-10`}>
                   {card.paragraphs.length && card.paragraphs.map(p => (
                     <p className={'tk-grotesk-lightbold'}>{p}</p>
                   ))}
-                </div>
+                </div> 
               </div>
 
             </div>)

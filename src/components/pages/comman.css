@@ -15,16 +15,16 @@
   background-position-y: 0;
   background-size: cover;
   color: white;
-  padding: 1.5rem 9rem;
-  min-height: 30rem;
+  padding: 15px 90px;
+  min-height: 300px;
   text-align: center;
   display: flex;
   flex-direction: column;
 }
 
 .wolves-container-fluid {
-  padding: 2rem 0;
-  min-height: 30rem !important;
+  padding: 20px 0;
+  min-height: 300px !important;
 }
 
 .--min-h0 {
@@ -37,13 +37,13 @@
 
 @media screen and (max-width: 768px) {
   .w-container {
-    padding: 1.5rem 3rem;
+    padding: 15px 30px;
   }
 }
 
 @media screen and (max-width: 320px) {
   .w-container {
-    padding: 1.5rem 1rem;
+    padding: 15px 10px;
   }
 }
 
@@ -82,8 +82,8 @@
 }
 
 .px-6 {
-  padding-right: 5rem !important;
-  padding-left: 5rem !important;
+  padding-right: 50px !important;
+  padding-left: 50px !important;
 }
 
 .bg-orange-trans {
@@ -99,7 +99,7 @@
 }
 
 .h-1 {
-  font-size: 48px;
+  font-size: 46px;
 }
 
 .h-2 {
@@ -231,11 +231,12 @@
 
 .page4-text-input {
   background-color: var(--wolves-orange-transparent);
-  padding: 1rem 2rem;
-  border: 0.3px solid rgba(255, 255, 255, 0.5);
-  font-weight: bold;
+  padding: 10px 20px;
+  border: .3px solid rgba(255, 255, 255, 05);
   color: var(--wolves-white);
-  margin-top: 1rem;
+  margin-top: 10px;
+  font-weight: bold;
+  font-size: 12px;
   outline: none;
 }
 
@@ -255,8 +256,8 @@
 }
 
 #page5-content-container {
-  margin-top: 1.5rem;
-  margin-bottom: 5rem;
+  margin-top: 15px;
+  margin-bottom: 50px;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
@@ -289,8 +290,8 @@
 .page5-content-small-image {
   position: absolute;
   width: 34%;
-  right: -2rem;
-  top: 2.8rem;
+  right: -20px;
+  top: 28px;
 }
 
 .page5-content-text {
@@ -306,14 +307,14 @@
   display: flex;
   width: auto;
   background-color: #23304788;
-  padding: 1rem 1.5rem;
+  padding: 10px 15px;
   list-style-type: none;
   border-bottom: 1px solid var(--wolves-orange);
 }
 
 .info-ribbon li {
-  margin-right: 1.5rem;
-  font-size: 1.6rem;
+  margin-right: 15px;
+  font-size: 16px;
   font-weight: bold;
 }
 
@@ -323,12 +324,13 @@
 
 .page5-btn-stack {
   background-color: var(--wolves-orange);
-  padding: 1.3rem 3rem;
-  border: 0.6px solid var(--wolves-white);
+  padding: 13px 30px;
+  border: .6px solid var(--wolves-white);
   text-align: center;
   font-weight: bold;
   color: var(--wolves-blue-dk);
-  margin-top: 1rem;
+  margin-top: 10px;
+  font-size: 12px;
 }
 
 @media all and (max-width: 800px) {
@@ -346,7 +348,7 @@
   }
 
   .info-ribbon li {
-    font-size: 1.3rem;
+    font-size: 13px;
   }
 }
 
@@ -358,12 +360,12 @@
 
 .page5-btn-stack {
   background-color: var(--wolves-orange);
-  padding: 1.3rem 3rem;
-  border: 0.6px solid var(--wolves-white);
+  padding: 13px 30px;
+  border: .6px solid var(--wolves-white);
   text-align: center;
   font-weight: bold;
   color: var(--wolves-blue-dk);
-  margin-top: 1rem;
+  margin-top: 10px;
 }
 
 @media screen and (max-width: 700px) {
@@ -379,35 +381,38 @@
   ----------- START page 7 */
 .page7-cards-container {
   width: 100%;
-  min-height: 50rem;
-  padding: 10rem 0;
+  min-height: 500px;
+  padding: 100px 0;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(270px, 310px));
-  gap: 5rem;
+  gap: 50px;
   justify-content: center;
 }
 
 .card-page7 {
-  min-height: 35rem;
-  padding: 3rem 4rem;
+  min-height: 350px;
+  padding: 30px 40px;
   background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5), transparent),
     url('../../assets/wolfd_app_devs_flat2_162.png');
   background-size: cover;
 }
 
 .page7-card-box-subtitle {
-  background-color: rgba(0, 0, 0, 0.66);
-  padding: 1.8rem 2rem;
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 18px 20px;
   margin: 0;
   font-size: 20px;
 }
 
 .page7-card-box-description {
-  padding: 1rem 2.6rem;
-  padding-top: 3rem;
+  padding: 10px 26px;
+  padding-top: 30px;
   background-color: rgba(0, 0, 0, 0.5);
-  line-height: 1.2;
   white-space: pre-line;
+
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.2;
 }
 
 .page7-card-box-description > * {
@@ -455,8 +460,8 @@
 }
 
 #page8-content-container {
-  margin-top: 1.5rem;
-  margin-bottom: 5rem;
+  margin-top: 15px;
+  margin-bottom: 50px;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
@@ -481,8 +486,8 @@
 .page8-content-small-image {
   position: absolute;
   width: 34%;
-  right: -2rem;
-  top: 2.8rem;
+  right: -20px;
+  top: 28px;
 }
 
 .page8-content-text {
@@ -505,7 +510,7 @@
 }
 
 .page8-line-w-80 {
-  max-width: 95rem !important;
+  max-width: 950px !important;
 }
 
 .page8-card-container {
@@ -558,8 +563,8 @@
 
 .page9-content-container {
   width: 80%;
-  margin: 4rem auto;
-  min-height: 50rem;
+  margin: 40px auto;
+  min-height: 500px;
   height: auto;
   display: flex;
   flex-wrap: wrap;
@@ -568,7 +573,8 @@
 
 .page9-bar-chart {
   position: relative;
-  margin: 1rem auto 3rem;
+  margin: 10px auto 30px;
+  font-size: 12px;
 }
 
 .page9-bar-chart:after {
@@ -615,8 +621,8 @@
 }
 
 #page11-content-container {
-  margin-top: 1.5rem;
-  margin-bottom: 5rem;
+  margin-top: 15px;
+  margin-bottom: 50px;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
@@ -641,8 +647,8 @@
 .page11-content-small-image {
   position: absolute;
   width: 34%;
-  right: -2rem;
-  top: 2.8rem;
+  right: -20px;
+  top: 28px;
 }
 
 .page11-content-text {
@@ -667,7 +673,7 @@
 .d-grid {
   display: grid;
   /* grid-template-columns: repeat(2, minmax(200px, auto)); */
-  grid-gap: 1.2rem 1rem;
+  grid-gap: 12px 10px;
 }
 
 .g-card {
@@ -698,7 +704,7 @@
 .d-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, auto));
-  grid-gap: 1.2rem 1rem;
+  grid-gap: 12px 10px;
 }
 
 .g-card {

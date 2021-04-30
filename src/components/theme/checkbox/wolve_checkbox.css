@@ -78,12 +78,12 @@
   position: absolute;
   left: 0;
   top: 0;
-  width: 4.5rem;
-  height: 4.5rem;
-  margin-left: -1.3rem;
-  margin-top: -1.3rem;
+  width: 45px;
+  height: 45px;
+  margin-left: -13px;
+  margin-top: -13px;
   background: #f37d47;
-  border-radius: 3rem;
+  border-radius: 3px;
   opacity: 0.6;
   z-index: 99999;
   transform: scale(0);

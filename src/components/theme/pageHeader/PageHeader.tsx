@@ -26,8 +26,8 @@ const PageHeader = ({
   return (
     <>
       {logoSrc && <img src={logoSrc} alt="Logo" width="50px" height="50px" />}
-      <h2 className="tk-vincente-lightbold font-32 single-line">{heading}</h2>
-      <h3 className="tk-grotesk-lightbold">{headingSecondry}</h3>
+      <h2 className="tk-vincente-lightbold font-28 single-line">{heading}</h2>
+      <h3 className="tk-grotesk-lightbold font-14">{headingSecondry}</h3>
     </>
   );
 };

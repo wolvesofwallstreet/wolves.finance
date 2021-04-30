@@ -36,7 +36,7 @@ function Page14({ t }: PROPS) {
           <div className="w-75 center-container">
             <div
               className={
-                'd-flex flex-column flex-md-row justify-content-center bg-blue-transparent h-5 py-3 px-3 my-2 mt-3 '
+                'd-flex flex-column flex-md-row justify-content-center bg-blue-transparent font-14 py-2 px-3 my-2 mt-3 '
               }
             >
               <span className={'lpipe  m-1 mr-1'}> Earned: 2.000000 WOWS,</span>
@@ -48,7 +48,7 @@ function Page14({ t }: PROPS) {
               {[1].map((card, i) => {
                 return (
                   <div
-                    className="p-5 bg-blue-transparent"
+                    className="px-4 py-3 bg-blue-transparent"
                     key={i + Math.random()}
                   >
                     <div

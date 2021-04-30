@@ -32,7 +32,7 @@
   background-color: rgba(243, 182, 152, 0.8);
   color: var(--wolves-white);
 
-  padding: 1rem 8rem;
+  padding: 10px 80px;
   max-width: 740px;
   border: 1px solid rgba(255, 255, 255, 0.74);
 }

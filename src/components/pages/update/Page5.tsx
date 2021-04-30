@@ -6,13 +6,13 @@
  * See the file LICENSES/README.md for more information.
  */
 
-import React, {Component} from 'react';
-import {TFunction, withTranslation} from 'react-i18next';
-import {Link, RouteComponentProps} from 'react-router-dom';
+import React, { Component } from 'react';
+import { TFunction, withTranslation } from 'react-i18next';
+import { Link, RouteComponentProps } from 'react-router-dom';
 
 import Logo from '../../../assets/logo.png';
-import SMALL_IMG from '../../../assets/wolfd_app_devs_flat2_136_500.jpg'
-import PageHeader from "../../theme/pageHeader";
+import SMALL_IMG from '../../../assets/wolfd_app_devs_flat2_136_500.jpg';
+import PageHeader from '../../theme/pageHeader';
 
 type PAGE8_PROPS = {
   t: TFunction;
@@ -40,28 +40,27 @@ type PAGE8_STATE = {
 
 const INITIAL_PAGE8_STATE: PAGE8_STATE = {
   type: 'wolves',
-  input: ''
+  input: '',
 };
 
 class Page5 extends Component<PAGE8_PROPS, PAGE8_STATE> {
-
   constructor(props: PAGE8_PROPS) {
     super(props);
     this.state = INITIAL_PAGE8_STATE;
   }
 
   handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const {name, value} = e.target
+    const { name, value } = e.target;
     if (name && value) {
       this.setState({
         ...this.state,
-        [name]: value
-      })
+        [name]: value,
+      });
     }
   }
 
   render(): JSX.Element {
-    const {t} = this.props;
+    const { t } = this.props;
     // const {currentCard, input1} = this.state;
 
     const extraInfo = {
@@ -75,7 +74,6 @@ class Page5 extends Component<PAGE8_PROPS, PAGE8_STATE> {
     return (
       <>
         <div id="top" className={'wolves-container bg-wolves'}>
-
           {/* Title & heading */}
           <div>
             <PageHeader
@@ -101,11 +99,10 @@ class Page5 extends Component<PAGE8_PROPS, PAGE8_STATE> {
 
           {/* Line */}
           <span className="line-container">
-            <span id="left" className="dot"/>
-            <span className="line"/>
-            <span id="right" className="dot"/>
+            <span id="left" className="dot" />
+            <span className="line" />
+            <span id="right" className="dot" />
           </span>
-
 
           <div id="page5-section-header">
             <span className="tk-vincente-lightbold font-24 single-line wolves-orange fixed-pos">
@@ -115,21 +112,43 @@ class Page5 extends Component<PAGE8_PROPS, PAGE8_STATE> {
           </div>
 
           <div id="page5-content-container" className="">
-            <div id="page5-content-image">
-              <video
-                id="page5-content-image-inner"
-                disableRemotePlayback={true}
-                className="card-visual"
-                autoPlay={true}
-                loop={true}
-                src={"https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-{res}.mp4".replace('{res}', '500')}
-                poster={"https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-{res}.mp4".replace('{res}', '500') + '.jpg'}
-                playsInline
-              />
-              <img className="page5-content-small-image" src={SMALL_IMG} alt={"img8"}/>
-              {/*<img className="page5-content-small-image" src={currentCard?.relative_img.replace('{res}', '500') + '.jpg'} alt={"img8"}/>*/}
+            <div>
+              <div id="page5-content-image">
+                <video
+                  id="page5-content-image-inner"
+                  disableRemotePlayback={true}
+                  className="card-visual"
+                  autoPlay={true}
+                  loop={true}
+                  src={'https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-{res}.mp4'.replace(
+                    '{res}',
+                    '500'
+                  )}
+                  poster={
+                    'https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-{res}.mp4'.replace(
+                      '{res}',
+                      '500'
+                    ) + '.jpg'
+                  }
+                  playsInline
+                />
+                <img
+                  className="page5-content-small-image"
+                  src={SMALL_IMG}
+                  alt={'img8'}
+                />
+                {/*<img className="page5-content-small-image" src={currentCard?.relative_img.replace('{res}', '500') + '.jpg'} alt={"img8"}/>*/}
+              </div>
+              <div id="page5-content-image">
+                <button
+                  className={
+                    'w-100 m-0 mt-2 mb-1 page5-btn-stack bg-blue-transparent text-white'
+                  }
+                >
+                  AUTO UPGRADE : 15 PROWESS 43 : 21 : 56
+                </button>
+              </div>
             </div>
-
             <div className="page5-content-text">
               <div>
                 <div>
@@ -141,21 +160,29 @@ class Page5 extends Component<PAGE8_PROPS, PAGE8_STATE> {
                     ))}
                   </ul>
                 </div>
-                <h1 className="tk-vincente-bold font-32 ">
-                  {t('page8.card-title')}
+                <h1 className="tk-vincente-bold h-1 f-vincente ">
+                  GORGAN DECKO
                 </h1>
                 <h2 className="tk-vincente-lightbold font-24">
                   <span className="wolves-orange">MOTO:</span>
                   BUY WHEN THERE IS BLOOD ON THE STREET
                 </h2>
                 <div>
-                  <p className={'tk-grotesk-lightbold font-16 line-break-enable'}>
-                    Wall Street Hustler - He’s worked his way up from the actual street. Learning the hustle on the street
-                    has given him the perfect grounding for working the trade floor. Forget rough diamond this trader is a
-                    blood diamond, and isnt afraid to step on toes and ears to make the deals he needs.
+                  <p
+                    className={'tk-grotesk-lightbold font-16 line-break-enable'}
+                  >
+                    Wall Street Hustler - He’s worked his way up from the actual
+                    street. Learning the hustle on the street has given him the
+                    perfect grounding for working the trade floor. Forget rough
+                    diamond this trader is a blood diamond, and isnt afraid to
+                    step on toes and ears to make the deals he needs.
                   </p>
-                  <p className={'tk-grotesk-lightbold font-16 line-break-enable'}>
-                    his is a staker card and allows to stake Wolf on the tradefloor and also Raid. You can sell this character licence at any point wither on our platform or on opensea
+                  <p
+                    className={'tk-grotesk-lightbold font-16 line-break-enable'}
+                  >
+                    his is a staker card and allows to stake Wolf on the
+                    tradefloor and also Raid. You can sell this character
+                    licence at any point wither on our platform or on opensea
                   </p>
                 </div>
 
@@ -172,20 +199,22 @@ class Page5 extends Component<PAGE8_PROPS, PAGE8_STATE> {
                 </ul>
 
                 <div className="w-100 page5-grid-btn ">
-                  <div className={'d-flex justify-content-between page4-text-input'}>
-                    <div className="">
-                      MAX
-                    </div>
-                    <div className="">
-                      50%
-                    </div>
+                  <div
+                    className={
+                      'd-flex justify-content-between page4-text-input'
+                    }
+                  >
+                    <div className="">MAX</div>
+                    <div className="">50%</div>
                   </div>
 
                   <div></div>
                   <button className={'page5-btn-stack m-0'}>
                     CLAIM REWARDS
                   </button>
-                  <button className={'page5-btn-stack m-0 bg-blue-dark --text-gray'}>
+                  <button
+                    className={'page5-btn-stack m-0 bg-blue-dark --text-gray'}
+                  >
                     CLAIM REWARDS & DESTROY NFT (UNSTAKE)
                   </button>
                   <button className={'page5-btn-stack m-0'}>
@@ -196,12 +225,6 @@ class Page5 extends Component<PAGE8_PROPS, PAGE8_STATE> {
                   </button>
                 </div>
               </div>
-            </div>
-
-            <div id="page5-content-image">
-              <button className={'w-100 m-0 mt-4 page5-btn-stack bg-blue-transparent text-white'}>
-                AUTO UPGRADE : 15 PROWESS 43 : 21 : 56
-              </button>
             </div>
           </div>
         </div>

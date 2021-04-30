@@ -125,7 +125,6 @@ class Page11 extends Component<PAGE8_PROPS, PAGE8_STATE> {
                 playsInline
               />
               <img className="page11-content-small-image" src={wolfd_app_devs_flat231_300} alt={"BRYANT_BARK_500"}/>
-              {/*<img className="page11-content-small-image" src={currentCard?.relative_img.replace('{res}', '500') + '.jpg'} alt={"img8"}/>*/}
             </div>
 
             <div className="page11-content-text">

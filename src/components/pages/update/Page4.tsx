@@ -40,7 +40,7 @@ const Page4 = ({ t, location, history }: PROPS) => {
   const [currentImage, setCurrentImage] = React.useState(0);
 
   const initGlide = () => {
-    new GlideJS('.images', {
+    new GlideJS('.page4-slider', {
       classes: {
         activeSlide: 'slider_active_slide',
       },
@@ -102,7 +102,7 @@ const Page4 = ({ t, location, history }: PROPS) => {
         {/* Card slider */}
         <div className={'slider-wrap-bar bg-transparent-orange'}>
           <div className={'wrap'}>
-            <div className="images glide wolves-orange-border-t  wolves-orange-border-b">
+            <div className="page4-slider wolves-orange-border-t wolves-orange-border-b">
               <div className="glide__track" data-glide-el="track">
                 <ul className="glide__slides">
                   {[1, 2, 3, 4, 5].map((card, i) => {
@@ -189,7 +189,7 @@ const Page4 = ({ t, location, history }: PROPS) => {
             <div className={'d-flex flex-wrap'}>
               {/* left */}
               <input
-                className={'page4-text-input font-14 mr-3 '}
+                className={'page4-text-input font-14 mr-2 '}
                 name={'input1'}
                 id={'input1'}
                 onChange={(e) => setInput1(e.target.value)}
@@ -197,7 +197,7 @@ const Page4 = ({ t, location, history }: PROPS) => {
               />
               {/* Right */}
               <input
-                className={'page4-text-input font-14 mr-3 '}
+                className={'page4-text-input font-14 mr-2 '}
                 name={'input2'}
                 id={'input2'}
                 onChange={(e) => setInput2(e.target.value)}
@@ -205,7 +205,7 @@ const Page4 = ({ t, location, history }: PROPS) => {
               />
             </div>
 
-            <div className={'w-80 mt-4'}>
+            <div className={'w-80 mt-3'}>
               <button className={'m-0 page5-btn-stack'}>
                 BUY STAKED ETH/WOWS NFT
               </button>

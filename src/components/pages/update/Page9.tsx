@@ -237,7 +237,7 @@ const Page9 = ({t, location, history}: PROPS) => {
               return (
                 <Fragment key={i + Math.random()}>
                   {/* Orange Horizontal Bar */}
-                  <div className=" d-flex justify-content-between p-3 bg-orange-trans">
+                  <div className=" d-flex justify-content-between p-3 bg-orange-trans font-12">
                     <p className={'m-0'}> {bar.name} </p>
                     <p className={'m-0 bold'}>{bar.value}</p>
                   </div>
@@ -258,7 +258,7 @@ const Page9 = ({t, location, history}: PROPS) => {
                         ['--percentage' as string]: '25%',
                       }}
                     >
-                      20%
+                      25%
                     </div>
                     <div
                       className="tick"
@@ -315,7 +315,7 @@ const Page9 = ({t, location, history}: PROPS) => {
               </div>
             </div>
 
-            <div className={'w-100 mt-3'}>
+            <div className={'w-100 mt-3 font-12'}>
               WHAT DOES PACK STRENGTH MEAN AND HOW CAN I SAVE GAS?
             </div>
           </div>

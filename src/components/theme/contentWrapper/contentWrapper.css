@@ -7,8 +7,8 @@
  */
 
 .content-wrapper-container {
-  margin-top: 1.5rem;
-  margin-bottom: 5rem;
+  margin-top: 15px;
+  margin-bottom: 5px;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
@@ -39,14 +39,14 @@
 }
 
 .content-details-btn {
-  min-width: 15rem;
-  margin-top: 1rem;
-  padding: 1.3rem 4rem;
+  min-width: 15px;
+  margin-top: 1px;
   text-align: center;
   font-weight: bold;
   color: var(--wolves-blue-dk);
   background-color: var(--wolves-orange);
-  border: 0.6px solid var(--wolves-white);
+  border: .6px solid var(--wolves-white);
+  padding: 13px 40px !important; 
 }
 
 @media all and (max-width: 800px) {

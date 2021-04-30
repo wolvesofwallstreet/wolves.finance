@@ -387,7 +387,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
             {currentCard && (
               <>
                 <div>
-                  <h1 className="tk-vincente-lightbold single-line">
+                  <h1 className="tk-vincente-lightbold h-1 single-line">
                     {currentCard.name}
                   </h1>
                   <h2 className="tk-vincente-lightbold font-24">

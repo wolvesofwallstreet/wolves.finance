@@ -416,14 +416,14 @@ function Page12({ t }: PROPS) {
             >
               MULTI TRANSFER
             </button>
-            <div className={'arrow_down mt-2'} />
+            <div className={'arrow_down mt-1'} />
           </div>
 
           {/* H-line */}
-          <div className={'h-line'} />
+          <div className={'h-line '} />
 
           {/* Card slider-3 */}
-          <div className={'w-100 center-container'}>
+          <div className={'w-100 mt-2 center-container'}>
             <div className={'slider-wrap-bar before_none after_none'}>
               <div className={'wrap'} style={{ maxWidth: '1000px' }}>
                 <div className="slider-3 images glide">
