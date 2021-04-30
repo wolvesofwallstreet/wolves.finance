@@ -203,19 +203,16 @@ const Page4 = ({ t, location, history }: PROPS) => {
                 onChange={(e) => setInput2(e.target.value)}
                 value={input2}
               />
+
             </div>
 
-            <div className={'w-80 mt-3'}>
-              <button className={'m-0 page5-btn-stack'}>
-                BUY STAKED ETH/WOWS NFT
-              </button>
-            </div>
-
-            {/*<div className="d-flex w-100">*/}
-            {/*  <button className={'w-25 m-0 page5-btn-stack'}>*/}
-            {/*    DIRECT INVEST - EARN GAS*/}
-            {/*  </button>*/}
-            {/*</div>*/}
+            <button
+                  className={'mt-3 page4-text-input m-0 page4-btn-stack font-10'}
+                >
+                  BUY STAKED ETH/WOWS NFT
+                </button>
+            <div className={''}>
+              </div>
           </div>
         </div>
       </div>

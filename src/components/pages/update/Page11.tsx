@@ -6,13 +6,13 @@
  * See the file LICENSES/README.md for more information.
  */
 
-import React, {Component} from 'react';
-import {TFunction, withTranslation} from 'react-i18next';
-import {Link, RouteComponentProps} from 'react-router-dom';
+import React, { Component } from 'react';
+import { TFunction, withTranslation } from 'react-i18next';
+import { Link, RouteComponentProps } from 'react-router-dom';
 
 import Logo from '../../../assets/logo.png';
-import wolfd_app_devs_flat231_300 from '../../../assets/wolfd_app_devs_flat231_300.jpg';
-import PageHeader from "../../theme/pageHeader";
+import ETH_CARD_BLUE from '../../../assets/wolfd_app_devs_flat231_300.jpg';
+import PageHeader from '../../theme/pageHeader';
 
 type PAGE8_PROPS = {
   t: TFunction;
@@ -40,28 +40,27 @@ type PAGE8_STATE = {
 
 const INITIAL_PAGE8_STATE: PAGE8_STATE = {
   type: 'wolves',
-  input: ''
+  input: '',
 };
 
 class Page11 extends Component<PAGE8_PROPS, PAGE8_STATE> {
-
   constructor(props: PAGE8_PROPS) {
     super(props);
     this.state = INITIAL_PAGE8_STATE;
   }
 
   handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const {name, value} = e.target
+    const { name, value } = e.target;
     if (name && value) {
       this.setState({
         ...this.state,
-        [name]: value
-      })
+        [name]: value,
+      });
     }
   }
 
   render(): JSX.Element {
-    const {t} = this.props;
+    const { t } = this.props;
     // const {currentCard, input1} = this.state;
 
     const extraInfo = {
@@ -75,12 +74,11 @@ class Page11 extends Component<PAGE8_PROPS, PAGE8_STATE> {
     return (
       <>
         <div id="top" className={'wolves-container bg-wolves'}>
-
           {/* Title & heading */}
           <div>
             <PageHeader
               logoSrc={Logo}
-              heading=" WELCOME TO YOUR PACK"
+              heading="WELCOME TO YOUR PACK"
               headingSecondry="THIS BOIS CRYPTOFOLIO, WILL IN TIME, ALLOW YOU TO YIELD FARM, DEFEND THE BOOSTER POOL, HOLD NFT UPGRADES, HOLD OTHER NFTS AND BUNDLE THEM TOGETHER TO SELL, AND MUCH MORE."
             />
           </div>
@@ -101,33 +99,56 @@ class Page11 extends Component<PAGE8_PROPS, PAGE8_STATE> {
 
           {/* Line */}
           <span className="line-container">
-            <span id="left" className="dot"/>
-            <span className="line"/>
-            <span id="right" className="dot"/>
+            <span id="left" className="dot" />
+            <span className="line" />
+            <span id="right" className="dot" />
           </span>
 
-          <div id="page11-section-header">
+          <div id="page5-section-header">
             <span className="tk-vincente-lightbold font-24 single-line wolves-orange fixed-pos">
               &lt;
-              <Link to="?page8=previousCard">{t('page.previousCard')}</Link>
+              <Link to="?page6=previousCard">PREVIOUS CARD</Link>
             </span>
           </div>
-          <div id="page11-content-container" className="">
-            <div id="page11-content-image">
-              <video
-                id="page11-content-image-inner"
-                disableRemotePlayback={true}
-                className="card-visual"
-                autoPlay={true}
-                loop={true}
-                src={"https://4travelers.de/wolves_assets/cards/bois/level2/BRYANT-300.mp4".replace('{res}', '500')}
-                poster={"https://4travelers.de/wolves_assets/cards/bois/level2/BRYANT-300.mp4".replace('{res}', '500') + '.jpg'}
-                playsInline
-              />
-              <img className="page11-content-small-image" src={wolfd_app_devs_flat231_300} alt={"BRYANT_BARK_500"}/>
-            </div>
 
-            <div className="page11-content-text">
+          <div id="page5-content-container" className="">
+            <div>
+              <div id="page5-content-image">
+                <video
+                  id="page5-content-image-inner"
+                  disableRemotePlayback={true}
+                  className="card-visual"
+                  autoPlay={true}
+                  loop={true}
+                  src={'https://4travelers.de/wolves_assets/cards/bois/level2/BRYANT-500.mp4'.replace(
+                    '{res}',
+                    '500'
+                  )}
+                  poster={
+                    'https://4travelers.de/wolves_assets/cards/bois/level2/BRYANT-500.mp4'.replace(
+                      '{res}',
+                      '500'
+                    ) + '.jpg'
+                  }
+                  playsInline
+                />
+                <img
+                  className="page5-content-small-image"
+                  src={ETH_CARD_BLUE}
+                  alt={'img8'}
+                />
+              </div>
+              <div id="page5-content-image">
+                <button
+                  className={
+                    'w-100 m-0 mt-2 mb-1 page5-btn-stack bg-blue-transparent text-white'
+                  }
+                >
+                  AUTO UPGRADE : 15 PROWESS 43 : 21 : 56
+                </button>
+              </div>
+            </div>
+            <div className="page5-content-text">
               <div>
                 <div>
                   <ul className="info-ribbon tk-grotesk-lightbold ">
@@ -138,7 +159,7 @@ class Page11 extends Component<PAGE8_PROPS, PAGE8_STATE> {
                     ))}
                   </ul>
                 </div>
-                <h1 className="h-1 f-vincente">
+                <h1 className="tk-vincente-bold h-1 f-vincente ">
                   BRYANT BARKLEY
                 </h1>
                 <h2 className="tk-vincente-lightbold font-24">
@@ -146,19 +167,27 @@ class Page11 extends Component<PAGE8_PROPS, PAGE8_STATE> {
                   BUY WHEN THERE IS BLOOD ON THE STREET
                 </h2>
                 <div>
-                  <p className={'tk-grotesk-lightbold font-16 line-break-enable'}>
-                    Wall Street Hustler - He’s worked his way up from the actual street. Learning the hustle on the street
-                    has given him the perfect grounding for working the trade floor. Forget rough diamond this trader is a
-                    blood diamond, and isnt afraid to step on toes and ears to make the deals he needs.
+                  <p
+                    className={'tk-grotesk-lightbold font-16 line-break-enable'}
+                  >
+                    Wall Street Hustler - He’s worked his way up from the actual
+                    street. Learning the hustle on the street has given him the
+                    perfect grounding for working the trade floor. Forget rough
+                    diamond this trader is a blood diamond, and isnt afraid to
+                    step on toes and ears to make the deals he needs.
                   </p>
-                  <p className={'tk-grotesk-lightbold font-16 line-break-enable'}>
-                    his is a staker card and allows to stake Wolf on the tradefloor and also Raid. You can sell this character licence at any point wither on our platform or on opensea
+                  <p
+                    className={'tk-grotesk-lightbold font-16 line-break-enable'}
+                  >
+                    This is a staker card and allows to stake Wolf on the
+                    tradefloor and also Raid. You can sell this character
+                    licence at any point wither on our platform or on opensea
                   </p>
                 </div>
 
                 <ul className="tk-vincente-bold font-24 rarity-box">
                   <li>
-                    <h2>RARITY: 1/120 </h2>
+                    <h2>RARITY: 1/140 </h2>
                   </li>
                   <li>
                     <h2>PROWESS: 50% </h2>
@@ -169,20 +198,22 @@ class Page11 extends Component<PAGE8_PROPS, PAGE8_STATE> {
                 </ul>
 
                 <div className="w-100 page5-grid-btn ">
-                  <div className={'d-flex justify-content-between page4-text-input'}>
-                    <div className="">
-                      MAX
-                    </div>
-                    <div className="">
-                      50%
-                    </div>
+                  <div
+                    className={
+                      'd-flex justify-content-between page4-text-input'
+                    }
+                  >
+                    <div className="">MAX</div>
+                    <div className="">50%</div>
                   </div>
 
                   <div></div>
                   <button className={'page5-btn-stack m-0'}>
                     CLAIM REWARDS
                   </button>
-                  <button className={'page5-btn-stack m-0 bg-blue-dark --text-gray'}>
+                  <button
+                    className={'page5-btn-stack m-0 bg-blue-dark --text-gray'}
+                  >
                     CLAIM REWARDS & DESTROY NFT (UNSTAKE)
                   </button>
                   <button className={'page5-btn-stack m-0'}>
@@ -193,12 +224,6 @@ class Page11 extends Component<PAGE8_PROPS, PAGE8_STATE> {
                   </button>
                 </div>
               </div>
-            </div>
-
-            <div id="page11-content-image">
-              <button className={'w-100 m-0 page5-btn-stack bg-blue-transparent text-white'}>
-                AUTO UPGRADE : 15 PROWESS 43 : 21 : 56
-              </button>
             </div>
           </div>
         </div>

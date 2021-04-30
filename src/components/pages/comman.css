@@ -228,16 +228,27 @@
 .img-bryant_bark-300 {
   background-image: url('../../assets/bryant_bark-300.jpg') !important;
 }
-
 .page4-text-input {
   background-color: var(--wolves-orange-transparent);
   padding: 10px 20px;
-  border: .3px solid rgba(255, 255, 255, 05);
+  border: 0.3px solid rgba(255, 255, 255, 05);
   color: var(--wolves-white);
   margin-top: 10px;
   font-weight: bold;
   font-size: 12px;
   outline: none;
+}
+
+.page4-btn-stack {
+  background-color: var(--wolves-orange);
+  padding: 13px 30px;
+  border: 0.6px solid var(--wolves-white);
+  text-align: center;
+  color: var(--wolves-blue-dk);
+  padding: 13px 19px;
+  font-size: 12px;
+  outline: none;
+  flex: 1 1 100%;
 }
 
 /* END page 4 */
@@ -325,7 +336,7 @@
 .page5-btn-stack {
   background-color: var(--wolves-orange);
   padding: 13px 30px;
-  border: .6px solid var(--wolves-white);
+  border: 0.6px solid var(--wolves-white);
   text-align: center;
   font-weight: bold;
   color: var(--wolves-blue-dk);
@@ -361,7 +372,7 @@
 .page5-btn-stack {
   background-color: var(--wolves-orange);
   padding: 13px 30px;
-  border: .6px solid var(--wolves-white);
+  border: 0.6px solid var(--wolves-white);
   text-align: center;
   font-weight: bold;
   color: var(--wolves-blue-dk);
