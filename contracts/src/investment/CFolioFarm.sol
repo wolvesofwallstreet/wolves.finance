@@ -123,6 +123,30 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
 
   /* ========== MUTATIVE FUNCTIONS ========== */
 
+  function addAssets(address account, uint256 amount)
+    external
+    override
+    onlyOwner
+  {
+    require(amount > 0, 'CFolioFarm: Cannot add 0');
+
+    _balances[account] = _balances[account].add(amount);
+
+    emit AssetAdded(account, amount);
+  }
+
+  function removeAssets(address account, uint256 amount)
+    external
+    override
+    onlyOwner
+  {
+    require(amount > 0, 'CFolioFarm: Cannot remove 0');
+
+    _balances[account] = _balances[account].sub(amount);
+
+    emit AssetRemoved(account, amount);
+  }
+
   function addShares(address account, uint256 amount)
     external
     override
@@ -137,7 +161,7 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
     _totalSupply = _totalSupply.add(amount);
     _balances[account] = _balances[account].add(amount);
 
-    emit Staked(account, amount);
+    emit ShareAdded(account, amount);
   }
 
   function removeShares(address account, uint256 amount)
@@ -154,20 +178,7 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
     _totalSupply = _totalSupply.sub(amount);
     _balances[account] = _balances[account].sub(amount);
 
-    emit Unstaked(account, amount);
-  }
-
-  function transfer(
-    address account,
-    address recipient,
-    uint256 amount
-  ) external override onlyOwner updateReward(account) updateReward(recipient) {
-    require(recipient != address(0), 'CFolioFarm: invalid address');
-    require(amount > 0, 'CFolioFarm: zero amount');
-
-    _balances[account] = _balances[account].sub(amount);
-    _balances[recipient] = _balances[recipient].add(amount);
-    emit Transfered(account, recipient, amount);
+    emit ShareRemoved(account, amount);
   }
 
   function getReward(address account, address rewardRecipient)
@@ -292,9 +303,10 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
   /* ========== EVENTS ========== */
 
   event RewardAdded(uint256 reward);
-  event Staked(address indexed user, uint256 amount);
-  event Unstaked(address indexed user, uint256 amount);
-  event Transfered(address indexed from, address indexed to, uint256 amount);
+  event AssetAdded(address indexed user, uint256 amount);
+  event AssetRemoved(address indexed user, uint256 amount);
+  event ShareAdded(address indexed user, uint256 amount);
+  event ShareRemoved(address indexed user, uint256 amount);
   event RewardPaid(
     address indexed account,
     address indexed user,

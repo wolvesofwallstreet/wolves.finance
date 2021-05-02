@@ -11,22 +11,24 @@ pragma solidity >=0.7.0 <0.8.0;
 /**
  * @dev Interface to receive callbacks when minted tokens are burnt
  */
-interface IMinterCallback {
+interface ICFolioItemCallback {
   /**
-   * @dev Called when a token minted by a minter is transferred
+   * @dev Called when a TradeFloor CFolioItem is transfered
+   * In case of mint from is address(0)
    * In case of burn to is address(0)
+   *
+   * cfolioHandlers are passed to let each cfolioHandler filter
+   * for its own token. This eliminates need of ceating separate lists
    *
    * @param from The account sending the token
    * @param to The account receiving the token
    * @param tokenIds The ERC-1155 token IDs
-   * @param amounts The amounts of tokens transfered
+   * @param cfolioHandlers cFolioItem handlers
    */
-  function onTransferFrom(
-    address caller,
+  function onCFolioItemsTransferedFrom(
     address from,
     address to,
     uint256[] calldata tokenIds,
-    uint256[] calldata amounts,
-    bytes calldata data
+    address[] calldata cfolioHandlers
   ) external;
 }
