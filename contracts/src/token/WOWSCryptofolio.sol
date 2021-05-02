@@ -29,7 +29,7 @@ contract WOWSCryptofolio is ERC1155Holder, IWOWSCryptofolio {
   mapping(address => uint256[]) private _cryptofolios;
 
   // List of all known tradefloors
-  address[] public _tradefloors;
+  address[] public override _tradefloors;
 
   //////////////////////////////////////////////////////////////////////////////
   // Events

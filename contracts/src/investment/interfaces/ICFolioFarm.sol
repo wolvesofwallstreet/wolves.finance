@@ -20,12 +20,22 @@ interface ICFolioFarm {
   function balanceOf(address account) external view returns (uint256);
 
   /**
+   * @dev Increase amount of non-rewarded asset
+   */
+  function addAssets(address account, uint256 amount) external;
+
+  /**
+   * @dev Remove amount of previous added assets
+   */
+  function removeAssets(address account, uint256 amount) external;
+
+  /**
    * @dev Increase amount of shares and earn rewards
    */
   function addShares(address account, uint256 amount) external;
 
   /**
-   * @dev Unstake amount of previous added shares, rewards will not be claimed
+   * @dev Remove amount of previous added shares, rewards will not be claimed
    */
   function removeShares(address account, uint256 amount) external;
 
@@ -38,13 +48,4 @@ interface ICFolioFarm {
    * @dev remove all shares and getRewards in a single step
    */
   function exit(address account, address rewardRecipient) external;
-
-  /**
-   * @dev Transfer amount of shares from account to recipient.
-   */
-  function transfer(
-    address account,
-    address recipient,
-    uint256 amount
-  ) external;
 }
