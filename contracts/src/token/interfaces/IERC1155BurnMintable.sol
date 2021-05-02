@@ -26,8 +26,8 @@ interface IERC1155BurnMintable is IERC1155 {
    */
   function mintBatch(
     address to,
-    uint256[] memory tokenIds,
-    uint256[] memory amounts,
+    uint256[] calldata tokenIds,
+    uint256[] calldata amounts,
     bytes memory data
   ) external;
 
@@ -49,7 +49,7 @@ interface IERC1155BurnMintable is IERC1155 {
    */
   function burnBatch(
     address account,
-    uint256[] memory tokenIds,
-    uint256[] memory values
+    uint256[] calldata tokenIds,
+    uint256[] calldata values
   ) external;
 }

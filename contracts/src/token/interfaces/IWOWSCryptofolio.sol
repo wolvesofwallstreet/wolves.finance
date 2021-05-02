@@ -31,6 +31,14 @@ interface IWOWSCryptofolio {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
+   * @dev Return tradefloor at given index
+   *
+   * @param index 0-based index in the tradefloor array
+   * @return the address of the tradefloor and position index
+   */
+  function _tradefloors(uint256 index) external view returns (address);
+
+  /**
    * @dev Return array of cryptofolio token IDs
    *
    * The token IDs belong to the contract tradefloor.
