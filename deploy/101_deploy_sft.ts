@@ -21,9 +21,14 @@ const SFT_CRYPTOFOLIO = 'WOWSCryptofolio';
 const SFT_MINTER_CONTRACT = 'WOWSSftMinter';
 const SFT_EVALUATOR_CONTRACT = 'SFTEvaluator';
 const SFT_EVALUATOR_PROXY_CONTRACT = 'SFTEvaluatorProxy';
+const UPGRADE_PROXY_CONTRACT = 'UpgradeProxy';
 
 const ADDRESS_BOOK_SFT_HOLDER_KEY = ethers.utils.formatBytes32String(
   'SFT_HOLDER'
+);
+
+const ADDRESS_BOOK_SFT_MINTER_KEY = ethers.utils.formatBytes32String(
+  'SFT_MINTER'
 );
 
 const ADDRESS_BOOK_SFT_EVALUATOR_PROXY_KEY = ethers.utils.formatBytes32String(
@@ -206,6 +211,14 @@ const sft_func = async function (hardhat_re) {
     generatedAddresses.sftMinter = sftMinterReceipt.address;
   }
 
+  await setRegistryKey(
+    deployer,
+    execute,
+    ADDRESS_REGISTRY_INSTANCE,
+    ADDRESS_BOOK_SFT_MINTER_KEY,
+    generatedAddresses.sftMinter
+  );
+
   //////////////////////////////////////////////////////////////////////////////
   //
   // Deploy SFT evaluator
@@ -243,6 +256,7 @@ const sft_func = async function (hardhat_re) {
     const sftEvaluatorProxyReceipt = await deploy(
       SFT_EVALUATOR_PROXY_CONTRACT,
       {
+        contract: UPGRADE_PROXY_CONTRACT,
         from: deployer,
         args: [ADDRESS_REGISTRY_ADDRESS, generatedAddresses.sftEvaluator, []],
         log: true,

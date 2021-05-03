@@ -15,6 +15,7 @@ require('hardhat-deploy-ethers');
 
 // TODO: Fully qualified contract names
 const SFT_HOLDER_CONTRACT = 'WOWSERC1155';
+const SFT_MINTER_CONTRACT = 'WOWSSftMinter';
 
 // Path to generated addresses file
 const GENERATED_ADDRESSES = `${__dirname}/../src/config/generated-addresses.json`;
@@ -67,6 +68,19 @@ const func = async function (hardhat_re) {
     },
     'grantRole',
     await SFT_HOLDER_INSTANCE.TRADEFLOOR_ROLE(),
+    generatedAddresses.tradeFloorProxy
+  );
+
+  //
+  // 2.) Call WOWSSftMinter.sol::setTradeFloor(TradeFloorProxy)
+  //
+  await execute(
+    SFT_MINTER_CONTRACT,
+    {
+      from: marketingWallet,
+      log: true,
+    },
+    'setTradeFloor',
     generatedAddresses.tradeFloorProxy
   );
 };
