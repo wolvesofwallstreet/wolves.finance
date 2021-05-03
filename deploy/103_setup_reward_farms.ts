@@ -96,7 +96,7 @@ const func = async function (hardhat_re) {
   const cfolioLpOwner = await CFOLIO_FARM_LP_INSTANCE.owner();
   if (
     cfolioLpOwner.toLowerCase() !==
-    generatedAddresses.tradeFloorClientLP.toLowerCase()
+    generatedAddresses.cfolioItemHandlerLP.toLowerCase()
   ) {
     await execute(
       CFOLIO_FARM_LP_CONTRACT,
@@ -105,7 +105,7 @@ const func = async function (hardhat_re) {
         log: true,
       },
       'transferOwnership',
-      generatedAddresses.tradeFloorClientLP
+      generatedAddresses.cfolioItemHandlerLP
     );
   }
 
