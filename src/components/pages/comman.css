@@ -225,9 +225,10 @@
   flex-wrap: wrap;
 }
 
-.img-bryant_bark-300 {
+/* .img-bryant_bark-300 {
   background-image: url('../../assets/bryant_bark-300.jpg') !important;
-}
+} */
+
 .page4-text-input {
   background-color: var(--wolves-orange-transparent);
   padding: 10px 20px;

@@ -6,23 +6,23 @@
  * See the file LICENSES/README.md for more information.
  */
 
-import './../../theme/glidejs/glide.core.min.css'
-import './../../theme/glidejs/glide.theme.min.css'
-import './../../theme/glidejs/glide_custom.css'
+import './../../theme/glidejs/glide.core.min.css';
+import './../../theme/glidejs/glide.theme.min.css';
+import './../../theme/glidejs/glide_custom.css';
 
 import GlideJS from '@glidejs/glide';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import {Breakpoints, Controls} from '@glidejs/glide/dist/glide.modular.esm';
+import { Breakpoints, Controls } from '@glidejs/glide/dist/glide.modular.esm';
 import Modal from 'components/theme/modal/Modal';
-import React, {Fragment} from 'react';
-import {TFunction, withTranslation} from 'react-i18next';
-import {RouteComponentProps} from 'react-router-dom';
+import React, { Fragment } from 'react';
+import { TFunction, withTranslation } from 'react-i18next';
+import { RouteComponentProps } from 'react-router-dom';
 
-import IMG_BRYANT_500 from "../../../assets/bryant_bark_500.jpg";
+import IMG_BRYANT_500 from '../../../assets/bryant_bark_500.jpg';
 import Logo from '../../../assets/logo.png';
-import IMG_ETH_WOWS_LP_TOKEN_GREEN_500 from "../../../assets/wolfd_app_devs_flat2_136_500.jpg";
-import IMG_ETH_WOWS_LP_TOKEN_BLUE_500 from "../../../assets/wolfd_app_devs_flat231_300.jpg";
+import IMG_ETH_WOWS_LP_TOKEN_GREEN_500 from '../../../assets/wolfd_app_devs_flat2_136_500.jpg';
+import IMG_ETH_WOWS_LP_TOKEN_BLUE_500 from '../../../assets/wolfd_app_devs_flat231_300.jpg';
 import PageHeader from '../../theme/pageHeader/PageHeader';
 
 type PROPS = {
@@ -31,7 +31,7 @@ type PROPS = {
   history: RouteComponentProps['history'];
 };
 
-const Page9 = ({t, location, history}: PROPS) => {
+const Page9 = ({ t, location, history }: PROPS) => {
   const [activeCard, setActiveCard] = React.useState<number>(0);
   const [show, setShow] = React.useState(false);
   const [barsInfo] = React.useState([
@@ -54,7 +54,11 @@ const Page9 = ({t, location, history}: PROPS) => {
   ]);
 
   // START Card image left side
-  const [images, /* setImages */] = React.useState([IMG_ETH_WOWS_LP_TOKEN_GREEN_500, IMG_ETH_WOWS_LP_TOKEN_BLUE_500, IMG_BRYANT_500]);
+  const [images /* setImages */] = React.useState([
+    IMG_ETH_WOWS_LP_TOKEN_GREEN_500,
+    IMG_ETH_WOWS_LP_TOKEN_BLUE_500,
+    IMG_BRYANT_500,
+  ]);
   const [currentImage, setCurrentImage] = React.useState(0);
   // End Card image left side
 
@@ -87,70 +91,94 @@ const Page9 = ({t, location, history}: PROPS) => {
     });
   };
 
-  // const cards = [
-  //   {
-  //     id: 1,
-  //     title: 'WORK AS A PACK ! ',
-  //     src: '',
-  //     paragraphs: [
-  //       `IN ORDER TO SAVE THE GAS COSTS INTERACTING WITH YEARN WE HAVE CREATED ANAUTOMATED BATCH SYSTEM. WE QUEUE AND COLLECT 4 GAS TRANSACTIONS BUT ONLY MAKE 1 TRANSACTION ON THE 5TH INVESTMENT`,
-  //       `IF YOU WANT TO SAVE 70% GAS CLICK‘SMART INVEST - EARN GAS’. THE PACK STRNGTH NUMBER SHOWS THE CURRENT AMOUNT OF BOIS IN QUEUE`,
-  //       `IF YOU DONT WANT TO WAIT, CLICK ‘DIRECT INVEST - EARN GAS’. THE AMOUNT DUE TO BE REFUNDED IN BOTH CASES IS SHOWN AS GAS REFUND.`,
-  //     ],
-  //   },
-  // ];
+  const cards = [
+    {
+      id: 1,
+      title: 'WORK AS A PACK ! ',
+      src: '',
+      paragraphs: [
+        `IN ORDER TO SAVE THE GAS COSTS INTERACTING WITH YEARN WE HAVE CREATED ANAUTOMATED BATCH SYSTEM. WE QUEUE AND COLLECT 4 GAS TRANSACTIONS BUT ONLY MAKE 1 TRANSACTION ON THE 5TH INVESTMENT`,
+        `IF YOU WANT TO SAVE 70% GAS CLICK‘SMART INVEST - EARN GAS’. THE PACK STRNGTH NUMBER SHOWS THE CURRENT AMOUNT OF BOIS IN QUEUE`,
+        `IF YOU DONT WANT TO WAIT, CLICK ‘DIRECT INVEST - EARN GAS’. THE AMOUNT DUE TO BE REFUNDED IN BOTH CASES IS SHOWN AS GAS REFUND.`,
+      ],
+    },
+    {
+      id: 2,
+      title: 'WORK AS A PACK ! 2',
+      src: '',
+      paragraphs: [
+        `IN ORDER TO SAVE THE GAS COSTS INTERACTING WITH YEARN WE HAVE CREATED ANAUTOMATED BATCH SYSTEM. WE QUEUE AND COLLECT 4 GAS TRANSACTIONS BUT ONLY MAKE 1 TRANSACTION ON THE 5TH INVESTMENT`,
+        `IF YOU WANT TO SAVE 70% GAS CLICK‘SMART INVEST - EARN GAS’. THE PACK STRNGTH NUMBER SHOWS THE CURRENT AMOUNT OF BOIS IN QUEUE`,
+        `IF YOU DONT WANT TO WAIT, CLICK ‘DIRECT INVEST - EARN GAS’. THE AMOUNT DUE TO BE REFUNDED IN BOTH CASES IS SHOWN AS GAS REFUND.`,
+      ],
+    },
+    {
+      id: 3,
+      title: 'WORK AS A PACK ! 3',
+      src: '',
+      paragraphs: [
+        `IN ORDER TO SAVE THE GAS COSTS INTERACTING WITH YEARN WE HAVE CREATED ANAUTOMATED BATCH SYSTEM. WE QUEUE AND COLLECT 4 GAS TRANSACTIONS BUT ONLY MAKE 1 TRANSACTION ON THE 5TH INVESTMENT`,
+        `IF YOU WANT TO SAVE 70% GAS CLICK‘SMART INVEST - EARN GAS’. THE PACK STRNGTH NUMBER SHOWS THE CURRENT AMOUNT OF BOIS IN QUEUE`,
+        `IF YOU DONT WANT TO WAIT, CLICK ‘DIRECT INVEST - EARN GAS’. THE AMOUNT DUE TO BE REFUNDED IN BOTH CASES IS SHOWN AS GAS REFUND.`,
+      ],
+    },
+    {
+      id: 4,
+      title: 'WORK AS A PACK ! 4',
+      src: '',
+      paragraphs: [
+        `IN ORDER TO SAVE THE GAS COSTS INTERACTING WITH YEARN WE HAVE CREATED ANAUTOMATED BATCH SYSTEM. WE QUEUE AND COLLECT 4 GAS TRANSACTIONS BUT ONLY MAKE 1 TRANSACTION ON THE 5TH INVESTMENT`,
+        `IF YOU WANT TO SAVE 70% GAS CLICK‘SMART INVEST - EARN GAS’. THE PACK STRNGTH NUMBER SHOWS THE CURRENT AMOUNT OF BOIS IN QUEUE`,
+        `IF YOU DONT WANT TO WAIT, CLICK ‘DIRECT INVEST - EARN GAS’. THE AMOUNT DUE TO BE REFUNDED IN BOTH CASES IS SHOWN AS GAS REFUND.`,
+      ],
+    },
+    {
+      id: 5,
+      title: 'WORK AS A PACK ! 5',
+      src: '',
+      paragraphs: [
+        `IN ORDER TO SAVE THE GAS COSTS INTERACTING WITH YEARN WE HAVE CREATED ANAUTOMATED BATCH SYSTEM. WE QUEUE AND COLLECT 4 GAS TRANSACTIONS BUT ONLY MAKE 1 TRANSACTION ON THE 5TH INVESTMENT`,
+        `IF YOU WANT TO SAVE 70% GAS CLICK‘SMART INVEST - EARN GAS’. THE PACK STRNGTH NUMBER SHOWS THE CURRENT AMOUNT OF BOIS IN QUEUE`,
+        `IF YOU DONT WANT TO WAIT, CLICK ‘DIRECT INVEST - EARN GAS’. THE AMOUNT DUE TO BE REFUNDED IN BOTH CASES IS SHOWN AS GAS REFUND.`,
+      ],
+    },
+  ];
 
   React.useEffect(() => {
     initGlide();
   });
 
-  const setModalContent = (card: { [key: string]: string | number }) => {
-    setShow(true);
-  };
-
   const handleImageChange = (change: number) => {
     if (currentImage + change < 0) {
-      return setCurrentImage(images.length - 1)
+      return setCurrentImage(images.length - 1);
     }
 
     if (currentImage + change >= images.length) {
-      return setCurrentImage(0)
+      return setCurrentImage(0);
     }
 
-    return setCurrentImage(currentImage + change)
-  }
+    return setCurrentImage(currentImage + change);
+  };
 
+  const renderModelContent = () => {
+    return (
+      <>
+        <h2 className="tk-vincente-lightbold font-32 single-line m-4">
+          {cards[activeCard] && cards[activeCard].title}
+        </h2>
+        <div className={'font-14 mt-2'}>
+          {cards[activeCard] &&
+            cards[activeCard].paragraphs.map((p, i) => {
+              return <p key={i + Math.random()}>{p}</p>;
+            })}
+        </div>
+      </>
+    );
+  };
 
   return (
     <>
-      <Modal
-        show={show}
-        setShow={setShow}
-        content={
-          <>
-            <h2 className="tk-vincente-lightbold font-32 single-line m-4">
-              WORK AS A PACK !
-            </h2>
-            <div className={'font-14 mt-2'}>
-              <p>
-                IN ORDER TO SAVE THE GAS COSTS INTERACTING WITH YEARN WE HAVE
-                CREATED ANAUTOMATED BATCH SYSTEM. WE QUEUE AND COLLECT 4 GAS
-                TRANSACTIONS BUT ONLY MAKE 1 TRANSACTION ON THE 5TH INVESTMENT.
-              </p>
-
-              <p>
-                IF YOU WANT TO SAVE 70% GAS CLICK‘SMART INVEST - EARN GAS’. THE
-                PACK STRNGTH NUMBER SHOWS THE CURRENT AMOUNT OF BOIS IN QUEUE,
-              </p>
-
-              <p>
-                IF YOU DONT WANT TO WAIT, CLICK ‘DIRECT INVEST - EARN GAS’. THE
-                AMOUNT DUE TO BE REFUNDED IN BOTH CASES IS SHOWN AS GAS REFUND.
-              </p>
-            </div>
-          </>
-        }
-      />
+      <Modal show={show} setShow={setShow} content={renderModelContent()} />
 
       <div className={'wolves-container-fluid bg-flat2 text-white text-center'}>
         {/* Title & heading */}
@@ -173,15 +201,13 @@ const Page9 = ({t, location, history}: PROPS) => {
                         <div
                           className="glide__slide"
                           onClick={() => {
-                            setModalContent({card});
+                            setShow(true);
                             setActiveCard(i);
                           }}
                         >
                           <div className="slide-count"> {i} </div>
                           <img
-                            className={
-                              'responsive-img slide-img img-bryant_bark-300'
-                            }
+                            className={'responsive-img slide-img'}
                             src="https://4travelers.de/wolves_assets/cards/wolves/level1/AXEL-300.jpg"
                             alt=""
                           />
@@ -219,14 +245,20 @@ const Page9 = ({t, location, history}: PROPS) => {
         {/* Content */}
         <div className={'two-column-container w-80 center-container my-5'}>
           <div className="d-flex align-items-center justify-content-around">
-            <button className="arrow_left m-0 mr-3" onClick={() => handleImageChange(-1)}/>
+            <button
+              className="arrow_left m-0 mr-3"
+              onClick={() => handleImageChange(-1)}
+            />
             <img
               className={'responsive-img'}
               src={images[currentImage]}
               alt={images[currentImage]}
-              style={{maxWidth: '500px'}}
+              style={{ maxWidth: '500px' }}
             />
-            <button className="arrow_right m-0 ml-3" onClick={() => handleImageChange(1)}/>
+            <button
+              className="arrow_right m-0 ml-3"
+              onClick={() => handleImageChange(1)}
+            />
           </div>
 
           <div className={'t-left mx-lg-5-5 px-lg-5'}>
@@ -291,7 +323,7 @@ const Page9 = ({t, location, history}: PROPS) => {
 
             {/* img + Title */}
             <div className={'d-flex align-items-center'}>
-              <img src={Logo} alt="Logo" width="30px" height="30px"/>
+              <img src={Logo} alt="Logo" width="30px" height="30px" />
               <span className="f-vincente font-24 ml-2">PACK STRENGTH : 3</span>
             </div>
 
