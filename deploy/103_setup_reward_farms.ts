@@ -15,7 +15,8 @@ require('hardhat-deploy');
 require('hardhat-deploy-ethers');
 
 // TODO: Fully qualified contract names
-const TRADE_FLOOR_CONTRACT = 'TradeFloor';
+const SFT_HOLDER_CONTRACT = 'WOWSERC1155';
+const SFT_MINTER_CONTRACT = 'WOWSSftMinter';
 const CONTROLLER_CONTRACT = 'Controller';
 
 // Deployed aliases
@@ -51,14 +52,9 @@ const func = async function (hardhat_re) {
   const generatedAddresses = generatedNetworks[chainId] || {};
 
   // Deployment instances
-  const TRADE_FLOOR_INSTANCE = await hardhat_re.ethers.getContractFactory(
-    TRADE_FLOOR_CONTRACT
+  const SFT_HOLDER_INSTANCE = await hardhat_re.ethers.getContractFactory(
+    SFT_HOLDER_CONTRACT
   );
-
-  // Attach the proxy and set marketing wallet signer
-  const TRADE_FLOOR_PROXY_INSTANCE = TRADE_FLOOR_INSTANCE.attach(
-    generatedAddresses.tradeFloorProxy
-  ).connect(TRADE_FLOOR_INSTANCE.signer.provider.getSigner(marketingWallet));
 
   // Load ABIs
   const cfolioFarmAbi = JSON.parse(fs.readFileSync(CFOLIO_FARM_ABI).toString());
@@ -67,7 +63,7 @@ const func = async function (hardhat_re) {
   const CFOLIO_FARM_LP_INSTANCE = new ethers.Contract(
     generatedAddresses.cfolioFarmLP,
     cfolioFarmAbi,
-    TRADE_FLOOR_INSTANCE.signer.provider.getSigner(marketingWallet)
+    SFT_HOLDER_INSTANCE.signer.provider.getSigner(marketingWallet)
   );
 
   //////////////////////////////////////////////////////////////////////////////
@@ -82,11 +78,16 @@ const func = async function (hardhat_re) {
   // 4.) TradeFloor::grantRole(MINTER_ROLE, TradeClientFloorLP)
   //
 
-  const tx = await TRADE_FLOOR_PROXY_INSTANCE.grantRole(
-    await TRADE_FLOOR_PROXY_INSTANCE.MINTER_ROLE(),
-    generatedAddresses.tradeFloorClientLP
+  await execute(
+    SFT_HOLDER_CONTRACT,
+    {
+      from: marketingWallet,
+      log: true,
+    },
+    'grantRole',
+    await SFT_HOLDER_INSTANCE.TRADEFLOOR_ROLE(),
+    generatedAddresses.cfolioItemHandlerLP
   );
-  await tx.wait();
 
   //
   // 5.) CFolioFarm.sol::transferOwnership(TradeClientFloorLP)
@@ -137,6 +138,29 @@ const func = async function (hardhat_re) {
     REWARD_PER_DURATION,
     REWARD_PROVIDED,
     REWARD_FEE
+  );
+
+  //
+  // 7.) Call WOWSSftMinter.sol::setCFolioSpec(types, handlers, maxMint, prices)
+  //
+
+  // We initialize 8 different LP cards
+  const CFI_TYPES = ['0', '1', '2', '3', '4', '5', '6', '7', '8'];
+  const CFI_HANDLERS = new Array(8).fill(generatedAddresses.cfolioFarmLP);
+  const CFI_MAXMINT = new Array(8).fill('100');
+  const CFI_PRICES = new Array(8).fill('500000000000000000');
+
+  await execute(
+    SFT_MINTER_CONTRACT,
+    {
+      from: marketingWallet,
+      log: true,
+    },
+    'setCFolioSpec',
+    CFI_TYPES,
+    CFI_HANDLERS,
+    CFI_MAXMINT,
+    CFI_PRICES
   );
 };
 

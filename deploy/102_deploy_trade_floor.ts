@@ -17,6 +17,7 @@ require('hardhat-deploy-ethers');
 // TODO: Fully qualified contract names
 const TRADE_FLOOR_CONTRACT = 'TradeFloor';
 const TRADE_FLOOR_PROXY_CONTRACT = 'TradeFloorProxy';
+const UPGRADE_PROXY_CONTRACT = 'UpgradeProxy';
 
 // Contract ABIs
 const TRADE_FLOOR_ABI = `${__dirname}/../src/abi/contracts/src/token/TradeFloor.sol/TradeFloor.json`;
@@ -137,6 +138,7 @@ const func = async function (hardhat_re) {
       );
     } catch (err) {
       tradeFloorProxyReceipt = await deploy(TRADE_FLOOR_PROXY_CONTRACT, {
+        contract: UPGRADE_PROXY_CONTRACT,
         from: deployer,
         args: [ADDRESS_REGISTRY_ADDRESS, TRADE_FLOOR_ADDRESS, proxyCallData],
         log: true,

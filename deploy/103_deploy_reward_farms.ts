@@ -17,7 +17,7 @@ require('hardhat-deploy-ethers');
 // TODO: Fully qualified contract names
 const CFOLIO_FARM_CONTRACT = 'CFolioFarm';
 const ADDRESS_REGISTRY_CONTRACT = 'AddressRegistry';
-const TRADE_FLOOR_CLIENT_LP_CONTRACT = 'TradeFloorClientLP';
+const CFOLIO_ITEM_HANDLER_LP_CONTRACT = 'CFolioItemHandlerLP';
 
 // Deployed aliases
 const CFOLIO_FARM_LP_CONTRACT = 'CFolioFarmLP';
@@ -103,7 +103,6 @@ const func = async function (hardhat_re) {
 
   const ADDRESS_REGISTRY_ADDRESS = generatedAddresses.addressRegistry;
   const CONTROLLER_ADDRESS = generatedAddresses.controller;
-  const TRADE_FLOOR_PROXY_ADDRESS = generatedAddresses.tradeFloorProxy;
 
   //////////////////////////////////////////////////////////////////////////////
   //
@@ -166,32 +165,25 @@ const func = async function (hardhat_re) {
 
   if (configAddresses.tradeFloorClientLP) {
     log_step(
-      `Using TradeFloorClientLP contract: ${configAddresses.tradeFloorClientLP}`
+      `Using CFolioItemHandlerLP contract: ${configAddresses.cfolioItemHandlerLP}`
     );
-    generatedAddresses.tradeFloorClientLP = configAddresses.tradeFloorClientLP;
+    generatedAddresses.cfolioItemHandlerLP =
+      configAddresses.cfolioItemHandlerLP;
   } else {
-    log_step('Deploying TradeFloorClientLP contract');
+    log_step('Deploying CFolioItemHandlerLP contract');
 
-    const TRADE_FLOOR_TOKEN_ID = ethers.BigNumber.from('0x10000000000000000'); // Unique and >= 0x10000000000000000
-    const TRADE_FLOOR_NUM_TOKEN_IDS = 8; // We use 8 atm for known cards
-
-    const tradeFloorClientLPContractReceipt = await deploy(
-      TRADE_FLOOR_CLIENT_LP_CONTRACT,
+    const cfolioItemHandlerLPContractReceipt = await deploy(
+      CFOLIO_ITEM_HANDLER_LP_CONTRACT,
       {
         from: deployer,
-        args: [
-          ADDRESS_REGISTRY_ADDRESS,
-          TRADE_FLOOR_PROXY_ADDRESS,
-          TRADE_FLOOR_TOKEN_ID,
-          TRADE_FLOOR_NUM_TOKEN_IDS,
-        ],
+        args: [ADDRESS_REGISTRY_ADDRESS],
         log: true,
         deterministicDeployment: true,
       }
     );
 
-    generatedAddresses.tradeFloorClientLP =
-      tradeFloorClientLPContractReceipt.address;
+    generatedAddresses.cfolioItemHandlerLP =
+      cfolioItemHandlerLPContractReceipt.address;
   }
 
   //////////////////////////////////////////////////////////////////////////////
