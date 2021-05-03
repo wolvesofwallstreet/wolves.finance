@@ -8,20 +8,20 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
+import './interfaces/ISFTEvaluator.sol';
+import './interfaces/ICFolioItemHandler.sol';
+
+import '../token/interfaces/IWOWSCryptofolio.sol';
 import '../token/interfaces/IWOWSERC1155.sol';
 import '../utils/AddressBook.sol';
 import '../utils/interfaces/IAddressRegistry.sol';
-
-import './interfaces/ISFTEvaluator.sol';
-import './interfaces/ITradeFloorClient.sol';
+import '../utils/TokenIds.sol';
 
 contract SFTEvaluator is ISFTEvaluator {
+  using TokenIds for uint256;
   //////////////////////////////////////////////////////////////////////////////
   // State
   //////////////////////////////////////////////////////////////////////////////
-
-  // Registered TFClients
-  ITradeFloorClient[] public tradeFloorClients;
 
   // Current reward weight of a sft card
   mapping(uint256 => uint32) private _rewardRate;
@@ -29,8 +29,17 @@ contract SFTEvaluator is ISFTEvaluator {
   // The SFT contract we need for level
   IWOWSERC1155 private immutable _sftHolder;
 
+  // The main tradefloor contract
+  address private immutable _tradeFloor;
+
   // Admin
   address public immutable admin;
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Events
+  //////////////////////////////////////////////////////////////////////////////
+
+  event RewardRate(uint256 indexed tokenId, uint32 rate);
 
   //////////////////////////////////////////////////////////////////////////////
   // Initialization
@@ -44,6 +53,11 @@ contract SFTEvaluator is ISFTEvaluator {
 
     // Admin
     admin = addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
+
+    // TradeFloor
+    _tradeFloor = addressRegistry.getRegistryEntry(
+      AddressBook.TRADE_FLOOR_PROXY
+    );
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -54,6 +68,7 @@ contract SFTEvaluator is ISFTEvaluator {
    * @dev See {ISftEvaluator-rewardRate}.
    */
   function rewardRate(uint256 tokenId) external view override returns (uint32) {
+    require(tokenId.isBaseCard(), 'Invalid tokenId');
     return
       _rewardRate[tokenId] == 0 ? _baseRate(tokenId) : _rewardRate[tokenId];
   }
@@ -65,6 +80,7 @@ contract SFTEvaluator is ISFTEvaluator {
     external
     override
   {
+    require(tokenId.isBaseCard(), 'Invalid tokenId');
     (uint32 untimed, uint32 timed) =
       // solhint-disable-next-line not-rely-on-time
       _baseRates(tokenId, uint64(block.timestamp - 60 days));
@@ -74,10 +90,38 @@ contract SFTEvaluator is ISFTEvaluator {
       // Update state
       _rewardRate[tokenId] = timed;
 
-      // Notify all TradeFloorClients
-      uint256 length = tradeFloorClients.length;
-      for (uint256 i = 0; i < length; ++i)
-        tradeFloorClients[i].sftUpgrade(tokenId, timed);
+      IWOWSCryptofolio cFolio =
+        IWOWSCryptofolio(_sftHolder.tokenIdToAddress(tokenId));
+      require(address(cFolio) != address(0), 'SFTE: invalid tokenId');
+
+      // Run through all cfolioItems of main tradefloor
+      (uint256[] memory cFolioItems, uint256 length) =
+        cFolio.getCryptofolio(_tradeFloor);
+      if (length > 0) {
+        address[] memory calledHandlers = new address[](length);
+        uint256 numCalledHandlers = 0;
+
+        for (uint256 i = 0; i < length; ++i) {
+          // secondary cfolio items has one tradefloor which is the handler
+          address handler =
+            IWOWSCryptofolio(_sftHolder.tokenIdToAddress(cFolioItems[i]))
+              ._tradefloors(0);
+          require(
+            address(handler) != address(0),
+            'SFTE: invalid cfolioItemHandler'
+          );
+          // check if we have called this handler already
+          uint256 j = numCalledHandlers;
+          while (j > 0 && calledHandlers[j - 1] != handler) --j;
+          if (j == 0) {
+            ICFolioItemHandler(handler).sftUpgrade(tokenId, timed);
+            calledHandlers[numCalledHandlers++] = handler;
+          }
+        }
+      }
+
+      // Fire an event
+      emit RewardRate(tokenId, timed);
     } else {
       // Revert if requested
       require(!revertUnchanged, 'Rate unchenged');

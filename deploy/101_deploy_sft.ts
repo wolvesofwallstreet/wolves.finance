@@ -19,15 +19,13 @@ const ADDRESS_REGISTRY_CONTRACT = 'AddressRegistry';
 const SFT_HOLDER_CONTRACT = 'WOWSERC1155';
 const SFT_CRYPTOFOLIO = 'WOWSCryptofolio';
 const SFT_MINTER_CONTRACT = 'WOWSSftMinter';
-const SFT_EVALUATOR_CONTRACT = 'SFTEvaluator';
-const SFT_EVALUATOR_PROXY_CONTRACT = 'SFTEvaluatorProxy';
 
 const ADDRESS_BOOK_SFT_HOLDER_KEY = ethers.utils.formatBytes32String(
   'SFT_HOLDER'
 );
 
-const ADDRESS_BOOK_SFT_EVALUATOR_PROXY_KEY = ethers.utils.formatBytes32String(
-  'SFT_EVALUATOR_PROXY'
+const ADDRESS_BOOK_SFT_MINTER_KEY = ethers.utils.formatBytes32String(
+  'SFT_MINTER'
 );
 
 // ERC-1155 metadata URI
@@ -116,7 +114,6 @@ const sft_func = async function (hardhat_re) {
   const ADDRESS_REGISTRY_INSTANCE = await hardhat_re.ethers.getContract(
     ADDRESS_REGISTRY_CONTRACT
   );
-  const ADDRESS_REGISTRY_ADDRESS = generatedAddresses.addressRegistry;
 
   //////////////////////////////////////////////////////////////////////////////
   //
@@ -206,59 +203,12 @@ const sft_func = async function (hardhat_re) {
     generatedAddresses.sftMinter = sftMinterReceipt.address;
   }
 
-  //////////////////////////////////////////////////////////////////////////////
-  //
-  // Deploy SFT evaluator
-  //
-  //////////////////////////////////////////////////////////////////////////////
-
-  if (configAddresses.sftEvaluator) {
-    log_step(`Using SFT evaluator: ${configAddresses.sftEvaluator}`);
-    generatedAddresses.sftEvaluator = configAddresses.sftEvaluator;
-  } else {
-    log_step('Deploying SFT evaluator');
-
-    const sftEvaluatorReceipt = await deploy(SFT_EVALUATOR_CONTRACT, {
-      from: deployer,
-      args: [ADDRESS_REGISTRY_ADDRESS],
-      log: true,
-      deterministicDeployment: false,
-    });
-
-    generatedAddresses.sftEvaluator = sftEvaluatorReceipt.address;
-  }
-
-  //////////////////////////////////////////////////////////////////////////////
-  //
-  // Deploy SFT evaluator proxy
-  //
-  //////////////////////////////////////////////////////////////////////////////
-
-  if (configAddresses.sftEvaluatorProxy) {
-    log_step(`Using SFT evaluator proxy: ${configAddresses.sftEvaluatorProxy}`);
-    generatedAddresses.sftEvaluatorProxy = configAddresses.sftEvaluatorProxy;
-  } else {
-    log_step('Deploying SFT evaluator proxy');
-
-    const sftEvaluatorProxyReceipt = await deploy(
-      SFT_EVALUATOR_PROXY_CONTRACT,
-      {
-        from: deployer,
-        args: [ADDRESS_REGISTRY_ADDRESS, generatedAddresses.sftEvaluator, []],
-        log: true,
-        deterministicDeployment: true,
-      }
-    );
-
-    generatedAddresses.sftEvaluatorProxy = sftEvaluatorProxyReceipt.address;
-  }
-
   await setRegistryKey(
     deployer,
     execute,
     ADDRESS_REGISTRY_INSTANCE,
-    ADDRESS_BOOK_SFT_EVALUATOR_PROXY_KEY,
-    generatedAddresses.sftEvaluatorProxy
+    ADDRESS_BOOK_SFT_MINTER_KEY,
+    generatedAddresses.sftMinter
   );
 
   //////////////////////////////////////////////////////////////////////////////

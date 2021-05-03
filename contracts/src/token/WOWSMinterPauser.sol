@@ -113,9 +113,9 @@ contract WOWSMinterPauser is
    */
   function mintBatch(
     address to,
-    uint256[] memory tokenIds,
-    uint256[] memory amounts,
-    bytes memory data
+    uint256[] calldata tokenIds,
+    uint256[] calldata amounts,
+    bytes calldata data
   ) public virtual {
     // Validate access
     require(hasRole(MINTER_ROLE, _msgSender()), 'minter role required');
@@ -146,8 +146,8 @@ contract WOWSMinterPauser is
 
   function burnBatch(
     address account,
-    uint256[] memory ids,
-    uint256[] memory values
+    uint256[] calldata ids,
+    uint256[] calldata values
   ) public virtual {
     require(
       account == _msgSender() || isApprovedForAll(account, _msgSender()),

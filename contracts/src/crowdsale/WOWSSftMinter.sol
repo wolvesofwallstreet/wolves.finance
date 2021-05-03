@@ -12,6 +12,7 @@ import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 
+import '../cfolio/interfaces/ICFolioItemHandler.sol';
 import '../investment/interfaces/IRewardHandler.sol';
 import '../token/interfaces/IERC1155BurnMintable.sol';
 import '../token/interfaces/IWOWSERC1155.sol';
@@ -21,6 +22,16 @@ contract WOWSSftMinter is Ownable {
 
   // PricePerlevel, customLevel start at 0xFF
   mapping(uint16 => uint256) public _pricePerLevel;
+
+  struct CFolioItemSft {
+    ICFolioItemHandler handler;
+    uint256 price;
+    uint128 numMinted;
+    uint128 maxMintable;
+  }
+  mapping(uint256 => CFolioItemSft) public cfolioItemSfts;
+  address public tradeFloor;
+  uint256 public nextCFolioItemNft = 0x10000000000000000;
 
   // The ERC1155 contract we are minting from
   IWOWSERC1155 private immutable _sftContract;
@@ -34,7 +45,12 @@ contract WOWSSftMinter is Ownable {
   // 1.0 of the rewards go to distribution
   uint32 private constant ALL = 1 * 1e6;
 
-  event Mint(address indexed recipient, uint256 tokenId, uint256 price);
+  event Mint(
+    address indexed recipient,
+    uint256 tokenId,
+    uint256 price,
+    uint256 cfolioType
+  );
 
   //////////////////////////////////////////////////////////////////////////////
   // Constructor
@@ -96,6 +112,39 @@ contract WOWSSftMinter is Ownable {
   }
 
   /**
+   * @dev Set tradefloor
+   */
+  function setTradeFloor(address tradeFloor_) external onlyOwner {
+    // Update state
+    tradeFloor = tradeFloor_;
+  }
+
+  /**
+   * @dev Set tradefloor
+   */
+  function setCFolioSpec(
+    uint256[] calldata cFolioTypes,
+    address[] calldata handlers,
+    uint128[] calldata maxMint,
+    uint256[] calldata prices
+  ) external onlyOwner {
+    require(
+      cFolioTypes.length == handlers.length &&
+        handlers.length == maxMint.length &&
+        maxMint.length == prices.length,
+      'Length mismatch'
+    );
+
+    // Update state
+    for (uint256 i = 0; i < cFolioTypes.length; ++i) {
+      CFolioItemSft storage cfi = cfolioItemSfts[cFolioTypes[i]];
+      cfi.handler = ICFolioItemHandler(handlers[i]);
+      cfi.maxMintable = maxMint[i];
+      cfi.price = prices[i];
+    }
+  }
+
+  /**
    * @dev Mint one of our stock card SFT's
    *
    * Approval of WOWS token required before the call.
@@ -117,7 +166,7 @@ contract WOWSSftMinter is Ownable {
     require(success, 'Unsufficient cards');
 
     // Update state
-    _mint(recipient, tokenId, price);
+    _mint(recipient, tokenId, price, 0);
   }
 
   /**
@@ -138,13 +187,79 @@ contract WOWSSftMinter is Ownable {
 
     // Get the next free mintable token for level / cardId
     uint256 tokenId = _sftContract.getNextMintableCustomToken();
+    // Custom baseToken only allowed < 64Bit
+    require(tokenId < 0x10000000000000000, 'Max tokenId reached');
 
     // Set card level and uri
     _sftContract.setCustomCardLevel(tokenId, level);
     _sftContract.setCustomURI(tokenId, uri);
 
     // Update state
-    _mint(recipient, tokenId, price);
+    _mint(recipient, tokenId, price, 0);
+  }
+
+  /**
+   * @dev Mint a cfolioitem token
+   *
+   * Approval of WOWS token required before the call.
+   *
+   * @param recipient recipient of the SFT, unused if sftTokenId is != -1
+   * @param cfolioItemType the item type of the sft
+   * @param uri the uri for this nft
+   * @param sftTokenId if <> -1 recipient is the SFT cfolio / handler must be called
+   * @param investAmounts arguments needed for the handler (in general investment)
+   */
+  function mintCFolioItemSFT(
+    address recipient,
+    uint256 cfolioItemType,
+    string calldata uri,
+    uint256 sftTokenId,
+    uint256[] calldata investAmounts
+  ) external {
+    // Load state
+    CFolioItemSft storage sftData = cfolioItemSfts[cfolioItemType];
+    require(address(sftData.handler) != address(0), 'CFI Minter: Invalid type');
+    require(sftData.numMinted < sftData.maxMintable, 'CFI Minter: sold out');
+
+    address sftCFolio = address(0);
+    if (sftTokenId != uint256(-1)) {
+      require(sftTokenId < 0x10000000000000000, 'Invalid sftTokenId');
+      // get the CFolio contract address, it will be the final recipient
+      sftCFolio = _sftContract.tokenIdToAddress(sftTokenId);
+      // intermediate owner of the minted sft
+      recipient = address(this);
+    }
+    uint256 tokenId = nextCFolioItemNft++;
+
+    _sftContract.setCustomURI(tokenId, uri);
+
+    // Update state, mint SFT token
+    _mint(recipient, tokenId, sftData.price, cfolioItemType);
+
+    // Let CFolioHandler setup the new minted token
+    sftData.handler.setupInvestment(msg.sender, tokenId, investAmounts);
+
+    // If SFT's cfolio is final recipient of cfolioitem, we call the handler
+    // and lock the sft in Tradefloor contract before we transfer it to the SFT.
+    if (sftCFolio != address(0)) {
+      require(tradeFloor != address(0), 'TradeFloor not set');
+      // Lock the SFT into the TradeFloor contract
+      IERC1155BurnMintable(address(_sftContract)).safeTransferFrom(
+        address(this),
+        tradeFloor,
+        tokenId,
+        1,
+        ''
+      );
+      // We now have a "locked" TradeFloor NFT, move it to the recipient
+      IERC1155BurnMintable(tradeFloor).safeTransferFrom(
+        address(this),
+        sftCFolio,
+        tokenId,
+        1,
+        ''
+      );
+    }
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -172,7 +287,8 @@ contract WOWSSftMinter is Ownable {
   function _mint(
     address recipient,
     uint256 tokenId,
-    uint256 price
+    uint256 price,
+    uint256 cfolioType
   ) internal {
     // Transfer WOWS from user to rewardhandler
     _wowsToken.safeTransferFrom(msg.sender, address(_rewardHandler), price);
@@ -184,6 +300,6 @@ contract WOWSSftMinter is Ownable {
     _rewardHandler.distribute2(recipient, price, ALL);
 
     // Log event
-    emit Mint(recipient, tokenId, price);
+    emit Mint(recipient, tokenId, price, cfolioType);
   }
 }

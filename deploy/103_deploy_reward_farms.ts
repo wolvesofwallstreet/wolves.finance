@@ -17,7 +17,10 @@ require('hardhat-deploy-ethers');
 // TODO: Fully qualified contract names
 const CFOLIO_FARM_CONTRACT = 'CFolioFarm';
 const ADDRESS_REGISTRY_CONTRACT = 'AddressRegistry';
-const TRADE_FLOOR_CLIENT_LP_CONTRACT = 'TradeFloorClientLP';
+const CFOLIO_ITEM_HANDLER_LP_CONTRACT = 'CFolioItemHandlerLP';
+const SFT_EVALUATOR_CONTRACT = 'SFTEvaluator';
+const SFT_EVALUATOR_PROXY_CONTRACT = 'SFTEvaluatorProxy';
+const UPGRADE_PROXY_CONTRACT = 'UpgradeProxy';
 
 // Deployed aliases
 const CFOLIO_FARM_LP_CONTRACT = 'CFolioFarmLP';
@@ -30,6 +33,10 @@ const FORCE_REBUILD = process.env.FORCE_REBUILD !== undefined;
 // Addressbook constants
 //const BOIS_REWARDS_KEY = ethers.utils.formatBytes32String('BOIS_REWARDS');
 const WOLVES_REWARDS_KEY = ethers.utils.formatBytes32String('WOLVES_REWARDS');
+
+const ADDRESS_BOOK_SFT_EVALUATOR_PROXY_KEY = ethers.utils.formatBytes32String(
+  'SFT_EVALUATOR_PROXY'
+);
 
 // Helper function
 function log_step(step_string) {
@@ -103,7 +110,6 @@ const func = async function (hardhat_re) {
 
   const ADDRESS_REGISTRY_ADDRESS = generatedAddresses.addressRegistry;
   const CONTROLLER_ADDRESS = generatedAddresses.controller;
-  const TRADE_FLOOR_PROXY_ADDRESS = generatedAddresses.tradeFloorProxy;
 
   //////////////////////////////////////////////////////////////////////////////
   //
@@ -113,6 +119,62 @@ const func = async function (hardhat_re) {
 
   const ADDRESS_REGISTRY_INSTANCE = await hardhat_re.ethers.getContract(
     ADDRESS_REGISTRY_CONTRACT
+  );
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // Deploy SFT evaluator
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  if (configAddresses.sftEvaluator) {
+    log_step(`Using SFT evaluator: ${configAddresses.sftEvaluator}`);
+    generatedAddresses.sftEvaluator = configAddresses.sftEvaluator;
+  } else {
+    log_step('Deploying SFT evaluator');
+
+    const sftEvaluatorReceipt = await deploy(SFT_EVALUATOR_CONTRACT, {
+      from: deployer,
+      args: [ADDRESS_REGISTRY_ADDRESS],
+      log: true,
+      deterministicDeployment: false,
+    });
+
+    generatedAddresses.sftEvaluator = sftEvaluatorReceipt.address;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // Deploy SFT evaluator proxy
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  if (configAddresses.sftEvaluatorProxy) {
+    log_step(`Using SFT evaluator proxy: ${configAddresses.sftEvaluatorProxy}`);
+    generatedAddresses.sftEvaluatorProxy = configAddresses.sftEvaluatorProxy;
+  } else {
+    log_step('Deploying SFT evaluator proxy');
+
+    const sftEvaluatorProxyReceipt = await deploy(
+      SFT_EVALUATOR_PROXY_CONTRACT,
+      {
+        contract: UPGRADE_PROXY_CONTRACT,
+        from: deployer,
+        args: [ADDRESS_REGISTRY_ADDRESS, generatedAddresses.sftEvaluator, []],
+        log: true,
+        deterministicDeployment: true,
+      }
+    );
+
+    generatedAddresses.sftEvaluatorProxy = sftEvaluatorProxyReceipt.address;
+  }
+
+  await setRegistryKey(
+    deployer,
+    execute,
+    ADDRESS_REGISTRY_INSTANCE,
+    ADDRESS_BOOK_SFT_EVALUATOR_PROXY_KEY,
+    generatedAddresses.sftEvaluatorProxy
   );
 
   //////////////////////////////////////////////////////////////////////////////
@@ -166,32 +228,25 @@ const func = async function (hardhat_re) {
 
   if (configAddresses.tradeFloorClientLP) {
     log_step(
-      `Using TradeFloorClientLP contract: ${configAddresses.tradeFloorClientLP}`
+      `Using CFolioItemHandlerLP contract: ${configAddresses.cfolioItemHandlerLP}`
     );
-    generatedAddresses.tradeFloorClientLP = configAddresses.tradeFloorClientLP;
+    generatedAddresses.cfolioItemHandlerLP =
+      configAddresses.cfolioItemHandlerLP;
   } else {
-    log_step('Deploying TradeFloorClientLP contract');
+    log_step('Deploying CFolioItemHandlerLP contract');
 
-    const TRADE_FLOOR_TOKEN_ID = ethers.BigNumber.from('0x10000000000000000'); // Unique and >= 0x10000000000000000
-    const TRADE_FLOOR_NUM_TOKEN_IDS = 8; // We use 8 atm for known cards
-
-    const tradeFloorClientLPContractReceipt = await deploy(
-      TRADE_FLOOR_CLIENT_LP_CONTRACT,
+    const cfolioItemHandlerLPContractReceipt = await deploy(
+      CFOLIO_ITEM_HANDLER_LP_CONTRACT,
       {
         from: deployer,
-        args: [
-          ADDRESS_REGISTRY_ADDRESS,
-          TRADE_FLOOR_PROXY_ADDRESS,
-          TRADE_FLOOR_TOKEN_ID,
-          TRADE_FLOOR_NUM_TOKEN_IDS,
-        ],
+        args: [ADDRESS_REGISTRY_ADDRESS],
         log: true,
         deterministicDeployment: true,
       }
     );
 
-    generatedAddresses.tradeFloorClientLP =
-      tradeFloorClientLPContractReceipt.address;
+    generatedAddresses.cfolioItemHandlerLP =
+      cfolioItemHandlerLPContractReceipt.address;
   }
 
   //////////////////////////////////////////////////////////////////////////////
