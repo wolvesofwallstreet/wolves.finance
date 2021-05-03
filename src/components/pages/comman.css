@@ -47,10 +47,14 @@
   }
 }
 
-.nav-link-active {
+/* .nav-link-active {
   color: var(--wolves-orange) !important;
   flex-shrink: 0;
   height: auto;
+} */
+
+.nav-active {
+  color: var(--wolves-orange) !important;
 }
 
 .dropdown:hover .dropdown-menu {

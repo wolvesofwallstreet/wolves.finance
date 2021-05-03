@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: Apache-2.0
  * See the file LICENSES/README.md for more information.
  */
-
+import React from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { Link, RouteComponentProps } from 'react-router-dom';
 
@@ -20,7 +20,16 @@ type PROPS = {
   history: RouteComponentProps['history'];
 };
 
-function Page13({ t }: PROPS) {
+function Page13({ t, location }: PROPS) {
+  const activeTab = (tab?: string) => {
+    const currentTab = new URLSearchParams(location.search).get('currentTab');
+    if (!tab) return currentTab;
+    if (tab && currentTab === tab) {
+      return 'nav-active';
+    }
+    return '';
+  };
+
   const cards = [
     {
       title: 'BOIS NYC USDT',
@@ -121,17 +130,26 @@ function Page13({ t }: PROPS) {
 
           <div className="w-nav-container">
             <div className="w-nav-center tk-vincente-lightbold">
-              <Link className="w-nav-section mx-4 " to="?item=PRODIGY">
+              <Link
+                className={`w-nav-section mx-4 ${activeTab('PRODIGY')}`}
+                to="?currentTab=PRODIGY"
+              >
                 PRODIGY
+                {activeTab('PRODIGY') && <div className="triangle-down"></div>}
               </Link>
               <Link
-                className="w-nav-section mx-4 w-nav-link-active"
-                to="?item=PHENOM"
+                className={`w-nav-section mx-4 ${activeTab('PHENOM')}`}
+                to="?currentTab=PHENOM"
               >
-                PHENOM<div className="triangle-down"></div>
+                PHENOM
+                {activeTab('PHENOM') && <div className="triangle-down"></div>}
               </Link>
-              <Link className="w-nav-section mx-4 " to="?item=NFTs">
+              <Link
+                className={`w-nav-section mx-4 ${activeTab('NFTs')}`}
+                to="?currentTab=NFTs"
+              >
                 NFTs
+                {activeTab('NFTs') && <div className="triangle-down"></div>}
               </Link>
             </div>
           </div>
@@ -141,7 +159,7 @@ function Page13({ t }: PROPS) {
               return (
                 <WolveCard
                   key={i + Math.random()}
-                  cardLink={'?item=three' + i}
+                  cardLink={'?currentTab=three' + i}
                   linkType="image"
                   src={WOLFD_APP_DEVS_FLAT231_300}
                   bottomContent={
