@@ -26,7 +26,7 @@ const PRESALE_CONTRACT = 'Crowdsale';
 // Path to address files
 const CONFIG_ADDRESSES = `${__dirname}/../src/config/addresses.json`;
 const GENERATED_ADDRESSES = `${__dirname}/../src/config/generated-addresses.json`;
-const FORCE_REBUILD = process.env.FORCE_REBUILD !== undefined;
+const IGNORE_ADDRESSES = process.env.IGNORE_ADDRESSES !== undefined;
 
 // Addressbook constants
 const ADDRESS_BOOK_TEAM_WALLET_KEY = ethers.utils.formatBytes32String(
@@ -117,7 +117,7 @@ const func = async function (hardhat_re) {
     fs.readFileSync(GENERATED_ADDRESSES).toString()
   );
 
-  const configAddresses = (!FORCE_REBUILD && configNetworks[chainId]) || {};
+  const configAddresses = (!IGNORE_ADDRESSES && configNetworks[chainId]) || {};
   const generatedAddresses = generatedNetworks[chainId] || {};
 
   //////////////////////////////////////////////////////////////////////////////
