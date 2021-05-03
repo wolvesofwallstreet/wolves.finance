@@ -52,7 +52,7 @@ const func = async function (hardhat_re) {
   const generatedAddresses = generatedNetworks[chainId] || {};
 
   // Deployment instances
-  const SFT_HOLDER_INSTANCE = await hardhat_re.ethers.getContractFactory(
+  const SFT_HOLDER_INSTANCE = await hardhat_re.ethers.getContract(
     SFT_HOLDER_CONTRACT
   );
 
@@ -145,7 +145,7 @@ const func = async function (hardhat_re) {
   //
 
   // We initialize 8 different LP cards
-  const CFI_TYPES = ['0', '1', '2', '3', '4', '5', '6', '7', '8'];
+  const CFI_TYPES = ['0', '1', '2', '3', '4', '5', '6', '7'];
   const CFI_HANDLERS = new Array(8).fill(generatedAddresses.cfolioFarmLP);
   const CFI_MAXMINT = new Array(8).fill('100');
   const CFI_PRICES = new Array(8).fill('500000000000000000');
