@@ -30,6 +30,7 @@ type PROPS = {
 };
 
 const Page4 = ({ t, location, history }: PROPS) => {
+  const [activeCard, setActiveCard] = React.useState<number>(0);
   const [input1, setInput1] = React.useState('ETH 2300');
   const [input2, setInput2] = React.useState('ETH 2300');
   const [images /*setImages*/] = React.useState([
@@ -48,7 +49,7 @@ const Page4 = ({ t, location, history }: PROPS) => {
       peek: 10,
       type: 'slider', // carousel
       perView: 5,
-      startAt: 1,
+      startAt: activeCard,
       focusAt: 'center',
       rewind: true,
       breakpoints: {
@@ -108,11 +109,16 @@ const Page4 = ({ t, location, history }: PROPS) => {
                   {[1, 2, 3, 4, 5].map((card, i) => {
                     return (
                       <Fragment key={i + Math.random()}>
-                        <div className="glide__slide">
+                        <div
+                          className="glide__slide"
+                          onClick={() => {
+                            setActiveCard(i);
+                          }}
+                        >
                           <div className="slide-count"> {i} </div>
                           <img
                             className={
-                              'responsive-img slide-img img-bryant_bark-300'
+                              'responsive-img slide-img'
                             }
                             src="https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-300.mp4.jpg"
                             alt=""
@@ -203,16 +209,14 @@ const Page4 = ({ t, location, history }: PROPS) => {
                 onChange={(e) => setInput2(e.target.value)}
                 value={input2}
               />
-
             </div>
 
             <button
-                  className={'mt-3 page4-text-input m-0 page4-btn-stack font-10'}
-                >
-                  BUY STAKED ETH/WOWS NFT
-                </button>
-            <div className={''}>
-              </div>
+              className={'mt-3 page4-text-input m-0 page4-btn-stack font-10'}
+            >
+              BUY STAKED ETH/WOWS NFT
+            </button>
+            <div className={''}></div>
           </div>
         </div>
       </div>

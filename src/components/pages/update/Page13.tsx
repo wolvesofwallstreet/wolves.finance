@@ -20,7 +20,17 @@ type PROPS = {
   history: RouteComponentProps['history'];
 };
 
-function Page14({ t }: PROPS) {
+function Page14({ t,location }: PROPS) {
+
+  const activeTab = (tab?: string) => {
+    const currentTab = new URLSearchParams(location.search).get('currentTab');
+    if (!tab) return currentTab;
+    if (tab && currentTab === tab) {
+      return 'nav-active';
+    }
+    return '';
+  };
+
   return (
     <>
       <div className={'w-container bg-wolves text-white'}>
@@ -107,23 +117,33 @@ function Page14({ t }: PROPS) {
           </div>
 
           <HorizontalLine />
-
+          
           <div className="w-nav-container">
             <div className="w-nav-center tk-vincente-lightbold">
-              <Link className="w-nav-section mx-4 " to="?item=PRODIGY">
+              <Link
+                className={`w-nav-section mx-4 ${activeTab('PRODIGY')}`}
+                to="?currentTab=PRODIGY"
+              >
                 PRODIGY
+                {activeTab('PRODIGY') && <div className="triangle-down"></div>}
               </Link>
               <Link
-                className="w-nav-section mx-4 w-nav-link-active"
-                to="?item=PHENOM"
+                className={`w-nav-section mx-4 ${activeTab('PHENOM')}`}
+                to="?currentTab=PHENOM"
               >
-                PHENOM <div className="triangle-down"></div>
+                PHENOM
+                {activeTab('PHENOM') && <div className="triangle-down"></div>}
               </Link>
-              <Link className="w-nav-section mx-4 " to="?item=NFTs">
+              <Link
+                className={`w-nav-section mx-4 ${activeTab('NFTs')}`}
+                to="?currentTab=NFTs"
+              >
                 NFTs
+                {activeTab('NFTs') && <div className="triangle-down"></div>}
               </Link>
             </div>
           </div>
+
 
           <div className="wolve-cards-container">
             {[1, 2].map((_, i) => {

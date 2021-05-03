@@ -1,6 +1,6 @@
 .wrap {
   max-width: 750px;
-  margin: -22px auto;
+  margin: -25px auto;
   position: relative;
   /* background-color: gainsboro; */
 }
@@ -97,6 +97,14 @@
   max-width: 100px;
   max-height: 140px;
   height: 110px;
+  cursor: pointer;
+  background-image: url('../../../assets/loading_animated.gif');
+  background-size: cover;
+  background-position: center;
+}
+
+.slide-img:hover {
+  opacity: 0.88;
 }
 
 .slider_active_slide .slide-img {

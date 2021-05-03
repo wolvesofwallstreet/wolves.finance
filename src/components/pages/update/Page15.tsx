@@ -20,7 +20,16 @@ type PROPS = {
   history: RouteComponentProps['history'];
 };
 
-function ExamplePage({ t }: PROPS) {
+function ExamplePage({ t, location }: PROPS) {
+  const activeTab = (tab?: string) => {
+    const currentTab = new URLSearchParams(location.search).get('currentTab');
+    if (!tab) return currentTab;
+    if (tab && currentTab === tab) {
+      return 'nav-active';
+    }
+    return '';
+  };
+
   const cards = [
     {
       title: 'BOIS NYC USDT',
@@ -127,19 +136,28 @@ function ExamplePage({ t }: PROPS) {
 
           <HorizontalLine />
 
-          <div className="w-nav-container">
+          <div className="w-nav-container mb-3">
             <div className="w-nav-center tk-vincente-lightbold">
-              <Link className="w-nav-section mx-4 " to="?item=PRODIGY">
+              <Link
+                className={`w-nav-section mx-4 ${activeTab('PRODIGY')}`}
+                to="?currentTab=PRODIGY"
+              >
                 PRODIGY
+                {activeTab('PRODIGY') && <div className="triangle-down"></div>}
               </Link>
               <Link
-                className="w-nav-section mx-4 w-nav-link-active"
-                to="?item=PHENOM"
+                className={`w-nav-section mx-4 ${activeTab('PHENOM')}`}
+                to="?currentTab=PHENOM"
               >
-                PHENOM<div className="triangle-down"></div>
+                PHENOM
+                {activeTab('PHENOM') && <div className="triangle-down"></div>}
               </Link>
-              <Link className="w-nav-section mx-4 " to="?item=NFTs">
+              <Link
+                className={`w-nav-section mx-4 ${activeTab('NFTs')}`}
+                to="?currentTab=NFTs"
+              >
                 NFTs
+                {activeTab('NFTs') && <div className="triangle-down"></div>}
               </Link>
             </div>
           </div>
