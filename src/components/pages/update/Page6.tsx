@@ -33,7 +33,7 @@ function Page6() {
             <span className="w-nav-center tk-vincente-lightbold">
               <Link
                 to={'page6?item=Back'}
-                className={'w-nav-section text-white'}
+                className={'w-nav-section text-white mr-2'}
               >
                 Back
               </Link>

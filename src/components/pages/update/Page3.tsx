@@ -24,17 +24,17 @@ interface ICard {
   levelId: number | string;
 }
 
-type PAGE8_PROPS = {
+type PAGE7_PROPS = {
   t: TFunction;
   location: RouteComponentProps['location'];
   history: RouteComponentProps['history'];
 };
 
-type PAGE8_STATE = {
+type PAGE7_STATE = {
   cards: Array<ICard>;
 };
 
-const INITIAL_PAGE8_STATE: PAGE8_STATE = {
+const INITIAL_PAGE7_STATE: PAGE7_STATE = {
   cards: [
     {
       title: 'MINT NFT',
@@ -129,10 +129,10 @@ const INITIAL_PAGE8_STATE: PAGE8_STATE = {
   ],
 };
 
-class Page8 extends Component<PAGE8_PROPS, PAGE8_STATE> {
-  constructor(props: PAGE8_PROPS) {
+class Page7 extends Component<PAGE7_PROPS, PAGE7_STATE> {
+  constructor(props: PAGE7_PROPS) {
     super(props);
-    this.state = INITIAL_PAGE8_STATE;
+    this.state = INITIAL_PAGE7_STATE;
   }
 
   render(): JSX.Element {
@@ -206,4 +206,4 @@ class Page8 extends Component<PAGE8_PROPS, PAGE8_STATE> {
   }
 }
 
-export default withTranslation()(Page8);
+export default withTranslation()(Page7);

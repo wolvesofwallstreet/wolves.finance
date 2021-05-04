@@ -13,6 +13,13 @@ import './components/pages/comman.css'
 import './components/theme/navigation/navigation.css'
 import './components/theme/checkbox/wolve_checkbox.css';
 
+import UpdatePage3 from 'components/pages/update/Page3';
+import UpdatePage4 from 'components/pages/update/Page4';
+import Page6 from 'components/pages/update/Page6';
+import Page7 from 'components/pages/update/Page7';
+import Page8 from 'components/pages/update/Page8';
+import Page9 from 'components/pages/update/Page9';
+import Page12 from 'components/pages/update/Page12';
 import React from 'react';
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
 
@@ -45,6 +52,15 @@ class App extends React.Component {
                 render={(props) => <Page3 {...props} display={'my'} />}
               />
               <Route path="/detail" component={Page4} />
+              
+              <Route path="/wolf_trade_floor" component={UpdatePage3} />
+              <Route path="/staked_invest" component={UpdatePage4} />
+              <Route path="/my_pack" component={Page6} />
+              <Route path="/bois_boardrooms" component={Page7} />
+              <Route path="/investment_sfts" component={Page8} />
+              <Route path="/yearn_invest" component={Page9} />
+              <Route path="/c_folio" component={Page12} />
+
               <Route path="/update/:page" component={PageLoader} />
               <Route component={Page1} />
             </Switch>

@@ -126,6 +126,10 @@ span a:hover {
   background-color: rgba(4, 29, 52, 0.44) !important;
 }
 
+.bg-blue-transparent-dark {
+  background-color: rgba(4, 29, 52, 0.8) !important;
+}
+
 .bg-blue-dark {
   background-color: rgba(4, 29, 52, 0.95) !important;
 }

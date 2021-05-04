@@ -95,16 +95,16 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
         to: '/shop?type=bois&levelId=' + levelId,
         disabled: type === 'bois',
       },
-      {
-        id: t('header.myPack'),
-        to: '/my?type=myPack&levelId=' + levelId,
-        disabled: type === 'myPack',
-      },
-      {
-        id: t('header.stake'),
-        to: '/stake',
-        disabled: location.pathname === '/stake',
-      }
+      // {
+      //   id: t('header.myPack'),
+      //   to: '/my?type=myPack&levelId=' + levelId,
+      //   disabled: type === 'myPack',
+      // },
+      // {
+      //   id: t('header.stake'),
+      //   to: '/stake',
+      //   disabled: location.pathname === '/stake',
+      // },
     ];
 
     return result;
@@ -119,7 +119,8 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
         <Navbar.Brand className="navbar-brand mr-auto" as={Link} to="/">
           <Image src={logo} width="300" className="logo" />
         </Navbar.Brand>
-        <Navbar.Collapse id="basic-navbar-nav">
+        <Navbar.Collapse id="basic-navbar-nav font-14">
+
           {navItems.map((item: NAVITEM, index: number) => {
             return item.disabled ? (
               <span key={index}>{item.id}</span>
@@ -130,15 +131,71 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
             );
           })}
 
+          <Link to={'/my_pack'}>
+            MY PACK
+          </Link>
+
+          <span className="nav-item dropdown mx-0 my-0">
+            <span
+              className="nav-link dropdown-toggle text-white"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+            >
+              WOLF TRADE FLOOR
+            </span>
+            <ul className="dropdown-menu bg-blue-transparent-dark">
+              <li>
+                <Link className="dropdown-item" to="/wolf_trade_floor">
+                  WOLF TRADE FLOOR 
+                </Link>
+              </li>
+              <li>
+                <Link className="dropdown-item" to="/staked_invest">
+                  STAKED INVEST
+                </Link>
+              </li>
+            </ul>
+          </span> 
+
+          <span className="nav-item dropdown mx-0 my-0">
+            <span
+              className="nav-link dropdown-toggle text-white "
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+            >
+              BOIS BOARDROOMS
+            </span>
+            <ul className="dropdown-menu bg-blue-transparent-dark">
+              <li>
+                <Link className="dropdown-item" to="/bois_boardrooms">
+                  BOIS BOARDROOMS
+                </Link>
+              </li>
+              <li>
+                <Link className="dropdown-item" to="/investment_sfts">
+                  YEARN INVESTMENT SFTS
+                </Link>
+              </li>
+              <li>
+                <Link className="dropdown-item" to="/yearn_invest">
+                  YEARN INVEST 
+                </Link>
+              </li>
+            </ul>
+          </span> 
+         
+          <Link to={'/c_folio'}>
+            C-FOLIO MANAGER
+          </Link>
+         
           <span className="nav-item dropdown">
             <span
               className="nav-link dropdown-toggle "
               data-bs-toggle="dropdown"
               aria-expanded="false"
             >
-              UI Pages
             </span>
-            <ul className="dropdown-menu bg-blue-transparent">
+            <ul className="dropdown-menu bg-blue-transparent-dark">
               <li>
                 <Link className="dropdown-item" to="/update/page4">
                   Page 4
@@ -195,7 +252,21 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
                 </Link>
               </li>
             </ul>
-          </span>
+          </span> 
+
+           {/* 
+          PG-3: WOLF TRADE FLOOR 
+          PG-4: WOLF TRADE FLOOR > STAKED INVEST (dropdown) 
+          pg-5 accessible from item selection within My Pack
+          PG-6 Item from my pack
+          PG-7 BOIS BOARDROOMS
+          PG-8 BOIS BOARDROOMS > YEARN INVESTMENT SFTS
+          PG-9 BOIS BOARDROOMS > YEARN INVESTMENT SFTS > YEARN INVEST (dropdowns) 
+          PG-10 -POPUP after clicking What does pack strength mean..."
+          PG - 11 accessible from item ( invested state )selection within My Pack
+          PG - 12 C-FOLIO MANAGER 
+          PG - 13/14/15 MYPACK */}
+
         </Navbar.Collapse>
 
         <Form className="dp-conn-form" onSubmit={this.handleSubmit} inline>
