@@ -124,7 +124,7 @@ contract SFTEvaluator is ISFTEvaluator {
       emit RewardRate(tokenId, timed);
     } else {
       // Revert if requested
-      require(!revertUnchanged, 'Rate unchenged');
+      require(!revertUnchanged, 'Rate unchanged');
     }
   }
 
