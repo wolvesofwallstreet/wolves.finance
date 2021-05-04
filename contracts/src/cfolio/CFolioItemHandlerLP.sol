@@ -8,6 +8,7 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
+import '../../0xerc1155/interfaces/IERC1155.sol';
 import '../../0xerc1155/interfaces/IERC20.sol';
 import '../../0xerc1155/interfaces/IERC1155TokenReceiver.sol';
 import '../../0xerc1155/utils/SafeMath.sol';
@@ -22,6 +23,19 @@ import '../utils/AddressBook.sol';
 import '../utils/interfaces/IAddressRegistry.sol';
 import '../utils/TokenIds.sol';
 
+/**
+ * @dev CFolioItemHandlerLP manages CFolioItems, minted in the SFT contract.
+ *
+ * Minting CFolioItem SFT is implemented in the WOWSSFTMinter contract, which
+ * mints the SFT in WowsERC1155 contract and calls setupCFolio in here.
+ *
+ * Normaly so prepares CFolioItem SFT's are locked in main TradeFloor contract
+ * to allow trading or transfer into a Base SFT card's cfolio.
+ *
+ * CFolioItem SFT's only earn rewards, if they are inside the cfolio of a base NFT.
+ * We get called from main TradeFloor every time an CFolioItem gets transfered and
+ * calculate the new rewardable LP amount based on the reward % of the base NFT.
+ */
 contract CFolioItemHandlerLP is ICFolioItemHandler {
   using SafeMath for uint256;
   using TokenIds for uint256;
@@ -65,6 +79,13 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
   // Initialization
   //////////////////////////////////////////////////////////////////////////////
 
+  /**
+   * @dev Constructs the CFolioItemHandlerLP
+   *
+   * We gather all current addresses from address registry into immutable vars.
+   * If one of the relevant addresses changes, the contract has to be updated.
+   * There is only few state, user state is completely handled in CFolioFarm.
+   */
   constructor(IAddressRegistry addressRegistry) {
     // TradeFloor
     tradeFloor = addressRegistry.getRegistryEntry(
@@ -96,6 +117,71 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
     cfolioFarm = ICFolioFarm(
       addressRegistry.getRegistryEntry(AddressBook.WOLVES_REWARDS)
     );
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Asset Access
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * @dev see {ICFolioItemCallback-deposit}
+   *
+   * Note: tokenId cannot be owned by an base SFT.
+   * There is no need to update any rewards.
+   */
+  function deposit(uint256 tokenId, uint256[] calldata amounts)
+    external
+    override
+  {
+    require(amounts.length == 1 && amounts[0] > 0, 'CFIH: invalid amount');
+    IWOWSCryptofolio cFolio = _verifyAssetAccess(tokenId);
+
+    // Transfer LP token to this contract
+    stakingToken.transferFrom(msg.sender, address(this), amounts[0]);
+    // Record assets in Farm contract. They don't earn rewards
+    // addAsset must only be called from Investment CFolios
+    cfolioFarm.addAssets(address(cFolio), amounts[0]);
+  }
+
+  /**
+   * @dev see {ICFolioItemCallback-withdraw}
+   *
+   * Note: tokenId cannot be owned by an base SFT.
+   * There is no need to update any rewards.
+   */
+  function withdraw(uint256 tokenId, uint256[] calldata amounts)
+    external
+    override
+  {
+    require(amounts.length == 1 && amounts[0] > 0, 'CFIH: invalid amount');
+    IWOWSCryptofolio cFolio = _verifyAssetAccess(tokenId);
+
+    // Record assets in Farm contract. They don't earn rewards
+    // addAsset must only be called from Investment CFolios
+    cfolioFarm.removeAssets(address(cFolio), amounts[0]);
+    // Transfer LP token to this contract
+    stakingToken.transferFrom(address(this), msg.sender, amounts[0]);
+  }
+
+  /**
+   * @dev see {ICFolioItemCallback-getRewards}
+   *
+   * Note: tokenId must be a base SFT card
+   * We allow reward pull only for unlocked SFT's
+   */
+  function getRewards(address recipient, uint256 tokenId) external override {
+    require(tokenId.isBaseCard(), 'CFIH: Invalid tokenId');
+    // Verify that tokenid has an valid cFolio address
+    address cfolio = _sftHolder.tokenIdToAddress(tokenId);
+    require(cfolio != address(0), 'Invalid cfolio address');
+    // Verify that the tokenId is owned by msg.sender in sft contract
+    // This also verifies that the token is not locked in TradeFloor
+    require(
+      IERC1155(address(_sftHolder)).balanceOf(msg.sender, tokenId) == 1,
+      'CFHI: Access denied'
+    );
+
+    cfolioFarm.getReward(cfolio, recipient);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -142,9 +228,14 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
   }
 
   /**
-   * @dev see {ICFolioItemHandler-setupInvestment}
+   * @dev see {ICFolioItemHandler-setupCFolio}
+   *
+   * Note: We place a dummy ERC1155 token with id 0 into the CFolioItem's cfolio.
+   * Reason is that we want to know if a cfolio item gets burned to prevent
+   * LP tokens gets inaccessible.
+   * Refer to the Minimal ERC1155 section to learn which functions we need fo this.
    */
-  function setupInvestment(
+  function setupCFolio(
     address payer,
     uint256 sftTokenId,
     uint256[] calldata amounts
@@ -215,6 +306,9 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
     return result;
   }
 
+  /**
+   * @dev We don't allow burning non-empty cfolios
+   */
   function burnBatch(
     address, /*account*/
     uint256[] calldata tokenIds,
@@ -230,6 +324,10 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
   // Internal details
   //////////////////////////////////////////////////////////////////////////////
 
+  /**
+   * @dev Run through all cFolioItems collected in cFolio and
+   * select the amount of LP tokens. Update cfolioFarm.
+   */
   function _updateRewards(address cfolio, uint32 rate) private {
     // get cfolio items of this base cFolio
     (uint256[] memory tokenIds, uint256 length) =
@@ -249,5 +347,30 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
       cfolioFarm.addShares(cfolio, newRewardAmount.sub(exitingRewardAmount));
     else if (newRewardAmount < exitingRewardAmount)
       cfolioFarm.removeShares(cfolio, exitingRewardAmount.sub(newRewardAmount));
+  }
+
+  /**
+   * @dev Verifies if a asset access operation is allowed
+   */
+  function _verifyAssetAccess(uint256 tokenId)
+    private
+    view
+    returns (IWOWSCryptofolio)
+  {
+    // Verify it's an cfolioItemTokenId
+    require(tokenId.isCFolioCard(), 'CFHI: Not CFolioCard');
+    // Verify that the tokenId is one of ours
+    IWOWSCryptofolio cFolio =
+      IWOWSCryptofolio(_sftHolder.tokenIdToAddress(tokenId));
+    require(address(cFolio) != address(0), 'CFIH: Invalid cFolioTokenId');
+    require(cFolio._tradefloors(0) == address(this), 'CFIH: Not our SFT');
+    // Verify that the tokenId is owned by msg.sender in sft contract
+    // This also verifies that the token is not locked in TradeFloor
+    require(
+      IERC1155(address(_sftHolder)).balanceOf(msg.sender, tokenId) == 1,
+      'CFHI: Access denied'
+    );
+
+    return cFolio;
   }
 }
