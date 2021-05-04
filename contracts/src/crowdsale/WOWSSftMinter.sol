@@ -42,6 +42,9 @@ contract WOWSSftMinter is Ownable {
   // Reward handler which distributes WOWS
   IRewardHandler private _rewardHandler;
 
+  // Set while minting CFolioToken
+  bool private _setupCFolio;
+
   // 1.0 of the rewards go to distribution
   uint32 private constant ALL = 1 * 1e6;
 
@@ -228,6 +231,8 @@ contract WOWSSftMinter is Ownable {
       sftCFolio = _sftContract.tokenIdToAddress(sftTokenId);
       // intermediate owner of the minted sft
       recipient = address(this);
+      // Allow this contract to be an ERC1155 holder
+      _setupCFolio = true;
     }
     uint256 tokenId = nextCFolioItemNft++;
 
@@ -242,7 +247,6 @@ contract WOWSSftMinter is Ownable {
     // If SFT's cfolio is final recipient of cfolioitem, we call the handler
     // and lock the sft in Tradefloor contract before we transfer it to the SFT.
     if (sftCFolio != address(0)) {
-      require(tradeFloor != address(0), 'TradeFloor not set');
       // Lock the SFT into the TradeFloor contract
       IERC1155BurnMintable(address(_sftContract)).safeTransferFrom(
         address(this),
@@ -259,7 +263,28 @@ contract WOWSSftMinter is Ownable {
         1,
         ''
       );
+      // Reset the temporary state which allows holding ERC1155 token
+      _setupCFolio = false;
     }
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // ERC1155Holder
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * @dev We are a temorary token holder during CFolioToken mint step
+   * Only accept ERC1155 tokens during this setup
+   */
+  function onERC1155Received(
+    address,
+    address,
+    uint256,
+    uint256,
+    bytes memory
+  ) external view returns (bytes4) {
+    require(_setupCFolio, 'Only during setup');
+    return this.onERC1155Received.selector;
   }
 
   //////////////////////////////////////////////////////////////////////////////

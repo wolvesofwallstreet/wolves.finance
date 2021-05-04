@@ -17,7 +17,7 @@ import { ethers } from 'ethers';
 import fs from 'fs';
 
 import WOWSSftMinterAbi from '../../src/abi/contracts/src/crowdsale/WOWSSftMinter.sol/WOWSSftMinter.json';
-import TradeFloorProxyAbi from '../../src/abi/contracts/src/proxy/TradeFloorProxy.sol/TradeFloorProxy.json';
+import UpgradeProxyAbi from '../../src/abi/contracts/src/proxy/UpgradeProxy.sol/UpgradeProxy.json';
 import TradeFloorAbi from '../../src/abi/contracts/src/token/TradeFloor.sol/TradeFloor.json';
 import WOWSTokenAbi from '../../src/abi/contracts/src/token/WOWSErc20.sol/WowsToken.json';
 import WOWSERC1155Abi from '../../src/abi/contracts/src/token/WOWSErc1155.sol/WOWSERC1155.json';
@@ -43,8 +43,9 @@ const CURRENT_PRICE_URL =
 
 // Gas estimator API URL
 // TODO: Move API key to GitHub Actions secret
-const GAS_ESTIMATOR_URL =
-  'https://data-api.defipulse.com/api/v1/egs/api/ethgasAPI.json?api-key=53be2a60f8bc0bb818ad161f034286d709a9c4ccb1362054b0543df78e27';
+//const GAS_ESTIMATOR_URL =
+//  'https://data-api.defipulse.com/api/v1/egs/api/ethgasAPI.json?api-key=53be2a60f8bc0bb818ad161f034286d709a9c4ccb1362054b0543df78e27';
+const GAS_ESTIMATOR_URL = 'https://ethgasstation.info/json/ethgasAPI.json';
 
 // Helper function
 function toWei(n: number, decimals = 18) {
@@ -105,7 +106,7 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
   );
   const tradeFloorProxyContract = new ethers.Contract(
     addresses.tradeFloorProxy,
-    TradeFloorProxyAbi,
+    UpgradeProxyAbi,
     marketingWallet
   );
 
@@ -130,6 +131,7 @@ describe('Trade Floor', function () {
 
   // Test parameters
   const level1Price = '3000000000000000000';
+  const defaultCFolioType = 0;
   const levelBoi = 1;
   const cardIdBoi = 2;
   const levelWolf = 5;
@@ -255,7 +257,8 @@ describe('Trade Floor', function () {
     await chai.expect(tx).to.emit(sftMinterContract, 'Mint').withArgs(
       marketingWallet.address, // Recipient
       wowsTokenIdBoi, // Token ID
-      level1Price // Price
+      level1Price, // Price
+      defaultCFolioType // CFolioItemType
     );
   });
 
@@ -273,7 +276,8 @@ describe('Trade Floor', function () {
     await chai.expect(tx).to.emit(sftMinterContract, 'Mint').withArgs(
       marketingWallet.address, // Recipient
       wowsTokenIdWolf, // Token ID
-      level1Price // Price
+      level1Price, // Price
+      defaultCFolioType // CFolioItemType
     );
   });
 

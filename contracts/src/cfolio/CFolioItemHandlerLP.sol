@@ -121,8 +121,10 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
       require((LEVEL2WOLF & (uint256(1) << level)) > 0, 'CFIH: Wolves only');
       _updateRewards(to, sftEvaluator.rewardRate(sftTokenId));
     }
-    if ((sftTokenId = _sftHolder.addressToTokenId(from)) != uint256(-1))
-      _updateRewards(from, sftEvaluator.rewardRate(sftTokenId));
+    if (
+      from != address(0) &&
+      (sftTokenId = _sftHolder.addressToTokenId(from)) != uint256(-1)
+    ) _updateRewards(from, sftEvaluator.rewardRate(sftTokenId));
   }
 
   /**
@@ -151,11 +153,11 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
 
     address cFolio = _sftHolder.tokenIdToAddress(sftTokenId);
     require(cFolio != address(0), 'Invalid sftTokenId');
+
     // Verify that this function is called the first time
-    require(
-      IWOWSCryptofolio(cFolio)._tradefloors(0) == address(0),
-      'Not empty'
-    );
+    try IWOWSCryptofolio(cFolio)._tradefloors(0) returns (address) {
+      revert('CFIH: Tradefloor not empty');
+    } catch {}
 
     if (amounts.length > 0 && amounts[0] > 0) {
       // Transfer LP token to this contract
@@ -245,7 +247,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
     uint256 exitingRewardAmount = cfolioFarm.balanceOf(cfolio);
     if (newRewardAmount > exitingRewardAmount)
       cfolioFarm.addShares(cfolio, newRewardAmount.sub(exitingRewardAmount));
-    else
+    else if (newRewardAmount < exitingRewardAmount)
       cfolioFarm.removeShares(cfolio, exitingRewardAmount.sub(newRewardAmount));
   }
 }
