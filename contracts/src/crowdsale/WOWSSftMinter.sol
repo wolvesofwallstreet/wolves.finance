@@ -242,7 +242,7 @@ contract WOWSSftMinter is Ownable {
     _mint(recipient, tokenId, sftData.price, cfolioItemType);
 
     // Let CFolioHandler setup the new minted token
-    sftData.handler.setupInvestment(msg.sender, tokenId, investAmounts);
+    sftData.handler.setupCFolio(msg.sender, tokenId, investAmounts);
 
     // If SFT's cfolio is final recipient of cfolioitem, we call the handler
     // and lock the sft in Tradefloor contract before we transfer it to the SFT.

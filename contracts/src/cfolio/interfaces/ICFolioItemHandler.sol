@@ -30,9 +30,38 @@ interface ICFolioItemHandler is ICFolioItemCallback {
    * @param sftTokenId the sftTokenId that cfolio is the owner of investment
    * @param amounts the amounts of invested assets
    */
-  function setupInvestment(
+  function setupCFolio(
     address payer,
     uint256 sftTokenId,
     uint256[] calldata amounts
   ) external;
+
+  /**
+   * @dev Adds investments into an cFolioItem SFT
+   *
+   * Transfers amounts of assets from users wallet to the contract.
+   * In general an Approval call is required before function is called
+   *
+   * @param tokenId cFolioItem tokenId, must be unlocked
+   * @param amounts invetsment amounts, implementation specific
+   */
+  function deposit(uint256 tokenId, uint256[] calldata amounts) external;
+
+  /**
+   * @dev Removes investments into an cFolioItem SFT
+   *
+   * Withdrawn token are transfered back to msg.sender
+   *
+   * @param tokenId cFolioItem tokenId, must be unlocked
+   * @param amounts invetsment amounts, implementation specific
+   */
+  function withdraw(uint256 tokenId, uint256[] calldata amounts) external;
+
+  /**
+   * @dev Get the rewards collected by an SFT base card
+   *
+   * @param recipient recipient of the rewards (- fees)
+   * @param tokenId SFT base card tokenId, must be unlocked
+   */
+  function getRewards(address recipient, uint256 tokenId) external;
 }
