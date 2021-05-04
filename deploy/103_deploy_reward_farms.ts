@@ -191,7 +191,7 @@ const func = async function (hardhat_re) {
 
     const CFOLIO_FARM_LP_NAME = 'CFolio Farm LP';
 
-    const cfolioFarmReceipt = await deploy(CFOLIO_FARM_LP_CONTRACT, {
+    const cfolioFarmLPReceipt = await deploy(CFOLIO_FARM_LP_CONTRACT, {
       contract: CFOLIO_FARM_CONTRACT,
       from: deployer,
       args: [deployer, CFOLIO_FARM_LP_NAME, CONTROLLER_ADDRESS],
@@ -199,7 +199,7 @@ const func = async function (hardhat_re) {
       deterministicDeployment: true,
     });
 
-    generatedAddresses.cfolioFarmLP = cfolioFarmReceipt.address;
+    generatedAddresses.cfolioFarmLP = cfolioFarmLPReceipt.address;
   }
 
   const CFOLIO_FARM_LP_ADDRESS = generatedAddresses.cfolioFarmLP;
@@ -222,11 +222,11 @@ const func = async function (hardhat_re) {
 
   //////////////////////////////////////////////////////////////////////////////
   //
-  // Deploy TradeFloorClientLP
+  // Deploy CFolioItemHandlerLP
   //
   //////////////////////////////////////////////////////////////////////////////
 
-  if (configAddresses.tradeFloorClientLP) {
+  if (configAddresses.cfolioItemHandlerLP) {
     log_step(
       `Using CFolioItemHandlerLP contract: ${configAddresses.cfolioItemHandlerLP}`
     );
