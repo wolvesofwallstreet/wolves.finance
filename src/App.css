@@ -19,31 +19,11 @@ body {
 }
 
 .no-margin {
-  margin: 0px;
+  margin: 0;
 }
 
 .single-line {
   line-height: 1em;
-}
-
-.font-14 {
-  font-size: 14px;
-}
-
-.font-20 {
-  font-size: 20px;
-}
-
-.font-24 {
-  font-size: 24px;
-}
-
-.font-28 {
-  font-size: 28px;
-}
-
-.font-32 {
-  font-size: 32px;
 }
 
 .ellipsis {
@@ -59,7 +39,7 @@ body {
 
 hr.wolves {
   border-top: var(--wolves-orange) 1px solid;
-  margin: 4px 0px;
+  margin: 4px 0;
   align-self: stretch;
 }
 
@@ -74,4 +54,8 @@ span a:hover {
 
 .link {
   cursor: pointer;
+}
+
+.bg-blue-transparent-dark {
+  background-color: rgba(4,29,52,.8) !important;
 }

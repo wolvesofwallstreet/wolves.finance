@@ -81,6 +81,17 @@
 .dp-conn-form {
   margin: 8px auto;
 }
+
 .navbar-dark .navbar-brand {
   margin: 0 auto 8px auto;
+}
+
+.dropdown:hover .dropdown-menu {
+  display: block;
+}
+
+.dropdown-menu,
+.dropdown-item:focus,
+.dropdown-item:hover {
+  background-color: transparent;
 }
