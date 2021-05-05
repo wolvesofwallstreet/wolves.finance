@@ -70,3 +70,24 @@
 .wolves-border {
   border: var(--wolves-orange) 1px solid;
 }
+
+.bg-wolves {
+  background-image: url(./assets/background_wolves.png);
+}
+
+.bg-bois {
+  background-image: url(./assets/background_bois.jpg);
+}
+
+.bg-myPack {
+  background-image: url(./assets/background_bois.jpg);
+}
+
+.bg-flat2 {
+  /* TODO::bg-asset */
+  background-image: url(./assets/background_bois.jpg);
+}
+
+.bg-transparent-orange {
+  background-color: var(--wolves-orange-transparent);
+}

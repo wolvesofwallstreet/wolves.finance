@@ -87,7 +87,7 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
 
   renderDropDown(title: string, dropdownItems: DropDownItem[]): ReactNode {
     return (
-      <span className="nav-item dropdown mx-0 my-0">
+      <span className="nav-item dropdown mx-0 my-0" key={Math.random() + title}>
         <span
           className="nav-link dropdown-toggle text-white"
           data-bs-toggle="dropdown"
@@ -97,7 +97,7 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
         </span>
         <ul className="dropdown-menu bg-blue-transparent-dark">
           {dropdownItems.map((item, index) => (
-            <li key={index + Math.random()}>
+            <li key={Math.random() + index}>
               <Link className="dropdown-item" to={item.to}>
                 {item.id}
               </Link>
@@ -132,11 +132,11 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
       {
         id: 'WOLF TRADE FLOOR',
         to: '/wolf_trade_floor-1',
-        disabled: location.pathname === '/wolf_trade_floor-1',
+        disabled: location.pathname === '/wolf_trade_floor',
         dropdownItems: [
           {
             id: 'WOLF TRADE FLOOR',
-            to: '/wolf_trade_floor-1',
+            to: '/wolf_trade_floor',
           },
           {
             id: 'STAKED INVEST',
