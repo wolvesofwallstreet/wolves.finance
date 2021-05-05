@@ -18,7 +18,7 @@ interface ICFolioItemCallback {
    * In case of burn to is address(0)
    *
    * cfolioHandlers are passed to let each cfolioHandler filter
-   * for its own token. This eliminates need of ceating separate lists
+   * for its own token. This eliminates need of creating separate lists
    *
    * @param from The account sending the token
    * @param to The account receiving the token

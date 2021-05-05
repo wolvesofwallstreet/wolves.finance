@@ -25,7 +25,8 @@ contract WOWSCryptofolio is ERC1155Holder, IWOWSCryptofolio {
   // The owner of the NFT token parent
   address private _owner;
 
-  // Mapping of cryptofolio items owned by this cryptofolio
+  // Mapping of cryptofolio items (trade floor to token ID) owned by this
+  // cryptofolio
   mapping(address => uint256[]) private _cryptofolios;
 
   // List of all known tradefloors
@@ -36,12 +37,12 @@ contract WOWSCryptofolio is ERC1155Holder, IWOWSCryptofolio {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev Triggered if sft receives new tokens from operator
+   * @dev Triggered if an SFT receives new tokens from operator
    *
    * @param sft The contract address of the tokens
    * @param operator The user that sent the tokens to the cryptofolio
    * @param tokenIds The IDs being transferred
-   * @param amounts The mounts being transferred
+   * @param amounts The amounts being transferred
    */
   event CryptoFolioAdded(
     address indexed sft,
