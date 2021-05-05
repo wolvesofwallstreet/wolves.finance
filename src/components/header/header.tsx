@@ -26,10 +26,17 @@ interface HEADER_STATE {
   networkName: string;
 }
 
+type DropDownItem = {
+  id: string;
+  to: string;
+};
+
 type NAVITEM = {
   id: string;
   to: string;
   disabled: boolean;
+  dropdown?: boolean;
+  dropdownItems?: DropDownItem[];
 };
 
 class Header extends Component<HEADER_PROPS, HEADER_STATE> {
@@ -42,6 +49,7 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
 
     this.handleSubmit = this.handleSubmit.bind(this);
     this.onConnectionChanged = this.onConnectionChanged.bind(this);
+    this.renderDropDown = this.renderDropDown.bind(this);
   }
 
   componentDidMount(): void {
@@ -77,14 +85,40 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
       : 'CONNECT WALLET';
   }
 
+  renderDropDown(title: string, dropdownItems: DropDownItem[]): ReactNode {
+    return (
+      <span className="nav-item dropdown mx-0 my-0">
+        <span
+          className="nav-link dropdown-toggle text-white"
+          data-bs-toggle="dropdown"
+          aria-expanded="false"
+        >
+          {title}
+        </span>
+        <ul className="dropdown-menu bg-blue-transparent-dark">
+          {dropdownItems.map((item, index) => (
+            <li key={index + Math.random()}>
+              <Link className="dropdown-item" to={item.to}>
+                {item.id}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </span>
+    );
+  }
+
   _getNavItems(): NAVITEM[] {
     const { location, t } = this.props;
     const query = new URLSearchParams(location.search);
     const type = query.get('type');
     const levelId = query.get('levelId') || 0;
-
     const result = [
-      { id: t('header.home'), to: '/', disabled: location.pathname === '/' },
+      {
+        id: t('header.home'),
+        to: '/',
+        disabled: location.pathname === '/',
+      },
       {
         id: t('header.wolvesCf'),
         to: '/shop?type=wolves&levelId=' + levelId,
@@ -94,6 +128,21 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
         id: t('header.boisCf'),
         to: '/shop?type=bois&levelId=' + levelId,
         disabled: type === 'bois',
+      },
+      {
+        id: 'WOLF TRADE FLOOR',
+        to: '/wolf_trade_floor-1',
+        disabled: location.pathname === '/wolf_trade_floor-1',
+        dropdownItems: [
+          {
+            id: 'WOLF TRADE FLOOR',
+            to: '/wolf_trade_floor-1',
+          },
+          {
+            id: 'STAKED INVEST',
+            to: '/staked-invest',
+          },
+        ],
       },
       {
         id: t('header.myPack'),
@@ -106,7 +155,6 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
         disabled: location.pathname === '/stake',
       },
     ];
-
     return result;
   }
 
@@ -120,16 +168,29 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
           <Image src={logo} width="300" className="logo" />
         </Navbar.Brand>
         <Navbar.Collapse id="basic-navbar-nav">
-          {navItems.map((item: NAVITEM, index: number) => {
-            return item.disabled ? (
-              <span key={index}>{item.id}</span>
-            ) : (
-              <Link key={index} to={item.to}>
-                {item.id}
+          {navItems.map((navItem: NAVITEM, index: number) => {
+            // render Dropdown items
+            if ('dropdownItems' in navItem && navItem.dropdownItems) {
+              return this.renderDropDown(
+                navItem.id,
+                navItem?.dropdownItems as DropDownItem[]
+              );
+            }
+
+            // Active nav item
+            if (navItem.disabled) {
+              return <span key={index}>{navItem.id}</span>;
+            }
+
+            // nav item
+            return (
+              <Link key={index} to={navItem.to}>
+                {navItem.id}
               </Link>
             );
           })}
         </Navbar.Collapse>
+
         <Form className="dp-conn-form" onSubmit={this.handleSubmit} inline>
           <input
             className="wolves-btn dp-conn-btn"
