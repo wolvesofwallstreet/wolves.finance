@@ -150,6 +150,11 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
         disabled: type === 'myPack',
       },
       {
+        id: 'Page5',
+        to: 'page5-mypack',
+        disabled: type === '/page5-mypack',
+      },
+      {
         id: t('header.stake'),
         to: '/stake',
         disabled: location.pathname === '/stake',
