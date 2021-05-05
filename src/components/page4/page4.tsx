@@ -305,7 +305,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         {contentLoaded && (
           <div className="back-level-container">
             <span
-              className="tk-vincente-lightbold font-24 content-margin link"
+              className="tk-vincente-lightbold font-24 content-margin c-pointer"
               onClick={() =>
                 history.push(
                   this.tokenId
@@ -334,7 +334,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
             <>
               <span
                 className={`tk-vincente-lightbold font-24 single-line ${
-                  this.prevUrl ? 'link' : 'disabled-link'
+                  this.prevUrl ? 'c-pointer' : 'disabled-link'
                 }`}
                 onClick={() =>
                   this.prevUrl ? history.push(this.prevUrl) : undefined
@@ -346,7 +346,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
           </span>
           <span
             className={`tk-vincente-lightbold font-24 single-line ${
-              this.nextUrl ? 'link' : 'disabled-link'
+              this.nextUrl ? 'c-pointer' : 'disabled-link'
             } `}
             onClick={() =>
               this.nextUrl ? history.replace(this.nextUrl) : undefined

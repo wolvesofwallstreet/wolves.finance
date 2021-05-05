@@ -12,7 +12,7 @@
   width: 85%;
 }
 
-#page4-section-header .link {
+#page4-section-header .c-pointer {
   color: white;
   cursor: pointer;
 }
@@ -21,7 +21,7 @@
   color: var(--wolves-orange);
 }
 
-#page4-section-header .link:hover {
+#page4-section-header .c-pointer:hover {
   color: var(--wolves-orange);
 }
 
@@ -92,7 +92,7 @@
   margin-top: 25px;
 }
 
-.back-level-container .link:hover {
+.back-level-container .c-pointer:hover {
   color: var(--wolves-orange);
 }
 
