@@ -1722,6 +1722,11 @@
     "@ethersproject/properties" "^5.1.0"
     "@ethersproject/strings" "^5.1.0"
 
+"@glidejs/glide@^3.4.1":
+  version "3.4.1"
+  resolved "https://registry.yarnpkg.com/@glidejs/glide/-/glide-3.4.1.tgz#8ad21f3169076e32bbfd75ed0753807662c25e90"
+  integrity sha512-C34AEcK1HjSyxilRToUL54I6KAoodojUbeRlXoruobZuG0eGm8xfDL+3kgkWj7AJK4EZtunSOYfoqMp70eDtwg==
+
 "@hapi/address@2.x.x":
   version "2.1.4"
   resolved "https://registry.yarnpkg.com/@hapi/address/-/address-2.1.4.tgz#5d67ed43f3fd41a69d4b9ff7b56e7c0d1d0a81e5"
@@ -2499,6 +2504,11 @@
   dependencies:
     "@types/fbemitter" "*"
     "@types/react" "*"
+
+"@types/glidejs__glide@^3.4.0":
+  version "3.4.0"
+  resolved "https://registry.yarnpkg.com/@types/glidejs__glide/-/glidejs__glide-3.4.0.tgz#7a557c921f85e47549c12d6cd62afe3230ae8042"
+  integrity sha512-LwOWY79RczNq18OZakHc3IXL1rfz27Rei83371Z45bDeI7UZfEiQPfqcHyxxuH51QwU+Rnww8y3rQzf9FBTSAw==
 
 "@types/glob@^7.1.1":
   version "7.1.3"

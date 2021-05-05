@@ -19,6 +19,7 @@ import Page1 from './components/page1';
 import Page3 from './components/page3';
 import Page3TradeFloor from './components/page3TradeFloor';
 import Page4 from './components/page4';
+import Page4StakedInvest from './components/Page4StakedInvest';
 import { PageStatus } from './components/pageStatus';
 import Stake from './components/stake';
 import WolfToast from './components/toast/wolftoast';
@@ -46,6 +47,7 @@ class App extends React.Component {
               <Route path="/status" component={PageStatus} />
 
               <Route path="/wolf_trade_floor" component={Page3TradeFloor} />
+              <Route path="/staked-invest" component={Page4StakedInvest} />
 
               <Route component={Page1} />
             </Switch>
