@@ -14,16 +14,16 @@ import React, { Fragment, useState } from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { RouteComponentProps } from 'react-router-dom';
 
-import ETH_WOWS_GREEN_CARD from '../../../assets/wolfd_app_devs_flat2_136_300.jpg';
-import ETH_WOWS_BLUE_CARD from '../../../assets/wolfd_app_devs_flat231_300.jpg';
+import ETH_WOWS_GREEN_CARD from '../../assets/wolfd_app_devs_flat2_136_300.jpg';
+import ETH_WOWS_BLUE_CARD from '../../assets/wolfd_app_devs_flat231_300.jpg';
 
 type PROPS = {
   t: TFunction;
   location: RouteComponentProps['location'];
   history: RouteComponentProps['history'];
 };
-
-function Page12({ t }: PROPS) {
+//Page 12
+function CFolioManagerPage12({ t }: PROPS) {
   const [slider1Cards /*setSlider1Cards*/] = useState([
     {
       id: Math.random(),
@@ -471,4 +471,4 @@ function Page12({ t }: PROPS) {
   );
 }
 
-export default withTranslation()(Page12);
+export default withTranslation()(CFolioManagerPage12);

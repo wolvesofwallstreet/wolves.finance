@@ -7,14 +7,14 @@
  */
 import './header.css';
 
-import React, { Component, ReactNode } from 'react';
-import { Form, Image, Navbar } from 'react-bootstrap';
-import { TFunction, withTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import React, {Component, ReactNode} from 'react';
+import {Form, Image, Navbar} from 'react-bootstrap';
+import {TFunction, withTranslation} from 'react-i18next';
+import {Link} from 'react-router-dom';
 
 import logo from '../../assets/wolves_sft_logo.svg';
-import { CONNECTION_CHANGED } from '../../stores/constants';
-import { ConnectResult, StoreClasses } from '../../stores/store';
+import {CONNECTION_CHANGED} from '../../stores/constants';
+import {ConnectResult, StoreClasses} from '../../stores/store';
 
 interface HEADER_PROPS {
   location: Location;
@@ -38,7 +38,7 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
 
   constructor(props: HEADER_PROPS) {
     super(props);
-    this.state = { address: '', networkName: '' };
+    this.state = {address: '', networkName: ''};
 
     this.handleSubmit = this.handleSubmit.bind(this);
     this.onConnectionChanged = this.onConnectionChanged.bind(this);
@@ -66,25 +66,25 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
   }
 
   _shortAddress(): string {
-    const { address, networkName } = this.state;
+    const {address, networkName} = this.state;
     return address !== ''
       ? address.substring(0, 6) +
-          '...' +
-          address.substring(address.length - 4, address.length) +
-          '(' +
-          networkName +
-          ')'
+      '...' +
+      address.substring(address.length - 4, address.length) +
+      '(' +
+      networkName +
+      ')'
       : 'CONNECT WALLET';
   }
 
   _getNavItems(): NAVITEM[] {
-    const { location, t } = this.props;
+    const {location, t} = this.props;
     const query = new URLSearchParams(location.search);
     const type = query.get('type');
     const levelId = query.get('levelId') || 0;
 
     const result = [
-      { id: t('header.home'), to: '/', disabled: location.pathname === '/' },
+      {id: t('header.home'), to: '/', disabled: location.pathname === '/'},
       {
         id: t('header.wolvesCf'),
         to: '/shop?type=wolves&levelId=' + levelId,
@@ -115,9 +115,9 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
     const navItems = this._getNavItems();
     return (
       <Navbar bg="wolf" variant="dark" expand="lg">
-        <Navbar.Toggle aria-controls="basic-navbar-nav" />
+        <Navbar.Toggle aria-controls="basic-navbar-nav"/>
         <Navbar.Brand className="navbar-brand mr-auto" as={Link} to="/">
-          <Image src={logo} width="300" className="logo" />
+          <Image src={logo} width="300" className="logo"/>
         </Navbar.Brand>
         <Navbar.Collapse id="basic-navbar-nav font-14">
 
@@ -155,7 +155,7 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
                 </Link>
               </li>
             </ul>
-          </span> 
+          </span>
 
           <span className="nav-item dropdown mx-0 my-0">
             <span
@@ -182,67 +182,67 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
                 </Link>
               </li>
             </ul>
-          </span> 
-         
+          </span>
+
           <Link to={'/c_folio'}>
             C-FOLIO MANAGER
           </Link>
-         
-          <span className="nav-item dropdown">
+
+          {process.env.NODE_ENV === 'development' && <span className="nav-item dropdown">
             <span
-              className="nav-link dropdown-toggle "
-              data-bs-toggle="dropdown"
-              aria-expanded="false"
+                className="nav-link dropdown-toggle "
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
             >
             </span>
             <ul className="dropdown-menu bg-blue-transparent-dark">
               <li>
-                <Link className="dropdown-item" to="/update/page4">
+                <Link className="dropdown-item" to="/dev/page4">
                   Page 4
                 </Link>
               </li>
               <li>
-                <Link className="dropdown-item" to="/update/page5">
+                <Link className="dropdown-item" to="/dev/page5">
                   Page 5
                 </Link>
               </li>
               <li>
-                <Link className="dropdown-item" to="/update/page6">
+                <Link className="dropdown-item" to="/dev/page6">
                   Page 6
                 </Link>
               </li>
               <li>
-                <Link className="dropdown-item" to="/update/page7">
+                <Link className="dropdown-item" to="/dev/page7">
                   Page 7
                 </Link>
               </li>
               <li>
-                <Link className="dropdown-item" to="/update/page8">
+                <Link className="dropdown-item" to="/dev/page8">
                   Page 8
                 </Link>
               </li>
               <li>
-                <Link className="dropdown-item" to="/update/page9">
+                <Link className="dropdown-item" to="/dev/page9">
                   Page 9
                 </Link>
               </li>
               <li>
-                <Link className="dropdown-item" to="/update/page11">
+                <Link className="dropdown-item" to="/dev/page11">
                   Page 11
                 </Link>
               </li>
               <li>
-                <Link className="dropdown-item" to="/update/page12">
+                <Link className="dropdown-item" to="/dev/page12">
                   Page 12
                 </Link>
               </li>
               <li>
-                <Link className="dropdown-item" to="/update/page13">
+                <Link className="dropdown-item" to="/dev/page13">
                   Page 13
                 </Link>
               </li>
               <li>
-                <Link className="dropdown-item" to="/update/page14">
+                <Link className="dropdown-item" to="/dev/page14">
                   Page 14
                 </Link>
               </li>
@@ -252,20 +252,7 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
                 </Link>
               </li>
             </ul>
-          </span> 
-
-           {/* 
-          PG-3: WOLF TRADE FLOOR 
-          PG-4: WOLF TRADE FLOOR > STAKED INVEST (dropdown) 
-          pg-5 accessible from item selection within My Pack
-          PG-6 Item from my pack
-          PG-7 BOIS BOARDROOMS
-          PG-8 BOIS BOARDROOMS > YEARN INVESTMENT SFTS
-          PG-9 BOIS BOARDROOMS > YEARN INVESTMENT SFTS > YEARN INVEST (dropdowns) 
-          PG-10 -POPUP after clicking What does pack strength mean..."
-          PG - 11 accessible from item ( invested state )selection within My Pack
-          PG - 12 C-FOLIO MANAGER 
-          PG - 13/14/15 MYPACK */}
+          </span>}
 
         </Navbar.Collapse>
 

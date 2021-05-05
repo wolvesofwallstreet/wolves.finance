@@ -9,10 +9,10 @@
 import { TFunction, withTranslation } from 'react-i18next';
 import { Link, RouteComponentProps } from 'react-router-dom';
 
-import WOLFD_APP_DEVS_FLAT231_300 from '../../../assets/wolfd_app_devs_flat2_136_300.jpg';
-import HorizontalLine from '../../theme/line/HorizontalLine';
-import PageHeader from '../../theme/pageHeader/PageHeader';
-import WolveCard from '../../theme/wolveCard/WolveCard';
+import WOLFD_APP_DEVS_FLAT231_300 from '../../assets/wolfd_app_devs_flat2_136_300.jpg';
+import HorizontalLine from '../theme/line';
+import PageHeader from '../theme/pageHeader';
+import WolveCard from '../theme/wolveCard';
 
 type PROPS = {
   t: TFunction;

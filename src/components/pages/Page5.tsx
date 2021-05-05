@@ -10,9 +10,9 @@ import React, { Component } from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { Link, RouteComponentProps } from 'react-router-dom';
 
-import Logo from '../../../assets/logo.png';
-import SMALL_IMG from '../../../assets/wolfd_app_devs_flat2_136_500.jpg';
-import PageHeader from '../../theme/pageHeader';
+import Logo from '../../assets/logo.png';
+import SMALL_IMG from '../../assets/wolfd_app_devs_flat2_136_500.jpg';
+import PageHeader from '../theme/pageHeader';
 
 type PAGE8_PROPS = {
   t: TFunction;

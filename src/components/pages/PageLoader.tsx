@@ -10,17 +10,17 @@ import React from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { RouteComponentProps } from 'react-router-dom';
 
-import Page4 from './update/Page4';
-import Page5 from './update/Page5';
-import Page6 from './update/Page6';
-import Page7 from './update/Page7';
-import Page8 from './update/Page8';
-import Page9 from './update/Page9';
-import Page11 from './update/Page11';
-import Page12 from "./update/Page12";
-import Page13 from './update/Page13';
-import Page14 from './update/Page14';
-import Page15 from './update/Page15';
+import BoisBoardroomsPage7 from './BoisBoardroomsPage7';
+import BoisBoardroomsPage9 from './BoisBoardroomsPage9';
+import CFolioManagerPage12 from "./CFolioManagerPage12";
+import BoisBoardroomsPage8 from './InvestmentSftsPage8';
+import MyPackPage6 from './MyPackPage6';
+import Page5 from './Page5';
+import Page11 from './Page11';
+import Page13 from './Page13';
+import Page14 from './Page14';
+import Page15 from './Page15';
+import TradeFloorPage4 from './TradeFloorPage4';
 
 type PROPS = {
   t: TFunction;
@@ -35,7 +35,7 @@ function ExamplePage({ t, ...props }: PROPS) {
   // @ts-ignore
   switch (props?.match?.params?.page) {
     case 'page4':
-      component = <Page4 {...props} />;
+      component = <TradeFloorPage4 {...props} />;
       break;
 
     case 'page5':
@@ -43,19 +43,19 @@ function ExamplePage({ t, ...props }: PROPS) {
       break;
 
     case 'page6':
-      component = <Page6 {...props} />;
+      component = <MyPackPage6 {...props} />;
       break;
 
     case 'page7':
-      component = <Page7 {...props} />;
+      component = <BoisBoardroomsPage7 {...props} />;
       break;
 
     case 'page8':
-      component = <Page8 {...props} />;
+      component = <BoisBoardroomsPage8 {...props} />;
       break;
 
     case 'page9':
-      component = <Page9 {...props} />;
+      component = <BoisBoardroomsPage9 {...props} />;
       break;
 
     // case 'page10': /// WIP 100%
@@ -67,7 +67,7 @@ function ExamplePage({ t, ...props }: PROPS) {
       break;
 
     case 'page12': /// WIP 100%
-      component = <Page12 {...props} />;
+      component = <CFolioManagerPage12 {...props} />;
       break;
 
     case 'page13':

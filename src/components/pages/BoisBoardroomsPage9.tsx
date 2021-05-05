@@ -6,9 +6,9 @@
  * See the file LICENSES/README.md for more information.
  */
 
-import './../../theme/glidejs/glide.core.min.css';
-import './../../theme/glidejs/glide.theme.min.css';
-import './../../theme/glidejs/glide_custom.css';
+import '../theme/glidejs/glide.core.min.css';
+import '../theme/glidejs/glide.theme.min.css';
+import '../theme/glidejs/glide_custom.css';
 
 import GlideJS from '@glidejs/glide';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -19,11 +19,11 @@ import React, { Fragment } from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { RouteComponentProps } from 'react-router-dom';
 
-import IMG_BRYANT_500 from '../../../assets/bryant_bark_500.jpg';
-import Logo from '../../../assets/logo.png';
-import IMG_ETH_WOWS_LP_TOKEN_GREEN_500 from '../../../assets/wolfd_app_devs_flat2_136_500.jpg';
-import IMG_ETH_WOWS_LP_TOKEN_BLUE_500 from '../../../assets/wolfd_app_devs_flat231_300.jpg';
-import PageHeader from '../../theme/pageHeader/PageHeader';
+import IMG_BRYANT_500 from '../../assets/bryant_bark_500.jpg';
+import Logo from '../../assets/logo.png';
+import IMG_ETH_WOWS_LP_TOKEN_GREEN_500 from '../../assets/wolfd_app_devs_flat2_136_500.jpg';
+import IMG_ETH_WOWS_LP_TOKEN_BLUE_500 from '../../assets/wolfd_app_devs_flat231_300.jpg';
+import PageHeader from '../theme/pageHeader';
 
 type PROPS = {
   t: TFunction;
@@ -31,7 +31,7 @@ type PROPS = {
   history: RouteComponentProps['history'];
 };
 
-const Page9 = ({ t, location, history }: PROPS) => {
+const BoisBoardroomsPage9 = ({ t, location, history }: PROPS) => {
   const [activeCard, setActiveCard] = React.useState<number>(0);
   const [show, setShow] = React.useState(false);
   const [barsInfo] = React.useState([
@@ -357,7 +357,7 @@ const Page9 = ({ t, location, history }: PROPS) => {
   );
 };
 
-export default withTranslation()(Page9);
+export default withTranslation()(BoisBoardroomsPage9);
 
 /*
 var style = { "--my-css-var": 10 } as React.CSSProperties;

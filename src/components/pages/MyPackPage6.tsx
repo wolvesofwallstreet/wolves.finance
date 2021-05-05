@@ -7,16 +7,16 @@
  */
 // import './contentWrapper.css';
 
-import ContentWrapper from 'components/theme/contentWrapper/ContentWrapper';
+import ContentWrapper from 'components/theme/contentWrapper';
 import { withTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
 // import HorizontalLine from '../../theme/line/HorizontalLine';
 // import Navigation from '../../theme/navigation/Navigation';
-import PageContainer from '../../theme/pageContainer/PageContainer';
-import PageHeader from '../../theme/pageHeader/PageHeader';
+import PageContainer from '../theme/pageContainer/PageContainer';
+import PageHeader from '../theme/pageHeader';
 
-function Page6() {
+function MyPackPage6() {
   return (
     <>
       <PageContainer bgClass="bg-bois">
@@ -110,7 +110,7 @@ function Page6() {
   );
 }
 
-export default withTranslation()(Page6);
+export default withTranslation()(MyPackPage6);
 
 /*
 

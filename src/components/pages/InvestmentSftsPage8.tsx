@@ -10,8 +10,8 @@ import { Component } from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { Link, RouteComponentProps } from 'react-router-dom';
 
-import IMG_GREEN_ETH_WOWS_LP_TOKEN_300 from '../../../assets/wolfd_app_devs_flat2_136_300.jpg';
-import IMG_BLUE_ETH_WOWS_LP_TOKEN_300 from '../../../assets/wolfd_app_devs_flat231_300.jpg';
+import IMG_GREEN_ETH_WOWS_LP_TOKEN_300 from '../../assets/wolfd_app_devs_flat2_136_300.jpg';
+import IMG_BLUE_ETH_WOWS_LP_TOKEN_300 from '../../assets/wolfd_app_devs_flat231_300.jpg';
 
 interface ICard {
   title: string;
@@ -24,17 +24,17 @@ interface ICard {
   levelId: number | string;
 }
 
-type PAGE7_PROPS = {
+type PAGE8_PROPS = {
   t: TFunction;
   location: RouteComponentProps['location'];
   history: RouteComponentProps['history'];
 };
 
-type PAGE7_STATE = {
+type PAGE8_STATE = {
   cards: Array<ICard>;
 };
 
-const INITIAL_PAGE7_STATE: PAGE7_STATE = {
+const INITIAL_PAGE8_STATE: PAGE8_STATE = {
   cards: [
     {
       title: 'MINT NFT',
@@ -129,10 +129,10 @@ const INITIAL_PAGE7_STATE: PAGE7_STATE = {
   ],
 };
 
-class Page7 extends Component<PAGE7_PROPS, PAGE7_STATE> {
-  constructor(props: PAGE7_PROPS) {
+class InvestmentSftsPage8 extends Component<PAGE8_PROPS, PAGE8_STATE> {
+  constructor(props: PAGE8_PROPS) {
     super(props);
-    this.state = INITIAL_PAGE7_STATE;
+    this.state = INITIAL_PAGE8_STATE;
   }
 
   render(): JSX.Element {
@@ -206,4 +206,4 @@ class Page7 extends Component<PAGE7_PROPS, PAGE7_STATE> {
   }
 }
 
-export default withTranslation()(Page7);
+export default withTranslation()(InvestmentSftsPage8);

@@ -11,7 +11,7 @@ import {TFunction, withTranslation} from 'react-i18next';
 import { RouteComponentProps} from "react-router-dom";
 
 // import Logo from '../../../assets/logo.png'
-import PageHeader from "../../theme/pageHeader/PageHeader";
+import PageHeader from "../theme/pageHeader";
 
 type PROPS = {
   t: TFunction;
@@ -19,7 +19,8 @@ type PROPS = {
   history: RouteComponentProps['history'];
 };
 
-const Page7 = ({t, location, history,}: PROPS) => {
+// BoisBoardroomsPage7 
+const BoisBoardroomsPage7 = ({t, location, history,}: PROPS) => {
 
   const cards = [
     {
@@ -93,4 +94,4 @@ const Page7 = ({t, location, history,}: PROPS) => {
   );
 }
 
-export default withTranslation()(Page7);
+export default withTranslation()(BoisBoardroomsPage7);

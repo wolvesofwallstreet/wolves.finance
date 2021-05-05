@@ -6,12 +6,12 @@
  * See the file LICENSES/README.md for more information.
  */
 
-import { Component } from 'react';
-import { TFunction, withTranslation } from 'react-i18next';
-import { Link, RouteComponentProps } from 'react-router-dom';
+import {Component} from 'react';
+import {TFunction, withTranslation} from 'react-i18next';
+import {Link, RouteComponentProps} from 'react-router-dom';
 
-import IMG_GREEN_ETH_WOWS_LP_TOKEN_300 from '../../../assets/wolfd_app_devs_flat2_136_300.jpg';
-import IMG_BLUE_ETH_WOWS_LP_TOKEN_300 from '../../../assets/wolfd_app_devs_flat231_300.jpg';
+import IMG_GREEN_ETH_WOWS_LP_TOKEN_300 from '../../assets/wolfd_app_devs_flat2_136_300.jpg';
+import IMG_BLUE_ETH_WOWS_LP_TOKEN_300 from '../../assets/wolfd_app_devs_flat231_300.jpg';
 
 interface ICard {
   title: string;
@@ -24,17 +24,17 @@ interface ICard {
   levelId: number | string;
 }
 
-type PAGE8_PROPS = {
+type PAGE7_PROPS = {
   t: TFunction;
   location: RouteComponentProps['location'];
   history: RouteComponentProps['history'];
 };
 
-type PAGE8_STATE = {
+type PAGE7_STATE = {
   cards: Array<ICard>;
 };
 
-const INITIAL_PAGE8_STATE: PAGE8_STATE = {
+const INITIAL_PAGE7_STATE: PAGE7_STATE = {
   cards: [
     {
       title: 'MINT NFT',
@@ -129,15 +129,16 @@ const INITIAL_PAGE8_STATE: PAGE8_STATE = {
   ],
 };
 
-class Page8 extends Component<PAGE8_PROPS, PAGE8_STATE> {
-  constructor(props: PAGE8_PROPS) {
+// PAGE 3
+class TradeFloorPage extends Component<PAGE7_PROPS, PAGE7_STATE> {
+  constructor(props: PAGE7_PROPS) {
     super(props);
-    this.state = INITIAL_PAGE8_STATE;
+    this.state = INITIAL_PAGE7_STATE;
   }
 
   render(): JSX.Element {
     // const { t } = this.props;
-    const { cards } = this.state;
+    const {cards} = this.state;
 
     const cardRender =
       cards?.length &&
@@ -162,7 +163,7 @@ class Page8 extends Component<PAGE8_PROPS, PAGE8_STATE> {
             <span className="tk-grotesk-lightbold font-14 ellipsis">
               MOTTO: {card?.moto}
             </span>
-            <hr className="wolves" />
+            <hr className="wolves"/>
             <span className="f-vincente font-32 m-0 line-h ellipsis">
               {card?.bucket}
             </span>
@@ -185,16 +186,16 @@ class Page8 extends Component<PAGE8_PROPS, PAGE8_STATE> {
 
           {/* Line */}
           <span className="line-container page8-line-w-80">
-            <span id="left" className="dot" />
-            <span className="line" />
-            <span id="right" className="dot" />
+            <span id="left" className="dot"/>
+            <span className="line"/>
+            <span id="right" className="dot"/>
           </span>
 
           {/* Section title */}
           <span className="tk-vincente-lightbold">
             <span className="font-24">
               CORE LP NFT
-              <div id="triangle-down" />
+              <div id="triangle-down"/>
             </span>
           </span>
 
@@ -206,4 +207,4 @@ class Page8 extends Component<PAGE8_PROPS, PAGE8_STATE> {
   }
 }
 
-export default withTranslation()(Page8);
+export default withTranslation()(TradeFloorPage);
