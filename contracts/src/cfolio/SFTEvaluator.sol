@@ -61,11 +61,11 @@ contract SFTEvaluator is ISFTEvaluator {
   }
 
   //////////////////////////////////////////////////////////////////////////////
-  // Implementation of {ISftEvaluator}
+  // Implementation of {ISFTEvaluator}
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev See {ISftEvaluator-rewardRate}.
+   * @dev See {ISFTEvaluator-rewardRate}.
    */
   function rewardRate(uint256 tokenId) external view override returns (uint32) {
     require(tokenId.isBaseCard(), 'Invalid tokenId');
@@ -74,7 +74,7 @@ contract SFTEvaluator is ISFTEvaluator {
   }
 
   /**
-   * @dev See {ISftEvaluator-setRewardRate}.
+   * @dev See {ISFTEvaluator-setRewardRate}.
    */
   function setRewardRate(uint256 tokenId, bool revertUnchanged)
     external
@@ -102,7 +102,7 @@ contract SFTEvaluator is ISFTEvaluator {
         uint256 numCalledHandlers = 0;
 
         for (uint256 i = 0; i < length; ++i) {
-          // secondary cfolio items has one tradefloor which is the handler
+          // Secondary c-folio items have one tradefloor which is the handler
           address handler =
             IWOWSCryptofolio(_sftHolder.tokenIdToAddress(cFolioItems[i]))
               ._tradefloors(0);
@@ -110,7 +110,8 @@ contract SFTEvaluator is ISFTEvaluator {
             address(handler) != address(0),
             'SFTE: invalid cfolioItemHandler'
           );
-          // check if we have called this handler already
+
+          // Check if we have called this handler already
           uint256 j = numCalledHandlers;
           while (j > 0 && calledHandlers[j - 1] != handler) --j;
           if (j == 0) {

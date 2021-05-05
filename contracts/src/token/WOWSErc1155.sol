@@ -206,6 +206,7 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
   function setBaseMetadataURI(string memory baseMetadataURI) external override {
     // Access control
     require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Access denied');
+
     // Set state
     _setBaseMetadataURI(baseMetadataURI);
   }
@@ -219,12 +220,13 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
   {
     // Access control
     require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Access denied');
+
     // Set state
     _setContractMetadataURI(contractMetadataURI);
   }
 
   /**
-   * @dev See {IWOWSERC1155-setCustumURI}.
+   * @dev See {IWOWSERC1155-setCustomURI}.
    */
   function setCustomURI(uint256 tokenId, string memory customURI)
     public
