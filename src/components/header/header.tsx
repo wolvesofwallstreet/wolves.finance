@@ -27,9 +27,9 @@ interface HEADER_STATE {
 }
 
 type DropDownItem = {
-  id: string,
-  to: string
-}
+  id: string;
+  to: string;
+};
 
 type NAVITEM = {
   id: string;
@@ -74,19 +74,18 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
   }
 
   _shortAddress(): string {
-    const {address, networkName} = this.state;
+    const { address, networkName } = this.state;
     return address !== ''
       ? address.substring(0, 6) +
-      '...' +
-      address.substring(address.length - 4, address.length) +
-      '(' +
-      networkName +
-      ')'
+          '...' +
+          address.substring(address.length - 4, address.length) +
+          '(' +
+          networkName +
+          ')'
       : 'CONNECT WALLET';
   }
 
-
-  renderDropDown(title: string, dropdownItems: DropDownItem[]):ReactNode {
+  renderDropDown(title: string, dropdownItems: DropDownItem[]): ReactNode {
     return (
       <span className="nav-item dropdown mx-0 my-0">
         <span
@@ -97,22 +96,20 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
           {title}
         </span>
         <ul className="dropdown-menu bg-blue-transparent-dark">
-          {dropdownItems.map((item, index) =>
-            (
-              <li key={index + Math.random()}>
-                <Link className="dropdown-item" to={item.to}>
-                  {item.id}
-                </Link>
-              </li>
-            )
-          )}
+          {dropdownItems.map((item, index) => (
+            <li key={index + Math.random()}>
+              <Link className="dropdown-item" to={item.to}>
+                {item.id}
+              </Link>
+            </li>
+          ))}
         </ul>
       </span>
-    )
+    );
   }
 
   _getNavItems(): NAVITEM[] {
-    const {location, t} = this.props;
+    const { location, t } = this.props;
     const query = new URLSearchParams(location.search);
     const type = query.get('type');
     const levelId = query.get('levelId') || 0;
@@ -120,7 +117,7 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
       {
         id: t('header.home'),
         to: '/',
-        disabled: location.pathname === '/'
+        disabled: location.pathname === '/',
       },
       {
         id: t('header.wolvesCf'),
@@ -145,7 +142,7 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
             id: 'STAKED INVEST',
             to: '/staked-invest',
           },
-        ]
+        ],
       },
       {
         id: t('header.myPack'),
@@ -168,24 +165,29 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
       <Navbar bg="wolf" variant="dark" expand="lg">
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Brand className="navbar-brand mr-auto" as={Link} to="/">
-          <Image src={logo} width="300" className="logo"/>
+          <Image src={logo} width="300" className="logo" />
         </Navbar.Brand>
         <Navbar.Collapse id="basic-navbar-nav">
           {navItems.map((navItem: NAVITEM, index: number) => {
             // render Dropdown items
             if ('dropdownItems' in navItem && navItem.dropdownItems) {
-              return this.renderDropDown(navItem.id, navItem?.dropdownItems as DropDownItem[])
+              return this.renderDropDown(
+                navItem.id,
+                navItem?.dropdownItems as DropDownItem[]
+              );
             }
 
             // Active nav item
             if (navItem.disabled) {
-              return (<span key={index}>{navItem.id}</span>)
+              return <span key={index}>{navItem.id}</span>;
             }
 
             // nav item
-            return (<Link key={index} to={navItem.to}>
-              {navItem.id}
-            </Link>)
+            return (
+              <Link key={index} to={navItem.to}>
+                {navItem.id}
+              </Link>
+            );
           })}
         </Navbar.Collapse>
 

@@ -31,6 +31,10 @@
   line-height: 1.4;
 }
 
+.f-light {
+  font-weight: 300 !important;
+}
+
 .font-13 {
   font-size: 13px;
 }

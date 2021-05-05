@@ -17,6 +17,7 @@ import Footer from './components/footer';
 import Header from './components/header';
 import Page1 from './components/page1';
 import Page3 from './components/page3';
+import Page3TradeFloor from './components/page3TradeFloor';
 import Page4 from './components/page4';
 import { PageStatus } from './components/pageStatus';
 import Stake from './components/stake';
@@ -43,6 +44,9 @@ class App extends React.Component {
               />
               <Route path="/detail" component={Page4} />
               <Route path="/status" component={PageStatus} />
+
+              <Route path="/wolf_trade_floor" component={Page3TradeFloor} />
+
               <Route component={Page1} />
             </Switch>
             <Footer />
