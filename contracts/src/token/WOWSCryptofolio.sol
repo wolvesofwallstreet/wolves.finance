@@ -174,9 +174,12 @@ contract WOWSCryptofolio is IWOWSCryptofolio, ERC1155Holder {
   }
 
   //////////////////////////////////////////////////////////////////////////////
-  // Hooks
+  // Implementation of {IERC1155TokenReceiver} via {ERC1155Holder}
   //////////////////////////////////////////////////////////////////////////////
 
+  /**
+   * @dev See {IERC1155TokenReceiver-onERC1155Received}
+   */
   function onERC1155Received(
     address operator,
     address from,
@@ -193,10 +196,13 @@ contract WOWSCryptofolio is IWOWSCryptofolio, ERC1155Holder {
     // Update state
     _onTokensReceived(tokenIds, amounts);
 
-    // This contract supports safe ERC-1155 transfers
+    // Call ancestor
     return super.onERC1155Received(operator, from, tokenId, amount, data);
   }
 
+  /**
+   * @dev See {IERC1155TokenReceiver-onERC1155BatchReceived}
+   */
   function onERC1155BatchReceived(
     address operator,
     address from,
@@ -207,7 +213,7 @@ contract WOWSCryptofolio is IWOWSCryptofolio, ERC1155Holder {
     // Update state
     _onTokensReceived(tokenIds, amounts);
 
-    // This contract supports safe ERC-1155 transfers
+    // Call ancestor
     return
       super.onERC1155BatchReceived(operator, from, tokenIds, amounts, data);
   }

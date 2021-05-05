@@ -32,9 +32,10 @@ import '../utils/TokenIds.sol';
  * Normaly CFolioItem SFTs are locked in the main TradeFloor contract to allow
  * trading or transfer into a Base SFT card's c-folio.
  *
- * CFolioItem SFTs only earn rewards if they are inside the cfolio of a base NFT.
- * We get called from main TradeFloor every time an CFolioItem gets transfered and
- * calculate the new rewardable LP amount based on the reward % of the base NFT.
+ * CFolioItem SFTs only earn rewards if they are inside the cfolio of a base
+ * NFT. We get called from main TradeFloor every time an CFolioItem gets
+ * transfered and calculate the new rewardable LP amount based on the reward %
+ * of the base NFT.
  */
 contract CFolioItemHandlerLP is ICFolioItemHandler {
   using SafeMath for uint256;
@@ -84,8 +85,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
    *
    * We gather all current addresses from address registry into immutable vars.
    * If one of the relevant addresses changes, the contract has to be updated.
-   * There is only a little state, user state is completely handled in
-   * CFolioFarm.
+   * There is little state here, user state is completely handled in CFolioFarm.
    */
   constructor(IAddressRegistry addressRegistry) {
     // TradeFloor
@@ -109,7 +109,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
       addressRegistry.getRegistryEntry(AddressBook.SFT_EVALUATOR_PROXY)
     );
 
-    // The ERC20 token we stake
+    // The ERC-20 token we stake
     stakingToken = IERC20(
       addressRegistry.getRegistryEntry(AddressBook.UNISWAP_V2_PAIR)
     );
@@ -128,6 +128,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
    * @dev See {ICFolioItemCallback-deposit}
    *
    * Note: tokenId cannot be owned by a base SFT.
+   *
    * There is no need to update any rewards.
    */
   function deposit(uint256 tokenId, uint256[] calldata amounts)
@@ -149,6 +150,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
    * @dev See {ICFolioItemCallback-withdraw}
    *
    * Note: tokenId cannot be owned by a base SFT.
+   *
    * There is no need to update any rewards.
    */
   function withdraw(uint256 tokenId, uint256[] calldata amounts)
@@ -170,15 +172,16 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
    * @dev See {ICFolioItemCallback-getRewards}
    *
    * Note: tokenId must be a base SFT card
+   *
    * We allow reward pull only for unlocked SFTs
    */
   function getRewards(address recipient, uint256 tokenId) external override {
     // Validate parameters
     require(tokenId.isBaseCard(), 'CFIH: Invalid tokenId');
 
-    // Verify that tokenid has an valid cFolio address
+    // Verify that tokenId has a valid cFolio address
     address cfolio = _sftHolder.tokenIdToAddress(tokenId);
-    require(cfolio != address(0), 'Invalid cfolio address');
+    require(cfolio != address(0), 'Invalid c-folio address');
 
     // Verify that the tokenId is owned by msg.sender in the SFT contract.
     // This also verifies that the token is not locked in TradeFloor.
@@ -205,6 +208,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
   ) external override onlyTradeFloor {
     // In case of transfer verify the target
     uint256 sftTokenId;
+
     if (
       to != address(0) &&
       (sftTokenId = _sftHolder.addressToTokenId(to)) != uint256(-1)
@@ -213,6 +217,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
       require((LEVEL2WOLF & (uint256(1) << level)) > 0, 'CFIH: Wolves only');
       _updateRewards(to, sftEvaluator.rewardRate(sftTokenId));
     }
+
     if (
       from != address(0) &&
       (sftTokenId = _sftHolder.addressToTokenId(from)) != uint256(-1)
@@ -238,11 +243,12 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
    * @dev See {ICFolioItemHandler-setupCFolio}
    *
    * Note: We place a dummy ERC1155 token with id 0 into the CFolioItem's
-   * cfolio. The reason is that we want to know if a c-folio item gets burned to
-   * prevent LP tokens becoming inaccessible.
+   * c-folio. The reason is that we want to know if a c-folio item gets burned,
+   * as burning an empty c-folio will result in no transfers. This prevents LP
+   * tokens from becoming inaccessible.
    *
-   * Refer to the Minimal ERC1155 section to learn which functions we need for
-   * this.
+   * Refer to the Minimal ERC1155 section below to learn which functions are
+   * needed for this.
    */
   function setupCFolio(
     address payer,
@@ -252,12 +258,13 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
     // Validate access
     require(msg.sender == sftMinter, 'Only SFTMinter');
 
+    // Validate parameters
     address cFolio = _sftHolder.tokenIdToAddress(sftTokenId);
     require(cFolio != address(0), 'Invalid sftTokenId');
 
     // Verify that this function is called the first time
     try IWOWSCryptofolio(cFolio)._tradefloors(0) returns (address) {
-      revert('CFIH: Tradefloor not empty');
+      revert('CFIH: TradeFloor not empty');
     } catch {}
 
     if (amounts.length > 0 && amounts[0] > 0) {
@@ -269,7 +276,8 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
       cfolioFarm.addAssets(cFolio, amounts[0]);
     }
 
-    // Transfer a dummy NFT token to cFolio so we get informed if the cFolio get burned
+    // Transfer a dummy NFT token to cFolio so we get informed if the cFolio
+    // gets burned
     IERC1155TokenReceiver(cFolio).onERC1155Received(
       address(this),
       address(0),
@@ -318,18 +326,18 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
   }
 
   /**
-   * @dev We don't allow burning non-empty cfolios
+   * @dev We don't allow burning non-empty c-folios
    */
   function burnBatch(
-    address, /*account*/
+    address, /* account */
     uint256[] calldata tokenIds,
     uint256[] calldata
   ) external view {
     // Validate parameters
     require(tokenIds.length == 1, 'Length must be 1');
 
-    // This call originates from the c-folio. We revert if there are
-    // investment amounts left for this c-folio address.
+    // This call originates from the c-folio. We revert if there are investment
+    // amounts left for this c-folio address.
     require(cfolioFarm.balanceOf(msg.sender) == 0, 'CFIH: not empty');
   }
 

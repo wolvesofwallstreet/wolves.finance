@@ -14,11 +14,12 @@ pragma solidity >=0.7.0 <0.8.0;
 interface ICFolioItemCallback {
   /**
    * @dev Called when a TradeFloor CFolioItem is transfered
-   * In case of mint from is address(0)
-   * In case of burn to is address(0)
    *
-   * cfolioHandlers are passed to let each cfolioHandler filter
-   * for its own token. This eliminates need of creating separate lists
+   * In case of mint `from` is address(0)
+   * In case of burn `to` is address(0)
+   *
+   * cfolioHandlers are passed to let each cfolioHandler filter for its own
+   * token. This eliminates the need for creating separate lists.
    *
    * @param from The account sending the token
    * @param to The account receiving the token

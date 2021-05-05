@@ -17,10 +17,12 @@ import '../utils/TokenIds.sol';
 
 /**
  * TODO's:
- * implement transfer and burn helpers for cryptofolio items
+ *
+ *   - Implement transfer and burn helpers for cryptofolio items
  */
 contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
   using TokenIds for uint256;
+
   //////////////////////////////////////////////////////////////////////////////
   // Constants
   //////////////////////////////////////////////////////////////////////////////
@@ -28,7 +30,10 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
   // Used to restict calls to TRADEFLOOR but also to collect all TRADEFLOORS
   bytes32 public constant TRADEFLOOR_ROLE = keccak256('TRADEFLOOR_ROLE');
 
-  // Used to restict calls to TRADEFLOOR but also to collect all TRADEFLOORS
+  // Operator role is required to set approval for tokens. This prevents
+  // auctions like OpenSea from selling this token. Selling by third parties
+  // is only allowed for cryptofolios which are locked in one of our TradeFloor
+  // contracts.
   bytes32 public constant OPERATOR_ROLE = keccak256('OPERATOR_ROLE');
 
   //////////////////////////////////////////////////////////////////////////////
@@ -329,6 +334,7 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
   ) internal virtual override {
     // Perform action
     _tokenTransfered(from, to, tokenId, amount);
+
     // Call ancestor
     super._beforeTokenTransfer(operator, from, to, tokenId, amount, data);
   }

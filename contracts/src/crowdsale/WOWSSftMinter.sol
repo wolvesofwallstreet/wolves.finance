@@ -20,6 +20,10 @@ import '../token/interfaces/IWOWSERC1155.sol';
 contract WOWSSftMinter is Ownable {
   using SafeERC20 for IERC20;
 
+  //////////////////////////////////////////////////////////////////////////////
+  // State
+  //////////////////////////////////////////////////////////////////////////////
+
   // PricePerlevel, customLevel start at 0xFF
   mapping(uint16 => uint256) public _pricePerLevel;
 
@@ -29,8 +33,10 @@ contract WOWSSftMinter is Ownable {
     uint128 numMinted;
     uint128 maxMintable;
   }
-  mapping(uint256 => CFolioItemSft) public cfolioItemSfts;
+  mapping(uint256 => CFolioItemSft) public cfolioItemSfts; // C-folio type to c-folio data
+
   address public tradeFloor;
+
   uint256 public nextCFolioItemNft = 0x10000000000000000;
 
   // The ERC1155 contract we are minting from
@@ -80,7 +86,7 @@ contract WOWSSftMinter is Ownable {
     // Initialize {Ownable}
     transferOwnership(owner);
 
-    // Initialize {WOWSSftMinter}
+    // Initialize state
     _sftContract = sftContract;
     _wowsToken = wowsToken;
     _rewardHandler = rewardHandler;
@@ -106,9 +112,9 @@ contract WOWSSftMinter is Ownable {
   }
 
   /**
-   * @dev Set new rewardhandler
+   * @dev Set new reward handler
    *
-   * RewardHandler is from concept upgradeable / see investment::Controller.sol.
+   * RewardHandler is by concept upgradeable / see investment::Controller.sol.
    */
   function setRewardHandler(IRewardHandler newRewardHandler)
     external
@@ -119,7 +125,7 @@ contract WOWSSftMinter is Ownable {
   }
 
   /**
-   * @dev Set tradefloor
+   * @dev Set Trade Floor
    */
   function setTradeFloor(address tradeFloor_) external onlyOwner {
     // Update state
@@ -127,7 +133,7 @@ contract WOWSSftMinter is Ownable {
   }
 
   /**
-   * @dev Set tradefloor
+   * @dev Set the limitations, the price and the handlers for CFolioItem SFT's
    */
   function setCFolioSpec(
     uint256[] calldata cFolioTypes,
@@ -135,6 +141,7 @@ contract WOWSSftMinter is Ownable {
     uint128[] calldata maxMint,
     uint256[] calldata prices
   ) external onlyOwner {
+    // Validate parameters
     require(
       cFolioTypes.length == handlers.length &&
         handlers.length == maxMint.length &&
@@ -225,10 +232,12 @@ contract WOWSSftMinter is Ownable {
     uint256[] calldata investAmounts
   ) external {
     // Validate state
-    require(_setupCFolio == false, 'Already entered');
+    require(_setupCFolio == false, 'Already setting up');
 
     // Load state
     CFolioItemSft storage sftData = cfolioItemSfts[cfolioItemType];
+
+    // Validate state
     require(address(sftData.handler) != address(0), 'CFI Minter: Invalid type');
     require(sftData.numMinted < sftData.maxMintable, 'CFI Minter: sold out');
 
@@ -245,6 +254,7 @@ contract WOWSSftMinter is Ownable {
       // Allow this contract to be an ERC1155 holder
       _setupCFolio = true;
     }
+
     uint256 tokenId = nextCFolioItemNft++;
 
     _sftContract.setCustomURI(tokenId, uri);
@@ -330,7 +340,7 @@ contract WOWSSftMinter is Ownable {
     uint256 price,
     uint256 cfolioType
   ) internal {
-    // Transfer WOWS from user to rewardhandler
+    // Transfer WOWS from user to reward handler
     _wowsToken.safeTransferFrom(msg.sender, address(_rewardHandler), price);
 
     // Mint the token

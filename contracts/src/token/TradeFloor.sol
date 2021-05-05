@@ -180,8 +180,10 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
 
     // Rarible: Need a real wallet for setting up storefront
     address deployer = _addressRegistry.getRegistryEntry(AddressBook.DEPLOYER);
+
     // This event initializes Rarible storefront
     emit CreateERC1155_v1(deployer, name, symbol);
+
     // OpenSea enable storefront editing
     emit OwnershipTransferred(address(0), deployer);
   }
@@ -524,10 +526,11 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
 
   /**
    * @dev Withdraw tokenAddress ERC20token to destination
-   * tokenAddress cannot be rewardToken.
-   * TODO: provide the possibility to swap into WOWS
    *
-   * @param tokenAddress the address of the token to transfer
+   * TODO: Provide the possibility to swap into WOWS
+   *
+   * @param tokenAddress the address of the token to transfer. Cannot be
+   * rewardToken.
    */
   function collectGarbage(address tokenAddress) external {
     // Validate access
@@ -564,7 +567,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     address to,
     uint256[] memory tokenIds
   ) private {
-    // Count sft tokenIds
+    // Count SFT tokenIds
     uint256 length = tokenIds.length;
     uint256 numBaseSft = 0;
     uint256 numUniqueCFolioHandlers = 0;
@@ -584,13 +587,15 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
           IWOWSCryptofolio(_sftHolder.tokenIdToAddress(tokenId))._tradefloors(
             0
           );
+
         uint256 iter = numUniqueCFolioHandlers;
         while (iter > 0 && uniqueCFolioHandlers[iter - 1] != cFolioHandler)
           --iter;
         if (iter == 0) {
-          require(cFolioHandler != address(0), 'Invalid cfh address');
+          require(cFolioHandler != address(0), 'Invalid CFH address');
           uniqueCFolioHandlers[numUniqueCFolioHandlers++] = cFolioHandler;
         }
+
         cFolioHandlers[i] = cFolioHandler;
       }
       _relinkOwner(from, to, tokenId);
@@ -650,11 +655,14 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
       require(amounts[i] == 1, 'Amount != 1 not allowed');
       require(_tokenInfos[tokenId].minted == false, 'Token already minted');
       _relinkOwner(address(0), from, tokenId);
+
       // OpenSea only listens to TransferSingle event on mint
       _mint(from, tokenId, 1, '');
+
       // Even the tokenId has not changed we fire URI to
       // let clients know that Metadata has to be refreshed
       emit URI(uri(tokenId), tokenId);
+
       // Rarible needs to be informed about fees
       emit SecondarySaleFees(tokenId, getFeeRecipients(0), getFeeBps(0));
     }
@@ -692,8 +700,10 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
 
       // Unlink prev -> tokenId
       key.index = tokenInfo.listKey.index;
+
       // Unlink tokenId -> next
       tokenInfo.listKey.index = 0;
+
       // Decrement count
       fromList.count--;
     }
@@ -727,11 +737,11 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   /**
    * @dev Check if the address is a valid target
    *
-   * @param test the address to test
+   * If sftHolder returns a valid tokenId, it must be a card. Even though
+   * Cryptofolio supports multiple TradeFloors, the main SFT lock handling
+   * happens only in this contract instance.
    *
-   * If sftHolder returns a valid tokenId, it must be a card.
-   * Even Cryptofolio supports multiple Tradefloors, the main
-   * SFT lock handling happens only in this contract instance.
+   * @param test The address to test
    */
   function _validTarget(address test) private view returns (bool) {
     uint256 tokenId;
