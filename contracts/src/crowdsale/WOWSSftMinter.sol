@@ -224,6 +224,9 @@ contract WOWSSftMinter is Ownable {
     uint256 sftTokenId,
     uint256[] calldata investAmounts
   ) external {
+    // Validate state
+    require(_setupCFolio == false, 'Already entered');
+
     // Load state
     CFolioItemSft storage sftData = cfolioItemSfts[cfolioItemType];
     require(address(sftData.handler) != address(0), 'CFI Minter: Invalid type');
