@@ -418,16 +418,12 @@ describe('Reward farms', function () {
     chai.expect(currentLpBalance).to.equal(lpBalance);
   });
 
-  //////////////////////////////////////////////////////////////////////////////
-  // Test LP NFTs
-  //////////////////////////////////////////////////////////////////////////////
-
-  it('should approve TFCLP to transfer tokens', async function () {
+  it('should approve CFIHLP to transfer tokens', async function () {
     this.timeout(60 * 1000);
 
     const { uniV2PairContract, cfolioItemHandlerLP } = contracts;
 
-    // Approve TFCLP to transfer our tokens
+    // Approve CFIHLP to transfer our tokens
     const tx = await uniV2PairContract.approve(
       cfolioItemHandlerLP.address,
       lpBalance
@@ -437,20 +433,11 @@ describe('Reward farms', function () {
       cfolioItemHandlerLP.address, // spender
       lpBalance // balance
     );
-
-    // Log gas cost
-    const receipt = await (await tx).wait();
-    const gasUsedGwei = receipt.gasUsed;
-    const gasCost =
-      gasUsedGwei
-        .mul(await getGasPrice())
-        .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
-    console.log(
-      `Approve LP gas used: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
-        gasCost
-      )})`
-    );
   });
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Test LP NFTs
+  //////////////////////////////////////////////////////////////////////////////
 
   it('should revert when creating LP SFT / NFT into boi cryptofolio', async function () {
     this.timeout(60 * 1000);
@@ -486,7 +473,7 @@ describe('Reward farms', function () {
       uniV2PairContract,
     } = contracts;
 
-    // Mint a new LP investment Type into Wolf
+    // Mint a new LP investment type into Wolf
     const tx = sftMinterContract.mintCFolioItemSFT(
       marketingWallet.address,
       cFolioItemType,
@@ -512,11 +499,23 @@ describe('Reward farms', function () {
         [1]
       );
 
+    // Log gas cost
+    const receipt = await (await tx).wait();
+    const gasUsedGwei = receipt.gasUsed;
+    const gasCost =
+      gasUsedGwei
+        .mul(await getGasPrice())
+        .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
+    console.log(
+      `Deposit LP NFT gas used: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+        gasCost
+      )})`
+    );
+
     // Get the address of the investment card clone contract
     const cryptofolioItemAddressWolfLP = await sftHolderContract.tokenIdToAddress(
       cfolioItemTokenId
     );
-
     await chai.expect(tx).to.emit(cfolioFarmLP, 'AssetAdded').withArgs(
       cryptofolioItemAddressWolfLP, // Recipient
       lpBalance // Amount
@@ -529,6 +528,43 @@ describe('Reward farms', function () {
     chai.expect(idsLength).to.equal(1);
     chai.expect(tokenIds[0]).to.equal(cfolioItemTokenId);
 
+    // Item in the SFT holder should belong to the trade floor
+    let balance = await sftHolderContract.balanceOf(
+      tradeFloorProxyContract.address,
+      cfolioItemTokenId
+    );
+    chai.expect(balance).to.equal(1);
+
+    // Item in the trade floor contract should belong to the cryptofolio
+    balance = await tradeFloorProxyInstance.balanceOf(
+      cryptofolioAddressWolf,
+      cfolioItemTokenId
+    );
+    chai.expect(balance).to.equal(1);
+  });
+
+  it('should remove c-folio item from base SFT c-folio', async function () {
+    this.timeout(60 * 1000);
+
+    const {
+      sftHolderContract,
+      tradeFloorProxyContract,
+      cfolioFarmLP,
+    } = contracts;
+
+    // Transfer locked cryptofolio item NFT
+    const tx = tradeFloorProxyInstance.safeTransferFrom(
+      cryptofolioAddressWolf,
+      marketingWallet.address,
+      cfolioItemTokenId,
+      1,
+      []
+    );
+    await chai
+      .expect(tx)
+      .to.emit(cfolioFarmLP, 'ShareRemoved')
+      .withArgs(cryptofolioAddressWolf, lpBalance.div(2));
+
     // Log gas cost
     const receipt = await (await tx).wait();
     const gasUsedGwei = receipt.gasUsed;
@@ -537,9 +573,78 @@ describe('Reward farms', function () {
         .mul(await getGasPrice())
         .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
     console.log(
-      `Deposit LP gas used: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+      `Transfer cryptofolio item NFT gas used: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
         gasCost
       )})`
     );
+
+    // Item in the SFT holder should belong to the trade floor
+    let balance = await sftHolderContract.balanceOf(
+      tradeFloorProxyContract.address,
+      cfolioItemTokenId
+    );
+    chai.expect(balance).to.equal(1);
+
+    // Item in the trade floor contract should belong to the marketing wallet
+    balance = await tradeFloorProxyInstance.balanceOf(
+      marketingWallet.address,
+      cfolioItemTokenId
+    );
+    chai.expect(balance).to.equal(1);
+  });
+
+  it('should burn the c-folio item NFT', async function () {
+    this.timeout(60 * 1000);
+
+    // Burn locked cryptofolio NFT
+    const tx = tradeFloorProxyInstance.burn(
+      marketingWallet.address,
+      cfolioItemTokenId,
+      1
+    );
+    await chai.expect(tx).to.not.be.reverted;
+
+    // Log gas cost
+    const receipt = await (await tx).wait();
+    const gasUsedGwei = receipt.gasUsed;
+    const gasCost =
+      gasUsedGwei
+        .mul(await getGasPrice())
+        .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
+    console.log(
+      `Burn cryptofolio item NFT gas used: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+        gasCost
+      )})`
+    );
+  });
+
+  it('should check that LP tokens were returned', async function () {
+    this.timeout(60 * 1000);
+
+    // TODO: Check that LP tokens were returned to the marketing wallet
+  });
+
+  it('should withdraw from CFIHLP', async function () {
+    this.timeout(60 * 1000);
+
+    // TODO
+  });
+
+  it('should deposit to CFIHLP', async function () {
+    this.timeout(60 * 1000);
+
+    // TODO
+  });
+
+  it('should lock investment SFT into TF', async function () {
+    this.timeout(60 * 1000);
+
+    // TODO
+  });
+
+  it('should transfer the locked NFT into the wolf card', async function () {
+    this.timeout(60 * 1000);
+
+    // TODO
   });
 });
