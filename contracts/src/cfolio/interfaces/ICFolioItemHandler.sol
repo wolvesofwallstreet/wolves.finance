@@ -17,9 +17,8 @@ interface ICFolioItemHandler is ICFolioItemCallback {
   /**
    * @dev Called when a SFT tokens grade needs re-evaluation
    *
-   * @param tokenId The ERC-1155 token ID
-   * Rate is in 1E6 convention: 1E6 = 100%
-   * @param newRate new value rate
+   * @param tokenId The ERC-1155 token ID. Rate is in 1E6 convention: 1E6 = 100%
+   * @param newRate The new value rate
    */
   function sftUpgrade(uint256 tokenId, uint32 newRate) external;
 
