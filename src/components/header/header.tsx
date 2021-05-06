@@ -145,11 +145,6 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
         ],
       },
       {
-        id: t('header.myPack'),
-        to: '/my?type=myPack&levelId=' + levelId,
-        disabled: type === 'myPack',
-      },
-      {
         id: 'BOIS BOARDROOMS',
         to: '/wolf_trade_floor-1',
         disabled: location.pathname === '/wolf_trade_floor',
@@ -167,6 +162,16 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
             to: '/yearn_invest',
           },
         ],
+      },
+      {
+        id: t('header.myPack'),
+        to: '/my?type=myPack&levelId=' + levelId,
+        disabled: type === 'myPack',
+      },
+      {
+        id: 'C-FOLIO MANAGER',
+        to: '/c_folio_manager',
+        disabled: location.pathname === '/c_folio_manager',
       },
       {
         id: t('header.stake'),

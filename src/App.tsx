@@ -24,6 +24,8 @@ import Page5 from './components/page5';
 import Page7BoisBoardrooms from './components/page7';
 import Page8InvestmentSfts from './components/page8InvestmentSfts';
 import Page9BoisBoardrooms from './components/Page9BoisBoardrooms';
+import Page11 from './components/page11';
+import Page12CFolioManager from './components/page12';
 import { PageStatus } from './components/pageStatus';
 import Stake from './components/stake';
 import WolfToast from './components/toast/wolftoast';
@@ -59,6 +61,8 @@ class App extends React.Component {
                 component={Page8InvestmentSfts}
               />
               <Route path="/yearn_invest" component={Page9BoisBoardrooms} />
+              <Route path="/page11" component={Page11} />
+              <Route path="/c_folio_manager" component={Page12CFolioManager} />
               <Route component={Page1} />
             </Switch>
             <Footer />
