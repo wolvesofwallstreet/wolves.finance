@@ -150,9 +150,23 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
         disabled: type === 'myPack',
       },
       {
-        id: 'Page5',
-        to: 'page5-mypack',
-        disabled: type === '/page5-mypack',
+        id: 'BOIS BOARDROOMS',
+        to: '/wolf_trade_floor-1',
+        disabled: location.pathname === '/wolf_trade_floor',
+        dropdownItems: [
+          {
+            id: 'BOIS BOARDROOMS',
+            to: '/bois_boardrooms',
+          },
+          {
+            id: 'YEARN INVESTMENT SFTS',
+            to: '/yearn_investment_sfts',
+          },
+          {
+            id: 'YEARN INVEST',
+            to: '/yearn_invest',
+          },
+        ],
       },
       {
         id: t('header.stake'),
