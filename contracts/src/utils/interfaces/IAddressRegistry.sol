@@ -15,7 +15,7 @@ interface IAddressRegistry {
   function setRegistryEntry(bytes32 _key, address _location) external;
 
   /**
-   * @dev Get an registry enty with by key, returns 0 address if not existing
+   * @dev Get a registry enty with by key, returns 0 address if not existing
    */
   function getRegistryEntry(bytes32 _key) external view returns (address);
 }

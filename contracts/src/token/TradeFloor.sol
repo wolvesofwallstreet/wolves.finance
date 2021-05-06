@@ -323,9 +323,9 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev See {ERC1155-_beforeTokenTransfer}.
+   * @dev See {ERC1155-_beforeTokenTransfer}
    *
-   * @notice Overrideable hook for single transfers.
+   * @notice Overrideable hook for single transfers
    */
   function _beforeTokenTransfer(
     address operator,
@@ -345,7 +345,9 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   }
 
   /**
-   * @notice overrideable hook for batch transfers.
+   * @dev See {ERC1155-_beforeBatchTokenTransfer}
+   *
+   * @notice Overrideable hook for batch transfers
    */
   function _beforeBatchTokenTransfer(
     address operator,
@@ -403,13 +405,14 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     uint256 amount,
     bytes memory data
   ) public override returns (bytes4) {
-    // Update state
+    // Handle tokens
     uint256[] memory tokenIds = new uint256[](1);
     tokenIds[0] = tokenId;
     uint256[] memory amounts = new uint256[](1);
     amounts[0] = amount;
     _onTokensReceived(from, tokenIds, amounts);
 
+    // Call ancestor
     return super.onERC1155Received(operator, from, tokenId, amount, data);
   }
 
@@ -420,9 +423,10 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     uint256[] memory amounts,
     bytes memory data
   ) public override returns (bytes4) {
+    // Handle tokens
     _onTokensReceived(from, tokenIds, amounts);
 
-    // This contract supports safe ERC-1155 transfers
+    // Call ancestor
     return
       super.onERC1155BatchReceived(operator, from, tokenIds, amounts, data);
   }

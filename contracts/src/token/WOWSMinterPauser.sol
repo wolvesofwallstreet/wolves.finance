@@ -137,10 +137,13 @@ contract WOWSMinterPauser is
     uint256 id,
     uint256 value
   ) public virtual {
+    // Validate access
     require(
       account == _msgSender() || isApprovedForAll(account, _msgSender()),
       'Caller is not owner nor approved'
     );
+
+    // Update state
     _burn(account, id, value);
   }
 
@@ -149,11 +152,13 @@ contract WOWSMinterPauser is
     uint256[] calldata ids,
     uint256[] calldata values
   ) public virtual {
+    // Validate access
     require(
       account == _msgSender() || isApprovedForAll(account, _msgSender()),
       'Caller is not owner nor approved'
     );
 
+    // Update state
     _batchBurn(account, ids, values);
   }
 
@@ -174,7 +179,9 @@ contract WOWSMinterPauser is
     uint256 amount,
     bytes memory data
   ) internal virtual override {
+    // Validate state
     require(_pauseActive == false, 'Transfer operation paused!');
+
     // Call ancestor
     super._beforeTokenTransfer(operator, from, to, tokenId, amount, data);
   }
@@ -192,7 +199,9 @@ contract WOWSMinterPauser is
     uint256[] memory amounts,
     bytes memory data
   ) internal virtual override {
+    // Valiate state
     require(_pauseActive == false, 'Transfer operation paused!');
+
     // Call ancestor
     super._beforeBatchTokenTransfer(
       operator,
@@ -204,6 +213,13 @@ contract WOWSMinterPauser is
     );
   }
 
+  //////////////////////////////////////////////////////////////////////////////
+  // Implementation of {ERC165}
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * @dev See {ERC165-supportsInterface}
+   */
   function supportsInterface(bytes4 _interfaceID)
     public
     pure

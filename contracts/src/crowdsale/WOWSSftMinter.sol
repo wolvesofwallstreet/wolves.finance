@@ -214,14 +214,14 @@ contract WOWSSftMinter is Ownable {
   }
 
   /**
-   * @dev Mint a cfolioitem token
+   * @dev Mint a CFolioItem token
    *
    * Approval of WOWS token required before the call.
    *
    * @param recipient Recipient of the SFT, unused if sftTokenId is != -1
    * @param cfolioItemType The item type of the SFT
    * @param uri The URI for this NFT
-   * @param sftTokenId If <> -1 recipient is the SFT cfolio / handler must be called
+   * @param sftTokenId If <> -1 recipient is the SFT c-folio / handler must be called
    * @param investAmounts Arguments needed for the handler (in general investment)
    */
   function mintCFolioItemSFT(
