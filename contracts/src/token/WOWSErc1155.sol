@@ -31,7 +31,7 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
   bytes32 public constant TRADEFLOOR_ROLE = keccak256('TRADEFLOOR_ROLE');
 
   // Operator role is required to set approval for tokens. This prevents
-  // auctions like OpenSea from selling this token. Selling by third parties
+  // auctions like OpenSea from selling the tokens. Selling by third parties
   // is only allowed for cryptofolios which are locked in one of our TradeFloor
   // contracts.
   bytes32 public constant OPERATOR_ROLE = keccak256('OPERATOR_ROLE');
@@ -74,8 +74,8 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
 
   // Mapping owner -> first owned token
   //
-  // Note that we work 1 based here because of initialization
-  // e.g. firstId == 1 links to tokenId 0;
+  // Note that we work 1-based here because of initialization
+  // e.g. firstId == 1 links to tokenId 0
   struct Owned {
     uint256 count;
     ListKey listKey; // First tokenId in linked list
@@ -112,7 +112,7 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
     // Our clone blueprint cryptofolio.
     _cryptofolio = cryptofolio;
 
-    // MetaData
+    // Metadata
     _setBaseMetadataURI(baseMetadataURI);
     _setContractMetadataURI(contractMetadataURI);
   }
@@ -375,17 +375,17 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev Return information about a wows card
+   * @dev Return information about a WOWS card
    *
    * NOTE: The implementation in the initial deployment was incorrect. If you
    * are interacting with contract 0x64B3342dB643f3Fb4da5781b6D09B44Ab4668dE4,
    * you must use {getCardDataBatch}!
    *
    * @param level The level of the card
-   * @param cardId The id of the card
+   * @param cardId The ID of the card
    *
    * @return cap Max mintable cards
-   * @return minted Already minted cards
+   * @return minted Number of cards that are already minted
    */
   function getCardData(uint8 level, uint8 cardId)
     external
@@ -397,12 +397,12 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
   }
 
   /**
-   * @dev Return information about a wows card
+   * @dev Return information about a WOWS card
    *
    * @param levels The levels of the card to query
-   * @param cardIds A list of card ids to query
+   * @param cardIds A list of card IDs to query
    *
-   * @return capMintedPair Array of 16 Bit, cap,minted,...
+   * @return capMintedPair Array of 16-bit cap,minted,...
    */
   function getCardDataBatch(uint8[] memory levels, uint8[] memory cardIds)
     external
@@ -505,7 +505,7 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
     uint256 tokenId,
     uint256 amount
   ) private {
-    // We have only NFT's in this contract
+    // We have only NFTs in this contract
     require(amount == 1, 'Amount != 1');
 
     // Load state
