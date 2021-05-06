@@ -137,17 +137,17 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     this.tokenId = undefined;
     this.tokenLocked = false;
     const tokenIndex =
-      tokenId >= 0 ? tokenIds.findIndex((e) => e.id.toNumber() === tokenId) : -1;
+      tokenId >= 0 ? tokenIds.findIndex((e) => e.id === tokenId) : -1;
     if (tokenIndex >= 0) {
       // retrieve levelId and cardId from tokenId
       this.tokenLocked = tokenIds[tokenIndex].locked;
       newLevelId = cards.cards.findIndex(
-        (level) => level.chainRef.toNumber() === tokenId >> 24
+        (level) => level.chainRef === tokenId >> 24
       );
       if (newLevelId >= 0) {
         newType = cards.cards[newLevelId].type === 'wolves' ? 'wolves' : 'bois';
         const newCardIndex = cards.cards[newLevelId].cards.findIndex(
-          (card) => card.chainRef.toNumber() === ((tokenId >> 16) & 0xff)
+          (card) => card.chainRef === ((tokenId >> 16) & 0xff)
         );
         if (newCardIndex >= 0) {
           newCardId = cards.cards[newLevelId].cards[newCardIndex].id;
@@ -196,7 +196,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         if (this.tokenId !== undefined) {
           if (tokenIds.length > 1) {
             let nextTokenId =
-              tokenIds.findIndex((e) => e.id.toNumber() === this.tokenId) + 1;
+              tokenIds.findIndex((e) => e.id === this.tokenId) + 1;
             let prevTokenId = nextTokenId - 2;
             if (nextTokenId >= tokenIds.length) nextTokenId = 0;
             if (prevTokenId < 0) prevTokenId = tokenIds.length - 1;
@@ -257,8 +257,8 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         amount: this.content.price,
         id:
           this.tokenId === undefined
-            ? (this.content.chainRef.toNumber() << 8) |
-              this.content.cards[this.cardIndex].chainRef.toNumber()
+            ? (this.content.chainRef << 8) |
+              this.content.cards[this.cardIndex].chainRef
             : this.tokenId,
       };
       this.setState({ txPending: true });
@@ -387,7 +387,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
             {currentCard && (
               <>
                 <div>
-                  <h1 className="tk-vincente-lightbold h-1 single-line">
+                  <h1 className="tk-vincente-lightbold single-line">
                     {currentCard.name}
                   </h1>
                   <h2 className="tk-vincente-lightbold font-24">
