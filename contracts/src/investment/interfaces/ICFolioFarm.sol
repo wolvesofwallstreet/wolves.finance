@@ -45,7 +45,7 @@ interface ICFolioFarm {
   function getReward(address account, address rewardRecipient) external;
 
   /**
-   * @dev remove all shares and getRewards in a single step
+   * @dev Remove all shares and call getRewards() in a single step
    */
   function exit(address account, address rewardRecipient) external;
 }
