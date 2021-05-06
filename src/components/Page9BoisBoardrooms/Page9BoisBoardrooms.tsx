@@ -355,7 +355,7 @@ const Page9BoisBoardrooms = ({ t, location, history }: PROPS) => {
               </div>
             </div>
 
-            <div className={'w-100 mt-3 font-12'}>
+            <div className={'w-100 mt-3 font-13'}>
               WHAT DOES PACK STRENGTH MEAN AND HOW CAN I SAVE GAS?
             </div>
           </div>
