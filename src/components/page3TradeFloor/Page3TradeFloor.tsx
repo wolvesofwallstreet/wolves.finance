@@ -156,9 +156,9 @@ class Page3TradeFloor extends Component<PAGE7_PROPS, PAGE7_STATE> {
 
     const cardRender =
       cards?.length &&
-      cards.map((card) => {
+      cards.map((card, index) => {
         return (
-          <div className="page3Trade-card">
+          <div className="page3Trade-card" key={index + Math.random()}>
             <Link
               to={`detail?type=wolves&levelId=${card?.levelId}&cardId=${card.cardId}`}
             >
