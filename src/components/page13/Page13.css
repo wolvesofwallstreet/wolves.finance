@@ -1,0 +1,129 @@
+/*
+ * Copyright (C) 2020-2021 The Wolfpack
+ * This file is part of wolves.finance - https://github.com/wolvesofwallstreet/wolves.finance
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * See LICENSE.txt for more information.
+ */
+
+.page13-container {
+  display: flex;
+  flex-direction: column;
+  padding: 15px 6vw;
+  min-height: 300px;
+
+  color: white;
+  text-align: center;
+
+  background-attachment: fixed;
+  background-position-x: center;
+  background-position-y: 0;
+  background-size: cover;
+}
+
+.page13-line {
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.page13-triangle-down {
+  width: 0;
+  height: 0;
+  border-left: 18px solid transparent;
+  border-right: 18px solid transparent;
+  border-top: 10px solid var(--wolves-orange);
+  margin: 0 auto;
+}
+
+.page13-card-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.d-grid {
+  display: grid;
+  /* grid-template-columns: repeat(2, minmax(200px, auto)); */
+  grid-gap: 12px 10px;
+}
+
+.g-card {
+  display: flex;
+  min-height: 130px;
+}
+
+.g-card-img-small {
+  position: absolute;
+  top: 20px;
+  left: -20px;
+  width: 70%;
+}
+
+.wolve-cards-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.w-nav-container a {
+  color: white;
+}
+
+.w-nav-center {
+  display: flex;
+  justify-content: center;
+}
+
+.w-nav-section {
+  /* margin: 8px; */
+  margin-top: 8px;
+  margin-bottom: 8px;
+  font-size: 24px;
+  flex-shrink: 1;
+  height: 1.2em;
+  user-select: none;
+  padding: 0;
+  /* overflow: hidden; */
+}
+
+.w-nav-link-active {
+  color: var(--wolves-orange) !important;
+  flex-shrink: 0;
+  height: 40px;
+}
+
+.w-nav-content-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.rotate {
+  transform: rotate(180deg);
+}
+
+.fixed-pos {
+  width: 110px;
+  text-align: left;
+}
+
+.wallet-warning {
+  margin: auto;
+}
+
+@media all and (max-width: 800px) {
+  .w-nav-section-container {
+    order: 3;
+    width: 100%;
+  }
+}
+
+.w-nav-single-line {
+  line-height: 1em;
+}
+
+.w-nav-fixed-pos {
+  width: 110px;
+  text-align: left;
+}
