@@ -20,7 +20,7 @@ import './interfaces/IController.sol';
 import './interfaces/IFarm.sol';
 
 /**
- * @notice Farm is owned by an CFolio contract.
+ * @notice Farm is owned by a CFolio contract.
  *
  * All state modifing calls are only allowed from this owner.
  */
@@ -28,7 +28,9 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
   using SafeMath for uint256;
   using SafeERC20 for IERC20;
 
-  /* ========== STATE VARIABLES ========== */
+  //////////////////////////////////////////////////////////////////////////////
+  // State
+  //////////////////////////////////////////////////////////////////////////////
 
   uint256 public override periodFinish = 0;
   uint256 public rewardRate = 0;
@@ -40,27 +42,81 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
   mapping(address => uint256) public userRewardPerTokenPaid;
   mapping(address => uint256) public rewards;
 
-  uint256 private _totalSupply;
-  mapping(address => uint256) private _balances;
-
   // Unique name of this farm instance, used in controller
   string private _farmName;
+
+  uint256 private _totalSupply;
+
+  mapping(address => uint256) private _balances;
+
   // The address of the controller
   IController public controller;
 
-  /* ========== CONSTRUCTOR ========== */
+  //////////////////////////////////////////////////////////////////////////////
+  // Modifiers
+  //////////////////////////////////////////////////////////////////////////////
+
+  modifier onlyController {
+    require(_msgSender() == address(controller), 'not controller');
+    _;
+  }
+
+  modifier updateReward(address account) {
+    rewardPerTokenStored = rewardPerToken();
+    lastUpdateTime = lastTimeRewardApplicable();
+
+    if (account != address(0)) {
+      rewards[account] = earned(account);
+      userRewardPerTokenPaid[account] = rewardPerTokenStored;
+    }
+
+    _;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Events
+  //////////////////////////////////////////////////////////////////////////////
+
+  event RewardAdded(uint256 reward);
+
+  event AssetAdded(address indexed user, uint256 amount);
+
+  event AssetRemoved(address indexed user, uint256 amount);
+
+  event ShareAdded(address indexed user, uint256 amount);
+
+  event ShareRemoved(address indexed user, uint256 amount);
+
+  event RewardPaid(
+    address indexed account,
+    address indexed user,
+    uint256 reward
+  );
+
+  event RewardsDurationUpdated(uint256 newDuration);
+
+  event ControllerChanged(address newController);
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Initialization
+  //////////////////////////////////////////////////////////////////////////////
 
   constructor(
     address _owner,
     string memory _name,
     address _controller
   ) {
+    // Initialize {Ownable}
+    transferOwnership(_owner);
+
+    // Initialize state
     _farmName = _name;
     controller = IController(_controller);
-    transferOwnership(_owner);
   }
 
-  /* ========== VIEWS ========== */
+  //////////////////////////////////////////////////////////////////////////////
+  // Views
+  //////////////////////////////////////////////////////////////////////////////
 
   function farmName() external view override returns (string memory) {
     return _farmName;
@@ -83,6 +139,7 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
     if (_totalSupply == 0) {
       return rewardPerTokenStored;
     }
+
     return
       rewardPerTokenStored.add(
         lastTimeRewardApplicable()
@@ -121,17 +178,22 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
     return result;
   }
 
-  /* ========== MUTATIVE FUNCTIONS ========== */
+  //////////////////////////////////////////////////////////////////////////////
+  // Mutators
+  //////////////////////////////////////////////////////////////////////////////
 
   function addAssets(address account, uint256 amount)
     external
     override
     onlyOwner
   {
+    // Validate parameters
     require(amount > 0, 'CFolioFarm: Cannot add 0');
 
+    // Update state
     _balances[account] = _balances[account].add(amount);
 
+    // Dispatch event
     emit AssetAdded(account, amount);
   }
 
@@ -140,10 +202,13 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
     override
     onlyOwner
   {
+    // Validate parameters
     require(amount > 0, 'CFolioFarm: Cannot remove 0');
 
+    // Update state
     _balances[account] = _balances[account].sub(amount);
 
+    // Dispatch event
     emit AssetRemoved(account, amount);
   }
 
@@ -153,14 +218,17 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
     onlyOwner
     updateReward(account)
   {
+    // Validate parameters
     require(amount > 0, 'CFolioFarm: Cannot add 0');
 
-    /*(uint256 fee) = */
-    controller.onDeposit(amount);
-
+    // Update state
     _totalSupply = _totalSupply.add(amount);
     _balances[account] = _balances[account].add(amount);
 
+    // Notify controller
+    controller.onDeposit(amount);
+
+    // Dispatch event
     emit ShareAdded(account, amount);
   }
 
@@ -170,14 +238,17 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
     onlyOwner
     updateReward(account)
   {
+    // Validate parameters
     require(amount > 0, 'CFolioFarm: Cannot remove 0');
 
-    /*(uint256 fee) = */
-    controller.onWithdraw(amount);
-
+    // Update state
     _totalSupply = _totalSupply.sub(amount);
     _balances[account] = _balances[account].sub(amount);
 
+    // Notify controller
+    controller.onWithdraw(amount);
+
+    // Dispatch event
     emit ShareRemoved(account, amount);
   }
 
@@ -187,11 +258,18 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
     onlyOwner
     updateReward(account)
   {
+    // Load state
     uint256 reward = rewards[account];
+
     if (reward > 0) {
+      // Update state
       rewards[account] = 0;
       availableRewards = availableRewards.sub(reward);
+
+      // Notify controller
       controller.payOutRewards(rewardRecipient, reward);
+
+      // Dispatch event
       emit RewardPaid(account, rewardRecipient, reward);
     }
   }
@@ -205,14 +283,19 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
     getReward(account, rewardRecipient);
   }
 
-  /* ========== RESTRICTED FUNCTIONS ========== */
+  //////////////////////////////////////////////////////////////////////////////
+  // Restricted functions
+  //////////////////////////////////////////////////////////////////////////////
 
   function setController(address newController)
     external
     override
     onlyController
   {
+    // Update state
     controller = IController(newController);
+
+    // Dispatch event
     emit ControllerChanged(newController);
   }
 
@@ -222,6 +305,7 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
     onlyController
     updateReward(address(0))
   {
+    // Update state
     // solhint-disable-next-line not-rely-on-time
     if (block.timestamp >= periodFinish) {
       rewardRate = reward.div(rewardsDuration);
@@ -233,6 +317,8 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
     }
     availableRewards = availableRewards.add(reward);
 
+    // Validate state
+    //
     // Ensure the provided reward amount is not more than the balance in the
     // contract.
     //
@@ -247,19 +333,26 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
       'Provided reward too high'
     );
 
+    // Update state
     // solhint-disable-next-line not-rely-on-time
     lastUpdateTime = block.timestamp;
     // solhint-disable-next-line not-rely-on-time
     periodFinish = block.timestamp.add(rewardsDuration);
 
+    // Dispatch event
     emit RewardAdded(reward);
   }
 
-  // We don't have any rebalancing here
+  /**
+   * @dev We don't have any rebalancing here
+   */
   // solhint-disable-next-line no-empty-blocks
   function rebalance() external override onlyController {}
 
-  // Added to support recovering LP Rewards from other systems to be distributed to holders
+  /**
+   * @dev Added to support recovering LP Rewards from other systems to be
+   * distributed to holders
+   */
   function recoverERC20(
     address recipient,
     address tokenAddress,
@@ -274,44 +367,17 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
     override
     onlyController
   {
+    // Validate state
     require(
       // solhint-disable-next-line not-rely-on-time
       periodFinish == 0 || block.timestamp > periodFinish,
-      'reward period not finished'
+      'Reward period not finished'
     );
+
+    // Update state
     rewardsDuration = _rewardsDuration;
+
+    // Dispatch event
     emit RewardsDurationUpdated(rewardsDuration);
   }
-
-  /* ========== MODIFIERS ========== */
-
-  modifier onlyController {
-    require(_msgSender() == address(controller), 'not controller');
-    _;
-  }
-
-  modifier updateReward(address account) {
-    rewardPerTokenStored = rewardPerToken();
-    lastUpdateTime = lastTimeRewardApplicable();
-    if (account != address(0)) {
-      rewards[account] = earned(account);
-      userRewardPerTokenPaid[account] = rewardPerTokenStored;
-    }
-    _;
-  }
-
-  /* ========== EVENTS ========== */
-
-  event RewardAdded(uint256 reward);
-  event AssetAdded(address indexed user, uint256 amount);
-  event AssetRemoved(address indexed user, uint256 amount);
-  event ShareAdded(address indexed user, uint256 amount);
-  event ShareRemoved(address indexed user, uint256 amount);
-  event RewardPaid(
-    address indexed account,
-    address indexed user,
-    uint256 reward
-  );
-  event RewardsDurationUpdated(uint256 newDuration);
-  event ControllerChanged(address newController);
 }
