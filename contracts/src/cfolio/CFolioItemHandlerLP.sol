@@ -306,6 +306,16 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
     selfdestruct(payable(address(newContract)));
   }
 
+  /**
+   * @dev Upgrade contract
+   */
+  function setMinter(address newMinter) external {
+    // Validate access
+    require(msg.sender == admin, 'Admin only');
+
+    sftMinter = newMinter;
+  }
+
   //////////////////////////////////////////////////////////////////////////////
   // Minimal ERC1155 implementation (called from SFTBase CFolio)
   //////////////////////////////////////////////////////////////////////////////
