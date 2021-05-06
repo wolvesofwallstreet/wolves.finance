@@ -6,6 +6,12 @@
  * See LICENSE.txt for more information.
  */
 
+.wolve-cards-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
 .wolve-card-container {
   display: flex;
   align-items: center;
@@ -17,21 +23,21 @@
   margin: 15px;
 }
 
-.media-container {
+.wolve-card-media-container {
   width: 300px;
   min-height: 300px;
   margin-bottom: 4px;
   border: grey 1px solid;
   background-size: 300px 300px;
-  background-image: url(../../assets/loading_animated.gif);
+  background-image: url(../../../assets/loading_animated.gif);
 }
 
-.wolve-card-container .card-visual {
+.card-visual {
   width: 300px;
   min-height: 300px;
   margin-bottom: 4px;
   border: grey 1px solid;
-  background-image: url(../../assets/loading_animated.gif);
+  background-image: url(../../../assets/loading_animated.gif);
   background-size: 300px 300px;
 }
 
@@ -54,4 +60,18 @@
 
 .line-h {
   line-height: 24px;
+}
+
+.wolve-card-counter {
+  width: 33px;
+  height: 33px;
+  line-height: 33px;
+  text-align: center;
+  border-radius: 50%;
+  background-color: #ffb89f;
+  color: black;
+  z-index: 10;
+  position: absolute;
+  right: 10%;
+  top: 20px;
 }
