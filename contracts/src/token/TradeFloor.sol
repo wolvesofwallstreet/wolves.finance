@@ -32,24 +32,39 @@ abstract contract OpenSeaProxyRegistry {
  * of the contract minting the token via the ERC-1155 data parameter. When
  * the token is transferred or burned, the minter is notified.
  *
- * TokenId Allocation:
- * 32Bit Stock Cards
- * 32Bit Custom Cards
- * Remaining CFolio NFTs
+ * Token ID allocation:
+ *
+ *   - 32Bit Stock Cards
+ *   - 32Bit Custom Cards
+ *   - Remaining CFolio NFTs
  */
 contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   using TokenIds for uint256;
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Roles
+  //////////////////////////////////////////////////////////////////////////////
+
+  // Only OPERATORS can approve when trading is restricted
+  bytes32 public constant OPERATOR_ROLE = keccak256('OPERATOR_ROLE');
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Constants
+  //////////////////////////////////////////////////////////////////////////////
+
+  // solhint-disable-next-line const-name-snakecase
+  string public constant name = 'Wolves of Wall Street - C-Folio NFTs';
+  // solhint-disable-next-line const-name-snakecase
+  string public constant symbol = 'WOWSCFNFT';
 
   //////////////////////////////////////////////////////////////////////////////
   // State
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev Per token information, used to cap NFT's and
-   * to allow querying a list of NFT's owned by an address
+   * @dev Per token information, used to cap NFT's and to allow querying a list
+   * of NFT's owned by an address
    */
-
-  // using a stuct allows us to work byRef
   struct ListKey {
     uint256 index;
   }
@@ -71,27 +86,33 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   }
   mapping(address => Owned) private _owned;
 
-  //The registry to get the required addreeses from
+  // The registry to get the required addreeses from
   IAddressRegistry private immutable _addressRegistry;
 
   // Our SFT contract, needed to check for locked transfers
   IWOWSERC1155 private immutable _sftHolder;
 
-  // solhint-disable-next-line const-name-snakecase
-  string public constant name = 'Wolves of Wall Street - C-Folio NFTs';
-  // solhint-disable-next-line const-name-snakecase
-  string public constant symbol = 'WOWSCFNFT';
+  // Restrict approvals to OPERATOR_ROLE members
+  bool private _tradingRestricted;
 
-  // Only OPERATORS can approve when trading is restricted
-  bytes32 public constant OPERATOR_ROLE = keccak256('OPERATOR_ROLE');
+  //////////////////////////////////////////////////////////////////////////////
+  // OpenSea compatibility
+  //////////////////////////////////////////////////////////////////////////////
 
-  // OpenSea Compatibility
+  // OpenSea per-account proxy registry. Used to whitelist Approvals and save
+  // GAS.
+  OpenSeaProxyRegistry private immutable _openSeaProxyRegistry;
+
+  // OpenSea events
   event OwnershipTransferred(
     address indexed previousOwner,
     address indexed newOwner
   );
 
+  //////////////////////////////////////////////////////////////////////////////
   // Rarible compatibility
+  //////////////////////////////////////////////////////////////////////////////
+
   /*
    * bytes4(keccak256('getFeeBps(uint256)')) == 0x0ebd4c7f
    * bytes4(keccak256('getFeeRecipients(uint256)')) == 0xb9c4d9fb
@@ -99,15 +120,9 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
    * => 0x0ebd4c7f ^ 0xb9c4d9fb == 0xb7799584
    */
   bytes4 private constant _INTERFACE_ID_FEES = 0xb7799584;
+
   uint256 private _fee;
   address private _feeRecipient;
-
-  // Restrict approvals to OPERATOR_ROLE members
-  bool private _tradingRestricted;
-
-  // OpenSea per-account proxy registry.
-  // Used to whitelist Approvals and save GAS
-  OpenSeaProxyRegistry private immutable _openSeaProxyRegistry;
 
   // Rarible events
   // solhint-disable-next-line event-name-camelcase
@@ -125,9 +140,9 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   /**
    * @dev Construct the contract
    *
-   * @param addressRegistry registry containing our system addresses
+   * @param addressRegistry Registry containing our system addresses
    *
-   * Note: Pause operation in this context. Only calls from Proxy allowed
+   * Note: Pause operation in this context. Only calls from Proxy allowed.
    */
   constructor(
     IAddressRegistry addressRegistry,
@@ -149,7 +164,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     // Immutable, visible for all contexts
     _openSeaProxyRegistry = openSeaProxyRegistry;
 
-    // pause this instance
+    // Pause this instance
     _pause(true);
   }
 
@@ -162,7 +177,9 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   function initialize(string memory tokenUriPrefix, string memory contractUri)
     public
   {
+    // Validate state
     require(_feeRecipient == address(0), 'already initialized');
+
     // Set tokenURIPrefix
     _setBaseMetadataURI(tokenUriPrefix);
 
@@ -211,50 +228,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   }
 
   //////////////////////////////////////////////////////////////////////////////
-  // Burning interface
-  //////////////////////////////////////////////////////////////////////////////
-
-  /**
-   * @dev See {ERC1155MintBurn-_burn}.
-   */
-  function burn(
-    address account,
-    uint256 tokenId,
-    uint256 amount
-  ) public override {
-    // Validate parameters
-    require(account != address(0), 'Invalid zero address');
-
-    // Call ancestor
-    super.burn(account, tokenId, amount);
-
-    uint256[] memory tokenIds = new uint256[](1);
-    tokenIds[0] = tokenId;
-
-    _onTransfer(account, address(0), tokenIds);
-  }
-
-  /**
-   * @dev See {ERC1155MintBurn-_batchBurn}.
-   */
-  function burnBatch(
-    address account,
-    uint256[] calldata tokenIds,
-    uint256[] calldata amounts
-  ) public virtual override {
-    // Validate parameters
-    require(account != address(0), 'Invalid zero address');
-    require(tokenIds.length == amounts.length, "Lengths don't match");
-
-    // Call parent
-    super.burnBatch(account, tokenIds, amounts);
-
-    // Perform internal handling
-    _onTransfer(account, address(0), tokenIds);
-  }
-
-  //////////////////////////////////////////////////////////////////////////////
-  // Implementation of {IERC1155}
+  // Implementation of {IERC1155} via {WOWSMinterPauser}
   //////////////////////////////////////////////////////////////////////////////
 
   /**
@@ -304,6 +278,8 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   }
 
   /**
+   * @dev See {IERC1155-setApprovalForAll}.
+   *
    * Override setApprovalForAll to be able to restrict to known operators.
    */
   function setApprovalForAll(address operator, bool approved)
@@ -311,10 +287,13 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     virtual
     override
   {
+    // Validate access
     require(
       !_tradingRestricted || hasRole(OPERATOR_ROLE, operator),
       'forbidden'
     );
+
+    // Call ancestor
     super.setApprovalForAll(operator, approved);
   }
 
@@ -335,11 +314,19 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
         return true;
       }
     }
+
+    // Call ancestor
     return super.isApprovedForAll(account, operator);
   }
 
+  //////////////////////////////////////////////////////////////////////////////
+  // Implementation of {ERC1155} via {WOWSMinterPauser}
+  //////////////////////////////////////////////////////////////////////////////
+
   /**
-   * @notice overrideable hook for single transfers.
+   * @dev See {ERC1155-_beforeTokenTransfer}.
+   *
+   * @notice Overrideable hook for single transfers.
    */
   function _beforeTokenTransfer(
     address operator,
@@ -349,8 +336,12 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     uint256 amount,
     bytes memory data
   ) internal override {
-    // Note: from must not be checked because in locked state owner is this contract.
+    // Validate parameters
+    // Note: `from` must not be checked because in locked state owner is this
+    // contract
     require(_validTarget(to), 'destination locked');
+
+    // Call ancestor
     super._beforeTokenTransfer(operator, from, to, tokenId, amount, data);
   }
 
@@ -365,8 +356,12 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     uint256[] memory amounts,
     bytes memory data
   ) internal override {
-    // Note: from must not be checked because in locked state owner is this contract.
+    // Validate parameters
+    // Note: `from` must not be checked because in locked state owner is this
+    // contract.
     require(_validTarget(to), 'destination locked');
+
+    // Call ancestor
     super._beforeBatchTokenTransfer(
       operator,
       from,
@@ -378,79 +373,29 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   }
 
   //////////////////////////////////////////////////////////////////////////////
-  // Implementation of {IERC1155MetadataURI}
+  // Implementation of {IERC1155MetadataURI} via {WOWSMinterPauser}
   //////////////////////////////////////////////////////////////////////////////
 
   /**
    * @dev See {IERC1155MetadataURI-uri}.
    *
-   * Revert for unminted SFT NFTs
+   * Revert for unminted SFT NFTs.
    */
   function uri(uint256 tokenId) public view override returns (string memory) {
     // Validate state
     require(_tokenInfos[tokenId].minted, 'Token not minted');
 
+    // Load state
     return _uri(tokenId, 0);
   }
 
   //////////////////////////////////////////////////////////////////////////////
-  // Rarible Fees and events
+  // Implementation of {IERC1155TokenReceiver} via {ERC1155Holder}
   //////////////////////////////////////////////////////////////////////////////
 
-  function setFee(uint256 fee) external {
-    // Validate access
-    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admin');
-
-    // Update state
-    _fee = fee;
-  }
-
-  function setFeeRecipient(address feeRecipient) external {
-    // Validate access
-    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admin');
-
-    // Update state
-    _feeRecipient = feeRecipient;
-  }
-
-  function getFeeRecipients(uint256)
-    public
-    view
-    returns (address payable[] memory)
-  {
-    // Return value
-    address payable[] memory recipients = new address payable[](1);
-
-    // Load state
-    recipients[0] = payable(_feeRecipient);
-    return recipients;
-  }
-
-  function getFeeBps(uint256) public view returns (uint256[] memory) {
-    // Return value
-    uint256[] memory bps = new uint256[](1);
-
-    // Load state
-    bps[0] = _fee;
-
-    return bps;
-  }
-
-  //////////////////////////////////////////////////////////////////////////////
-  // OpenSea compatibility
-  //////////////////////////////////////////////////////////////////////////////
-
-  function isOwner() external view returns (bool) {
-    return _msgSender() == owner();
-  }
-
-  function owner() public view returns (address) {
-    return _addressRegistry.getRegistryEntry(AddressBook.DEPLOYER);
-  }
-
-  //////////////////////////////////////////////////////////////////////////////
-  // Hooks
-  //////////////////////////////////////////////////////////////////////////////
+  /**
+   * @dev See {IERC1155TokenReceiver-onERC1155Received}
+   */
 
   function onERC1155Received(
     address operator,
@@ -481,6 +426,49 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     // This contract supports safe ERC-1155 transfers
     return
       super.onERC1155BatchReceived(operator, from, tokenIds, amounts, data);
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Burning interface
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * @dev See {ERC1155MintBurn-_burn}.
+   */
+  function burn(
+    address account,
+    uint256 tokenId,
+    uint256 amount
+  ) public override {
+    // Validate parameters
+    require(account != address(0), 'Invalid zero address');
+
+    // Call ancestor
+    super.burn(account, tokenId, amount);
+
+    uint256[] memory tokenIds = new uint256[](1);
+    tokenIds[0] = tokenId;
+
+    _onTransfer(account, address(0), tokenIds);
+  }
+
+  /**
+   * @dev See {ERC1155MintBurn-_batchBurn}.
+   */
+  function burnBatch(
+    address account,
+    uint256[] calldata tokenIds,
+    uint256[] calldata amounts
+  ) public virtual override {
+    // Validate parameters
+    require(account != address(0), 'Invalid zero address');
+    require(tokenIds.length == amounts.length, "Lengths don't match");
+
+    // Call parent
+    super.burnBatch(account, tokenIds, amounts);
+
+    // Perform internal handling
+    _onTransfer(account, address(0), tokenIds);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -543,19 +531,69 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   }
 
   /**
-   * remove before mainnet deploy
-   */
-  function testSelfDestroy() external {
-    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admins');
-    selfdestruct(_msgSender());
-  }
-
-  /**
-   * Restrict trading to OPERATOR_ROLE (see setApprovalForAll)
+   * @dev Restrict trading to OPERATOR_ROLE (see setApprovalForAll)
    */
   function restrictTrading(bool restrict) external {
+    // Validate access
     require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admins');
+
+    // Update state
     _tradingRestricted = restrict;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // OpenSea compatibility
+  //////////////////////////////////////////////////////////////////////////////
+
+  function isOwner() external view returns (bool) {
+    return _msgSender() == owner();
+  }
+
+  function owner() public view returns (address) {
+    return _addressRegistry.getRegistryEntry(AddressBook.DEPLOYER);
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Rarible Fees and events
+  //////////////////////////////////////////////////////////////////////////////
+
+  function setFee(uint256 fee) external {
+    // Validate access
+    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admin');
+
+    // Update state
+    _fee = fee;
+  }
+
+  function setFeeRecipient(address feeRecipient) external {
+    // Validate access
+    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admin');
+
+    // Update state
+    _feeRecipient = feeRecipient;
+  }
+
+  function getFeeRecipients(uint256)
+    public
+    view
+    returns (address payable[] memory)
+  {
+    // Return value
+    address payable[] memory recipients = new address payable[](1);
+
+    // Load state
+    recipients[0] = payable(_feeRecipient);
+    return recipients;
+  }
+
+  function getFeeBps(uint256) public view returns (uint256[] memory) {
+    // Return value
+    uint256[] memory bps = new uint256[](1);
+
+    // Load state
+    bps[0] = _fee;
+
+    return bps;
   }
 
   //////////////////////////////////////////////////////////////////////////////
