@@ -64,6 +64,10 @@ span a:hover {
   background-color: rgba(4, 29, 52, 0.8) !important;
 }
 
+.bg-orange-transparent {
+  background-color: var(--wolves-orange-transparent);
+}
+
 .t-left {
   text-align: left;
 }
