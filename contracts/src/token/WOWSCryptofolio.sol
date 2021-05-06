@@ -14,7 +14,7 @@ import './interfaces/IERC1155BurnMintable.sol';
 import './interfaces/IWOWSCryptofolio.sol';
 import './interfaces/IWOWSERC1155.sol';
 
-contract WOWSCryptofolio is ERC1155Holder, IWOWSCryptofolio {
+contract WOWSCryptofolio is IWOWSCryptofolio, ERC1155Holder {
   //////////////////////////////////////////////////////////////////////////////
   // State
   //////////////////////////////////////////////////////////////////////////////
