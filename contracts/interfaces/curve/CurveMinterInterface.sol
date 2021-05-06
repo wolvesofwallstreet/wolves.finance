@@ -8,16 +8,17 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
-abstract contract ICurveFi_Minter {
-  function mint(address gauge_addr) external virtual;
+/* solhint-disable func-name-mixedcase */
+abstract contract ICurveFiMinter {
+  function mint(address gaugeAddr) external virtual;
 
-  function minted(address _for, address gauge_addr)
+  function minted(address _for, address gaugeAddr)
     external
     view
     virtual
     returns (uint256);
 
-  function toggle_approve_mint(address minting_user) external virtual;
+  function toggle_approve_mint(address mintingUser) external virtual;
 
   function token() external view virtual returns (address);
 }

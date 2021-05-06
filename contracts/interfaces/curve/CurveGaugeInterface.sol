@@ -8,7 +8,8 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
-abstract contract ICurveFi_Gauge {
+/* solhint-disable func-name-mixedcase */
+abstract contract ICurveFiGauge {
   function lp_token() external view virtual returns (address);
 
   function crv_token() external view virtual returns (address);
