@@ -7,6 +7,7 @@
  */
 import './page3.css';
 
+import { ethers } from 'ethers';
 import React, { Component } from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { Link, RouteComponentProps } from 'react-router-dom';
@@ -55,7 +56,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
     myPackLevelDescriptions: [],
   };
   levelDescription = '';
-  tokenIds: { id: number; locked: boolean }[] = [];
+  tokenIds: { id: ethers.BigNumber; locked: boolean }[] = [];
   levelFilter = 0;
   nextLevel = -1;
   prevLevel = -1;
@@ -148,9 +149,10 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
           );
           this.tokenIds = this.content.cards[idx].cards.map((card) => {
             return {
-              id:
-                (this.content.cards[idx].chainRef << 24) |
-                (card.chainRef << 16),
+              id: ethers.BigNumber.from(
+                (this.content.cards[idx].chainRef.toNumber() << 24) |
+                  (card.chainRef.toNumber() << 16)
+              ),
               locked: false,
             };
           });
@@ -159,9 +161,11 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
 
           // collect tokenId bitmask
           let tokenIdBits = 0;
-          this.tokenIds.forEach((n) => (tokenIdBits |= 1 << (n.id >> 24)));
+          this.tokenIds.forEach(
+            (n) => (tokenIdBits |= 1 << (n.id.toNumber() >> 24))
+          );
           this.content.cards.forEach((level) => {
-            if (tokenIdBits & (1 << level.chainRef)) {
+            if (tokenIdBits & (1 << level.chainRef.toNumber())) {
               this.levelFilter |= 1 << level.levelId;
             }
           });
@@ -300,12 +304,15 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
                   .map((level) =>
                     level.cards.map((card, index) => {
                       const collection: JSX.Element[] = [];
-                      const tokenId = (level.chainRef << 8) | card.chainRef;
+                      const tokenId =
+                        (level.chainRef.toNumber() << 8) |
+                        card.chainRef.toNumber();
                       while (
                         tokenIdx < this.tokenIds.length &&
-                        this.tokenIds[tokenIdx].id >> 16 <= tokenId
+                        this.tokenIds[tokenIdx].id.toNumber() >> 16 <= tokenId
                       ) {
-                        this.tokenIds[tokenIdx].id >> 16 === tokenId &&
+                        this.tokenIds[tokenIdx].id.toNumber() >> 16 ===
+                          tokenId &&
                           collection.push(
                             <CardBox
                               key={'card_' + tokenIdx}

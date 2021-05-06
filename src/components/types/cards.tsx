@@ -5,10 +5,11 @@
  * SPDX-License-Identifier: Apache-2.0
  * See the file LICENSES/README.md for more information.
  */
+import { ethers } from 'ethers';
 
 export type CARD = {
   id: string;
-  chainRef: number;
+  chainRef: ethers.BigNumber;
   minted: number;
   name: string;
   motto: string;
@@ -19,7 +20,7 @@ export type CARD = {
 
 export type CARD_LEVEL = {
   levelId: number;
-  chainRef: number;
+  chainRef: ethers.BigNumber;
   type: string;
   quantity: number;
   price: number;
