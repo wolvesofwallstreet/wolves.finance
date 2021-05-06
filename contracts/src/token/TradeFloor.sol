@@ -180,20 +180,19 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     // Validate state
     require(_feeRecipient == address(0), 'already initialized');
 
-    // Set tokenURIPrefix
-    _setBaseMetadataURI(tokenUriPrefix);
-
     // Initialize {AccessControl}
     address marketingWallet =
       _addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
     _setupRole(DEFAULT_ADMIN_ROLE, marketingWallet);
 
+    // Initialize {ERC1155Metadata}
+    _setBaseMetadataURI(tokenUriPrefix);
+    _setContractMetadataURI(contractUri);
+
     _feeRecipient = _addressRegistry.getRegistryEntry(
       AddressBook.REWARD_HANDLER
     );
     _fee = 1000; // 10%
-
-    _setContractMetadataURI(contractUri);
 
     // Rarible: Need a real wallet for setting up storefront
     address deployer = _addressRegistry.getRegistryEntry(AddressBook.DEPLOYER);
