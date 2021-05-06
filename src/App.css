@@ -33,7 +33,7 @@ body {
   text-overflow: ellipsis;
 }
 
-.wolves-orange {
+.wolves-color-orange {
   color: var(--wolves-orange);
 }
 

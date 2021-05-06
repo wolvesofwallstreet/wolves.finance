@@ -110,7 +110,7 @@ class Page11 extends Component<PAGE11_PROPS, PAGE11_STATE> {
 
           {/* sub-navigation 2 */}
           <div className={'page11-section-header'}>
-            <span className="tk-vincente-lightbold font-24 single-line wolves-orange fixed-pos">
+            <span className="tk-vincente-lightbold font-24 single-line wolves-color-orange fixed-pos">
               &lt;
               <Link to="?cards=previousCard">PREVIOUS CARD</Link>
             </span>
@@ -169,7 +169,7 @@ class Page11 extends Component<PAGE11_PROPS, PAGE11_STATE> {
                   BRYANT BARKLEY
                 </h1>
                 <h2 className="tk-vincente-lightbold font-24">
-                  <span className="wolves-orange">MOTO:</span>
+                  <span className="wolves-color-orange">MOTO:</span>
                   BUY WHEN THERE IS BLOOD ON THE STREET
                 </h2>
                 <div>
@@ -184,7 +184,7 @@ class Page11 extends Component<PAGE11_PROPS, PAGE11_STATE> {
                   </p>
                   <p
                     className={
-                      'tk-grotesk-lightbold font-16 line-break-enable wolves-orange'
+                      'tk-grotesk-lightbold font-16 line-break-enable wolves-color-orange'
                     }
                   >
                     This is a staker card and allows to stake Wolf on the
