@@ -96,8 +96,13 @@ const Page7BoisBoardrooms = ({ t, location, history }: PROPS) => {
 
                   <div className={`page7-card-box-description font-10`}>
                     {card.paragraphs.length &&
-                      card.paragraphs.map((p) => (
-                        <p className={'tk-grotesk-lightbold'}>{p}</p>
+                      card.paragraphs.map((p, index) => (
+                        <p
+                          className={'tk-grotesk-lightbold'}
+                          key={index + Math.random()}
+                        >
+                          {p}
+                        </p>
                       ))}
                   </div>
                 </div>
