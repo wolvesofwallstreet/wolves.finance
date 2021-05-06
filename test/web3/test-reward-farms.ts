@@ -17,10 +17,11 @@ import { ethers } from 'ethers';
 import fs from 'fs';
 
 import UniswapV2ERC20Abi from '../../src/abi/contracts/depends/uniswap-v2-core/UniswapV2ERC20.sol/UniswapV2ERC20.json';
-import TradeFloorClientLpAbi from '../../src/abi/contracts/src/cfolio/TradeFloorClientLP.sol/TradeFloorClientLP.json';
+import CFolioItemHandlerLpAbi from '../../src/abi/contracts/src/cfolio/CFolioItemHandlerLP.sol/CFolioItemHandlerLP.json';
 import PresaleAbi from '../../src/abi/contracts/src/crowdsale/Crowdsale.sol/Crowdsale.json';
 import WOWSSftMinterAbi from '../../src/abi/contracts/src/crowdsale/WOWSSftMinter.sol/WOWSSftMinter.json';
-import TradeFloorProxyAbi from '../../src/abi/contracts/src/proxy/TradeFloorProxy.sol/TradeFloorProxy.json';
+import CFolioFarmAbi from '../../src/abi/contracts/src/investment/CFolioFarm.sol/CFolioFarm.json';
+import UpgradeProxyAbi from '../../src/abi/contracts/src/proxy/UpgradeProxy.sol/UpgradeProxy.json';
 import TradeFloorAbi from '../../src/abi/contracts/src/token/TradeFloor.sol/TradeFloor.json';
 import WOWSCryptofolioAbi from '../../src/abi/contracts/src/token/WOWSCryptofolio.sol/WOWSCryptofolio.json';
 import WOWSTokenAbi from '../../src/abi/contracts/src/token/WOWSErc20.sol/WowsToken.json';
@@ -47,8 +48,9 @@ const CURRENT_PRICE_URL =
 
 // Gas estimator API URL
 // TODO: Move API key to GitHub Actions secret
-const GAS_ESTIMATOR_URL =
-  'https://data-api.defipulse.com/api/v1/egs/api/ethgasAPI.json?api-key=53be2a60f8bc0bb818ad161f034286d709a9c4ccb1362054b0543df78e27';
+//const GAS_ESTIMATOR_URL =
+//  'https://data-api.defipulse.com/api/v1/egs/api/ethgasAPI.json?api-key=53be2a60f8bc0bb818ad161f034286d709a9c4ccb1362054b0543df78e27';
+const GAS_ESTIMATOR_URL = 'https://ethgasstation.info/json/ethgasAPI.json';
 
 // Helper function
 function toWei(n: number, decimals = 18) {
@@ -114,12 +116,17 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
   );
   const tradeFloorProxyContract = new ethers.Contract(
     addresses.tradeFloorProxy,
-    TradeFloorProxyAbi,
+    UpgradeProxyAbi,
     marketingWallet
   );
-  const tradeFloorClientLP = new ethers.Contract(
-    addresses.tradeFloorClientLP,
-    TradeFloorClientLpAbi,
+  const cfolioItemHandlerLP = new ethers.Contract(
+    addresses.cfolioItemHandlerLP,
+    CFolioItemHandlerLpAbi,
+    marketingWallet
+  );
+  const cfolioFarmLP = new ethers.Contract(
+    addresses.cfolioFarmLP,
+    CFolioFarmAbi,
     marketingWallet
   );
   const presaleContract = new ethers.Contract(
@@ -135,7 +142,8 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
     sftMinterContract,
     tradeFloorContract,
     tradeFloorProxyContract,
-    tradeFloorClientLP,
+    cfolioItemHandlerLP,
+    cfolioFarmLP,
     presaleContract,
   };
 });
@@ -155,6 +163,7 @@ describe('Reward farms', function () {
 
   // Test parameters
   const level1Price = '3000000000000000000';
+  const defaultCFolioType = 0;
   const lpBalance = ethers.BigNumber.from('12000000000000000000'); // 12 UNI-V2 LP tokens
   const levelBoi = 1;
   const cardIdBoi = 2;
@@ -162,8 +171,10 @@ describe('Reward farms', function () {
   const cardIdWolf = 2;
   const wowsTokenIdBoi = ethers.BigNumber.from('0x01020000');
   const wowsTokenIdWolf = ethers.BigNumber.from('0x05020000');
-  const tradeFloorTokenIdBoi = ethers.BigNumber.from('0x10000000000000000');
-  const tradeFloorTokenIdWolf = ethers.BigNumber.from('0x10000000000000001');
+
+  const cfolioItemTokenId = ethers.BigNumber.from('0x10000000000000000');
+  const cFolioItemType = 0; // Card type 0, registered in minter for cfolioItemHandlerLP
+  const cFolioItemURI = 'http://4travelers.de/wolves_assets/cfolio/00.json';
 
   // Lazily-initialized variables
   let ethUsd = 0;
@@ -283,7 +294,8 @@ describe('Reward farms', function () {
     await chai.expect(tx).to.emit(sftMinterContract, 'Mint').withArgs(
       marketingWallet.address, // Recipient
       wowsTokenIdBoi, // Token ID
-      level1Price // Price
+      level1Price, // Price
+      defaultCFolioType // CFolioItemType
     );
   });
 
@@ -301,7 +313,8 @@ describe('Reward farms', function () {
     await chai.expect(tx).to.emit(sftMinterContract, 'Mint').withArgs(
       marketingWallet.address, // Recipient
       wowsTokenIdWolf, // Token ID
-      level1Price // Price
+      level1Price, // Price
+      defaultCFolioType // CFolioItemType
     );
   });
 
@@ -412,16 +425,16 @@ describe('Reward farms', function () {
   it('should approve TFCLP to transfer tokens', async function () {
     this.timeout(60 * 1000);
 
-    const { uniV2PairContract, tradeFloorClientLP } = contracts;
+    const { uniV2PairContract, cfolioItemHandlerLP } = contracts;
 
     // Approve TFCLP to transfer our tokens
     const tx = await uniV2PairContract.approve(
-      tradeFloorClientLP.address,
+      cfolioItemHandlerLP.address,
       lpBalance
     );
     await chai.expect(tx).to.emit(uniV2PairContract, 'Approval').withArgs(
       marketingWallet.address, // owner
-      tradeFloorClientLP.address, // spender
+      cfolioItemHandlerLP.address, // spender
       lpBalance // balance
     );
 
@@ -439,47 +452,20 @@ describe('Reward farms', function () {
     );
   });
 
-  it('should increase possible token IDs', async function () {
+  it('should revert when creating LP SFT / NFT into boi cryptofolio', async function () {
     this.timeout(60 * 1000);
 
-    const { tradeFloorClientLP } = contracts;
-
-    // Test parameters
-    const defaultTokenIdCount = 8;
-    const testTokenIdCount = 16;
-
-    // Check number of token IDs
-    let numTokenIds = await tradeFloorClientLP.numTradeFloorTokenIds();
-    chai.expect(numTokenIds).to.equal(defaultTokenIdCount);
-
-    // Fail to decrease possible token IDs
-    let tx = tradeFloorClientLP.setNumTokenIds(0);
-    await chai.expect(tx).to.be.revertedWith('TFCLP: increase only');
-
-    // Increase possible token IDs
-    tx = tradeFloorClientLP.setNumTokenIds(testTokenIdCount);
-    await chai
-      .expect(tx)
-      .to.emit(tradeFloorClientLP, 'TokenIdCountChanged')
-      .withArgs(testTokenIdCount);
-
-    // Check number of token IDs
-    numTokenIds = await tradeFloorClientLP.numTradeFloorTokenIds();
-    chai.expect(numTokenIds).to.equal(testTokenIdCount);
-  });
-
-  it('should revert when depositing LP NFT into boi cryptofolio', async function () {
-    this.timeout(60 * 1000);
-
-    const { tradeFloorProxyContract, tradeFloorClientLP } = contracts;
+    const { sftMinterContract, tradeFloorProxyContract } = contracts;
 
     // Deposit LP tokens to boi should fail
-    const tx = tradeFloorClientLP.deposit(
-      cryptofolioAddressBoi,
-      tradeFloorTokenIdBoi,
-      lpBalance
+    const tx = sftMinterContract.mintCFolioItemSFT(
+      marketingWallet.address,
+      cFolioItemType,
+      cFolioItemURI,
+      wowsTokenIdBoi,
+      []
     );
-    await chai.expect(tx).to.be.revertedWith('TFCLP: Wolves only');
+    await chai.expect(tx).to.be.revertedWith('CFIH: Wolves only');
 
     // Boi cryptofolio should be in its original state
     const [tokenIds, idsLength] = await cryptofolioContractBoi.getCryptofolio(
@@ -492,35 +478,48 @@ describe('Reward farms', function () {
     this.timeout(60 * 1000);
 
     const {
-      uniV2PairContract,
+      cfolioFarmLP,
+      cfolioItemHandlerLP,
+      sftHolderContract,
+      sftMinterContract,
       tradeFloorProxyContract,
-      tradeFloorClientLP,
+      uniV2PairContract,
     } = contracts;
 
-    // Deposit LP tokens to wolf
-    const tx = tradeFloorClientLP.deposit(
-      cryptofolioAddressWolf,
-      tradeFloorTokenIdWolf,
-      lpBalance
+    // Mint a new LP investment Type into Wolf
+    const tx = sftMinterContract.mintCFolioItemSFT(
+      marketingWallet.address,
+      cFolioItemType,
+      cFolioItemURI,
+      wowsTokenIdWolf,
+      [lpBalance]
     );
     await chai
       .expect(tx)
       .to.emit(uniV2PairContract, 'Transfer')
-      .withArgs(marketingWallet.address, tradeFloorClientLP.address, lpBalance);
+      .withArgs(
+        marketingWallet.address,
+        cfolioItemHandlerLP.address,
+        lpBalance
+      );
     await chai
       .expect(tx)
       .to.emit(cryptofolioContractWolf, 'CryptoFolioAdded')
       .withArgs(
         cryptofolioAddressWolf,
         tradeFloorProxyContract.address,
-        [tradeFloorTokenIdWolf],
-        [lpBalance]
+        [cfolioItemTokenId],
+        [1]
       );
-    await chai.expect(tx).to.emit(tradeFloorClientLP, 'Deposit').withArgs(
-      marketingWallet.address, // User
-      cryptofolioAddressWolf, // Recipient
-      lpBalance, // Amount
-      500000 // Reward rate
+
+    // Get the address of the investment card clone contract
+    const cryptofolioItemAddressWolfLP = await sftHolderContract.tokenIdToAddress(
+      cfolioItemTokenId
+    );
+
+    await chai.expect(tx).to.emit(cfolioFarmLP, 'AssetAdded').withArgs(
+      cryptofolioItemAddressWolfLP, // Recipient
+      lpBalance // Amount
     );
 
     // Check cryptofolio and the LP NFT should appear
@@ -528,7 +527,7 @@ describe('Reward farms', function () {
       tradeFloorProxyContract.address
     );
     chai.expect(idsLength).to.equal(1);
-    chai.expect(tokenIds[0]).to.equal(tradeFloorTokenIdWolf);
+    chai.expect(tokenIds[0]).to.equal(cfolioItemTokenId);
 
     // Log gas cost
     const receipt = await (await tx).wait();
@@ -542,192 +541,5 @@ describe('Reward farms', function () {
         gasCost
       )})`
     );
-  });
-
-  it('should burn half the LP NFT', async function () {
-    this.timeout(60 * 1000);
-
-    const {
-      uniV2PairContract,
-      tradeFloorProxyContract,
-      tradeFloorClientLP,
-    } = contracts;
-
-    // Burn half the NFT
-    const tx = tradeFloorProxyInstance.burn(
-      cryptofolioAddressWolf,
-      tradeFloorTokenIdWolf,
-      lpBalance.div(2)
-    );
-    await chai
-      .expect(tx)
-      .to.emit(uniV2PairContract, 'Transfer')
-      .withArgs(
-        tradeFloorClientLP.address,
-        marketingWallet.address,
-        lpBalance.div(2)
-      );
-
-    // Check wallet balance
-    const newLpBalance = await uniV2PairContract.balanceOf(
-      marketingWallet.address
-    );
-    chai.expect(newLpBalance).to.equal(lpBalance.div(2));
-
-    // Check the cryptofolio again and verify it holds the NFT
-    const [tokenIds, idsLength] = await cryptofolioContractWolf.getCryptofolio(
-      tradeFloorProxyContract.address
-    );
-    chai.expect(idsLength).to.equal(1);
-    chai.expect(tokenIds[0]).to.equal(tradeFloorTokenIdWolf);
-
-    // Log gas cost
-    const receipt = await (await tx).wait();
-    const gasUsedGwei = receipt.gasUsed;
-    const gasCost =
-      gasUsedGwei
-        .mul(await getGasPrice())
-        .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
-    console.log(
-      `Burn LP NFT gas used: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
-        gasCost
-      )})`
-    );
-  });
-
-  it('should burn almost the other half of the LP NFT', async function () {
-    this.timeout(60 * 1000);
-
-    const {
-      uniV2PairContract,
-      tradeFloorProxyContract,
-      tradeFloorClientLP,
-    } = contracts;
-
-    // Burn *almost* the other half of the NFT
-    const tx = tradeFloorProxyInstance.burn(
-      cryptofolioAddressWolf,
-      tradeFloorTokenIdWolf,
-      lpBalance.div(2).sub(1)
-    );
-    await chai
-      .expect(tx)
-      .to.emit(uniV2PairContract, 'Transfer')
-      .withArgs(
-        tradeFloorClientLP.address,
-        marketingWallet.address,
-        lpBalance.div(2).sub(1)
-      );
-
-    // Check wallet balance
-    const newLpBalance = await uniV2PairContract.balanceOf(
-      marketingWallet.address
-    );
-    chai.expect(newLpBalance).to.equal(lpBalance.sub(1));
-
-    // Check the cryptofolio again and verify it holds the NFT
-    const [tokenIds, idsLength] = await cryptofolioContractWolf.getCryptofolio(
-      tradeFloorProxyContract.address
-    );
-    chai.expect(idsLength).to.equal(1);
-    chai.expect(tokenIds[0]).to.equal(tradeFloorTokenIdWolf);
-  });
-
-  it('should burn the dust', async function () {
-    this.timeout(60 * 1000);
-
-    const {
-      uniV2PairContract,
-      tradeFloorProxyContract,
-      tradeFloorClientLP,
-    } = contracts;
-
-    // Burn the dust
-    const tx = tradeFloorProxyInstance.burn(
-      cryptofolioAddressWolf,
-      tradeFloorTokenIdWolf,
-      1
-    );
-    await chai
-      .expect(tx)
-      .to.emit(uniV2PairContract, 'Transfer')
-      .withArgs(tradeFloorClientLP.address, marketingWallet.address, 1);
-
-    // Check the cryptofolio again and it should be in its original state
-    const [tokenIds, idsLength] = await cryptofolioContractWolf.getCryptofolio(
-      tradeFloorProxyContract.address
-    );
-    chai.expect(idsLength).to.equal(0);
-  });
-
-  it('should test re-staking LP NFT', async function () {
-    this.timeout(60 * 1000);
-
-    const {
-      uniV2PairContract,
-      tradeFloorProxyContract,
-      tradeFloorClientLP,
-    } = contracts;
-
-    // Approve LP tokens again for another deposit
-    let tx = await uniV2PairContract.approve(
-      tradeFloorClientLP.address,
-      lpBalance
-    );
-    await chai.expect(tx).to.emit(uniV2PairContract, 'Approval').withArgs(
-      marketingWallet.address, // owner
-      tradeFloorClientLP.address, // spender
-      lpBalance // balance
-    );
-
-    // Deposit LP tokens again
-    tx = tradeFloorClientLP.deposit(
-      cryptofolioAddressWolf,
-      tradeFloorTokenIdWolf,
-      lpBalance
-    );
-    await chai
-      .expect(tx)
-      .to.emit(uniV2PairContract, 'Transfer')
-      .withArgs(marketingWallet.address, tradeFloorClientLP.address, lpBalance);
-    await chai
-      .expect(tx)
-      .to.emit(cryptofolioContractWolf, 'CryptoFolioAdded')
-      .withArgs(
-        cryptofolioAddressWolf,
-        tradeFloorProxyContract.address,
-        [tradeFloorTokenIdWolf],
-        [lpBalance]
-      );
-    await chai.expect(tx).to.emit(tradeFloorClientLP, 'Deposit').withArgs(
-      marketingWallet.address, // User
-      cryptofolioAddressWolf, // Recipient
-      lpBalance, // Amount
-      500000 // Reward rate
-    );
-
-    // Check the cryptofolio again and the LP NFT should appear
-    let [tokenIds, idsLength] = await cryptofolioContractWolf.getCryptofolio(
-      tradeFloorProxyContract.address
-    );
-    chai.expect(idsLength).to.equal(1);
-    chai.expect(tokenIds[0]).to.equal(tradeFloorTokenIdWolf);
-
-    // Burn the NFT
-    tx = tradeFloorProxyInstance.burn(
-      cryptofolioAddressWolf,
-      tradeFloorTokenIdWolf,
-      lpBalance
-    );
-    await chai
-      .expect(tx)
-      .to.emit(uniV2PairContract, 'Transfer')
-      .withArgs(tradeFloorClientLP.address, marketingWallet.address, lpBalance);
-
-    // Check the cryptofolio again and it should be in its original state
-    [tokenIds, idsLength] = await cryptofolioContractWolf.getCryptofolio(
-      tradeFloorProxyContract.address
-    );
-    chai.expect(idsLength).to.equal(0);
   });
 });

@@ -42,8 +42,9 @@ const CURRENT_PRICE_URL =
   'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=ethereum';
 
 // Gas estimator API URL
-const GAS_ESTIMATOR_URL =
-  'https://data-api.defipulse.com/api/v1/egs/api/ethgasAPI.json?api-key=53be2a60f8bc0bb818ad161f034286d709a9c4ccb1362054b0543df78e27';
+//const GAS_ESTIMATOR_URL =
+//  'https://data-api.defipulse.com/api/v1/egs/api/ethgasAPI.json?api-key=53be2a60f8bc0bb818ad161f034286d709a9c4ccb1362054b0543df78e27';
+const GAS_ESTIMATOR_URL = 'https://ethgasstation.info/json/ethgasAPI.json';
 
 // Helper function
 function toWei(n: number, decimals = 18) {

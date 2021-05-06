@@ -13,7 +13,11 @@ library TokenIds {
     return tokenId < 0x10000000000000000;
   }
 
-  function isInvestmentCard(uint256 tokenId) internal pure returns (bool) {
+  function isStockCard(uint256 tokenId) internal pure returns (bool) {
+    return tokenId < 0x100000000;
+  }
+
+  function isCFolioCard(uint256 tokenId) internal pure returns (bool) {
     return tokenId > 0xFFFF0000000000000000;
   }
 }

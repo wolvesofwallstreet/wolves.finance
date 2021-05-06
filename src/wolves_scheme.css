@@ -76,25 +76,23 @@
   border: var(--wolves-orange) 1px solid;
 }
 
-.wolves-orange-border {
-  border: 1px solid #e8a688;
+.bg-wolves {
+  background-image: url(./assets/background_wolves.png);
 }
 
-.wolves-orange-border-t {
-  border-top: 1px solid var(--wolves-orange-light)
+.bg-bois {
+  background-image: url(./assets/background_bois.jpg);
 }
 
-.wolves-orange-border-b {
-  border-bottom: 1px solid var(--wolves-orange-light);
+.bg-myPack {
+  background-image: url(./assets/background_bois.jpg);
+}
+
+.bg-flat2 {
+  /* TODO::bg-asset */
+  background-image: url(./assets/background_bois.jpg);
 }
 
 .bg-transparent-orange {
   background-color: var(--wolves-orange-transparent);
-}
-
-.before_none::before {
-  content: none !important;
-}
-.after_none::after {
-  content: none !important;
 }

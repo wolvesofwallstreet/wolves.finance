@@ -1,3 +1,11 @@
+.glide-border-t {
+  border-top: 1px solid var(--wolves-orange-light);
+}
+
+.glide-border-b {
+  border-bottom: 1px solid var(--wolves-orange-light);
+}
+
 .wrap {
   max-width: 750px;
   margin: -25px auto;

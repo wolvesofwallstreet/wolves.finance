@@ -13,12 +13,14 @@ import '@openzeppelin/contracts/proxy/Clones.sol';
 import './interfaces/IWOWSCryptofolio.sol';
 import './interfaces/IWOWSERC1155.sol';
 import './WOWSMinterPauser.sol';
+import '../utils/TokenIds.sol';
 
 /**
  * TODO's:
  * implement transfer and burn helpers for cryptofolio items
  */
 contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
+  using TokenIds for uint256;
   //////////////////////////////////////////////////////////////////////////////
   // Constants
   //////////////////////////////////////////////////////////////////////////////
@@ -204,6 +206,7 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
   function setBaseMetadataURI(string memory baseMetadataURI) external override {
     // Access control
     require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Access denied');
+
     // Set state
     _setBaseMetadataURI(baseMetadataURI);
   }
@@ -217,12 +220,13 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
   {
     // Access control
     require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Access denied');
+
     // Set state
     _setContractMetadataURI(contractMetadataURI);
   }
 
   /**
-   * @dev See {IWOWSERC1155-setCustumURI}.
+   * @dev See {IWOWSERC1155-setCustomURI}.
    */
   function setCustomURI(uint256 tokenId, string memory customURI)
     public
@@ -232,7 +236,7 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
     require(hasRole(MINTER_ROLE, _msgSender()), 'Access denied');
 
     // Validate parameters
-    require(_isCustomToken(tokenId), 'invalid tokenId');
+    require(!tokenId.isStockCard(), 'Only custom cards');
 
     // Update state
     _customCards[tokenId].uri = customURI;
@@ -249,7 +253,7 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
     require(hasRole(MINTER_ROLE, _msgSender()), 'Only minter');
 
     // Validate parameter
-    require(_isCustomToken(tokenId), 'Only for custom cards');
+    require(!tokenId.isStockCard(), 'Only custom cards');
 
     // Update state
     _customCards[tokenId].level = cardLevel;
@@ -296,7 +300,7 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
     returns (string memory)
   {
     // Custom token
-    if (_isCustomToken(tokenId)) {
+    if (!tokenId.isStockCard()) {
       if (bytes(_customCards[tokenId].uri).length == 0) {
         return _uri(tokenId, 0);
       } else {
@@ -366,6 +370,10 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
 
   /**
    * @dev Return information about a wows card
+   *
+   * NOTE: The implementation in the initial deployment was incorrect. If you
+   * are interacting with contract 0x64B3342dB643f3Fb4da5781b6D09B44Ab4668dE4,
+   * you must use {getCardDataBatch}!
    *
    * @param level The level of the card
    * @param cardId The id of the card
@@ -517,10 +525,12 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
       _addressToTokenId[tokenAddress] = tokenId;
 
       // Increment the minted count for this card
-      if (!_isCustomToken(tokenId)) {
-        _wowsCardsMinted[uint16(tokenId >> 16)] += 1;
-      } else {
-        ++_customCardCount;
+      if (tokenId.isBaseCard()) {
+        if (tokenId.isStockCard()) {
+          _wowsCardsMinted[uint16(tokenId >> 16)] += 1;
+        } else {
+          ++_customCardCount;
+        }
       }
     }
     // Burning
@@ -532,7 +542,7 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
       tokenInfo.minted = false;
 
       // Decrement the minted count for this card
-      if (!_isCustomToken(tokenId)) {
+      if (tokenId.isStockCard()) {
         _wowsCardsMinted[uint16(tokenId >> 16)] -= 1;
       }
     }
@@ -571,17 +581,6 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
       toList.listKey.index = tokenId;
       toList.count++;
     }
-  }
-
-  /**
-   * @dev Check if a token ID belongs to a custom token
-   *
-   * @param tokenId The token ID to check
-   *
-   * @return True if the token is a custom token, false otherwise
-   */
-  function _isCustomToken(uint256 tokenId) private pure returns (bool) {
-    return tokenId > 0xFFFFFFFF;
   }
 
   /**
@@ -626,7 +625,7 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
    * @return level The level of the token
    */
   function _getLevel(uint256 tokenId) private view returns (uint8 level) {
-    if (_isCustomToken(tokenId)) {
+    if (!tokenId.isStockCard()) {
       level = _customCards[tokenId].level;
     } else {
       level = uint8(tokenId >> 24);

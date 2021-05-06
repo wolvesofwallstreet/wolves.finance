@@ -20,8 +20,11 @@ import Footer from './components/footer';
 import Header from './components/header';
 import Page1 from './components/page1';
 import Page3 from './components/page3';
+import Page3TradeFloor from './components/page3TradeFloor';
 import Page4 from './components/page4';
-import PageLoader from './components/pages/PageLoader';
+import Page4StakedInvest from './components/Page4StakedInvest';
+import Page5 from './components/page5';
+import { PageStatus } from './components/pageStatus';
 import Stake from './components/stake';
 import WolfToast from './components/toast/wolftoast';
 import { StoreContainer } from './stores/store';
@@ -45,7 +48,12 @@ class App extends React.Component {
                 render={(props) => <Page3 {...props} display={'my'} />}
               />
               <Route path="/detail" component={Page4} />
-              <Route path="/update/:page" component={PageLoader} />
+              <Route path="/status" component={PageStatus} />
+
+              <Route path="/wolf_trade_floor" component={Page3TradeFloor} />
+              <Route path="/staked-invest" component={Page4StakedInvest} />
+              <Route path="/page5-mypack" component={Page5} />
+
               <Route component={Page1} />
             </Switch>
             <Footer />

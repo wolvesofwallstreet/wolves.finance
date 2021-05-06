@@ -27,42 +27,6 @@ body {
   line-height: 1em;
 }
 
-.font-10 {
-  font-size: 10px;
-}
-
-.font-12 {
-  font-size: 12px;
-}
-
-.font-14 {
-  font-size: 14px;
-}
-
-.font-16 {
-  font-size: 16px;
-}
-
-.font-20 {
-  font-size: 20px;
-}
-
-.font-24 {
-  font-size: 24px;
-}
-
-.font-28 {
-  font-size: 28px;
-}
-
-.font-32 {
-  font-size: 32px;
-}
-
-.font-48 {
-  font-size: 48px;
-}
-
 .ellipsis {
   width: 100%;
   white-space: nowrap;
@@ -84,7 +48,7 @@ body {
 
 hr.wolves {
   border-top: var(--wolves-orange) 1px solid;
-  margin: 4px 0px;
+  margin: 4px 0;
   align-self: stretch;
 }
 
@@ -97,35 +61,71 @@ span a:hover {
   color: var(--wolves-orange);
 }
 
-.link {
+.c-pointer {
   cursor: pointer;
-}
-
-.text-white {
-  color: var(--color-white);
-}
-
-.triangle-down {
-  width: 0;
-  height: 0;
-  border-left: 18px solid transparent;
-  border-right: 18px solid transparent;
-  border-top: 10px solid var(--wolves-orange);
-  margin: 0 auto;
-}
-
-.--text-left {
-  text-align: left !important;
-}
-
-.--text-gray {
-  color: gray !important;
 }
 
 .bg-blue-transparent {
   background-color: rgba(4, 29, 52, 0.44) !important;
 }
 
-.bg-blue-dark {
-  background-color: rgba(4, 29, 52, 0.95) !important;
+.bg-blue-transparent-dark {
+  background-color: rgba(4, 29, 52, 0.8) !important;
 }
+
+.t-left {
+  text-align: left;
+}
+
+.text-white {
+  color: var(--wolves-white);
+}
+.text-gray {
+  color: gray !important;
+}
+
+.line-break-enable {
+  white-space: pre-line;
+}
+
+.center-container {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.responsive-img {
+  width: 100%;
+}
+
+/* --- START ARROWS */
+/* Src http://apps.eky.hk/css-triangle-generator/ */
+
+.arrow_up,
+.arrow_down,
+.arrow_left,
+.arrow_right {
+  width: 0;
+  height: 0;
+  border-style: solid;
+  background-color: transparent;
+  border-color: transparent;
+}
+.arrow_down {
+  border-width: 15px 25px 0 25px;
+  border-top-color: var(--wolves-orange-light);
+}
+.arrow_left {
+  border-width: 20px 15px 20px 0;
+  border-right-color: var(--wolves-orange-light);
+}
+.arrow_right {
+  border-width: 20px 0 20px 15px;
+  border-left-color: var(--wolves-orange-light);
+}
+.arrow_left:hover {
+  border-right-color: var(--wolves-orange);
+}
+.arrow_right:hover {
+  border-left-color: var(--wolves-orange);
+}
+/* --- ARROWS END*/

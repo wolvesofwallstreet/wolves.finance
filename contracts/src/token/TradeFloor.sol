@@ -39,6 +39,7 @@ abstract contract OpenSeaProxyRegistry {
  */
 contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   using TokenIds for uint256;
+
   //////////////////////////////////////////////////////////////////////////////
   // State
   //////////////////////////////////////////////////////////////////////////////
@@ -245,6 +246,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
 
     // Call parent
     super.burnBatch(account, tokenIds, amounts);
+
     // Perform internal handling
     _onTransfer(account, address(0), tokenIds);
   }
@@ -576,7 +578,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
       if (tokenId.isBaseCard()) {
         ++numBaseSft;
       } else {
-        // CFolio SFT's always have one tradefloor / 1 CFolio dummy
+        // CFolio SFTs always have one tradefloor / 1 CFolio dummy
         // which is needed to notify the CFolioHandler on SFT burn
         address cFolioHandler =
           IWOWSCryptofolio(_sftHolder.tokenIdToAddress(tokenId))._tradefloors(

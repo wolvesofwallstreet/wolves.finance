@@ -17,7 +17,7 @@ import fs from 'fs';
 
 import WOWSSftMinterAbi from '../../src/abi/contracts/src/crowdsale/WOWSSftMinter.sol/WOWSSftMinter.json';
 import RewardHandlerAbi from '../../src/abi/contracts/src/investment/RewardHandler.sol/RewardHandler.json';
-import TradeFloorProxyAbi from '../../src/abi/contracts/src/proxy/TradeFloorProxy.sol/TradeFloorProxy.json';
+import UpgradeProxyAbi from '../../src/abi/contracts/src/proxy/UpgradeProxy.sol/UpgradeProxy.json';
 import TradeFloorAbi from '../../src/abi/contracts/src/token/TradeFloor.sol/TradeFloor.json';
 import WOWSTokenAbi from '../../src/abi/contracts/src/token/WOWSErc20.sol/WowsToken.json';
 import WOWSERC1155Abi from '../../src/abi/contracts/src/token/WOWSErc1155.sol/WOWSERC1155.json';
@@ -89,7 +89,7 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
   );
   const tradeFloorProxyContract = new ethers.Contract(
     addresses.tradeFloorProxy,
-    TradeFloorProxyAbi,
+    UpgradeProxyAbi,
     marketingWallet
   );
 
@@ -401,7 +401,7 @@ describe('SFT contracts', function () {
 
     // Set the URI of (level = 1, card ID = 1)
     tx = sftHolderContract.setCustomURI(tokenId, referenceUri);
-    await chai.expect(tx).to.be.revertedWith('invalid tokenId');
+    await chai.expect(tx).to.be.revertedWith('Only custom cards');
 
     // Check the URI of (level = 1, card ID = 1)
     uri = await sftHolderContract.uri(tokenId);
@@ -471,7 +471,7 @@ describe('SFT contracts', function () {
 
     // Set the URI of WOWS token (should fail)
     tx = sftHolderContract.setCustomURI(wowsTokenId, customReferenceUri);
-    await chai.expect(tx).to.be.revertedWith('invalid tokenId');
+    await chai.expect(tx).to.be.revertedWith('Only custom cards');
 
     // Check the default URI of WOWS token
     uri = await sftHolderContract.uri(0);
@@ -693,6 +693,7 @@ describe('SFT contracts', function () {
     const cardId = 2;
     const wowsTokenId = ethers.BigNumber.from('0x01020000');
     const level1Price = '3000000000000000000';
+    const cFolioType = 0;
 
     // Approve SFT minter spending WOWS
     let tx = tokenContract.approve(
@@ -708,7 +709,8 @@ describe('SFT contracts', function () {
     await chai.expect(tx).to.emit(sftMinterContract, 'Mint').withArgs(
       marketingWallet.address, // Recipient
       wowsTokenId, // Token ID
-      level1Price // Price
+      level1Price, // Price
+      cFolioType // CFolioItemType
     );
 
     // Check the token's ownership (NFT balance is always 1)
