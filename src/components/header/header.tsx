@@ -150,12 +150,6 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
         disabled: type === 'myPack',
       },
       {
-        id: 'PAGE-5',
-        to: 'page5-mypack',
-        disabled: type === '/page5-mypack',
-      },
-
-      {
         id: 'BOIS BOARDROOMS',
         to: '/wolf_trade_floor-1',
         disabled: location.pathname === '/wolf_trade_floor',
