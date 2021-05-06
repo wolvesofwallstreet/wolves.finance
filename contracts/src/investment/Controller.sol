@@ -21,12 +21,16 @@ import './interfaces/IRewardHandler.sol';
 contract Controller is IController, Ownable {
   using SafeMath for uint256;
 
-  /* ========== STATE VARIABLES ========== */
+  //////////////////////////////////////////////////////////////////////////////
+  // State
+  //////////////////////////////////////////////////////////////////////////////
 
   // We need the previous controller for calculation of pending rewards
   address public previousController;
+
   // Our rewardHandler which distributes rewards
   IRewardHandler public rewardHandler;
+
   // The address which is alowed to call service functions
   address public worker;
 
@@ -45,45 +49,63 @@ contract Controller is IController, Ownable {
 
   mapping(address => Farm) public farms;
 
-  /* ========== MODIFIER ========== */
+  //////////////////////////////////////////////////////////////////////////////
+  // Modifiers
+  //////////////////////////////////////////////////////////////////////////////
 
   modifier onlyWorker {
     require(_msgSender() == worker, 'not worker');
     _;
   }
 
-  /* ========== EVENTS ========== */
+  //////////////////////////////////////////////////////////////////////////////
+  // Events
+  //////////////////////////////////////////////////////////////////////////////
 
   event FarmRegistered(address indexed farm);
+
   event FarmUpdated(address indexed farm);
+
   event FarmDisabled(address indexed farm);
+
   event FarmPaused(address indexed farm, bool pause);
+
   event FarmTransfered(address indexed farm, address indexed to);
+
   event Rebalanced(address indexed farm);
+
   event Refueled(address indexed farm, uint256 amount);
 
-  /* ========== CONSTRUCTOR ========== */
+  //////////////////////////////////////////////////////////////////////////////
+  // Initialization
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @param _rewardHandler handler of reward distribution
-   *
    * @dev rewardHandler is the instance which finally stores the reward token
    * and distributes them to the different recipients
+   *
+   * @param _addressRegistry IAdressRegistry to get system addresses
+   * @param _rewardHandler Handler of reward distribution
+   * @param _previousController The previous controller
    */
   constructor(
     IAddressRegistry _addressRegistry,
     address _rewardHandler,
     address _previousController
   ) {
+    // Initialize state
     setRewardHandler(_rewardHandler);
     previousController = _previousController;
 
+    // Initialize {Ownable}
     address _marketingWallet =
       _addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
     transferOwnership(_marketingWallet);
   }
 
-  /* ========== ROUTING ========== */
+  //////////////////////////////////////////////////////////////////////////////
+  // Routing
+  //////////////////////////////////////////////////////////////////////////////
 
   function setRewardHandler(address _rewardHandler) public onlyOwner {
     rewardHandler = IRewardHandler(_rewardHandler);
@@ -93,67 +115,74 @@ contract Controller is IController, Ownable {
     worker = _worker;
   }
 
-  /* ========== FARM CALLBACKS ========== */
+  //////////////////////////////////////////////////////////////////////////////
+  // Implementation of {IController}
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev Used to control fees and accessibility instead having an
-   * implementation in each farm contract
-   *
-   * Deposit is only allowed if farm is open and not not paused.
-   *
-   * @param _amount Number of tokens the user wants to deposit
-   *
-   * @return fee The deposit fee (1e18 factor)
+   * @dev See {IController-onDeposit}
    */
-  function onDeposit(uint256 _amount)
+  function onDeposit(uint256 amount)
     external
     view
     override
     returns (uint256 fee)
   {
+    // Load state
     Farm storage farm = farms[msg.sender];
-    require(farm.farmStartedAtBlock > 0, 'caller not a farm');
-    require(farm.farmEndedAtBlock == 0, 'farm closed');
-    require(!farm.paused, 'farm paused');
-    _amount;
+
+    // Validate state
+    require(farm.farmStartedAtBlock > 0, 'Caller not a farm');
+    require(farm.farmEndedAtBlock == 0, 'Farm closed');
+    require(!farm.paused, 'Farm paused');
+
+    // Unused
+    amount;
+
     return 0;
   }
 
   /**
-   * @dev Used to control fees and accessibility instead having an
-   * implementation in each farm contract
-   *
-   * Withdraw is only allowed if farm is not paused.
-   *
-   * @param _amount Number of tokens the user wants to withdraw
-   *
-   * @return fee The withdrawal fee (1e18 factor)
+   * @dev See {IController-onDeposit}
    */
-  function onWithdraw(uint256 _amount)
+  function onWithdraw(uint256 amount)
     external
     view
     override
     returns (uint256 fee)
   {
-    require(!farms[msg.sender].paused, 'farm paused');
-    _amount;
+    // Validate state
+    require(!farms[msg.sender].paused, 'Farm paused');
+
+    // Unused
+    amount;
+
     return 0;
   }
 
+  /**
+   * @dev See {IController-payOutRewards}
+   */
   function payOutRewards(address recipient, uint256 amount) external override {
+    // Load state
     Farm storage farm = farms[msg.sender];
-    require(farm.farmStartedAtBlock > 0, 'caller not a farm');
-    require(recipient != address(0), 'recipient 0 address');
-    require(!farm.paused, 'farm paused');
+
+    // Validate state
+    require(farm.farmStartedAtBlock > 0, 'Caller not a farm');
+    require(recipient != address(0), 'Recipient 0 address');
+    require(!farm.paused, 'Farm paused');
     require(
       amount.add(farm.rewardProvided) <= farm.rewardCap,
-      'rewardCap reached'
+      'Reward cap reached'
     );
 
+    // Update state
     rewardHandler.distribute2(recipient, amount, farm.rewardFee);
   }
 
-  /* ========== FARM MANAGMENT ========== */
+  //////////////////////////////////////////////////////////////////////////////
+  // Farm management
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
    * @dev registerFarm can be called from outside (for new Farms deployed with
@@ -166,11 +195,14 @@ contract Controller is IController, Ownable {
    * _rewardProvided should be left 0, it is mainly used if a farm is
    * transferred.
    *
-   * @param _farmAddress contract address of farm
-   * @param _rewardCap max. amount of tokens rewardable
-   * @param _rewardPerDuration refuel amount of tokens, duration is fixed in farm contract
-   * @param _rewardProvided already provided rewards for this farm, should be 0 for external calls
-   * @param _rewardFee fee we take from the reward and distribute through components (1e6 factor)
+   * @param _farmAddress Contract address of farm
+   * @param _rewardCap Maximum amount of tokens rewardable
+   * @param _rewardPerDuration Refuel amount of tokens, duration is fixed in
+   * farm contract
+   * @param _rewardProvided Already provided rewards for this farm, should be 0
+   * for external calls
+   * @param _rewardFee Fee we take from the reward and distribute through
+   * components (1e6 factor)
    */
   function registerFarm(
     address _farmAddress,
@@ -179,11 +211,14 @@ contract Controller is IController, Ownable {
     uint256 _rewardProvided,
     uint32 _rewardFee
   ) external {
+    // Validate access
     require(
       msg.sender == owner() || msg.sender == previousController,
-      'not allowed'
+      'Not allowed'
     );
-    require(_farmAddress != address(0), 'invalid farm');
+
+    // Validate parameters
+    require(_farmAddress != address(0), 'Invalid farm');
 
     // Farm existent, add new reward logic
     Farm storage farm = farms[_farmAddress];
@@ -195,6 +230,8 @@ contract Controller is IController, Ownable {
       farm.rewardCap = _rewardCap;
       farm.rewardFee = _rewardFee;
       if (_rewardProvided > 0) farm.rewardProvided = _rewardProvided;
+
+      // Dispatch event
       emit FarmUpdated(_farmAddress);
     }
     // We have a new farm
@@ -207,11 +244,13 @@ contract Controller is IController, Ownable {
         searchAddress != address(0) &&
         farmName != keccak256(abi.encodePacked(IFarm(searchAddress).farmName()))
       ) searchAddress = farms[searchAddress].nextFarm;
+
       // If found (update), disable existing farm
       if (searchAddress != address(0)) {
         farms[searchAddress].farmEndedAtBlock = block.number;
         _rewardProvided = farms[searchAddress].rewardProvided;
       }
+
       // Insert the new Farm
       farm.nextFarm = farmHead;
       farm.farmStartedAtBlock = block.number;
@@ -223,24 +262,33 @@ contract Controller is IController, Ownable {
       farm.paused = false;
       farm.active = true;
       farmHead = _farmAddress;
+
+      // Dispatch event
       emit FarmRegistered(_farmAddress);
     }
   }
 
   /**
-   * @dev note that disabled farm can only be enabled again by calling
+   * @dev Note that disabled farms can only be enabled again by calling
    * registerFarm() with new parameters
    *
    * This function is meant to finally end a farm.
    *
-   * @param _farmAddress contract address of farm to disable
+   * @param _farmAddress Contract address of farm to disable
    */
   function disableFarm(address _farmAddress) external onlyOwner {
+    // Load state
     Farm storage farm = farms[_farmAddress];
-    require(farm.farmStartedAtBlock > 0, 'not a farm');
 
+    // Validate state
+    require(farm.farmStartedAtBlock > 0, 'Not a farm');
+
+    // Update state
     farm.farmEndedAtBlock = block.number;
+
+    // Dispatch event
     emit FarmDisabled(_farmAddress);
+
     _checkActive(farm);
   }
 
@@ -250,15 +298,22 @@ contract Controller is IController, Ownable {
    *
    * Deposit / withdraw and rewards are disabled while pause is set to true.
    *
-   * @param _farmAddress contract address of farm to disable
-   * @param _pause to enable / disable a farm
+   * @param _farmAddress Contract address of farm to disable
+   * @param _pause To enable / disable a farm
    */
   function pauseFarm(address _farmAddress, bool _pause) external onlyOwner {
+    // Load state
     Farm storage farm = farms[_farmAddress];
-    require(farm.farmStartedAtBlock > 0, 'not a farm');
 
+    // Validate state
+    require(farm.farmStartedAtBlock > 0, 'Not a farm');
+
+    // Update state
     farm.paused = _pause;
+
+    // Dispatch event
     emit FarmPaused(_farmAddress, _pause);
+
     _checkActive(farm);
   }
 
@@ -266,12 +321,19 @@ contract Controller is IController, Ownable {
     public
     onlyOwner
   {
-    Farm storage farm = farms[_farmAddress];
-    require(farm.farmStartedAtBlock > 0, 'farm not registered');
+    // Validate parameters
     require(_newController != address(0), 'newController = 0');
     require(_newController != address(this), 'newController = this');
 
+    // Load state
+    Farm storage farm = farms[_farmAddress];
+
+    // Validate state
+    require(farm.farmStartedAtBlock > 0, 'Farm not registered');
+
+    // Update state
     IFarm(_farmAddress).setController(_newController);
+
     // Register this farm in the new controller
     Controller(_newController).registerFarm(
       _farmAddress,
@@ -280,6 +342,7 @@ contract Controller is IController, Ownable {
       farm.rewardProvided,
       farm.rewardFee
     );
+
     // Remove this farm from controller
     if (_farmAddress == farmHead) {
       farmHead = farm.nextFarm;
@@ -289,17 +352,25 @@ contract Controller is IController, Ownable {
         searchAddress = farms[searchAddress].nextFarm;
       farms[searchAddress].nextFarm = farm.nextFarm;
     }
+
     delete (farms[_farmAddress]);
+
+    // Dispatch event
     emit FarmTransfered(_farmAddress, _newController);
   }
 
   function transferAllFarms(address _newController) external onlyOwner {
-    while (farmHead != address(0)) transferFarm(farmHead, _newController);
+    while (farmHead != address(0)) {
+      transferFarm(farmHead, _newController);
+    }
   }
 
-  /* ========== UTILITY FUNCTIONS ========== */
+  //////////////////////////////////////////////////////////////////////////////
+  // Utility functions
+  //////////////////////////////////////////////////////////////////////////////
 
   function rebalance() external onlyWorker {
+    // Update state
     address iterAddress = farmHead;
     while (iterAddress != address(0)) {
       if (farms[iterAddress].active) {
@@ -307,6 +378,8 @@ contract Controller is IController, Ownable {
       }
       iterAddress = farms[iterAddress].nextFarm;
     }
+
+    // Dispatch event
     emit Rebalanced(iterAddress);
   }
 
@@ -320,15 +393,20 @@ contract Controller is IController, Ownable {
         // solhint-disable-next-line not-rely-on-time
         block.timestamp + 86400 >= IFarm(iterAddress).periodFinish()
       ) {
+        // Update state
         IFarm(iterAddress).notifyRewardAmount(farm.rewardPerDuration);
         farm.rewardProvided = farm.rewardProvided.add(farm.rewardPerDuration);
+
+        // Dispatch event
         emit Refueled(iterAddress, farm.rewardPerDuration);
       }
       iterAddress = farm.nextFarm;
     }
   }
 
-  /* ========== INTERNAL FUNCTIONS ========== */
+  //////////////////////////////////////////////////////////////////////////////
+  // Implementation details
+  //////////////////////////////////////////////////////////////////////////////
 
   function _checkActive(Farm storage farm) internal {
     farm.active = !(farm.paused || farm.farmEndedAtBlock > 0);

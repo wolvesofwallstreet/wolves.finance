@@ -10,12 +10,27 @@ pragma solidity >=0.6.0 <0.8.0;
 
 interface IController {
   /**
-   * @dev Revert on failure, return deposit fee in 1e-18/fee notation on success
+   * @dev Used to control fees and accessibility instead having an implementation
+   * in each farm contract
+   *
+   * Deposit is only allowed if farm is open and not not paused. Must revert on
+   * failure.
+   *
+   * @param amount Number of tokens the user wants to deposit
+   *
+   * @return fee The deposit fee (1e18 factor) on success
    */
   function onDeposit(uint256 amount) external view returns (uint256 fee);
 
   /**
-   * @dev Revert on failure, return withdrawal fee in 1e-18/fee notation on success
+   * @dev Used to control fees and accessibility instead having an
+   * implementation in each farm contract
+   *
+   * Withdraw is only allowed if farm is not paused. Must revert on failure
+   *
+   * @param amount Number of tokens the user wants to withdraw
+   *
+   * @return fee The withdrawal fee (1e18 factor) on success
    */
   function onWithdraw(uint256 amount) external view returns (uint256 fee);
 
