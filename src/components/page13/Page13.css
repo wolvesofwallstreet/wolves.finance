@@ -60,12 +60,6 @@
   width: 70%;
 }
 
-.wolve-cards-container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
 .w-nav-container a {
   color: white;
 }

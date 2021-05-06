@@ -16,7 +16,7 @@ import { Link } from 'react-router-dom';
 
 type ReactNodeType = JSX.Element | React.ReactNode | React.ReactElement | any;
 
-type NavigationPropsTypes = {
+type WolveCardPropsTypes = {
   title?: string;
 
   titleSecondary?: string;
@@ -31,6 +31,8 @@ type NavigationPropsTypes = {
   alt?: string;
   linkType?: 'image' | 'video';
 
+  count?: string | number;
+
   [key: string]: any;
 };
 
@@ -44,8 +46,9 @@ const WolveCard = ({
   alt,
   bottomContent,
   linkType = 'image',
+  count,
   media_className,
-}: NavigationPropsTypes): ReactNodeType => {
+}: WolveCardPropsTypes): ReactNodeType => {
   return (
     <>
       <div className="wolve-card-container">
@@ -53,16 +56,15 @@ const WolveCard = ({
           <span className="tk-vincente-lightbold font-32">{title}</span>
         )}
 
-        <span>
+        <span className={'position-relative'}>
           <Link to={cardLink}>
             {linkType === 'image' && (
               <img
-                className={`media-container ${media_className}`}
+                className={`wolve-card-media-container ${media_className} `}
                 /*style={{width:'100%'}}*/ src={src}
                 alt={alt}
               />
             )}
-
             {linkType === 'video' && (
               <video
                 playsInline
@@ -74,6 +76,7 @@ const WolveCard = ({
                 poster={src + '.jpg'}
               />
             )}
+            <span className="wolve-card-counter"> {count} </span>
           </Link>
         </span>
 

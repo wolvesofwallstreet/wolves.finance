@@ -13,7 +13,7 @@ import { TFunction, withTranslation } from 'react-i18next';
 import { Link, RouteComponentProps } from 'react-router-dom';
 
 import Logo from '../../assets/logo.png';
-import WolveCard from './WolveCard';
+import WolveCard from '../theme/wolveCard/WolveCard';
 
 type PROPS = {
   t: TFunction;
@@ -21,7 +21,7 @@ type PROPS = {
   history: RouteComponentProps['history'];
 };
 
-function Page14({ t, location }: PROPS) {
+function Page13({ t, location }: PROPS) {
   // const activeTab = (tab?: string) => {
   //   const currentTab = new URLSearchParams(location.search).get('currentTab');
   //   if (!tab) return currentTab;
@@ -175,4 +175,4 @@ function Page14({ t, location }: PROPS) {
   );
 }
 
-export default withTranslation()(Page14);
+export default withTranslation()(Page13);
