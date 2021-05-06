@@ -21,11 +21,19 @@ import '../../src/utils/interfaces/IAddressRegistry.sol';
 contract RewardHandler is Context, AccessControl, IRewardHandler {
   using SafeMath for uint256;
 
+  //////////////////////////////////////////////////////////////////////////////
+  // Roles
+  //////////////////////////////////////////////////////////////////////////////
+
   // Role granted to distribute funds
   bytes32 public constant REWARD_ROLE = 'reward_role';
 
   // Role granted to access the private API for testing
   bytes32 public constant TESTER_ROLE = 'test';
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Constants
+  //////////////////////////////////////////////////////////////////////////////
 
   // The fee is distributed to 4 channels:
   // 0.15 team
@@ -37,6 +45,10 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
   // 0.3 back to reward pool (remaining fee remains in contract)
   // uint32 private constant FEE_TO_REWARDPOOL = 3 * 1e5;
 
+  //////////////////////////////////////////////////////////////////////////////
+  // State
+  //////////////////////////////////////////////////////////////////////////////
+
   // Minimal mint amount
   uint256 private _minimalMintAmount = 100 * 1e18;
 
@@ -46,8 +58,18 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
   // Amount to distribute?
   uint256 private _distributeAmount;
 
-  // fired if we receive Ether
+  //////////////////////////////////////////////////////////////////////////////
+  // Events
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * @dev Fired if we receive Ether
+   */
   event Received(address, uint256);
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Initialization
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
    * @dev Constructor
@@ -55,13 +77,13 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
    * @param addressRegistry The registry for addresses in the system
    */
   constructor(IAddressRegistry addressRegistry) {
-    // Initialize parameters
-    _addressRegistry = addressRegistry;
-
     // Initialize access
     address marketingWallet =
       addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
     _setupRole(DEFAULT_ADMIN_ROLE, marketingWallet);
+
+    // Initialize state
+    _addressRegistry = addressRegistry;
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -86,14 +108,14 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
    */
   function distributeAll() external {
     // Validate state
-    require(_distributeAmount > 0, 'nothing to distribute');
+    require(_distributeAmount > 0, 'Nothing to distribute');
 
     _distribute();
   }
 
   /**
    * @dev Distribute _distributeAmount to internal targets, transfer all WOWS
-   * to the new reward handler, and destroy this contract
+   * to the new reward handler, and (optionally) destroy this contract
    *
    * @param newRewardHandler The reward handler that succeeds this one
    * @param destroy True to destroy this contract, false to distribute without
@@ -120,18 +142,20 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
 
   /**
    * @dev Swap ETH or ERC20 token into rewardToken
+   *
    * tokenAddress cannot be rewardToken.
    *
-   * @param route path containing ERC20 token addresses
-   * to swap route[0] into reward tokens.
-   * The last address must be rewardToken address
+   * @param route Path containing ERC20 token addresses to swap route[0] into
+   * reward tokens. The last address must be rewardToken address.
    */
   function swapIntoRewardToken(address[] calldata route) external {
     // Validate access
     require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admins');
+
     address rewardToken =
       _addressRegistry.getRegistryEntry(AddressBook.WOWS_TOKEN);
-    // get the UniV2 Router
+
+    // Get the UniV2 Router
     IUniswapV2Router02 router =
       IUniswapV2Router02(
         _addressRegistry.getRegistryEntry(AddressBook.UNISWAP_V2_ROUTER02)
@@ -139,11 +163,14 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
 
     // Check for ETH swap (no route given)
     if (route.length == 0) {
+      // Validate state
       uint256 amountETH = payable(address(this)).balance;
-      require(amountETH > 0, 'insufficient amount');
+      require(amountETH > 0, 'Insufficient amount');
+
       address[] memory ethRoute = new address[](2);
       ethRoute[0] = router.WETH();
       ethRoute[1] = rewardToken;
+
       uint256[] memory amounts =
         router.swapExactETHForTokens{ value: amountETH }(
           0,
@@ -152,15 +179,21 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
           // solhint-disable-next-line not-rely-on-time
           block.timestamp + 3600
         );
+
+      // Update state
       _distributeAmount = _distributeAmount.add(amounts[1]);
     } else {
-      require(route.length >= 2, 'invalid route');
+      // Validate parameters
+      require(route.length >= 2, 'Invalid route');
       require(
         route[route.length - 1] == address(rewardToken),
-        'route terminator != rewardToken'
+        'Route terminator != rewardToken'
       );
+
+      // Validate state
       uint256 amountToken = IERC20(route[0]).balanceOf(address(this));
-      require(amountToken > 0, 'insufficient amount');
+      require(amountToken > 0, 'Insufficient amount');
+
       uint256[] memory amounts =
         router.swapExactTokensForTokens(
           amountToken,
@@ -170,6 +203,8 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
           // solhint-disable-next-line not-rely-on-time
           block.timestamp + 3600
         );
+
+      // Update state
       _distributeAmount = _distributeAmount.add(amounts[route.length - 1]);
     }
   }
@@ -252,7 +287,7 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
   /**
    * @dev Distribute the accumulated fees
    *
-   * @return The WOWS token
+   * @return The WOWS token address
    */
   function _distribute() internal returns (IERC20WowsMintable) {
     IERC20WowsMintable rewardToken =
