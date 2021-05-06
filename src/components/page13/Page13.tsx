@@ -115,7 +115,7 @@ function Page13({ t, location }: PROPS) {
         </div>
 
         {/* H-Line */}
-        <span className="line-container page13-line">
+        <span className="line-container m-auto">
           <span id="left" className="dot" />
           <span className="line" />
           <span id="right" className="dot" />

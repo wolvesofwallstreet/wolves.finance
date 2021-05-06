@@ -76,7 +76,7 @@ const WolveCard = ({
                 poster={src + '.jpg'}
               />
             )}
-            <span className="wolve-card-counter"> {count} </span>
+            {count && <span className="wolve-card-counter"> {count} </span>}
           </Link>
         </span>
 
