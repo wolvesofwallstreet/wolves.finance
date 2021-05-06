@@ -96,14 +96,14 @@ contract Controller is IController, Ownable {
   /* ========== FARM CALLBACKS ========== */
 
   /**
-   * @dev onDeposit() is used to control fees and accessibility instead having an
+   * @dev Used to control fees and accessibility instead having an
    * implementation in each farm contract
    *
-   * Deposit is only allowed, if farm is open and not not paused.
+   * Deposit is only allowed if farm is open and not not paused.
    *
-   * @param _amount #tokens the user wants to deposit
+   * @param _amount Number of tokens the user wants to deposit
    *
-   * @return fee returns the deposit fee (1e18 factor)
+   * @return fee The deposit fee (1e18 factor)
    */
   function onDeposit(uint256 _amount)
     external
@@ -120,14 +120,14 @@ contract Controller is IController, Ownable {
   }
 
   /**
-   * @dev onWithdraw() is used to control fees and accessibility instead having
-   * an implementation in each farm contract
+   * @dev Used to control fees and accessibility instead having an
+   * implementation in each farm contract
    *
-   * Withdraw is only allowed, if farm is not paused.
+   * Withdraw is only allowed if farm is not paused.
    *
-   * @param _amount #tokens the user wants to withdraw
+   * @param _amount Number of tokens the user wants to withdraw
    *
-   * @return fee returns the withdraw fee (1e18 factor)
+   * @return fee The withdrawal fee (1e18 factor)
    */
   function onWithdraw(uint256 _amount)
     external
