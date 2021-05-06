@@ -46,7 +46,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   //////////////////////////////////////////////////////////////////////////////
 
   // Only OPERATORS can approve when trading is restricted
-  bytes32 public constant OPERATOR_ROLE = keccak256('OPERATOR_ROLE');
+  bytes32 public constant OPERATOR_ROLE = 'OPERATOR_ROLE';
 
   //////////////////////////////////////////////////////////////////////////////
   // Constants

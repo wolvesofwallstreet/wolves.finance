@@ -28,13 +28,13 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
   //////////////////////////////////////////////////////////////////////////////
 
   // Used to restict calls to TRADEFLOOR but also to collect all TRADEFLOORS
-  bytes32 public constant TRADEFLOOR_ROLE = keccak256('TRADEFLOOR_ROLE');
+  bytes32 public constant TRADEFLOOR_ROLE = 'TRADEFLOOR_ROLE';
 
   // Operator role is required to set approval for tokens. This prevents
   // auctions like OpenSea from selling the tokens. Selling by third parties
   // is only allowed for cryptofolios which are locked in one of our TradeFloor
   // contracts.
-  bytes32 public constant OPERATOR_ROLE = keccak256('OPERATOR_ROLE');
+  bytes32 public constant OPERATOR_ROLE = 'OPERATOR_ROLE';
 
   //////////////////////////////////////////////////////////////////////////////
   // State
