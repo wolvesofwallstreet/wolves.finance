@@ -7,11 +7,11 @@
  */
 import './cardbox.css';
 
+import { ethers } from 'ethers';
 import { TFunction } from 'i18next';
 import { Link } from 'react-router-dom';
 
 import { CARD } from '../types/cards';
-import { ethers } from 'ethers';
 
 type CARDBOX_PROPS = {
   content: CARD;

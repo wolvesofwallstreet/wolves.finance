@@ -7,6 +7,7 @@
  */
 import './page3.css';
 
+import { ethers } from 'ethers';
 import React, { Component } from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { Link, RouteComponentProps } from 'react-router-dom';
@@ -24,7 +25,6 @@ import {
 } from '../../stores/store';
 import { CARDS } from '../types/cards';
 import { CardBox } from './cardbox';
-import { ethers } from 'ethers';
 
 type PAGE3_PROPS = {
   t: TFunction;
