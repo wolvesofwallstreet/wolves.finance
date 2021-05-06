@@ -8,18 +8,19 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
-abstract contract ICurveFi_DepositY {
-  function add_liquidity(uint256[4] calldata uamounts, uint256 min_mint_amount)
+/* solhint-disable func-name-mixedcase */
+abstract contract ICurveFiDepositY {
+  function add_liquidity(uint256[4] calldata uAmounts, uint256 minMintAmount)
     external
     virtual;
 
-  function remove_liquidity(uint256 _amount, uint256[4] calldata min_uamounts)
+  function remove_liquidity(uint256 amount, uint256[4] calldata minUAmounts)
     external
     virtual;
 
   function remove_liquidity_imbalance(
-    uint256[4] calldata uamounts,
-    uint256 max_burn_amount
+    uint256[4] calldata uAmounts,
+    uint256 maxBurnAmount
   ) external virtual;
 
   function coins(int128 i) external view virtual returns (address);
