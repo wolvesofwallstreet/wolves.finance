@@ -32,7 +32,7 @@ interface IRewardHandler {
    * This is the current implementation, needed for backward compatibility.
    *
    * Current ERC1155Minter and Controller call this function, later
-   * rewardhandler clients should call the the new one with internal
+   * reward handler clients should call the the new one with internal
    * fees specified in this contract.
    *
    * uint32 values are in 1e6 factor notation.

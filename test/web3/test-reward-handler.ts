@@ -185,7 +185,7 @@ describe('Reward handler', function () {
 
     // Distribute with no funds should fail
     let tx = rewardHandlerContract.distributeAll();
-    await chai.expect(tx).to.be.revertedWith('nothing to distribute');
+    await chai.expect(tx).to.be.revertedWith('Nothing to distribute');
 
     // Adding funds without role should revert
     tx = rewardHandlerContract.distribute2(
