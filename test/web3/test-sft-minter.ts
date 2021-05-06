@@ -16,9 +16,13 @@ import { solidity } from 'ethereum-waffle';
 import { ethers } from 'ethers';
 import fs from 'fs';
 
+import UniswapV2ERC20Abi from '../../src/abi/contracts/depends/uniswap-v2-core/UniswapV2ERC20.sol/UniswapV2ERC20.json';
+import CFolioItemHandlerLpAbi from '../../src/abi/contracts/src/cfolio/CFolioItemHandlerLP.sol/CFolioItemHandlerLP.json';
+import PresaleAbi from '../../src/abi/contracts/src/crowdsale/Crowdsale.sol/Crowdsale.json';
 import WOWSSftMinterAbi from '../../src/abi/contracts/src/crowdsale/WOWSSftMinter.sol/WOWSSftMinter.json';
 import UpgradeProxyAbi from '../../src/abi/contracts/src/proxy/UpgradeProxy.sol/UpgradeProxy.json';
 import TradeFloorAbi from '../../src/abi/contracts/src/token/TradeFloor.sol/TradeFloor.json';
+import WOWSCryptofolioAbi from '../../src/abi/contracts/src/token/WOWSCryptofolio.sol/WOWSCryptofolio.json';
 import WOWSTokenAbi from '../../src/abi/contracts/src/token/WOWSErc20.sol/WowsToken.json';
 import WOWSERC1155Abi from '../../src/abi/contracts/src/token/WOWSErc1155.sol/WOWSERC1155.json';
 import { hardhat } from '../utils/hardhat';
@@ -89,6 +93,11 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
     WOWSTokenAbi,
     marketingWallet
   );
+  const uniV2PairContract = new ethers.Contract(
+    await tokenContract.uniV2Pair(),
+    UniswapV2ERC20Abi,
+    marketingWallet
+  );
   const sftHolderContract = new ethers.Contract(
     addresses.sftHolder,
     WOWSERC1155Abi,
@@ -109,13 +118,26 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
     UpgradeProxyAbi,
     marketingWallet
   );
+  const cfolioItemHandlerLP = new ethers.Contract(
+    addresses.cfolioItemHandlerLP,
+    CFolioItemHandlerLpAbi,
+    marketingWallet
+  );
+  const presaleContract = new ethers.Contract(
+    addresses.presale,
+    PresaleAbi,
+    marketingWallet
+  );
 
   return {
     tokenContract,
+    uniV2PairContract,
     sftHolderContract,
     sftMinterContract,
     tradeFloorContract,
     tradeFloorProxyContract,
+    cfolioItemHandlerLP,
+    presaleContract,
   };
 });
 
@@ -126,6 +148,9 @@ describe('SFT minter', function () {
 
   let cryptofolioAddressBoi: string;
   let cryptofolioAddressWolf: string;
+
+  let cryptofolioContractBoi: ethers.Contract;
+  let cryptofolioContractWolf: ethers.Contract;
 
   let tradeFloorProxyInstance: ethers.Contract;
 
@@ -138,6 +163,10 @@ describe('SFT minter', function () {
   const cardIdWolf = 2;
   const wowsTokenIdBoi = ethers.BigNumber.from('0x01020000');
   const wowsTokenIdWolf = ethers.BigNumber.from('0x05020000');
+  const cfolioItemTokenId = ethers.BigNumber.from('0x10000000000000000');
+  const cFolioItemType = 0; // Card type 0, registered in minter for cfolioItemHandlerLP
+  const cFolioItemURI = 'http://4travelers.de/wolves_assets/cfolio/00.json';
+  const lpBalance = ethers.BigNumber.from('12000000000000000000'); // 12 UNI-V2 LP tokens
 
   // Lazily-initialized variables
   let ethUsd = 0;
@@ -215,7 +244,6 @@ describe('SFT minter', function () {
   // Setup: WOWS
   //////////////////////////////////////////////////////////////////////////////
 
-  /**/
   it('should approve spending WOWS', async function () {
     this.timeout(60 * 1000);
 
@@ -238,6 +266,81 @@ describe('SFT minter', function () {
           '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
         )
       );
+  });
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Setup: LP tokens
+  //////////////////////////////////////////////////////////////////////////////
+
+  it('should get LP tokens', async function () {
+    this.timeout(60 * 1000);
+
+    const { presaleContract } = contracts;
+
+    //
+    // Get LP tokens for the marketing wallet
+    //
+    // Instead of a dedicated test contract to deposit and obtain LP tokens,
+    // we just re-use the presale contract: open it, buy liquidity, finalize
+    // it, and LP tokens will be transfered to the marketing wallet.
+    //
+
+    // Open the presale
+    await hardhat.network.provider.send('evm_increaseTime', [5 * 60]); // 5 mins
+    await hardhat.network.provider.send('evm_mine');
+    chai.expect(await presaleContract.isOpen()).to.be.true;
+
+    // Limit of 6.75 ETH
+    const amount = 6.75;
+    const options = { value: toWei(amount) };
+
+    // Buy tokens and add liquidity
+    let tx = presaleContract.buyTokensAddLiquidity(
+      marketingWallet.address,
+      options
+    );
+    await chai.expect(tx).to.emit(presaleContract, 'Staked').withArgs(
+      marketingWallet.address, // Beneficiary
+      ethers.BigNumber.from('29999999999999999000') // Liquidity - ~30 LP tokens
+    );
+
+    // Add 5 minutes and mine the next block to close the presale
+    await hardhat.network.provider.send('evm_increaseTime', [5 * 60]);
+    await hardhat.network.provider.send('evm_mine');
+    chai.expect(await presaleContract.isOpen()).to.be.false;
+
+    // Finalize the presale
+    tx = presaleContract.finalizePresale();
+    await chai.expect(tx).to.not.be.reverted;
+  });
+
+  it('should check wallet balance', async function () {
+    this.timeout(60 * 1000);
+
+    const { uniV2PairContract } = contracts;
+
+    // Check wallet balance
+    const currentLpBalance = await uniV2PairContract.balanceOf(
+      marketingWallet.address
+    );
+    chai.expect(currentLpBalance).to.equal(lpBalance);
+  });
+
+  it('should approve CFIHLP to transfer tokens', async function () {
+    this.timeout(60 * 1000);
+
+    const { uniV2PairContract, cfolioItemHandlerLP } = contracts;
+
+    // Approve CFIHLP to transfer our tokens
+    const tx = await uniV2PairContract.approve(
+      cfolioItemHandlerLP.address,
+      lpBalance
+    );
+    await chai.expect(tx).to.emit(uniV2PairContract, 'Approval').withArgs(
+      marketingWallet.address, // owner
+      cfolioItemHandlerLP.address, // spender
+      lpBalance // balance
+    );
   });
 
   //////////////////////////////////////////////////////////////////////////////
@@ -408,5 +511,79 @@ describe('SFT minter', function () {
       cryptofolioAddressWolf
     );
     chai.expect(tokenIdWolf).to.equal(wowsTokenIdWolf);
+  });
+
+  it('should instantiate cryptofolio contract', async function () {
+    this.timeout(60 * 1000);
+
+    // Instantiate cryptofolio contract
+    cryptofolioContractBoi = new ethers.Contract(
+      cryptofolioAddressBoi,
+      WOWSCryptofolioAbi,
+      marketingWallet
+    );
+
+    // Instantiate cryptofolio contract
+    cryptofolioContractWolf = new ethers.Contract(
+      cryptofolioAddressWolf,
+      WOWSCryptofolioAbi,
+      marketingWallet
+    );
+  });
+
+  it('should mint investment SFT', async function () {
+    this.timeout(60 * 1000);
+
+    const {
+      cfolioItemHandlerLP,
+      sftMinterContract,
+      uniV2PairContract,
+    } = contracts;
+
+    // Mint a new LP investment type into marketing wallet
+    const tx = sftMinterContract.mintCFolioItemSFT(
+      marketingWallet.address,
+      cFolioItemType,
+      cFolioItemURI,
+      // uint256(-1) == No parent cryptofolio, mint to recipient (marketing wallet)
+      ethers.BigNumber.from(
+        '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+      ),
+      [lpBalance]
+    );
+    await chai
+      .expect(tx)
+      .to.emit(uniV2PairContract, 'Transfer')
+      .withArgs(
+        marketingWallet.address,
+        cfolioItemHandlerLP.address,
+        lpBalance
+      );
+
+    // Log gas cost
+    const receipt = await (await tx).wait();
+    const gasUsedGwei = receipt.gasUsed;
+    const gasCost =
+      gasUsedGwei
+        .mul(await getGasPrice())
+        .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
+    console.log(
+      `Mint investment SFT gas used: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+        gasCost
+      )})`
+    );
+  });
+
+  it('should check balance of investment SFT', async function () {
+    this.timeout(60 * 1000);
+
+    const { sftHolderContract } = contracts;
+
+    // Item in the SFT holder should belong to the marketing wallet
+    const balance = await sftHolderContract.balanceOf(
+      marketingWallet.address,
+      cfolioItemTokenId
+    );
+    chai.expect(balance).to.equal(1);
   });
 });
