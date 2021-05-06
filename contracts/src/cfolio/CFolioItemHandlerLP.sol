@@ -68,7 +68,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
   address public immutable admin;
 
   //////////////////////////////////////////////////////////////////////////////
-  // Modifier
+  // Modifiers
   //////////////////////////////////////////////////////////////////////////////
 
   modifier onlyTradeFloor {
@@ -121,8 +121,102 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
   }
 
   //////////////////////////////////////////////////////////////////////////////
-  // Asset Access
+  // Implementation of {ICFolioItemCallback} via {ICFolioItemHandler}
   //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * @dev See {ICFolioItemCallback-onCFolioItemsTransferedFrom}
+   */
+  function onCFolioItemsTransferedFrom(
+    address from,
+    address to,
+    uint256[] calldata, /* tokenIds*/
+    address[] calldata /* cfolioHandlers*/
+  ) external override onlyTradeFloor {
+    // In case of transfer verify the target
+    uint256 sftTokenId;
+
+    if (
+      to != address(0) &&
+      (sftTokenId = _sftHolder.addressToTokenId(to)) != uint256(-1)
+    ) {
+      (, uint8 level) = _sftHolder.getTokenData(sftTokenId);
+      require((LEVEL2WOLF & (uint256(1) << level)) > 0, 'CFIH: Wolves only');
+      _updateRewards(to, sftEvaluator.rewardRate(sftTokenId));
+    }
+
+    if (
+      from != address(0) &&
+      (sftTokenId = _sftHolder.addressToTokenId(from)) != uint256(-1)
+    ) _updateRewards(from, sftEvaluator.rewardRate(sftTokenId));
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Implementation of {ICFolioItemHandler}
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * @dev See {ICFolioItemHandler-sftUpgrade}
+   */
+  function sftUpgrade(uint256 tokenId, uint32 newRate) external override {
+    // Validate access
+    require(msg.sender == address(sftEvaluator), 'Invalid caller');
+    require(tokenId.isBaseCard(), 'Invalid token');
+
+    // CFolio address
+    address cfolio = _sftHolder.tokenIdToAddress(tokenId);
+
+    // Update state
+    _updateRewards(cfolio, newRate);
+  }
+
+  /**
+   * @dev See {ICFolioItemHandler-setupCFolio}
+   *
+   * Note: We place a dummy ERC1155 token with id 0 into the CFolioItem's
+   * c-folio. The reason is that we want to know if a c-folio item gets burned,
+   * as burning an empty c-folio will result in no transfers. This prevents LP
+   * tokens from becoming inaccessible.
+   *
+   * Refer to the Minimal ERC1155 section below to learn which functions are
+   * needed for this.
+   */
+  function setupCFolio(
+    address payer,
+    uint256 sftTokenId,
+    uint256[] calldata amounts
+  ) external override {
+    // Validate access
+    require(msg.sender == sftMinter, 'Only SFTMinter');
+
+    // Validate parameters
+    address cFolio = _sftHolder.tokenIdToAddress(sftTokenId);
+    require(cFolio != address(0), 'Invalid sftTokenId');
+
+    // Verify that this function is called the first time
+    try IWOWSCryptofolio(cFolio)._tradefloors(0) returns (address) {
+      revert('CFIH: TradeFloor not empty');
+    } catch {}
+
+    if (amounts.length > 0 && amounts[0] > 0) {
+      // Transfer LP token to this contract
+      stakingToken.transferFrom(payer, address(this), amounts[0]);
+
+      // Record assets in Farm contract. They don't earn rewards.
+      // addAsset must only be called from Investment CFolios
+      cfolioFarm.addAssets(cFolio, amounts[0]);
+    }
+
+    // Transfer a dummy NFT token to cFolio so we get informed if the cFolio
+    // gets burned
+    IERC1155TokenReceiver(cFolio).onERC1155Received(
+      address(this),
+      address(0),
+      0,
+      1,
+      ''
+    );
+  }
 
   /**
    * @dev See {ICFolioItemCallback-deposit}
@@ -194,100 +288,6 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
   }
 
   //////////////////////////////////////////////////////////////////////////////
-  // Overrides
-  //////////////////////////////////////////////////////////////////////////////
-
-  /**
-   * @dev See {ICFolioItemCallback-onCFolioItemsTransferedFrom}
-   */
-  function onCFolioItemsTransferedFrom(
-    address from,
-    address to,
-    uint256[] calldata, /* tokenIds*/
-    address[] calldata /* cfolioHandlers*/
-  ) external override onlyTradeFloor {
-    // In case of transfer verify the target
-    uint256 sftTokenId;
-
-    if (
-      to != address(0) &&
-      (sftTokenId = _sftHolder.addressToTokenId(to)) != uint256(-1)
-    ) {
-      (, uint8 level) = _sftHolder.getTokenData(sftTokenId);
-      require((LEVEL2WOLF & (uint256(1) << level)) > 0, 'CFIH: Wolves only');
-      _updateRewards(to, sftEvaluator.rewardRate(sftTokenId));
-    }
-
-    if (
-      from != address(0) &&
-      (sftTokenId = _sftHolder.addressToTokenId(from)) != uint256(-1)
-    ) _updateRewards(from, sftEvaluator.rewardRate(sftTokenId));
-  }
-
-  /**
-   * @dev See {ICFolioItemHandler-sftUpgrade}
-   */
-  function sftUpgrade(uint256 tokenId, uint32 newRate) external override {
-    // Validate access
-    require(msg.sender == address(sftEvaluator), 'Invalid caller');
-    require(tokenId.isBaseCard(), 'Invalid token');
-
-    // CFolio address
-    address cfolio = _sftHolder.tokenIdToAddress(tokenId);
-
-    // Update state
-    _updateRewards(cfolio, newRate);
-  }
-
-  /**
-   * @dev See {ICFolioItemHandler-setupCFolio}
-   *
-   * Note: We place a dummy ERC1155 token with id 0 into the CFolioItem's
-   * c-folio. The reason is that we want to know if a c-folio item gets burned,
-   * as burning an empty c-folio will result in no transfers. This prevents LP
-   * tokens from becoming inaccessible.
-   *
-   * Refer to the Minimal ERC1155 section below to learn which functions are
-   * needed for this.
-   */
-  function setupCFolio(
-    address payer,
-    uint256 sftTokenId,
-    uint256[] calldata amounts
-  ) external override {
-    // Validate access
-    require(msg.sender == sftMinter, 'Only SFTMinter');
-
-    // Validate parameters
-    address cFolio = _sftHolder.tokenIdToAddress(sftTokenId);
-    require(cFolio != address(0), 'Invalid sftTokenId');
-
-    // Verify that this function is called the first time
-    try IWOWSCryptofolio(cFolio)._tradefloors(0) returns (address) {
-      revert('CFIH: TradeFloor not empty');
-    } catch {}
-
-    if (amounts.length > 0 && amounts[0] > 0) {
-      // Transfer LP token to this contract
-      stakingToken.transferFrom(payer, address(this), amounts[0]);
-
-      // Record assets in Farm contract. They don't earn rewards.
-      // addAsset must only be called from Investment CFolios
-      cfolioFarm.addAssets(cFolio, amounts[0]);
-    }
-
-    // Transfer a dummy NFT token to cFolio so we get informed if the cFolio
-    // gets burned
-    IERC1155TokenReceiver(cFolio).onERC1155Received(
-      address(this),
-      address(0),
-      0,
-      1,
-      ''
-    );
-  }
-
-  //////////////////////////////////////////////////////////////////////////////
   // Maintanace
   //////////////////////////////////////////////////////////////////////////////
 
@@ -320,6 +320,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
     returns (uint256[] memory)
   {
     require(_owners.length == 1 && _ids.length == 1, 'Length must be 1');
+
     uint256[] memory result = new uint256[](1);
     result[0] = 1;
     return result;

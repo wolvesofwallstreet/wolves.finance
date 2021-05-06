@@ -15,8 +15,8 @@ interface ICFolioItemCallback {
   /**
    * @dev Called when a TradeFloor CFolioItem is transfered
    *
-   * In case of mint `from` is address(0)
-   * In case of burn `to` is address(0)
+   * In case of mint `from` is address(0).
+   * In case of burn `to` is address(0).
    *
    * cfolioHandlers are passed to let each cfolioHandler filter for its own
    * token. This eliminates the need for creating separate lists.
