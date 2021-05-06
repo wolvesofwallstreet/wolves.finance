@@ -149,8 +149,10 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
           );
           this.tokenIds = this.content.cards[idx].cards.map((card) => {
             return {
-              id: ethers.BigNumber.from((this.content.cards[idx].chainRef.toNumber() << 24) |
-              (card.chainRef.toNumber() << 16)),
+              id: ethers.BigNumber.from(
+                (this.content.cards[idx].chainRef.toNumber() << 24) |
+                  (card.chainRef.toNumber() << 16)
+              ),
               locked: false,
             };
           });
@@ -159,7 +161,9 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
 
           // collect tokenId bitmask
           let tokenIdBits = 0;
-          this.tokenIds.forEach((n) => (tokenIdBits |= 1 << (n.id.toNumber() >> 24)));
+          this.tokenIds.forEach(
+            (n) => (tokenIdBits |= 1 << (n.id.toNumber() >> 24))
+          );
           this.content.cards.forEach((level) => {
             if (tokenIdBits & (1 << level.chainRef.toNumber())) {
               this.levelFilter |= 1 << level.levelId;
@@ -300,12 +304,15 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
                   .map((level) =>
                     level.cards.map((card, index) => {
                       const collection: JSX.Element[] = [];
-                      const tokenId = (level.chainRef.toNumber() << 8) | card.chainRef.toNumber();
+                      const tokenId =
+                        (level.chainRef.toNumber() << 8) |
+                        card.chainRef.toNumber();
                       while (
                         tokenIdx < this.tokenIds.length &&
-                        this.tokenIds[tokenIdx].id.toNumber() >> 16 <= tokenId 
+                        this.tokenIds[tokenIdx].id.toNumber() >> 16 <= tokenId
                       ) {
-                        this.tokenIds[tokenIdx].id.toNumber() >> 16 === tokenId  &&
+                        this.tokenIds[tokenIdx].id.toNumber() >> 16 ===
+                          tokenId &&
                           collection.push(
                             <CardBox
                               key={'card_' + tokenIdx}

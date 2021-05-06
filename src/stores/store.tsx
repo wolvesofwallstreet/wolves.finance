@@ -248,9 +248,12 @@ class Store {
         content.default.myPackLevelDescriptions;
       const levels = content.default.levels.map((level) => {
         return {
-          ...level, chainRef: ethers.BigNumber.from(level.chainRef), cards: level.cards.map((card) => {
+          ...level,
+          chainRef: ethers.BigNumber.from(level.chainRef),
+          cards: level.cards.map((card) => {
             return { ...card, chainRef: ethers.BigNumber.from(card.chainRef) };
-        }) };
+          }),
+        };
       });
       this.assets.cards.cards = levels as CARD_LEVEL[];
       this.assets.cards.cards[1].cards.splice(3, 1);
@@ -655,7 +658,10 @@ class Store {
         }
       }
       this.assets.userSFT = this.assets.userSFT
-        .filter((n) => n.id.toNumber() >> 16 !== 0x0103 && n.id.toNumber() >> 16 !== 0x0503)
+        .filter(
+          (n) =>
+            n.id.toNumber() >> 16 !== 0x0103 && n.id.toNumber() >> 16 !== 0x0503
+        )
         .sort((a, b) => a.id.toNumber() - b.id.toNumber());
       emitter.emit(SFT_STATE, { status: 'user' } as SFTStateresult);
     } catch (e) {

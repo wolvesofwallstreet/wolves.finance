@@ -137,7 +137,9 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     this.tokenId = undefined;
     this.tokenLocked = false;
     const tokenIndex =
-      tokenId >= 0 ? tokenIds.findIndex((e) => e.id.toNumber() === tokenId) : -1;
+      tokenId >= 0
+        ? tokenIds.findIndex((e) => e.id.toNumber() === tokenId)
+        : -1;
     if (tokenIndex >= 0) {
       // retrieve levelId and cardId from tokenId
       this.tokenLocked = tokenIds[tokenIndex].locked;
