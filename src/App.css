@@ -88,6 +88,10 @@ span a:hover {
   margin-right: auto;
 }
 
+.w-80 {
+  width: 80%;
+}
+
 .responsive-img {
   width: 100%;
 }

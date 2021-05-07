@@ -21,6 +21,7 @@ import Page3TradeFloor from './components/page3TradeFloor';
 import Page4 from './components/page4';
 import Page4StakedInvest from './components/Page4StakedInvest';
 import Page5 from './components/page5';
+import Page6 from './components/page6';
 import Page7BoisBoardrooms from './components/page7';
 import Page8InvestmentSfts from './components/page8InvestmentSfts';
 import Page9BoisBoardrooms from './components/Page9BoisBoardrooms';
@@ -58,6 +59,7 @@ class App extends React.Component {
               <Route path="/wolf_trade_floor" component={Page3TradeFloor} />
               <Route path="/staked-invest" component={Page4StakedInvest} />
               <Route path="/page5-mypack" component={Page5} />
+              <Route path="/page6" component={Page6} />
               <Route path="/bois_boardrooms" component={Page7BoisBoardrooms} />
               <Route
                 path="/yearn_investment_sfts"
