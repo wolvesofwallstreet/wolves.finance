@@ -46,7 +46,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
   //////////////////////////////////////////////////////////////////////////////
 
   // The SFT contract needed to check if the address is a c-folio
-  IWOWSERC1155 private immutable _sftHolder;
+  IWOWSERC1155 private immutable sftHolder;
 
   // The TradeFloor contract which provides c-folio NFTs. This TradeFloor
   // contract calls the IMinterCallback interface functions.
@@ -97,7 +97,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
     admin = addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
 
     // The SFT holder
-    _sftHolder = IWOWSERC1155(
+    sftHolder = IWOWSERC1155(
       addressRegistry.getRegistryEntry(AddressBook.SFT_HOLDER)
     );
 
@@ -138,16 +138,16 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
 
     if (
       to != address(0) &&
-      (sftTokenId = _sftHolder.addressToTokenId(to)) != uint256(-1)
+      (sftTokenId = sftHolder.addressToTokenId(to)) != uint256(-1)
     ) {
-      (, uint8 level) = _sftHolder.getTokenData(sftTokenId);
+      (, uint8 level) = sftHolder.getTokenData(sftTokenId);
       require((LEVEL2WOLF & (uint256(1) << level)) > 0, 'CFIH: Wolves only');
       _updateRewards(to, sftEvaluator.rewardRate(sftTokenId));
     }
 
     if (
       from != address(0) &&
-      (sftTokenId = _sftHolder.addressToTokenId(from)) != uint256(-1)
+      (sftTokenId = sftHolder.addressToTokenId(from)) != uint256(-1)
     ) _updateRewards(from, sftEvaluator.rewardRate(sftTokenId));
   }
 
@@ -164,7 +164,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
     require(tokenId.isBaseCard(), 'Invalid token');
 
     // CFolio address
-    address cfolio = _sftHolder.tokenIdToAddress(tokenId);
+    address cfolio = sftHolder.tokenIdToAddress(tokenId);
 
     // Update state
     _updateRewards(cfolio, newRate);
@@ -190,7 +190,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
     require(msg.sender == sftMinter, 'Only SFTMinter');
 
     // Validate parameters
-    address cFolio = _sftHolder.tokenIdToAddress(sftTokenId);
+    address cFolio = sftHolder.tokenIdToAddress(sftTokenId);
     require(cFolio != address(0), 'Invalid sftTokenId');
 
     // Verify that this function is called the first time
@@ -274,13 +274,13 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
     require(tokenId.isBaseCard(), 'CFIH: Invalid tokenId');
 
     // Verify that tokenId has a valid cFolio address
-    address cfolio = _sftHolder.tokenIdToAddress(tokenId);
+    address cfolio = sftHolder.tokenIdToAddress(tokenId);
     require(cfolio != address(0), 'Invalid c-folio address');
 
     // Verify that the tokenId is owned by msg.sender in the SFT contract.
     // This also verifies that the token is not locked in TradeFloor.
     require(
-      IERC1155(address(_sftHolder)).balanceOf(msg.sender, tokenId) == 1,
+      IERC1155(address(sftHolder)).balanceOf(msg.sender, tokenId) == 1,
       'CFHI: Access denied'
     );
 
@@ -368,7 +368,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
     // Calculate new reward amount
     uint256 newRewardAmount = 0;
     for (uint256 i = 0; i < length; ++i) {
-      address secondaryCFolio = _sftHolder.tokenIdToAddress(tokenIds[i]);
+      address secondaryCFolio = sftHolder.tokenIdToAddress(tokenIds[i]);
       require(secondaryCFolio != address(0), 'CFIH: Invalid secondary cFolio');
       if (IWOWSCryptofolio(secondaryCFolio)._tradefloors(0) == address(this))
         newRewardAmount = newRewardAmount.add(
@@ -400,14 +400,14 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
 
     // Verify that the tokenId is one of ours
     IWOWSCryptofolio cFolio =
-      IWOWSCryptofolio(_sftHolder.tokenIdToAddress(tokenId));
+      IWOWSCryptofolio(sftHolder.tokenIdToAddress(tokenId));
     require(address(cFolio) != address(0), 'CFIH: Invalid cFolioTokenId');
     require(cFolio._tradefloors(0) == address(this), 'CFIH: Not our SFT');
 
     // Verify that the tokenId is owned by msg.sender in SFT contract.
     // This also verifies that the token is not locked in TradeFloor.
     require(
-      IERC1155(address(_sftHolder)).balanceOf(msg.sender, tokenId) == 1,
+      IERC1155(address(sftHolder)).balanceOf(msg.sender, tokenId) == 1,
       'CFHI: Access denied'
     );
 
