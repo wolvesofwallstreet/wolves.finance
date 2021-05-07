@@ -45,15 +45,19 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
   // State
   //////////////////////////////////////////////////////////////////////////////
 
+  // Route to SFT Minter. Only setup from SFT Minter allowed.
+  address public sftMinter;
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Routing
+  //////////////////////////////////////////////////////////////////////////////
+
   // The SFT contract needed to check if the address is a c-folio
   IWOWSERC1155 private immutable sftHolder;
 
   // The TradeFloor contract which provides c-folio NFTs. This TradeFloor
   // contract calls the IMinterCallback interface functions.
   address public immutable tradeFloor;
-
-  // Only setup from SFT Minter allowed
-  address public sftMinter;
 
   // The reward token
   IERC20 public immutable stakingToken;
@@ -104,7 +108,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
     // The SFT minter
     sftMinter = addressRegistry.getRegistryEntry(AddressBook.SFT_MINTER);
 
-    // SftEvaluator
+    // SFT evaluator
     sftEvaluator = ISFTEvaluator(
       addressRegistry.getRegistryEntry(AddressBook.SFT_EVALUATOR_PROXY)
     );
@@ -229,6 +233,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
     external
     override
   {
+    // Validate parameters
     require(amounts.length == 1 && amounts[0] > 0, 'CFIH: invalid amount');
     IWOWSCryptofolio cFolio = _verifyAssetAccess(tokenId);
 
@@ -313,6 +318,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
     // Validate access
     require(msg.sender == admin, 'Admin only');
 
+    // Update state
     sftMinter = newMinter;
   }
 
@@ -329,6 +335,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
     pure
     returns (uint256[] memory)
   {
+    // Validate parameters
     require(_owners.length == 1 && _ids.length == 1, 'Length must be 1');
 
     uint256[] memory result = new uint256[](1);
