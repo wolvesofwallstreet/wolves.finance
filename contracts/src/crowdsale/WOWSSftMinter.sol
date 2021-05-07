@@ -275,16 +275,7 @@ contract WOWSSftMinter is Ownable {
         tradeFloor,
         tokenId,
         1,
-        ''
-      );
-
-      // We now have a "locked" TradeFloor NFT, move it to the recipient
-      IERC1155BurnMintable(tradeFloor).safeTransferFrom(
-        address(this),
-        sftCFolio,
-        tokenId,
-        1,
-        ''
+        abi.encodePacked(sftCFolio)
       );
 
       // Reset the temporary state which allows holding ERC1155 token
