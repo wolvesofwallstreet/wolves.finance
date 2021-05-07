@@ -645,7 +645,11 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     // On Burn we need to transfer SFT ownership back
     if (to == address(0)) {
       uint256[] memory amounts = new uint256[](length);
-      for (uint256 i = 0; i < length; ++i) amounts[i] = 1;
+      for (uint256 i = 0; i < length; ++i) {
+        require(_tokenInfos[tokenIds[i]].minted == true, 'TF: Not minted');
+        _tokenInfos[tokenIds[i]].minted = false;
+        amounts[i] = 1;
+      }
 
       WOWSMinterPauser(address(_sftHolder)).safeBatchTransferFrom(
         address(this),
@@ -691,16 +695,20 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     // Validate parameters
     require(tokenIds.length == amounts.length, 'Lengths mismatch');
 
+    // To save gas we allow mintinting directly into a given recipient
     address sftRecipient;
-    if (data.length == 32) sftRecipient = _getAddress(data);
-    else sftRecipient = from;
+    if (data.length == 20) {
+      sftRecipient = _getAddress(data);
+      require(sftRecipient != address(0), 'TF: invalid recipient');
+    } else sftRecipient = from;
 
     // Update state
     for (uint256 i = 0; i < tokenIds.length; ++i) {
       uint256 tokenId = tokenIds[i];
       require(amounts[i] == 1, 'Amount != 1 not allowed');
       require(_tokenInfos[tokenId].minted == false, 'Token already minted');
-      _relinkOwner(address(0), from, tokenId);
+
+      _tokenInfos[tokenId].minted = true;
 
       // OpenSea only listens to TransferSingle event on mint
       _mint(sftRecipient, tokenId, 1, '');
@@ -712,7 +720,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
       // Rarible needs to be informed about fees
       emit SecondarySaleFees(tokenId, getFeeRecipients(0), getFeeBps(0));
     }
-    _onTransfer(address(0), from, tokenIds);
+    _onTransfer(address(0), sftRecipient, tokenIds);
   }
 
   /**
@@ -760,9 +768,6 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
       tokenInfo.listKey.index = toList.listKey.index;
       toList.listKey.index = tokenId;
       toList.count++;
-      _tokenInfos[tokenId].minted = true;
-    } else {
-      _tokenInfos[tokenId].minted = false;
     }
   }
 
