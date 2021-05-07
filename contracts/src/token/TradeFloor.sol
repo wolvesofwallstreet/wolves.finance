@@ -403,14 +403,14 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     address from,
     uint256 tokenId,
     uint256 amount,
-    bytes memory data
+    bytes calldata data
   ) public override returns (bytes4) {
     // Handle tokens
     uint256[] memory tokenIds = new uint256[](1);
     tokenIds[0] = tokenId;
     uint256[] memory amounts = new uint256[](1);
     amounts[0] = amount;
-    _onTokensReceived(from, tokenIds, amounts);
+    _onTokensReceived(from, tokenIds, amounts, data);
 
     // Call ancestor
     return super.onERC1155Received(operator, from, tokenId, amount, data);
@@ -421,10 +421,10 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     address from,
     uint256[] memory tokenIds,
     uint256[] memory amounts,
-    bytes memory data
+    bytes calldata data
   ) public override returns (bytes4) {
     // Handle tokens
-    _onTokensReceived(from, tokenIds, amounts);
+    _onTokensReceived(from, tokenIds, amounts, data);
 
     // Call ancestor
     return
@@ -679,7 +679,8 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   function _onTokensReceived(
     address from,
     uint256[] memory tokenIds,
-    uint256[] memory amounts
+    uint256[] memory amounts,
+    bytes memory data
   ) private {
     // We only support tokens from our SFT Holder contract
     require(
@@ -690,6 +691,10 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     // Validate parameters
     require(tokenIds.length == amounts.length, 'Lengths mismatch');
 
+    address sftRecipient;
+    if (data.length == 32) sftRecipient = _getAddress(data);
+    else sftRecipient = from;
+
     // Update state
     for (uint256 i = 0; i < tokenIds.length; ++i) {
       uint256 tokenId = tokenIds[i];
@@ -698,7 +703,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
       _relinkOwner(address(0), from, tokenId);
 
       // OpenSea only listens to TransferSingle event on mint
-      _mint(from, tokenId, 1, '');
+      _mint(sftRecipient, tokenId, 1, '');
 
       // Even the tokenId has not changed we fire URI to
       // let clients know that Metadata has to be refreshed
