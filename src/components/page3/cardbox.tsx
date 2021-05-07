@@ -7,6 +7,7 @@
  */
 import './cardbox.css';
 
+import { ethers } from 'ethers';
 import { TFunction } from 'i18next';
 import { Link } from 'react-router-dom';
 
@@ -19,7 +20,7 @@ type CARDBOX_PROPS = {
   price: number;
   t: TFunction;
   type: string;
-  tokenId?: number;
+  tokenId?: ethers.BigNumber;
 };
 
 export function CardBox(props: CARDBOX_PROPS): JSX.Element {
@@ -61,7 +62,7 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
         <span id="triangle-up" />
         {tokenId !== undefined && (
           <span className="tk-vincente-lightbold font-28">
-            {`TOKEN ID: 0x${tokenId.toString(16).padStart(8, '0')}`}
+            {`TOKEN ID: 0x${tokenId.toNumber().toString(16).padStart(8, '0')}`}
           </span>
         )}
         <span className="tk-grotesk-lightbold font-14 ellipsis">

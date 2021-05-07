@@ -52,7 +52,7 @@ const dispatcher = new Dispatcher.Dispatcher();
 
 type PayloadContent = {
   amount?: number;
-  id?: number;
+  id?: ethers.BigNumber;
   filter?: Array<string>;
 };
 
@@ -112,7 +112,7 @@ export type StakeResult = {
 type cbf = async.AsyncResultCallback<unknown, Error>;
 
 type ASSETS = {
-  userSFT: { id: number; locked: boolean }[];
+  userSFT: { id: ethers.BigNumber; locked: boolean }[];
   cards: CARDS;
 };
 
@@ -246,7 +246,16 @@ class Store {
       this.assets.cards.levelNames = content.default.levelNames;
       this.assets.cards.myPackLevelDescriptions =
         content.default.myPackLevelDescriptions;
-      this.assets.cards.cards = content.default.levels as CARD_LEVEL[];
+      const levels = content.default.levels.map((level) => {
+        return {
+          ...level,
+          chainRef: ethers.BigNumber.from(level.chainRef),
+          cards: level.cards.map((card) => {
+            return { ...card, chainRef: ethers.BigNumber.from(card.chainRef) };
+          }),
+        };
+      });
+      this.assets.cards.cards = levels as CARD_LEVEL[];
       this.assets.cards.cards[1].cards.splice(3, 1);
       this.assets.cards.cards[5].cards.splice(3, 1);
       emitter.emit(ASSETS_LOADED);
@@ -587,8 +596,8 @@ class Store {
 
   _getSftState = async (payloadContent: PayloadContent | undefined) => {
     // Loop through the assets and build up level / cardIds to query
-    const levels: number[] = [];
-    const cardIds: number[] = [];
+    const levels: ethers.BigNumber[] = [];
+    const cardIds: ethers.BigNumber[] = [];
 
     this.assets.cards.cards.forEach((level) =>
       level.cards.forEach((card) => {
@@ -630,10 +639,11 @@ class Store {
 
       if (result) {
         this.assets.userSFT = result.map((bn) => {
-          return { id: bn.toNumber(), locked: false };
+          return { id: bn, locked: false };
         });
       } else this.assets.userSFT = [];
 
+      console.log(this.assets.userSFT);
       if (this.tradeFloorContract) {
         const result:
           | ethers.BigNumber[]
@@ -642,14 +652,17 @@ class Store {
         if (result) {
           this.assets.userSFT = this.assets.userSFT.concat(
             result.map((bn) => {
-              return { id: bn.toNumber(), locked: true };
+              return { id: bn, locked: true };
             })
           );
         }
       }
       this.assets.userSFT = this.assets.userSFT
-        .filter((n) => n.id >> 16 !== 0x0103 && n.id >> 16 !== 0x0503)
-        .sort((a, b) => a.id - b.id);
+        .filter(
+          (n) =>
+            n.id.toNumber() >> 16 !== 0x0103 && n.id.toNumber() >> 16 !== 0x0503
+        )
+        .sort((a, b) => a.id.toNumber() - b.id.toNumber());
       emitter.emit(SFT_STATE, { status: 'user' } as SFTStateresult);
     } catch (e) {
       console.log(e.message);
@@ -849,8 +862,8 @@ class Store {
       }
 
       const cardData = await this.sftHolderContractRO?.getCardDataBatch(
-        [id >> 8],
-        [id & 0xff]
+        [id.toNumber() >> 8],
+        [id.toNumber() & 0xff]
       );
       if (cardData[0] <= cardData[1]) {
         emitter.emit(SFT_BUY, {
@@ -882,8 +895,8 @@ class Store {
         | ethers.ContractTransaction
         | undefined = await this.sftMintContract?.mintWowsSFT(
         this.address,
-        id >> 8,
-        id & 0xff,
+        id.toNumber() >> 8,
+        id.toNumber() & 0xff,
         { gasLimit: 350000 }
       );
       emitter.emit(SFT_BUY, {
@@ -1031,9 +1044,9 @@ class Store {
     return ethers.utils.parseUnits(parsed, decimals);
   }
 
-  _resolveSFTUser(tokenId: number, locked: boolean) {
+  _resolveSFTUser(tokenId: ethers.BigNumber, locked: boolean) {
     if (this.pauseSFTUser) {
-      const elem = this.assets.userSFT.find((entry) => entry.id === tokenId);
+      const elem = this.assets.userSFT.find((entry) => entry.id.eq(tokenId));
       if (elem) elem.locked = locked;
       this.pauseSFTUser = false;
       emitter.emit(SFT_STATE, { status: 'user' } as SFTStateresult);
