@@ -479,7 +479,8 @@ describe('Reward farms', function () {
       cFolioItemType,
       cFolioItemURI,
       wowsTokenIdWolf,
-      [lpBalance]
+      [lpBalance],
+      {gasLimit: 2000000}
     );
     await chai
       .expect(tx)

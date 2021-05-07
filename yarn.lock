@@ -2345,6 +2345,15 @@
   dependencies:
     defer-to-connect "^1.0.1"
 
+"@tenderly/hardhat-tenderly@^1.0.12":
+  version "1.0.12"
+  resolved "https://registry.yarnpkg.com/@tenderly/hardhat-tenderly/-/hardhat-tenderly-1.0.12.tgz#fa64da2bf2f6d35a1c131ac9ccaf2f7e8b189a50"
+  integrity sha512-zx2zVpbBxGWVp+aLgf59sZR5lxdqfq/PjqUhga6+iazukQNu/Y6pLfVnCcF1ggvLsf7gnMjwLe3YEx/GxCAykQ==
+  dependencies:
+    axios "^0.21.1"
+    fs-extra "^9.0.1"
+    js-yaml "^3.14.0"
+
 "@testing-library/dom@^7.28.1":
   version "7.30.4"
   resolved "https://registry.yarnpkg.com/@testing-library/dom/-/dom-7.30.4.tgz#c6a4a91557e92035fd565246bbbfb8107aa4634d"
@@ -2473,6 +2482,13 @@
   integrity sha512-zeOWb0JGBoVmlQoznvqXbE0tEC/HONsnoUNH19Hc96NFsTAwTXbTqb8FMYkru1F/iqp7a18Ws3nWJvtA1sHD1A==
   dependencies:
     classnames "*"
+
+"@types/dotenv-defaults@^2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@types/dotenv-defaults/-/dotenv-defaults-2.0.0.tgz#973d9b6f7233336554a9af3430bcbd2a77f7a46f"
+  integrity sha512-os/CaFTj0EFzw+7jvliz9fJk0LKwANc8W4UzwXF8tqW440TWQAsUSYUgiPgGxzW5flGnGqlP3ywaSTCzHye3KA==
+  dependencies:
+    dotenv "^8.2.0"
 
 "@types/eslint@^7.2.6":
   version "7.2.10"
@@ -10383,7 +10399,7 @@ js-yaml@4.0.0:
   dependencies:
     argparse "^2.0.1"
 
-js-yaml@^3.12.0, js-yaml@^3.13.0, js-yaml@^3.13.1:
+js-yaml@^3.12.0, js-yaml@^3.13.0, js-yaml@^3.13.1, js-yaml@^3.14.0:
   version "3.14.1"
   resolved "https://registry.yarnpkg.com/js-yaml/-/js-yaml-3.14.1.tgz#dae812fdb3825fa306609a8717383c50c36a0537"
   integrity sha512-okMH7OXXJ7YrN9Ok3/SXrnu4iX9yOk+25nqX4imS2npuvTYDmo/QEZoqwZkYaIDk3jVvBOTOIEgEhaLOynBS9g==

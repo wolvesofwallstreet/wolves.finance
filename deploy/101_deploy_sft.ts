@@ -201,6 +201,11 @@ const sft_func = async function (hardhat_re) {
     });
 
     generatedAddresses.sftMinter = sftMinterReceipt.address;
+
+    await hardhat_re.tenderly.persistArtifacts({
+      name: SFT_MINTER_CONTRACT,
+      address: sftMinterReceipt.address
+    });
   }
 
   await setRegistryKey(

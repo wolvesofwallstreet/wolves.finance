@@ -53,13 +53,15 @@
     "start": "react-scripts start",
     "test": "yarn test-chain && yarn test-app",
     "test-app": "react-scripts test --passWithNoTests",
-    "test-chain": "ts-mocha --recursive --extension ts --require esm --require isomorphic-fetch || ([ $? -eq 139 ] && echo 'Segfault')"
+    "test-chain": "ts-mocha --recursive --extension ts --require esm --require isomorphic-fetch test/web3/test-reward-farms.ts || ([ $? -eq 139 ] && echo 'Segfault')"
   },
   "dependencies": {
     "@glidejs/glide": "^3.4.1",
+    "@tenderly/hardhat-tenderly": "^1.0.12",
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
     "@testing-library/user-event": "^12.1.10",
+    "@types/dotenv-defaults": "^2.0.0",
     "@types/i18next": "^13.0.0",
     "@types/react-copy-to-clipboard": "^5.0.0",
     "@types/react-i18next": "^8.1.0",

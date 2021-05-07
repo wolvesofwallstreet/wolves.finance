@@ -16,6 +16,7 @@ require('@nomiclabs/hardhat-etherscan');
 require('hardhat-abi-exporter');
 require('hardhat-deploy');
 require('hardhat-deploy-ethers');
+require("@tenderly/hardhat-tenderly")
 
 // Testnet accounts
 const TESTNET_ACCOUNTS = [
@@ -127,7 +128,7 @@ const config = {
       },
     ],
   },
-  defaultNetwork: 'hardhat',
+  defaultNetwork: 'localhost',
   networks: {
     hardhat: {
       tags: ['test', 'local'],
@@ -181,6 +182,10 @@ const config = {
 
     // Whether to delete old files in path
     clear: true,
+  },
+  tenderly: {
+    username: "peak3d",
+    project: "wolves"
   },
 };
 
