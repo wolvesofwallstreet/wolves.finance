@@ -391,6 +391,49 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   }
 
   //////////////////////////////////////////////////////////////////////////////
+  // Implementation of {WOWSMinterPauser}
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * @dev See {ERC1155MintBurn-_burn}.
+   */
+  function burn(
+    address account,
+    uint256 tokenId,
+    uint256 amount
+  ) public override {
+    // Validate parameters
+    require(account != address(0), 'Invalid zero address');
+
+    // Call ancestor
+    super.burn(account, tokenId, amount);
+
+    // Perform internal handling
+    uint256[] memory tokenIds = new uint256[](1);
+    tokenIds[0] = tokenId;
+    _onTransfer(account, address(0), tokenIds);
+  }
+
+  /**
+   * @dev See {ERC1155MintBurn-_batchBurn}.
+   */
+  function burnBatch(
+    address account,
+    uint256[] calldata tokenIds,
+    uint256[] calldata amounts
+  ) public virtual override {
+    // Validate parameters
+    require(account != address(0), 'Invalid zero address');
+    require(tokenIds.length == amounts.length, "Lengths don't match");
+
+    // Call ancestor
+    super.burnBatch(account, tokenIds, amounts);
+
+    // Perform internal handling
+    _onTransfer(account, address(0), tokenIds);
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
   // Implementation of {IERC1155TokenReceiver} via {ERC1155Holder}
   //////////////////////////////////////////////////////////////////////////////
 
@@ -429,49 +472,6 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     // Call ancestor
     return
       super.onERC1155BatchReceived(operator, from, tokenIds, amounts, data);
-  }
-
-  //////////////////////////////////////////////////////////////////////////////
-  // Burning interface
-  //////////////////////////////////////////////////////////////////////////////
-
-  /**
-   * @dev See {ERC1155MintBurn-_burn}.
-   */
-  function burn(
-    address account,
-    uint256 tokenId,
-    uint256 amount
-  ) public override {
-    // Validate parameters
-    require(account != address(0), 'Invalid zero address');
-
-    // Call ancestor
-    super.burn(account, tokenId, amount);
-
-    uint256[] memory tokenIds = new uint256[](1);
-    tokenIds[0] = tokenId;
-
-    _onTransfer(account, address(0), tokenIds);
-  }
-
-  /**
-   * @dev See {ERC1155MintBurn-_batchBurn}.
-   */
-  function burnBatch(
-    address account,
-    uint256[] calldata tokenIds,
-    uint256[] calldata amounts
-  ) public virtual override {
-    // Validate parameters
-    require(account != address(0), 'Invalid zero address');
-    require(tokenIds.length == amounts.length, "Lengths don't match");
-
-    // Call parent
-    super.burnBatch(account, tokenIds, amounts);
-
-    // Perform internal handling
-    _onTransfer(account, address(0), tokenIds);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -557,7 +557,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   }
 
   //////////////////////////////////////////////////////////////////////////////
-  // Rarible Fees and events
+  // Rarible fees and events
   //////////////////////////////////////////////////////////////////////////////
 
   function setFee(uint256 fee) external {
@@ -678,7 +678,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   }
 
   /**
-   * @dev SFT Token arrived, provide a NFT
+   * @dev SFT token arrived, provide an NFT
    */
   function _onTokensReceived(
     address from,
@@ -695,7 +695,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     // Validate parameters
     require(tokenIds.length == amounts.length, 'Lengths mismatch');
 
-    // To save gas we allow mintinting directly into a given recipient
+    // To save gas we allow minting directly into a given recipient
     address sftRecipient;
     if (data.length == 20) {
       sftRecipient = _getAddress(data);
@@ -713,8 +713,8 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
       // OpenSea only listens to TransferSingle event on mint
       _mint(sftRecipient, tokenId, 1, '');
 
-      // Even the tokenId has not changed we fire URI to
-      // let clients know that Metadata has to be refreshed
+      // Even though the tokenId has not changed we fire URI to let clients
+      // know that metadata has to be refreshed
       emit URI(uri(tokenId), tokenId);
 
       // Rarible needs to be informed about fees
