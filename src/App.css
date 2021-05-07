@@ -33,7 +33,7 @@ body {
   text-overflow: ellipsis;
 }
 
-.wolves-orange {
+.wolves-color-orange {
   color: var(--wolves-orange);
 }
 
@@ -86,6 +86,10 @@ span a:hover {
 .center-container {
   margin-left: auto;
   margin-right: auto;
+}
+
+.w-80 {
+  width: 80%;
 }
 
 .responsive-img {

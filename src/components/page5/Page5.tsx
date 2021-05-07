@@ -110,7 +110,7 @@ class Page5 extends Component<PAGE5_PROPS, PAGE5_STATE> {
 
           {/* sub-navigation 2 */}
           <div id="page5-section-header">
-            <span className="tk-vincente-lightbold font-24 single-line wolves-orange fixed-pos">
+            <span className="tk-vincente-lightbold font-24 single-line wolves-color-orange fixed-pos">
               &lt;
               <Link to="?cards=previousCard">PREVIOUS CARD</Link>
             </span>
@@ -170,7 +170,7 @@ class Page5 extends Component<PAGE5_PROPS, PAGE5_STATE> {
                   GORGAN DECKO
                 </h1>
                 <h2 className="tk-vincente-lightbold font-24">
-                  <span className="wolves-orange">MOTO:</span>
+                  <span className="wolves-color-orange">MOTO:</span>
                   BUY WHEN THERE IS BLOOD ON THE STREET
                 </h2>
                 <div>

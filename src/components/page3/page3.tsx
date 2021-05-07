@@ -245,7 +245,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
               <span id="right" className="dot" />
             </span>
             <div id="page3-section-header">
-              <span className="tk-vincente-lightbold font-24 single-line wolves-orange fixed-pos">
+              <span className="tk-vincente-lightbold font-24 single-line wolves-color-orange fixed-pos">
                 &lt;
                 {levelPosition <= startPosition ? (
                   <Link to="/">{t('page.home')}</Link>
@@ -279,7 +279,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
                     } else return null;
                   })}
               </span>
-              <span className="tk-vincente-lightbold font-24 single-line wolves-orange">
+              <span className="tk-vincente-lightbold font-24 single-line wolves-color-orange">
                 {hasMoreLevels ? (
                   <Link to={'?type=' + type + '&levelId=' + (levelId + 1)}>
                     {t('page.nextLevel')}
