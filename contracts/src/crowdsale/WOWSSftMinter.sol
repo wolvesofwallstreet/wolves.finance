@@ -299,7 +299,10 @@ contract WOWSSftMinter is Ownable {
     uint256,
     bytes memory
   ) external view returns (bytes4) {
+    // Validate state
     require(_setupCFolio, 'Only during setup');
+
+    // Call ancestor
     return this.onERC1155Received.selector;
   }
 
