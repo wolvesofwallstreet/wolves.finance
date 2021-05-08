@@ -235,7 +235,7 @@ contract WOWSSftMinter is Ownable {
     uint256[] calldata investAmounts
   ) external {
     // Validate state
-    require(_setupCFolio == false, 'Already setting up');
+    require(!_setupCFolio, 'Already setting up');
 
     // Load state
     CFolioItemSft storage sftData = cfolioItemSfts[cfolioItemType];

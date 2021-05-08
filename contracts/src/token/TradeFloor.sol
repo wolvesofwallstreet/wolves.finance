@@ -646,7 +646,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     if (to == address(0)) {
       uint256[] memory amounts = new uint256[](length);
       for (uint256 i = 0; i < length; ++i) {
-        require(_tokenInfos[tokenIds[i]].minted == true, 'TF: Not minted');
+        require(_tokenInfos[tokenIds[i]].minted, 'TF: Not minted');
         _tokenInfos[tokenIds[i]].minted = false;
         amounts[i] = 1;
       }
@@ -706,7 +706,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     for (uint256 i = 0; i < tokenIds.length; ++i) {
       uint256 tokenId = tokenIds[i];
       require(amounts[i] == 1, 'Amount != 1 not allowed');
-      require(_tokenInfos[tokenId].minted == false, 'Token already minted');
+      require(!_tokenInfos[tokenId].minted, 'Token already minted');
 
       _tokenInfos[tokenId].minted = true;
 
@@ -799,6 +799,6 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     return
       test == address(0) ||
       (tokenId = _sftHolder.addressToTokenId(test)) == uint256(-1) ||
-      (tokenId.isBaseCard() && _tokenInfos[tokenId].minted == false);
+      (tokenId.isBaseCard() && !_tokenInfos[tokenId].minted);
   }
 }
