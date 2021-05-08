@@ -83,6 +83,9 @@ contract WOWSSftMinter is Ownable {
     IRewardHandler rewardHandler,
     IWOWSERC1155 sftContract
   ) {
+    // Validate parameters
+    require(owner != address(0), 'Invalid owner');
+
     // Initialize {Ownable}
     transferOwnership(owner);
 
@@ -128,6 +131,9 @@ contract WOWSSftMinter is Ownable {
    * @dev Set Trade Floor
    */
   function setTradeFloor(address tradeFloor_) external onlyOwner {
+    // Validate parameters
+    require(tradeFloor_ != address(0), 'Invalid TF');
+
     // Update state
     tradeFloor = tradeFloor_;
   }
@@ -168,6 +174,9 @@ contract WOWSSftMinter is Ownable {
     uint8 level,
     uint8 cardId
   ) external {
+    // Validate parameters
+    require(recipient != address(0), 'Invalid recipient');
+
     // Load state
     uint256 price = _pricePerLevel[level];
 
@@ -193,6 +202,9 @@ contract WOWSSftMinter is Ownable {
     uint8 level,
     string memory uri
   ) external {
+    // Validate parameters
+    require(recipient != address(0), 'Invalid recipient');
+
     // Load state
     uint256 price = _pricePerLevel[0x100 + level];
 
@@ -236,6 +248,9 @@ contract WOWSSftMinter is Ownable {
   ) external {
     // Validate state
     require(!_setupCFolio, 'Already setting up');
+
+    // Validate parameters
+    require(recipient != address(0), 'Invalid recipient');
 
     // Load state
     CFolioItemSft storage sftData = cfolioItemSfts[cfolioItemType];

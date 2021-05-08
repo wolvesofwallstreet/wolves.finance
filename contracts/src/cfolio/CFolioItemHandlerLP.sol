@@ -276,6 +276,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
    */
   function getRewards(address recipient, uint256 tokenId) external override {
     // Validate parameters
+    require(recipient != address(0), 'CFIH: Invalid recipient');
     require(tokenId.isBaseCard(), 'CFIH: Invalid tokenId');
 
     // Verify that tokenId has a valid cFolio address
@@ -317,6 +318,9 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
   function setMinter(address newMinter) external {
     // Validate access
     require(msg.sender == admin, 'Admin only');
+
+    // Validate parameters
+    require(newMinter != address(0), 'Invalid newMinter');
 
     // Update state
     sftMinter = newMinter;

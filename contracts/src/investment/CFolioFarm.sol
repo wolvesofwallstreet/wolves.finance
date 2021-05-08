@@ -106,6 +106,10 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
     string memory _name,
     address _controller
   ) {
+    // Validate parameters
+    require(_owner != address(0), 'Invalid owner');
+    require(_controller != address(0), 'Invalid controller');
+
     // Initialize {Ownable}
     transferOwnership(_owner);
 

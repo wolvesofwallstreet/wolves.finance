@@ -229,6 +229,9 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
     // Validate access
     require(hasRole(REWARD_ROLE, _msgSender()), 'Only rewarders');
 
+    // Validate parameters
+    require(recipient != address(0), 'Invalid recipient');
+
     // If amount is zero there's nothing to do
     if (amount == 0) return;
 
