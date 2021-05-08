@@ -218,6 +218,8 @@ contract WOWSSftMinter is Ownable {
    *
    * Approval of WOWS token required before the call.
    *
+   * Post-condition: `_setupCFolio` must be false.
+   *
    * @param recipient Recipient of the SFT, unused if sftTokenId is != -1
    * @param cfolioItemType The item type of the SFT
    * @param uri The URI for this NFT
