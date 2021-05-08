@@ -18,6 +18,6 @@ library TokenIds {
   }
 
   function isCFolioCard(uint256 tokenId) internal pure returns (bool) {
-    return tokenId > 0xFFFF0000000000000000;
+    return tokenId >= 0x10000000000000000;
   }
 }
