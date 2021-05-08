@@ -224,7 +224,8 @@ contract WOWSSftMinter is Ownable {
    * @param cfolioItemType The item type of the SFT
    * @param uri The URI for this NFT
    * @param sftTokenId If <> -1 recipient is the SFT c-folio / handler must be called
-   * @param investAmounts Arguments needed for the handler (in general investment)
+   * @param investAmounts Arguments needed for the handler (in general investments).
+   * Investments may be zero if the user is just buying an SFT.
    */
   function mintCFolioItemSFT(
     address recipient,
