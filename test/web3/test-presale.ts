@@ -156,8 +156,8 @@ describe('Presale contract', function () {
     const ethUsd = await toUsd(1);
     const gasPrice = await getGasPrice();
 
-    console.log(`ETH price is $${ethUsd}`);
-    console.log(`Using '${GAS_PRICE}' gas at ${gasPrice / 1e9} Gwei`);
+    console.log(`    ETH price is $${ethUsd}`);
+    console.log(`    Using '${GAS_PRICE}' gas at ${gasPrice / 1e9} Gwei`);
   });
 
   beforeEach(async function () {
@@ -318,7 +318,7 @@ describe('Presale contract', function () {
       (initialBalance - finalBalance - amount).toFixed(4)
     );
     console.log(
-      `Buy token gas cost: ${gasCost} ETH ($${await toUsd(gasCost)})`
+      `    Buy token gas cost: ${gasCost} ETH ($${await toUsd(gasCost)})`
     );
 
     // Check token balance
@@ -425,7 +425,7 @@ describe('Presale contract', function () {
       (initialBalance - finalBalance - amount).toFixed(4)
     );
     console.log(
-      `Buy liquidity gas cost: ${gasCost} ETH ($${await toUsd(gasCost)})`
+      `    Buy liquidity gas cost: ${gasCost} ETH ($${await toUsd(gasCost)})`
     );
 
     // Check marketing ETH balance
@@ -496,7 +496,7 @@ describe('Presale contract', function () {
     );
     const gasCost = parseFloat((currentBalance - finalBalance).toFixed(4));
     console.log(
-      `Transfer stake gas cost: ${gasCost} ETH ($${await toUsd(gasCost)})`
+      `    Transfer stake gas cost: ${gasCost} ETH ($${await toUsd(gasCost)})`
     );
   });
 });

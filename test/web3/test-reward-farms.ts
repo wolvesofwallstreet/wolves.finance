@@ -233,8 +233,8 @@ describe('Reward farms', function () {
     const ethUsd = await toUsd(1);
     const gasPrice = await getGasPrice();
 
-    console.log(`ETH price is $${ethUsd}`);
-    console.log(`Using '${GAS_PRICE}' gas at ${gasPrice / 1e9} Gwei`);
+    console.log(`    ETH price is $${ethUsd}`);
+    console.log(`    Using '${GAS_PRICE}' gas at ${gasPrice / 1e9} Gwei`);
   });
 
   it('should attach the trade floor proxy', async function () {
@@ -507,7 +507,7 @@ describe('Reward farms', function () {
         .mul(await getGasPrice())
         .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
     console.log(
-      `Deposit LP NFT gas used: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+      `    Deposit LP NFT gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
         gasCost
       )})`
     );
@@ -573,7 +573,7 @@ describe('Reward farms', function () {
         .mul(await getGasPrice())
         .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
     console.log(
-      `Transfer cryptofolio item NFT gas used: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+      `    Transfer c-folio item NFT gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
         gasCost
       )})`
     );
@@ -612,7 +612,7 @@ describe('Reward farms', function () {
         .mul(await getGasPrice())
         .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
     console.log(
-      `Burn cryptofolio item NFT gas used: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+      `    Burn c-folio item NFT gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
         gasCost
       )})`
     );
