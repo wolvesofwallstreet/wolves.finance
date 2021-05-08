@@ -247,6 +247,7 @@ contract WOWSSftMinter is Ownable {
 
       // Get the CFolio contract address, it will be the final recipient
       sftCFolio = _sftContract.tokenIdToAddress(sftTokenId);
+      require(sftCFolio != address(0), 'Bad sftTokenId');
 
       // Intermediate owner of the minted SFT
       recipient = address(this);
