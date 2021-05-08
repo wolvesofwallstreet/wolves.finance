@@ -272,7 +272,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
    *
    * Note: tokenId must be a base SFT card
    *
-   * We allow reward pull only for unlocked SFTs
+   * We allow reward pull only for unlocked SFTs.
    */
   function getRewards(address recipient, uint256 tokenId) external override {
     // Validate parameters

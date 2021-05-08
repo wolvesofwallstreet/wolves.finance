@@ -615,7 +615,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     address[] memory uniqueCFolioHandlers = new address[](length);
     address[] memory cFolioHandlers = new address[](length);
 
-    // Invoke callbacks / count SFT's
+    // Invoke callbacks / count SFTs
     for (uint256 i = 0; i < tokenIds.length; i++) {
       uint256 tokenId = tokenIds[i];
       // Unstake SFT on burn
