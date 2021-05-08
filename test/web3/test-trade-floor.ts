@@ -196,8 +196,8 @@ describe('Trade Floor', function () {
     const ethUsd = await toUsd(1);
     const gasPrice = await getGasPrice();
 
-    console.log(`ETH price is $${ethUsd}`);
-    console.log(`Using '${GAS_PRICE}' gas at ${gasPrice / 1e9} Gwei`);
+    console.log(`    ETH price is $${ethUsd}`);
+    console.log(`    Using '${GAS_PRICE}' gas at ${gasPrice / 1e9} Gwei`);
   });
 
   it('should attach the trade floor proxy', async function () {
@@ -348,7 +348,7 @@ describe('Trade Floor', function () {
         .mul(await getGasPrice())
         .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
     console.log(
-      `Lock cryptofolio gas used: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+      `    Lock cryptofolio gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
         gasCost
       )})`
     );
@@ -395,7 +395,7 @@ describe('Trade Floor', function () {
         .mul(await getGasPrice())
         .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
     console.log(
-      `Transfer locked cryptofolio NFT gas used: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+      `    Transfer locked cryptofolio NFT gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
         gasCost
       )})`
     );
@@ -436,7 +436,7 @@ describe('Trade Floor', function () {
         .mul(await getGasPrice())
         .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
     console.log(
-      `Burn locked cryptofolio NFT gas used: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+      `    Burn locked cryptofolio NFT gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
         gasCost
       )})`
     );

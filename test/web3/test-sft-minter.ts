@@ -225,8 +225,8 @@ describe('SFT minter', function () {
     const ethUsd = await toUsd(1);
     const gasPrice = await getGasPrice();
 
-    console.log(`ETH price is $${ethUsd}`);
-    console.log(`Using '${GAS_PRICE}' gas at ${gasPrice / 1e9} Gwei`);
+    console.log(`    ETH price is $${ethUsd}`);
+    console.log(`    Using '${GAS_PRICE}' gas at ${gasPrice / 1e9} Gwei`);
   });
 
   it('should attach the trade floor proxy', async function () {
@@ -373,7 +373,7 @@ describe('SFT minter', function () {
         .mul(await getGasPrice())
         .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
     console.log(
-      `Mint boi gas used: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+      `    Mint boi SFT gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
         gasCost
       )})`
     );
@@ -405,7 +405,7 @@ describe('SFT minter', function () {
         .mul(await getGasPrice())
         .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
     console.log(
-      `Mint wolf gas used: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+      `    Mint wolf SFT gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
         gasCost
       )})`
     );
@@ -568,7 +568,7 @@ describe('SFT minter', function () {
         .mul(await getGasPrice())
         .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
     console.log(
-      `Mint investment SFT gas used: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+      `    Mint investment SFT gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
         gasCost
       )})`
     );
