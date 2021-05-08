@@ -180,7 +180,7 @@ contract WOWSMinterPauser is
     bytes memory data
   ) internal virtual override {
     // Validate state
-    require(_pauseActive == false, 'Transfer operation paused!');
+    require(!_pauseActive, 'Transfer operation paused!');
 
     // Call ancestor
     super._beforeTokenTransfer(operator, from, to, tokenId, amount, data);
@@ -200,7 +200,7 @@ contract WOWSMinterPauser is
     bytes memory data
   ) internal virtual override {
     // Valiate state
-    require(_pauseActive == false, 'Transfer operation paused!');
+    require(!_pauseActive, 'Transfer operation paused!');
 
     // Call ancestor
     super._beforeBatchTokenTransfer(
