@@ -264,7 +264,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
     cfolioFarm.removeAssets(address(cFolio), amounts[0]);
 
     // Transfer LP token from this contract
-    stakingToken.transferFrom(address(this), msg.sender, amounts[0]);
+    stakingToken.transfer(msg.sender, amounts[0]);
   }
 
   /**
