@@ -92,8 +92,16 @@ span a:hover {
   width: 80%;
 }
 
+.vw-80 {
+  width: 80vw;
+}
+
 .responsive-img {
   width: 100%;
+}
+
+.border-white-thin {
+  border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
 /* --- START ARROWS */
