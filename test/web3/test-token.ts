@@ -46,7 +46,7 @@ describe('Token contract', function () {
     await hardhat.deployments.fixture();
   });
 
-  it('should assign the total supply of tokens to the team', async function () {
+  it('should assign the initial supply of tokens to the team', async function () {
     // Desired balances upon minting
     const MARKETING_BALANCE = ethers.BigNumber.from('3600000000000000000000'); // 3600 WOWS
     const TEAM_BALANCE = ethers.BigNumber.from('7500000000000000000000'); // 7500 WOWS
