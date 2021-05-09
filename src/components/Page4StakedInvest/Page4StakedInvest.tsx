@@ -19,6 +19,10 @@ import React, { Fragment } from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { RouteComponentProps } from 'react-router-dom';
 
+import { ASSETS_LOADED, SFT_STATE } from '../../stores/constants';
+import { SFTStateresult, StoreClasses } from '../../stores/store';
+import { CARDS } from '../types/cards';
+
 type PROPS = {
   t: TFunction;
   location: RouteComponentProps['location'];
@@ -31,13 +35,17 @@ type STATE = {
   currentImage: number;
 };
 
-// Page 4
+type IMAGE = { tokenId: number; level: number; index: number };
+
+// Page 4 Stake Invest
 
 class Page4StakedInvest extends React.Component<PROPS, STATE> {
-  images = [
+  receiverImages: IMAGE[] = [];
+  investImages = [
     'https://4travelers.de/wolves_assets/cards/wolves/level1/AXEL-500.jpg',
     'https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-500.mp4.jpg',
   ];
+  content: CARDS | undefined = undefined;
 
   glide = new Glide('.page4sInvest-slider', {
     classes: {
@@ -71,6 +79,8 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
       input2: 'ETH 2300',
       currentImage: 0,
     };
+    this.onSFTState = this.onSFTState.bind(this);
+    this._updateImages = this._updateImages.bind(this);
   }
 
   setInput1(val: string) {
@@ -88,19 +98,52 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
       Controls,
       Breakpoints,
     });
+    StoreClasses.emitter.on(ASSETS_LOADED, this._updateImages);
+    StoreClasses.emitter.on(SFT_STATE, this.onSFTState);
+    this._updateImages();
   }
 
   componentWillUnmount() {
+    StoreClasses.emitter.off(SFT_STATE, this.onSFTState);
+    StoreClasses.emitter.off(ASSETS_LOADED, this._updateImages);
     this.glideProperties.destroy();
+  }
+
+  onSFTState(result: SFTStateresult) {
+    if (result.status === 'user') this._updateImages();
+  }
+
+  _updateImages() {
+    const cards = StoreClasses.store.getAssets().cards;
+    const tokenIds = StoreClasses.store.getAssets().userSFT;
+
+    const newImages: IMAGE[] = [];
+    tokenIds.forEach((elem) => {
+      if (elem.isStockCard && elem.id.toNumber() >> 24 >= 4) {
+        const tokenId = elem.id.toNumber();
+        const newLevel = cards.cards.findIndex(
+          (level) => level.chainRef === tokenId >> 24
+        );
+        const newIndex = cards.cards[newLevel].cards.findIndex(
+          (card) => card.chainRef === ((tokenId >> 16) & 0xff)
+        );
+        newImages.push({ tokenId: tokenId, level: newLevel, index: newIndex });
+      }
+    });
+    if (newImages !== this.receiverImages) {
+      this.receiverImages = newImages;
+      this.setCurrentImage(this.state.currentImage);
+    }
+    this.content = cards;
   }
 
   render(): JSX.Element {
     const handleImageChange = (change: number) => {
       if (this.state.currentImage + change < 0) {
-        return this.setCurrentImage(this.images.length - 1);
+        return this.setCurrentImage(this.investImages.length - 1);
       }
 
-      if (this.state.currentImage + change >= this.images.length) {
+      if (this.state.currentImage + change >= this.investImages.length) {
         return this.setCurrentImage(0);
       }
 
@@ -129,7 +172,7 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
               <div className="page4sInvest-slider glide-border-t glide-border-b">
                 <div className="glide__track" data-glide-el="track">
                   <ul className="glide__slides">
-                    {[1, 2, 3, 4, 5].map((card, i) => {
+                    {this.receiverImages.map((card, i) => {
                       return (
                         <Fragment key={'p4si' + i}>
                           <div
@@ -141,7 +184,13 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
                             <div className="slide-count"> {i} </div>
                             <img
                               className={'responsive-img slide-img'}
-                              src="https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-300.mp4.jpg"
+                              src={
+                                this.content
+                                  ? this.content.cards[card.level].cards[
+                                      card.index
+                                    ].url.replace('{res}', '300')
+                                  : ''
+                              }
                               alt=""
                             />
                           </div>
@@ -188,8 +237,8 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
               />
               <img
                 className={'responsive-img'}
-                src={this.images[this.state.currentImage]}
-                alt={this.images[this.state.currentImage]}
+                src={this.investImages[this.state.currentImage]}
+                alt={this.investImages[this.state.currentImage]}
                 style={{ maxWidth: '500px' }}
               />
               <button
