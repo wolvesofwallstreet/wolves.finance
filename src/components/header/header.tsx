@@ -89,13 +89,13 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
     return (
       <span className="nav-item dropdown mx-0 my-0" key={Math.random() + title}>
         <span
-          className="nav-link dropdown-toggle text-white"
+          className="nav-link dropdown-toggle text-white navbar-text"
           data-bs-toggle="dropdown"
           aria-expanded="false"
         >
           {title}
         </span>
-        <ul className="dropdown-menu bg-blue-transparent-dark">
+        <ul className="dropdown-menu bg-blue-transparent-dark translateY_-10">
           {dropdownItems.map((item, index) => (
             <li key={Math.random() + index}>
               <Link className="dropdown-item" to={item.to}>
@@ -120,20 +120,15 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
         disabled: location.pathname === '/',
       },
       {
-        id: t('header.wolvesCf'),
-        to: '/shop?type=wolves&levelId=' + levelId,
-        disabled: type === 'wolves',
-      },
-      {
-        id: t('header.boisCf'),
-        to: '/shop?type=bois&levelId=' + levelId,
-        disabled: type === 'bois',
-      },
-      {
         id: 'WOLF TRADE FLOOR',
         to: '/wolf_trade_floor-1',
         disabled: location.pathname === '/wolf_trade_floor',
         dropdownItems: [
+          {
+            id: t('header.wolvesCf'),
+            to: '/shop?type=wolves&levelId=' + levelId,
+            disabled: type === 'wolves',
+          },
           {
             id: 'WOLF TRADE FLOOR',
             to: '/wolf_trade_floor',
@@ -149,6 +144,11 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
         to: '/wolf_trade_floor-1',
         disabled: location.pathname === '/wolf_trade_floor',
         dropdownItems: [
+          {
+            id: t('header.boisCf'),
+            to: '/shop?type=bois&levelId=' + levelId,
+            disabled: type === 'bois',
+          },
           {
             id: 'BOIS BOARDROOMS',
             to: '/bois_boardrooms',

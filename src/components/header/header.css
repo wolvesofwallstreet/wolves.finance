@@ -6,7 +6,7 @@
  * See the file LICENSES/README.md for more information.
  */
 
-.navbar-nav {
+ .navbar-nav {
   letter-spacing: 0.02em;
   font-family: 'vincente', serif;
   font-weight: bold;
@@ -17,7 +17,7 @@
   letter-spacing: 0.02em;
   font-family: 'vincente', serif;
   font-weight: 500;
-  font-size: 24px;
+  font-size: 23px;
   line-height: 1.2em;
   color: white;
   margin: 0 10px;
@@ -50,14 +50,16 @@
 }
 
 .dp-conn-btn {
-  width: 200px;
+  width: 160px;
   margin: 8px 0px 8px 0px;
+  font-size: 15px;
 }
 
 @media screen and (max-width: 991px) {
   .navbar-collapse a,
   .navbar-collapse span {
     margin: 2px 8px;
+    /* font-size: 12px; */
   }
   .navbar-collapse a,
   .navbar-collapse {
@@ -86,6 +88,14 @@
   margin: 0 auto 8px auto;
 }
 
+.nav-item {
+  cursor: pointer;
+}
+
+.dropdown-menu {
+  margin: 0 !important;
+}
+
 .dropdown:hover .dropdown-menu {
   display: block;
 }
@@ -95,3 +105,28 @@
 .dropdown-item:hover {
   background-color: transparent;
 }
+
+.dropdown-toggle {
+  padding-left: 3px;
+  padding-right: 3px;
+}
+
+.translateY_-10 {
+  transform: translateY(-7px);
+}
+
+/* 
+@media screen and (min-width: 800px) {
+  .navbar-collapse a,
+  .navbar-collapse span {
+    letter-spacing: 0.02em;
+    font-size: 15px;
+    margin-left: 3px;
+    margin-right: 3px;
+    background-color: red !important;
+  }
+
+  .dp-conn-btn {
+    width: auto;
+  }
+} */
