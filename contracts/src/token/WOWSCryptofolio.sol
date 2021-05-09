@@ -8,13 +8,15 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
+import '@openzeppelin/contracts/utils/Context.sol';
+
 import '../../0xerc1155/tokens/ERC1155/ERC1155Holder.sol';
 
 import './interfaces/IERC1155BurnMintable.sol';
 import './interfaces/IWOWSCryptofolio.sol';
 import './interfaces/IWOWSERC1155.sol';
 
-contract WOWSCryptofolio is IWOWSCryptofolio, ERC1155Holder {
+contract WOWSCryptofolio is IWOWSCryptofolio, Context, ERC1155Holder {
   //////////////////////////////////////////////////////////////////////////////
   // State
   //////////////////////////////////////////////////////////////////////////////
@@ -63,7 +65,7 @@ contract WOWSCryptofolio is IWOWSCryptofolio, ERC1155Holder {
     require(address(_deployer) == address(0), 'CF: Already initialized');
 
     // Update state
-    _deployer = IWOWSERC1155(msg.sender);
+    _deployer = IWOWSERC1155(_msgSender());
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -130,7 +132,7 @@ contract WOWSCryptofolio is IWOWSCryptofolio, ERC1155Holder {
    */
   function setApprovalForAll(address operator, bool allow) external override {
     // Access control
-    require(msg.sender == _owner, 'CF: Only owner');
+    require(_msgSender() == _owner, 'CF: Only owner');
 
     // Update state
     for (uint256 i = 0; i < _tradefloors.length; ++i) {
@@ -143,7 +145,7 @@ contract WOWSCryptofolio is IWOWSCryptofolio, ERC1155Holder {
    */
   function burn() external override {
     // Access control
-    require(msg.sender == address(_deployer), 'CF: Only deployer');
+    require(_msgSender() == address(_deployer), 'CF: Only deployer');
 
     for (uint256 i = 0; i < _tradefloors.length; ++i) {
       // Load state
@@ -232,7 +234,7 @@ contract WOWSCryptofolio is IWOWSCryptofolio, ERC1155Holder {
     uint256[] memory tokenIds,
     uint256[] memory amounts
   ) internal {
-    address tradefloor = msg.sender;
+    address tradefloor = _msgSender();
 
     // Access control
     require(_deployer.isTradeFloor(tradefloor), 'CF: Only tradefloor');

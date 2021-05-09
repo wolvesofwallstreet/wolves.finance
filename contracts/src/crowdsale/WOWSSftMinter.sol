@@ -11,13 +11,14 @@ pragma solidity >=0.7.0 <0.8.0;
 import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
+import '@openzeppelin/contracts/utils/Context.sol';
 
 import '../cfolio/interfaces/ICFolioItemHandler.sol';
 import '../investment/interfaces/IRewardHandler.sol';
 import '../token/interfaces/IERC1155BurnMintable.sol';
 import '../token/interfaces/IWOWSERC1155.sol';
 
-contract WOWSSftMinter is Ownable {
+contract WOWSSftMinter is Context, Ownable {
   using SafeERC20 for IERC20;
 
   //////////////////////////////////////////////////////////////////////////////
@@ -282,7 +283,7 @@ contract WOWSSftMinter is Ownable {
     _mint(recipient, tokenId, sftData.price, cfolioItemType);
 
     // Let CFolioHandler setup the new minted token
-    sftData.handler.setupCFolio(msg.sender, tokenId, investAmounts);
+    sftData.handler.setupCFolio(_msgSender(), tokenId, investAmounts);
 
     // Check-effects-interaction not needed, as `_setupCFolio` can't be mutated
     // outside this function.
@@ -357,7 +358,7 @@ contract WOWSSftMinter is Ownable {
     uint256 cfolioType
   ) internal {
     // Transfer WOWS from user to reward handler
-    _wowsToken.safeTransferFrom(msg.sender, address(_rewardHandler), price);
+    _wowsToken.safeTransferFrom(_msgSender(), address(_rewardHandler), price);
 
     // Mint the token
     IERC1155BurnMintable(address(_sftContract)).mint(recipient, tokenId, 1, '');

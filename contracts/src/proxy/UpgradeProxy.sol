@@ -9,11 +9,12 @@
 pragma solidity >=0.7.0 <0.8.0;
 
 import '@openzeppelin/contracts/proxy/UpgradeableProxy.sol';
+import '@openzeppelin/contracts/utils/Context.sol';
 
 import '../utils/AddressBook.sol';
 import '../utils/interfaces/IAddressRegistry.sol';
 
-contract UpgradeProxy is UpgradeableProxy {
+contract UpgradeProxy is Context, UpgradeableProxy {
   /**
    * @dev Storage slot with the admin of the contract.
    * This is the keccak-256 hash of "eip1967.proxy.admin" subtracted by 1, and is
@@ -31,7 +32,7 @@ contract UpgradeProxy is UpgradeableProxy {
    * @dev Modifier used internally that will delegate the call to the implementation unless the sender is the admin.
    */
   modifier ifAdmin() {
-    if (msg.sender == _admin()) {
+    if (_msgSender() == _admin()) {
       _;
     } else {
       _fallback();
