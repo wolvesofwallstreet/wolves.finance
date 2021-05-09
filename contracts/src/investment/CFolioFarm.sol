@@ -53,27 +53,6 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
   IController public controller;
 
   //////////////////////////////////////////////////////////////////////////////
-  // Modifiers
-  //////////////////////////////////////////////////////////////////////////////
-
-  modifier onlyController {
-    require(_msgSender() == address(controller), 'not controller');
-    _;
-  }
-
-  modifier updateReward(address account) {
-    rewardPerTokenStored = rewardPerToken();
-    lastUpdateTime = lastTimeRewardApplicable();
-
-    if (account != address(0)) {
-      rewards[account] = earned(account);
-      userRewardPerTokenPaid[account] = rewardPerTokenStored;
-    }
-
-    _;
-  }
-
-  //////////////////////////////////////////////////////////////////////////////
   // Events
   //////////////////////////////////////////////////////////////////////////////
 
@@ -96,6 +75,27 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
   event RewardsDurationUpdated(uint256 newDuration);
 
   event ControllerChanged(address newController);
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Modifiers
+  //////////////////////////////////////////////////////////////////////////////
+
+  modifier onlyController {
+    require(_msgSender() == address(controller), 'not controller');
+    _;
+  }
+
+  modifier updateReward(address account) {
+    rewardPerTokenStored = rewardPerToken();
+    lastUpdateTime = lastTimeRewardApplicable();
+
+    if (account != address(0)) {
+      rewards[account] = earned(account);
+      userRewardPerTokenPaid[account] = rewardPerTokenStored;
+    }
+
+    _;
+  }
 
   //////////////////////////////////////////////////////////////////////////////
   // Initialization
