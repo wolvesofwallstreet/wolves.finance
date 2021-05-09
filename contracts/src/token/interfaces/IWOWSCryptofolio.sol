@@ -41,9 +41,9 @@ interface IWOWSCryptofolio {
   /**
    * @dev Return array of cryptofolio token IDs
    *
-   * The token IDs belong to the contract tradefloor.
+   * The token IDs belong to the contract TradeFloor.
    *
-   * @param tradefloor The tradefloor items belong to
+   * @param tradefloor The TradeFloor that items belong to
    *
    * @return tokenIds The token IDs in scope of operator
    * @return idsLength The number of valid token IDs
@@ -66,7 +66,8 @@ interface IWOWSCryptofolio {
    * is allowed to transfer / burn cryptofolio items. Make sure that allowance
    * is removed from previous owner.
    *
-   * @param owner The new owner of the underlying NFT
+   * @param owner The new owner of the underlying NFT, or address(0) if the
+   * underlying NFT is being burned
    */
   function setOwner(address owner) external;
 
