@@ -530,7 +530,8 @@ describe('LP NFTs', function () {
     );
     await chai.expect(tx).to.emit(cfolioFarmLPContract, 'AssetAdded').withArgs(
       cryptofolioItemAddressWolfLP, // Recipient
-      lpBalance // Amount
+      lpBalance, // Amount
+      lpBalance // totalAmount
     );
   });
 
