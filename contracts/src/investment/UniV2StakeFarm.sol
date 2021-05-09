@@ -12,6 +12,7 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import '@openzeppelin/contracts/math/SafeMath.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
+import '@openzeppelin/contracts/utils/Context.sol';
 import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
 
 import '../utils/ERC20Recovery.sol';
@@ -24,6 +25,7 @@ import '../../interfaces/uniswap/IUniswapV2Pair.sol';
 contract UniV2StakeFarm is
   IFarm,
   IStakeFarm,
+  Context,
   Ownable,
   ReentrancyGuard,
   ERC20Recovery
@@ -167,7 +169,7 @@ contract UniV2StakeFarm is
     external
     override
     nonReentrant
-    updateReward(msg.sender)
+    updateReward(_msgSender())
   {
     require(amount > 0, 'Cannot stake 0');
 
@@ -175,28 +177,28 @@ contract UniV2StakeFarm is
     controller.onDeposit(amount);
 
     _totalSupply = _totalSupply.add(amount);
-    _balances[msg.sender] = _balances[msg.sender].add(amount);
+    _balances[_msgSender()] = _balances[_msgSender()].add(amount);
     IERC20(address(stakingToken)).safeTransferFrom(
-      msg.sender,
+      _msgSender(),
       address(this),
       amount
     );
 
     // TODO: Remove after launch
     if (
-      firstStakeTime[msg.sender] == 0 &&
-      _ethAmount(_balances[msg.sender]) >= ETH_LIMIT
+      firstStakeTime[_msgSender()] == 0 &&
+      _ethAmount(_balances[_msgSender()]) >= ETH_LIMIT
       // solhint-disable-next-line not-rely-on-time
-    ) firstStakeTime[msg.sender] = block.timestamp;
+    ) firstStakeTime[_msgSender()] = block.timestamp;
 
-    emit Staked(msg.sender, amount);
+    emit Staked(_msgSender(), amount);
   }
 
   function unstake(uint256 amount)
     public
     override
     nonReentrant
-    updateReward(msg.sender)
+    updateReward(_msgSender())
   {
     require(amount > 0, 'Cannot withdraw 0');
 
@@ -204,45 +206,45 @@ contract UniV2StakeFarm is
     controller.onWithdraw(amount);
 
     _totalSupply = _totalSupply.sub(amount);
-    _balances[msg.sender] = _balances[msg.sender].sub(amount);
-    IERC20(address(stakingToken)).safeTransfer(msg.sender, amount);
+    _balances[_msgSender()] = _balances[_msgSender()].sub(amount);
+    IERC20(address(stakingToken)).safeTransfer(_msgSender(), amount);
 
     // TODO: Remove after launch
     if (
-      firstStakeTime[msg.sender] > 0 &&
-      (_balances[msg.sender] == 0 ||
-        _ethAmount(_balances[msg.sender]) < ETH_LIMIT)
-    ) firstStakeTime[msg.sender] = 0;
+      firstStakeTime[_msgSender()] > 0 &&
+      (_balances[_msgSender()] == 0 ||
+        _ethAmount(_balances[_msgSender()]) < ETH_LIMIT)
+    ) firstStakeTime[_msgSender()] = 0;
 
-    emit Unstaked(msg.sender, amount);
+    emit Unstaked(_msgSender(), amount);
   }
 
   function transfer(address recipient, uint256 amount)
     external
     override
-    updateReward(msg.sender)
+    updateReward(_msgSender())
     updateReward(recipient)
   {
     require(recipient != address(0), 'invalid address');
     require(amount > 0, 'zero amount');
 
-    _balances[msg.sender] = _balances[msg.sender].sub(amount);
+    _balances[_msgSender()] = _balances[_msgSender()].sub(amount);
     _balances[recipient] = _balances[recipient].add(amount);
-    emit Transfered(msg.sender, recipient, amount);
+    emit Transfered(_msgSender(), recipient, amount);
   }
 
-  function getReward() public override nonReentrant updateReward(msg.sender) {
-    uint256 reward = rewards[msg.sender];
+  function getReward() public override nonReentrant updateReward(_msgSender()) {
+    uint256 reward = rewards[_msgSender()];
     if (reward > 0) {
-      rewards[msg.sender] = 0;
+      rewards[_msgSender()] = 0;
       availableRewards = availableRewards.sub(reward);
-      controller.payOutRewards(msg.sender, reward);
-      emit RewardPaid(msg.sender, reward);
+      controller.payOutRewards(_msgSender(), reward);
+      emit RewardPaid(_msgSender(), reward);
     }
   }
 
   function exit() external override {
-    unstake(_balances[msg.sender]);
+    unstake(_balances[_msgSender()]);
     getReward();
   }
 

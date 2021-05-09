@@ -10,6 +10,7 @@ pragma solidity >=0.6.0 <0.8.0;
 
 import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/math/SafeMath.sol';
+import '@openzeppelin/contracts/utils/Context.sol';
 
 import '../utils/AddressBook.sol';
 import '../utils/interfaces/IAddressRegistry.sol';
@@ -18,7 +19,7 @@ import './interfaces/IController.sol';
 import './interfaces/IFarm.sol';
 import './interfaces/IRewardHandler.sol';
 
-contract Controller is IController, Ownable {
+contract Controller is IController, Context, Ownable {
   using SafeMath for uint256;
 
   //////////////////////////////////////////////////////////////////////////////
@@ -129,7 +130,7 @@ contract Controller is IController, Ownable {
     returns (uint256 fee)
   {
     // Load state
-    Farm storage farm = farms[msg.sender];
+    Farm storage farm = farms[_msgSender()];
 
     // Validate state
     require(farm.farmStartedAtBlock > 0, 'Caller not a farm');
@@ -152,7 +153,7 @@ contract Controller is IController, Ownable {
     returns (uint256 fee)
   {
     // Validate state
-    require(!farms[msg.sender].paused, 'Farm paused');
+    require(!farms[_msgSender()].paused, 'Farm paused');
 
     // Unused
     amount;
@@ -165,7 +166,7 @@ contract Controller is IController, Ownable {
    */
   function payOutRewards(address recipient, uint256 amount) external override {
     // Load state
-    Farm storage farm = farms[msg.sender];
+    Farm storage farm = farms[_msgSender()];
 
     // Validate state
     require(farm.farmStartedAtBlock > 0, 'Caller not a farm');
@@ -213,7 +214,7 @@ contract Controller is IController, Ownable {
   ) external {
     // Validate access
     require(
-      msg.sender == owner() || msg.sender == previousController,
+      _msgSender() == owner() || _msgSender() == previousController,
       'Not allowed'
     );
 

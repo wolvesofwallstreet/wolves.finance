@@ -8,6 +8,8 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
+import '@openzeppelin/contracts/utils/Context.sol';
+
 import '../../0xerc1155/interfaces/IERC1155.sol';
 import '../../0xerc1155/interfaces/IERC20.sol';
 import '../../0xerc1155/interfaces/IERC1155TokenReceiver.sol';
@@ -37,7 +39,7 @@ import '../utils/TokenIds.sol';
  * transfered and calculate the new rewardable LP amount based on the reward %
  * of the base NFT.
  */
-contract CFolioItemHandlerLP is ICFolioItemHandler {
+contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
   using SafeMath for uint256;
   using TokenIds for uint256;
 
@@ -76,7 +78,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
   //////////////////////////////////////////////////////////////////////////////
 
   modifier onlyTradeFloor {
-    require(msg.sender == address(tradeFloor), 'TFCLP: only TF');
+    require(_msgSender() == address(tradeFloor), 'TFCLP: only TF');
     _;
   }
 
@@ -164,7 +166,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
    */
   function sftUpgrade(uint256 tokenId, uint32 newRate) external override {
     // Validate access
-    require(msg.sender == address(sftEvaluator), 'Invalid caller');
+    require(_msgSender() == address(sftEvaluator), 'Invalid caller');
     require(tokenId.isBaseCard(), 'Invalid token');
 
     // CFolio address
@@ -191,7 +193,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
     uint256[] calldata amounts
   ) external override {
     // Validate access
-    require(msg.sender == sftMinter, 'Only SFTMinter');
+    require(_msgSender() == sftMinter, 'Only SFTMinter');
 
     // Validate parameters
     address cFolio = sftHolder.tokenIdToAddress(sftTokenId);
@@ -238,7 +240,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
     IWOWSCryptofolio cFolio = _verifyAssetAccess(tokenId);
 
     // Transfer LP token to this contract
-    stakingToken.transferFrom(msg.sender, address(this), amounts[0]);
+    stakingToken.transferFrom(_msgSender(), address(this), amounts[0]);
 
     // Record assets in the Farm contract. They don't earn rewards.
     // addAssets must only be called from Investment CFolios
@@ -264,7 +266,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
     cfolioFarm.removeAssets(address(cFolio), amounts[0]);
 
     // Transfer LP token from this contract
-    stakingToken.transfer(msg.sender, amounts[0]);
+    stakingToken.transfer(_msgSender(), amounts[0]);
   }
 
   /**
@@ -286,7 +288,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
     // Verify that the tokenId is owned by msg.sender in the SFT contract.
     // This also verifies that the token is not locked in TradeFloor.
     require(
-      IERC1155(address(sftHolder)).balanceOf(msg.sender, tokenId) == 1,
+      IERC1155(address(sftHolder)).balanceOf(_msgSender(), tokenId) == 1,
       'CFHI: Access denied'
     );
 
@@ -302,7 +304,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
    */
   function upgradeContract(CFolioItemHandlerLP newContract) external {
     // Validate access
-    require(msg.sender == admin, 'Admin only');
+    require(_msgSender() == admin, 'Admin only');
 
     // Update state
     stakingToken.transfer(
@@ -317,7 +319,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
    */
   function setMinter(address newMinter) external {
     // Validate access
-    require(msg.sender == admin, 'Admin only');
+    require(_msgSender() == admin, 'Admin only');
 
     // Validate parameters
     require(newMinter != address(0), 'Invalid newMinter');
@@ -360,7 +362,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
 
     // This call originates from the c-folio. We revert if there are investment
     // amounts left for this c-folio address.
-    require(cfolioFarm.balanceOf(msg.sender) == 0, 'CFIH: not empty');
+    require(cfolioFarm.balanceOf(_msgSender()) == 0, 'CFIH: not empty');
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -418,7 +420,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler {
     // Verify that the tokenId is owned by msg.sender in SFT contract.
     // This also verifies that the token is not locked in TradeFloor.
     require(
-      IERC1155(address(sftHolder)).balanceOf(msg.sender, tokenId) == 1,
+      IERC1155(address(sftHolder)).balanceOf(_msgSender(), tokenId) == 1,
       'CFHI: Access denied'
     );
 
