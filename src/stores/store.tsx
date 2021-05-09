@@ -112,7 +112,12 @@ export type StakeResult = {
 type cbf = async.AsyncResultCallback<unknown, Error>;
 
 type ASSETS = {
-  userSFT: { id: ethers.BigNumber; locked: boolean }[];
+  userSFT: {
+    id: ethers.BigNumber;
+    isBaseCard: boolean;
+    isStockCard: boolean;
+    locked: boolean;
+  }[];
   cards: CARDS;
 };
 
@@ -133,6 +138,8 @@ class Store {
   uniDaiWethPairContractRO: ethers.Contract | null = null;
 
   static nullAddress = '0x0000000000000000000000000000000000000000';
+  static BASE_CARD_MAX = ethers.BigNumber.from('0xFFFFFFFFFFFFFFFF');
+  static STOCK_CARD_MAX = ethers.BigNumber.from('0xFFFFFFFF');
 
   /* Misc */
   networkName = 'mainnet';
@@ -246,16 +253,7 @@ class Store {
       this.assets.cards.levelNames = content.default.levelNames;
       this.assets.cards.myPackLevelDescriptions =
         content.default.myPackLevelDescriptions;
-      const levels = content.default.levels.map((level) => {
-        return {
-          ...level,
-          chainRef: ethers.BigNumber.from(level.chainRef),
-          cards: level.cards.map((card) => {
-            return { ...card, chainRef: ethers.BigNumber.from(card.chainRef) };
-          }),
-        };
-      });
-      this.assets.cards.cards = levels as CARD_LEVEL[];
+      this.assets.cards.cards = content.default.levels as CARD_LEVEL[];
       this.assets.cards.cards[1].cards.splice(3, 1);
       this.assets.cards.cards[5].cards.splice(3, 1);
       emitter.emit(ASSETS_LOADED);
@@ -601,8 +599,8 @@ class Store {
 
     this.assets.cards.cards.forEach((level) =>
       level.cards.forEach((card) => {
-        levels.push(level.chainRef);
-        cardIds.push(card.chainRef);
+        levels.push(ethers.BigNumber.from(level.chainRef));
+        cardIds.push(ethers.BigNumber.from(card.chainRef));
       })
     );
 
@@ -639,7 +637,12 @@ class Store {
 
       if (result) {
         this.assets.userSFT = result.map((bn) => {
-          return { id: bn, locked: false };
+          return {
+            id: bn,
+            isBaseCard: bn.lt(Store.BASE_CARD_MAX),
+            isStockCard: bn.lt(Store.STOCK_CARD_MAX),
+            locked: false,
+          };
         });
       } else this.assets.userSFT = [];
 
@@ -652,7 +655,12 @@ class Store {
         if (result) {
           this.assets.userSFT = this.assets.userSFT.concat(
             result.map((bn) => {
-              return { id: bn, locked: true };
+              return {
+                id: bn,
+                isBaseCard: bn.lt(Store.BASE_CARD_MAX),
+                isStockCard: bn.lt(Store.STOCK_CARD_MAX),
+                locked: true,
+              };
             })
           );
         }

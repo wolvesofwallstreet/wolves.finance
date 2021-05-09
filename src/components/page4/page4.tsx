@@ -7,6 +7,7 @@
  */
 import './page4.css';
 
+import { BigNumber } from 'ethers';
 import { Component } from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { RouteComponentProps } from 'react-router-dom';
@@ -144,12 +145,12 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       // retrieve levelId and cardId from tokenId
       this.tokenLocked = tokenIds[tokenIndex].locked;
       newLevelId = cards.cards.findIndex(
-        (level) => level.chainRef.toNumber() === tokenId >> 24
+        (level) => level.chainRef === tokenId >> 24
       );
       if (newLevelId >= 0) {
         newType = cards.cards[newLevelId].type === 'wolves' ? 'wolves' : 'bois';
         const newCardIndex = cards.cards[newLevelId].cards.findIndex(
-          (card) => card.chainRef.toNumber() === ((tokenId >> 16) & 0xff)
+          (card) => card.chainRef === ((tokenId >> 16) & 0xff)
         );
         if (newCardIndex >= 0) {
           newCardId = cards.cards[newLevelId].cards[newCardIndex].id;
@@ -257,11 +258,12 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       };
       payload.content = {
         amount: this.content.price,
-        id:
+        id: BigNumber.from(
           this.tokenId === undefined
-            ? (this.content.chainRef.toNumber() << 8) |
-              this.content.cards[this.cardIndex].chainRef.toNumber()
-            : this.tokenId,
+            ? (this.content.chainRef << 8) |
+                this.content.cards[this.cardIndex].chainRef
+            : this.tokenId
+        ),
       };
       this.setState({ txPending: true });
       StoreClasses.dispatcher.dispatch(payload);
