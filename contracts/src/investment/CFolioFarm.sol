@@ -79,9 +79,9 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
 
   event RewardAdded(uint256 reward);
 
-  event AssetAdded(address indexed user, uint256 amount);
+  event AssetAdded(address indexed user, uint256 amount, uint256 totalAmount);
 
-  event AssetRemoved(address indexed user, uint256 amount);
+  event AssetRemoved(address indexed user, uint256 amount, uint256 totalAmount);
 
   event ShareAdded(address indexed user, uint256 amount);
 
@@ -198,7 +198,7 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
     _balances[account] = _balances[account].add(amount);
 
     // Dispatch event
-    emit AssetAdded(account, amount);
+    emit AssetAdded(account, amount, _balances[account]);
   }
 
   function removeAssets(address account, uint256 amount)
@@ -213,7 +213,7 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
     _balances[account] = _balances[account].sub(amount);
 
     // Dispatch event
-    emit AssetRemoved(account, amount);
+    emit AssetRemoved(account, amount, _balances[account]);
   }
 
   function addShares(address account, uint256 amount)
