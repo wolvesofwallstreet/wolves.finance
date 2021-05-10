@@ -6,20 +6,25 @@
  * See the file LICENSES/README.md for more information.
  */
 
+.page9-slider {
+  margin: 0 14vw;
+  min-height: 160px;
+}
+
 .page9-container-fluid {
   padding: 20px 0;
   min-height: 300px !important;
 }
 
 .page9-two-column-container {
-  width: 80%;
   display: flex;
   flex-direction: row;
+  padding: 15px 12vw;
 }
 
 .page9-two-column-container div {
   flex: 1;
-  /*border: 1px solid blue;*/
+  align-self: flex-start;
 }
 
 @media only screen and (max-width: 800px) {
@@ -68,6 +73,17 @@
   position: relative;
 }
 
+.page9-btn-stack {
+  background-color: var(--wolves-orange);
+  padding: 10px 15px;
+  border: 0.6px solid var(--wolves-white);
+  text-align: center;
+  font-weight: bold;
+  color: var(--wolves-blue-dk);
+  margin-top: 10px;
+  font-size: 12px;
+}
+
 .tick {
   border-left: 2px solid var(--wolves-white);
   height: 5px;
@@ -82,5 +98,5 @@
 .tick:last-child {
   left: calc(var(--percentage) - 6%);
   border-left: 0;
-  border-right: 2px solid var(--wolves-white);
+  /* border-right: 2px solid var(--wolves-white); */
 }

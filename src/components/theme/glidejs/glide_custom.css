@@ -205,3 +205,34 @@
 }
 
 /* Slide btn */
+
+/* 
+  H-Bar Centered trianges,
+  triange_up, triange_down
+ */
+
+.center_triange_up::before {
+  content: ' ';
+  position: relative;
+  top: 6px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  background-color: transparent;
+  border-color: transparent;
+  border-width: 10px 20px 0 20px;
+  border-top-color: var(--wolves-orange-light);
+}
+
+.center_triange_down::after {
+  content: ' ';
+  position: relative;
+  bottom: 6px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  background-color: transparent;
+  border-color: transparent;
+  border-width: 0 15px 10px 15px;
+  border-bottom-color: var(--wolves-orange-light);
+}
