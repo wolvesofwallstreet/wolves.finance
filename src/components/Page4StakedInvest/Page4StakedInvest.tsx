@@ -47,11 +47,11 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
   ];
   content: CARDS | undefined = undefined;
 
-  glide = new Glide('.page4sInvest-slider', {
+  glide = new Glide('.page4sInvest-slider-1', {
     classes: {
       activeSlide: 'slider_active_slide',
     },
-    gap: 35,
+    gap: 23,
     peek: 10,
     type: 'slider', // carousel
     perView: 5,
@@ -62,8 +62,14 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
       1200: {
         perView: 5,
       },
+      1000: {
+        perView: 4,
+      },
+      900: {
+        perView: 3,
+      },
       800: {
-        perView: 2,
+        perView: 3,
       },
       600: {
         perView: 2,
@@ -151,151 +157,144 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
     };
     return (
       <>
-        <div
-          className={
-            'page4sInvest-container-fluid  bg-flat2 text-white text-center'
-          }
-        >
-          {/* Title & heading */}
-          <div>
-            <h2 className="tk-vincente-lightbold font-28 single-line">
-              {'WOLF TRADE FLOOR - CHOOSE YOUR C-FOLIO TO STAKE WITH'}
-            </h2>
-            <h3 className="tk-grotesk-lightbold font-14">
-              {'PICK YOUR HIGHEST LEVEL WORK TO STAKE '}
-            </h3>
-          </div>
-
-          {/* Card slider */}
-          <div className={'slider-wrap-bar bg-transparent-orange'}>
-            <div className={'wrap'}>
-              <div className="page4sInvest-slider glide-border-t glide-border-b">
-                <div className="glide__track" data-glide-el="track">
-                  <ul className="glide__slides">
-                    {this.receiverImages.map((card, i) => {
-                      return (
-                        <Fragment key={'p4si' + i}>
-                          <div
-                            className="glide__slide"
-                            onClick={() => {
-                              this.glideProperties.go(`=${i}`);
-                            }}
-                          >
-                            <div className="slide-count"> {i} </div>
-                            <img
-                              className={'responsive-img slide-img'}
-                              src={
-                                this.content
-                                  ? this.content.cards[card.level].cards[
-                                      card.index
-                                    ].url.replace('{res}', '300')
-                                  : ''
-                              }
-                              alt=""
-                            />
-                          </div>
-                        </Fragment>
-                      );
-                    })}
-                  </ul>
-                </div>
-                <div className="glide__arrows" data-glide-el="controls">
-                  <button
-                    className="glide__arrow glide__arrow--left"
-                    data-glide-dir="<"
-                    style={{
-                      ['--left' as string]: '-15%',
-                    }}
-                  >
-                    {/*<i className="fas fa-arrow-left"/>*/}
-                  </button>
-
-                  <button
-                    className="glide__arrow glide__arrow--right"
-                    data-glide-dir=">"
-                    style={{
-                      ['--right' as string]: '-15%',
-                    }}
-                  >
-                    {/*<i className="fas fa-arrow-right"/>*/}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Content */}
+        <>
           <div
             className={
-              'page4sInvest-container page4sInvest-w-80 center-container my-5'
+              'flex-column justify-content-center bg-flat2 text-white text-center '
             }
           >
-            <div className="d-flex align-items-center justify-content-around">
-              <button
-                className="arrow_left m-0 mr-3"
-                onClick={() => handleImageChange(-1)}
-              />
-              <img
-                className={'responsive-img'}
-                src={this.investImages[this.state.currentImage]}
-                alt={this.investImages[this.state.currentImage]}
-                style={{ maxWidth: '500px' }}
-              />
-              <button
-                className="arrow_right m-0 ml-3"
-                onClick={() => handleImageChange(1)}
-              />
+            {/* Title & heading */}
+            <div>
+              <h2 className="mt-4 tk-vincente-lightbold font-28 single-line">
+                {'WOLF TRADE FLOOR - CHOOSE YOUR C-FOLIO TO STAKE WITH'}
+              </h2>
+              <h3 className="tk-grotesk-lightbold font-14">
+                {'PICK YOUR HIGHEST LEVEL WORK TO STAKE '}
+              </h3>
             </div>
 
-            <div className={'t-left mx-lg-5-5 px-lg-5'}>
-              <h1 className={'tk-vincente h-1'}> WOLVES WOWS/ETH NFT </h1>
+            {/* Card slider */}
 
-              <div className={'tk-grotesk-lightbold font-20 line-break-enable'}>
-                <p>
-                  Wall Street Hustler - He’s worked his way up from the actual
-                  street. Learning the hustle on the street has given him the
-                  perfect grounding for working the trade floor. Forget rough
-                  diamond this trader is a blood diamond, and isnt afraid to
-                  step on toes and ears to make the deals he needs.
-                </p>
-                <br />
-                <p>
-                  This is a staker card and allows to stake Wolf on the
-                  tradefloor and also Raid. You can sell this character licence
-                  at any point wither on our platform or on opensea
-                </p>
+            <div
+              className={'d-flex justify-content-center bg-transparent-orange '}
+            >
+              <div className="vw-80 position-relative glide-border-t glide-border-b center_triange_down center_triange_up">
+                <div className="page4sInvest-slider-1 triange-margin-fixation">
+                  <div className="glide__track" data-glide-el="track">
+                    <ul className="glide__slides">
+                      {this.receiverImages.map((card, i) => {
+                        return (
+                          <Fragment key={'p4si' + i}>
+                            <div
+                              className="glide__slide"
+                              onClick={() => {
+                                this.glideProperties.go(`=${i}`);
+                              }}
+                            >
+                              <div className="slide-count"> {i} </div>
+                              <img
+                                className={'responsive-img slide-img'}
+                                src={
+                                  this.content
+                                    ? this.content.cards[card.level].cards[
+                                        card.index
+                                      ].url.replace('{res}', '300')
+                                    : ''
+                                }
+                                alt=""
+                              />
+                            </div>
+                          </Fragment>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                  <div className="glide__arrows" data-glide-el="controls">
+                    <button
+                      className="glide__arrow glide__arrow--left"
+                      data-glide-dir="<"
+                      style={{
+                        ['--left' as string]: '0%',
+                      }}
+                    >
+                      {/*<i className="fas fa-arrow-left"/>*/}
+                    </button>
+
+                    <button
+                      className="glide__arrow glide__arrow--right"
+                      data-glide-dir=">"
+                      style={{
+                        ['--right' as string]: '-0%',
+                      }}
+                    >
+                      {/*<i className="fas fa-arrow-right"/>*/}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className={'page4sInvest-container center-container my-5'}>
+              <div className="d-flex align-items-center justify-content-even mb-3">
+                <button
+                  className="arrow_left m-0 mr-2"
+                  onClick={() => handleImageChange(-1)}
+                />
+                <img
+                  className={'w-80'}
+                  src={this.investImages[this.state.currentImage]}
+                  alt={this.investImages[this.state.currentImage]}
+                  style={{ maxWidth: '500px' }}
+                />
+                <button
+                  className="arrow_right m-0 ml-2"
+                  onClick={() => handleImageChange(1)}
+                />
               </div>
 
-              <div className={'d-flex flex-wrap'}>
-                {/* left */}
-                <input
-                  className={'page4sInvest-text-input font-14 mr-2 '}
-                  name={'input1'}
-                  id={'input1'}
-                  onChange={(e) => this.setInput1(e.target.value)}
-                  value={this.state.input1}
-                />
-                {/* Right */}
-                <input
-                  className={'page4sInvest-text-input font-14 mr-2 '}
-                  name={'input2'}
-                  id={'input2'}
-                  onChange={(e) => this.setInput2(e.target.value)}
-                  value={this.state.input2}
-                />
-              </div>
+              <div className={'t-left'}>
+                <h1 className={'tk-vincente h-1'}> WOLVES WOWS/ETH NFT </h1>
 
-              <button
-                className={
-                  'mt-3 page4sInvest-text-input m-0 page4sInvest-btn-stack font-10'
-                }
-              >
-                BUY STAKED ETH/WOWS NFT
-              </button>
-              <div className={''}></div>
+                <div
+                  className={'tk-grotesk-lightbold font-16 line-break-enable'}
+                >
+                  <p>
+                    Wall Street Hustler - He’s worked his way up from the actual
+                    street. Learning the hustle on the street has given him the
+                    perfect grounding for working the trade floor. Forget rough
+                    diamond this trader is a blood diamond, and isnt afraid to
+                    step on toes and ears to make the deals he needs.
+                  </p>
+                  <p>
+                    This is a staker card and allows to stake Wolf on the
+                    tradefloor and also Raid. You can sell this character
+                    licence at any point wither on our platform or on opensea
+                  </p>
+                </div>
+
+                <div className={'d-flex'}>
+                  <div className="d-flex justify-content-between px-3 py-2 font-14 border-white-thin bg-orange-transparent ">
+                    <p className={'m-0'}> BUY MAX </p>
+                    <p className={'m-0 bold'}> WOWS/ETH LP </p>
+                  </div>
+                </div>
+
+                <div className="d-flex justify-content-end mt-1 font-13">
+                  BUY V.2 ETH/WOWS LP TOKENS HERE
+                </div>
+
+                <button
+                  className={
+                    'page4sInvest-text-input mt-3 m-0 page4sInvest-btn-stack font-10'
+                  }
+                >
+                  BUY STAKED ETH/WOWS NFT
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </>
       </>
     );
   }
