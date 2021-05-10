@@ -158,9 +158,7 @@ class Page8InvestmentSfts extends Component<PAGE8_PROPS, PAGE8_STATE> {
       cards.map((card, index) => {
         return (
           <div className="page8-card" key={index + Math.random()}>
-            <Link
-              to={`detail?type=wolves&levelId=${card?.levelId}&cardId=${card.cardId}`}
-            >
+            <Link to={`?item=${index}`}>
               <video
                 className="card-media"
                 src={card.image}

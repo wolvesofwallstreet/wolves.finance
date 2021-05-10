@@ -160,7 +160,7 @@ class Page3TradeFloor extends Component<PAGE7_PROPS, PAGE7_STATE> {
         return (
           <div className="page3Trade-card" key={index + Math.random()}>
             <Link
-              to={`detail?type=wolves&levelId=${card?.levelId}&cardId=${card.cardId}`}
+              to={`?item=${index}`}
             >
               <video
                 className="card-media"

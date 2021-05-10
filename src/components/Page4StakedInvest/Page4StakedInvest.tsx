@@ -178,7 +178,7 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
           <div
             className={'d-flex justify-content-center bg-transparent-orange '}
           >
-            <div className="vw-80 position-relative glide-border-t glide-border-b pg4_triange_down pg4_triange_up">
+            <div className="vw-80 position-relative glide-border-t glide-border-b center_triange_down center_triange_up">
               <div className="page4sInvest-slider-1 triange-margin-fixation">
                 <div className="glide__track" data-glide-el="track">
                   <ul className="glide__slides">

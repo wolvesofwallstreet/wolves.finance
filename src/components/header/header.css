@@ -6,7 +6,7 @@
  * See the file LICENSES/README.md for more information.
  */
 
- .navbar-nav {
+.navbar-nav {
   letter-spacing: 0.02em;
   font-family: 'vincente', serif;
   font-weight: bold;
@@ -50,9 +50,14 @@
 }
 
 .dp-conn-btn {
-  width: 160px;
+  /* width: 160px; */
+  padding: 7px 1.2vw;
   margin: 8px 0px 8px 0px;
   font-size: 15px;
+
+  line-height: 1.1;
+  white-space: normal;
+  height: auto;
 }
 
 @media screen and (max-width: 991px) {
