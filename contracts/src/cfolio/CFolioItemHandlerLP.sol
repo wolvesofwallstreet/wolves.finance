@@ -166,8 +166,8 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
    */
   function sftUpgrade(uint256 tokenId, uint32 newRate) external override {
     // Validate access
-    require(_msgSender() == address(sftEvaluator), 'Invalid caller');
-    require(tokenId.isBaseCard(), 'Invalid token');
+    require(_msgSender() == address(sftEvaluator), 'CFIH: Invalid caller');
+    require(tokenId.isBaseCard(), 'CFIH: Invalid token');
 
     // CFolio address
     address cfolio = sftHolder.tokenIdToAddress(tokenId);
@@ -195,7 +195,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
     // Validate access
     require(_msgSender() == sftMinter, 'Only SFTMinter');
 
-    // Validate parameters
+    // Validate parameters, no unmasking required, must be SFT
     address cFolio = sftHolder.tokenIdToAddress(sftTokenId);
     require(cFolio != address(0), 'Invalid sftTokenId');
 
@@ -282,17 +282,36 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
     require(tokenId.isBaseCard(), 'CFIH: Invalid tokenId');
 
     // Verify that tokenId has a valid cFolio address
-    address cfolio = sftHolder.tokenIdToAddress(tokenId);
+    uint256 sftTokenId = tokenId.toSftTokenId();
+    address cfolio = sftHolder.tokenIdToAddress(sftTokenId);
     require(cfolio != address(0), 'Invalid c-folio address');
 
     // Verify that the tokenId is owned by msg.sender in the SFT contract.
     // This also verifies that the token is not locked in TradeFloor.
     require(
-      IERC1155(address(sftHolder)).balanceOf(_msgSender(), tokenId) == 1,
+      IERC1155(address(sftHolder)).balanceOf(_msgSender(), sftTokenId) == 1,
       'CFHI: Access denied'
     );
 
     cfolioFarm.getReward(cfolio, recipient);
+  }
+
+  /**
+   * @dev See {ICFolioItemCallback-appendHash}
+   *
+   */
+  function appendHash(address cfolioItem, bytes calldata current)
+    external
+    view
+    override
+    returns (bytes memory)
+  {
+    return
+      abi.encodePacked(
+        current,
+        address(this),
+        cfolioFarm.balanceOf(cfolioItem)
+      );
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -381,7 +400,8 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
     // Calculate new reward amount
     uint256 newRewardAmount = 0;
     for (uint256 i = 0; i < length; ++i) {
-      address secondaryCFolio = sftHolder.tokenIdToAddress(tokenIds[i]);
+      address secondaryCFolio =
+        sftHolder.tokenIdToAddress(tokenIds[i].toSftTokenId());
       require(secondaryCFolio != address(0), 'CFIH: Invalid secondary cFolio');
       if (IWOWSCryptofolio(secondaryCFolio)._tradefloors(0) == address(this))
         newRewardAmount = newRewardAmount.add(
