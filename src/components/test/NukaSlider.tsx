@@ -7,6 +7,7 @@
  */
 
 import './NukaSlider.css';
+import './triangles.css';
 
 import Carousel from 'nuka-carousel';
 import React, { Fragment } from 'react';
@@ -53,6 +54,7 @@ class NukaSlider extends React.Component<PROPS, STATE> {
       slideIndex: 0,
       imgSlides: [],
     };
+    this.fetchData = this.fetchData.bind(this);
   }
 
   setCurrentImage(val: number) {
@@ -61,6 +63,7 @@ class NukaSlider extends React.Component<PROPS, STATE> {
 
   componentDidMount() {
     this._updateImages();
+    this.fetchData();
   }
 
   componentWillUnmount() {
@@ -99,28 +102,31 @@ class NukaSlider extends React.Component<PROPS, STATE> {
           ...this.state,
           imgSlides: res.data,
         });
+        this.receiverImages = res.data;
       });
   }
 
   render(): JSX.Element {
-    // const { slideIndex } = this.state;
-    const colors = ['7732bb', '047cc0', '00884b', 'e3bc13', 'db7c00'];
-    const slides = [...colors, ...colors.slice(1, 2)].map((color, index) => (
-      <img
-        src={`https://via.placeholder.com/400/${color}/ffffff/&text=slide${
-          index + 1
-        }`}
-        alt={`Slide ${index + 1}`}
-        key={color}
-        style={{
-          width: '100%',
-          height: '150px',
-        }}
-        onClick={() => {
-          this.setState({ slideIndex: index });
-        }}
-      />
-    ));
+    const { imgSlides } = this.state;
+    let slides = null;
+    if (imgSlides.length) {
+      slides = imgSlides.map((elem, index) => {
+        const { avatar = '' } = elem;
+        return (
+          <div key={Math.random() + index} className={'nuka_slide'}>
+            <div
+              className="glide__slide_test__img_container"
+              style={{
+                ['--url' as string]: `url(${avatar}`,
+              }}
+              onClick={() => this.setState({ slideIndex: index })}
+            >
+              <div className="slide_count">{index}</div>
+            </div>
+          </div>
+        );
+      });
+    }
 
     return (
       <>
@@ -148,10 +154,11 @@ class NukaSlider extends React.Component<PROPS, STATE> {
                 'd-flex justify-content-center bg-transparent-orange mb-3 '
               }
             >
-              <div className="vw-80 position-relative glide-border-t glide-border-b center_triange_down center_triange_up">
-                <div className="nuka_slider d-flex">
+              <div className="vw-80 glide-border-t glide-border-b center_triange_down center_triange_up">
+                <div className="nuka_slider">
                   <Carousel
                     wrapAround
+                    swiping
                     cellAlign="center"
                     cellSpacing={20}
                     slidesToShow={5}
@@ -161,20 +168,6 @@ class NukaSlider extends React.Component<PROPS, STATE> {
                     }}
                   >
                     {slides}
-                    {[].map((slide, index) => {
-                      <img
-                        key={Math.random() + index}
-                        src={`'`}
-                        alt={`Slide ${index + 1}`}
-                        onClick={() => {
-                          this.setState({ slideIndex: index });
-                        }}
-                        style={{
-                          width: '100%',
-                          height: '150px',
-                        }}
-                      />;
-                    })}
                   </Carousel>
                 </div>
               </div>

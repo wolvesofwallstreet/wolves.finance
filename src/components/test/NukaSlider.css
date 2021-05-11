@@ -6,7 +6,70 @@
  * See the file LICENSES/README.md for more information.
  */
 
- .nuka_slider {
-  /* margin: 0 14vw; */
-  min-height: 160px;
+/* slider-frame slider-slide slide-visible slide-current */
+
+/* * {
+  overflow: visible !important;
+} */
+
+.slider-control-bottomcenter {
+  display: none;
+  visibility: hidden;
 }
+
+.nuka_slide {
+  display: flex;
+  justify-content: center;
+  transform: scale(0.8);
+  opacity: 0.6;
+}
+
+.slide-current .nuka_slide {
+  opacity: 1 !important;
+}
+
+.glide__slide_test__img_container {
+  border: 1px solid var(--wolves-white);
+
+  position: relative;
+
+  width: 140px;
+  height: 150px;
+
+  min-width: 140px;
+  min-height: 150px;
+
+  --url: url('../../assets/loading_animated.gif');
+  background-image: var(--url);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+.slide-current .glide__slide_test__img_container {
+  opacity: 1 !important;
+  border: 3px solid var(--wolves-white);
+  transform: scale(1.15);
+}
+
+.slide_count {
+  width: 27.9px;
+  height: 27.9px;
+  line-height: 27.9px;
+  text-align: center;
+  border-radius: 50%;
+  background-color: #ffb89f;
+  color: black;
+  z-index: 10;
+  position: absolute;
+  line-height: 160%;
+  font-weight: bold;
+  top: 7px;
+  right: 7%;
+  transform: scale(0.8);
+}
+/* 
+
+.glide__slide_test_active .slide_count {
+  transform: scale(0.88);
+} */
