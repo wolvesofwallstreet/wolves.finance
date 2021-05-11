@@ -346,7 +346,7 @@ contract WOWSSftMinter is Context, Ownable {
     uint256[] memory tokenIds;
     uint256 tokenIdsLength;
     if (sftTokenId.isBaseCard()) {
-      // Its a base card, calculate hash using all cfolioItems
+      // It's a base card, calculate hash using all cfolioItems
       address cfolio = _sftContract.tokenIdToAddress(sftTokenId);
       require(cfolio != address(0), 'WSM: src token invalid');
       (tokenIds, tokenIdsLength) = IWOWSCryptofolio(cfolio).getCryptofolio(
@@ -354,14 +354,14 @@ contract WOWSSftMinter is Context, Ownable {
       );
       hashData = abi.encodePacked(address(this), sftTokenId);
     } else {
-      // Its a cfolioItem itself, only calculate unerlying value
+      // It's a cfolioItem itself, only calculate unerlying value
       tokenIds = new uint256[](1);
       tokenIds[0] = sftTokenId;
       tokenIdsLength = 1;
     }
 
-    // Run through all cfolioItems and add let their
-    // single CFolioItemHandler append hashable data
+    // Run through all cfolioItems and add let their single CFolioItemHandler
+    // append hashable data
     for (uint256 i = 0; i < tokenIdsLength; ++i) {
       address cfolio = _sftContract.tokenIdToAddress(tokenIds[i]);
       require(cfolio != address(0), 'WSM: item token invalid');
@@ -371,6 +371,7 @@ contract WOWSSftMinter is Context, Ownable {
 
       hashData = ICFolioItemCallback(handler).appendHash(cfolio, hashData);
     }
+
     uint256 hashNum = uint256(keccak256(hashData));
     return (hashNum ^ (hashNum << 128)).maskHash() | sftTokenId;
   }

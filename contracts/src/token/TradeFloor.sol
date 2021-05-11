@@ -459,7 +459,6 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   /**
    * @dev See {IERC1155TokenReceiver-onERC1155Received}
    */
-
   function onERC1155Received(
     address operator,
     address from,
@@ -478,6 +477,9 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     return super.onERC1155Received(operator, from, tokenId, amount, data);
   }
 
+  /**
+   * @dev See {IERC1155TokenReceiver-onERC1155BatchReceived}
+   */
   function onERC1155BatchReceived(
     address operator,
     address from,
@@ -806,12 +808,14 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   /**
    * @dev Check if the address is a valid target
    *
-   * If sftHolder returns a valid tokenId, it must be a card not owned by
-   * this contract (which means it is locked). Even though
-   * Cryptofolio supports multiple TradeFloors, the main SFT lock handling
-   * happens only in this contract instance.
+   * If sftHolder returns a valid tokenId, it must be a card not owned by this
+   * contract (which means it is locked). Even though Cryptofolio supports
+   * multiple TradeFloors, the main SFT lock handling happens only in this
+   * contract instance.
    *
    * @param test The address to test
+   *
+   * @return True if the address is a valid target, false otherwise
    */
   function _validTarget(address test) private view returns (bool) {
     uint256 tokenId;
