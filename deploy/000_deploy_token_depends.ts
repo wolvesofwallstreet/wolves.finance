@@ -21,7 +21,7 @@ const UNI_V2_ROUTER_CONTRACT = 'UniswapV2Router02';
 // Path to address files
 const CONFIG_ADDRESSES = `${__dirname}/../src/config/addresses.json`;
 const GENERATED_ADDRESSES = `${__dirname}/../src/config/generated-addresses.json`;
-const FORCE_REBUILD = process.env.FORCE_REBUILD !== undefined;
+const IGNORE_ADDRESSES = process.env.IGNORE_ADDRESSES !== undefined;
 
 // Helper function
 function log_step(step_string) {
@@ -45,7 +45,7 @@ const func = async function (hardhat_re) {
   const configNetworks = JSON.parse(
     fs.readFileSync(CONFIG_ADDRESSES).toString()
   );
-  const configAddresses = (!FORCE_REBUILD && configNetworks[chainId]) || {};
+  const configAddresses = (!IGNORE_ADDRESSES && configNetworks[chainId]) || {};
   let generatedNetworks = {};
   try {
     generatedNetworks = JSON.parse(
