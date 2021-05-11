@@ -68,7 +68,7 @@ Launches a local Ethereum VM for testing.
 
 Performs a test deployment on a temporary network. This causes `generated-addresses.json` to be generated.
 
-By default addresses found in `src/config/addresses.json` are used and not deployed.  
+By default addresses found in `src/config/addresses.json` are used and not deployed.
 You can override this behaviour by setting the env var `IGNORE_ADDRESSES=1`
 
 Contracts can be deployed on the following networks:
