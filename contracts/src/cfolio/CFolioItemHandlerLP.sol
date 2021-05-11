@@ -179,7 +179,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
   /**
    * @dev See {ICFolioItemHandler-setupCFolio}
    *
-   * Note: We place a dummy ERC1155 token with id 0 into the CFolioItem's
+   * Note: We place a dummy ERC1155 token with ID 0 into the CFolioItem's
    * c-folio. The reason is that we want to know if a c-folio item gets burned,
    * as burning an empty c-folio will result in no transfers. This prevents LP
    * tokens from becoming inaccessible.
@@ -298,7 +298,6 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
 
   /**
    * @dev See {ICFolioItemCallback-appendHash}
-   *
    */
   function appendHash(address cfolioItem, bytes calldata current)
     external
@@ -344,7 +343,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
   }
 
   /**
-   * @dev Upgrade contract
+   * @dev Set a new SFT minter
    */
   function setMinter(address newMinter) external {
     // Validate access

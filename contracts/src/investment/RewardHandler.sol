@@ -55,7 +55,7 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
   // Registry for addresses in the system
   IAddressRegistry private immutable _addressRegistry;
 
-  // Amount to distribute?
+  // Amount to distribute
   uint256 private _distributeAmount;
 
   //////////////////////////////////////////////////////////////////////////////

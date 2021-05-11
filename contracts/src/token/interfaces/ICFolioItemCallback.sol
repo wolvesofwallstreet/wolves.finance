@@ -34,7 +34,12 @@ interface ICFolioItemCallback {
   ) external;
 
   /**
-   * @dev append data we use later for hashing
+   * @dev Append data we use later for hashing
+   *
+   * @param cfolioItem The token ID of the c-folio item
+   * @param current The current data being hashes
+   *
+   * @return The current data, with internal data appended
    */
   function appendHash(address cfolioItem, bytes calldata current)
     external
