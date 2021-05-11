@@ -76,7 +76,7 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
       },
     },
   });
-  glideProperties = (this.glide as unknown) as Properties;
+  glideProperties = this.glide as unknown as Properties;
 
   constructor(props: PROPS) {
     super(props);
@@ -286,7 +286,7 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
 
                 <button
                   className={
-                    'page4sInvest-text-input mt-3 m-0 page4sInvest-btn-stack font-10'
+                    'wolve_btn page4sInvest-text-input mt-3 m-0 page4sInvest-btn-stack font-10'
                   }
                 >
                   BUY STAKED ETH/WOWS NFT

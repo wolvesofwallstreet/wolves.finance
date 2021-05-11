@@ -449,10 +449,8 @@ describe('SFT minter', function () {
     const { sftHolderContract } = contracts;
 
     // Query the token ID in the SFT contract
-    const [
-      mintTimestampBoi,
-      tokenLevelBoi,
-    ] = await sftHolderContract.getTokenData(wowsTokenIdBoi);
+    const [mintTimestampBoi, tokenLevelBoi] =
+      await sftHolderContract.getTokenData(wowsTokenIdBoi);
     chai.expect(mintTimestampBoi).to.not.equal(0);
     chai.expect(tokenLevelBoi).to.equal(levelBoi);
   });
@@ -463,10 +461,8 @@ describe('SFT minter', function () {
     const { sftHolderContract } = contracts;
 
     // Query the token ID in the SFT contract
-    const [
-      mintTimestampWolf,
-      tokenLevelWolf,
-    ] = await sftHolderContract.getTokenData(wowsTokenIdWolf);
+    const [mintTimestampWolf, tokenLevelWolf] =
+      await sftHolderContract.getTokenData(wowsTokenIdWolf);
     chai.expect(mintTimestampWolf).to.not.equal(0);
     chai.expect(tokenLevelWolf).to.equal(levelWolf);
   });
@@ -534,11 +530,8 @@ describe('SFT minter', function () {
   it('should mint investment SFT', async function () {
     this.timeout(60 * 1000);
 
-    const {
-      cfolioItemHandlerLP,
-      sftMinterContract,
-      uniV2PairContract,
-    } = contracts;
+    const { cfolioItemHandlerLP, sftMinterContract, uniV2PairContract } =
+      contracts;
 
     // Mint a new LP investment type into marketing wallet
     const tx = sftMinterContract.mintCFolioItemSFT(

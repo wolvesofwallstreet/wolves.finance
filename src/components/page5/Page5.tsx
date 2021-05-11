@@ -215,20 +215,20 @@ class Page5 extends Component<PAGE5_PROPS, PAGE5_STATE> {
                   </div>
 
                   <div></div>
-                  <button className={'page5-btn-stack m-0'}>
+                  <button className={'wolve_btn page5-btn-stack m-0'}>
                     CLAIM REWARDS
                   </button>
                   <button
                     className={
-                      'page5-btn-stack m-0 bg-blue-transparent-dark text-gray'
+                      'wolve_btn page5-btn-stack m-0 bg-blue-transparent-dark text-gray'
                     }
                   >
                     CLAIM REWARDS & DESTROY NFT (UNSTAKE)
                   </button>
-                  <button className={'page5-btn-stack m-0'}>
+                  <button className={'wolve_btn page5-btn-stack m-0'}>
                     LOCK FOR SALE
                   </button>
-                  <button className={'page5-btn-stack m-0'}>
+                  <button className={'wolve_btn page5-btn-stack m-0'}>
                     C-FOLIO TRANSFER MANAGER
                   </button>
                 </div>

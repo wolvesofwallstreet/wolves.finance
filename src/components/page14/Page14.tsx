@@ -33,8 +33,7 @@ function Page14({ t, location }: PROPS) {
   const cards = [
     {
       title: 'BOIS NYC USDT',
-      src:
-        'https://4travelers.de/wolves_assets/cards/bois/level2/BRYANT-300.mp4.jpg',
+      src: 'https://4travelers.de/wolves_assets/cards/bois/level2/BRYANT-300.mp4.jpg',
       info: ['LPToken: 0.00', 'Staked: 0.00', 'Earned: 0.000000 WOWS'],
       extraInfo: ['APY*: 394.45%', 'APR: 162.31%'],
       apy: '394.45',
@@ -42,8 +41,7 @@ function Page14({ t, location }: PROPS) {
     },
     {
       title: 'BBOIS LOS ANGELES DAI',
-      src:
-        'https://4travelers.de/wolves_assets/cards/bois/level2/BRYANT-300.mp4.jpg',
+      src: 'https://4travelers.de/wolves_assets/cards/bois/level2/BRYANT-300.mp4.jpg',
       info: ['LPToken: 0.00', 'Staked: 0.00', 'Earned: 0.000000 WOWS'],
       extraInfo: ['APY*: 394.45%', 'APR: 162.31%'],
       apy: '394.45',

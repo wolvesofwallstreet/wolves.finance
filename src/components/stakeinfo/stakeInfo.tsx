@@ -136,13 +136,8 @@ class StakeInfo extends Component<STAKEINFOPROPS, STAKEINFOSTATE> {
     let apr = 0;
     // APY calculation
     if (stakeSupply > 0 && rewardPerDuration > 0) {
-      const {
-        poolSupply,
-        priceReserve0,
-        reserve0,
-        reserve1,
-        rewardsDuration,
-      } = this.state;
+      const { poolSupply, priceReserve0, reserve0, reserve1, rewardsDuration } =
+        this.state;
       // Price of 1 WOWS
       const wowsPrice = (reserve0 * priceReserve0) / reserve1;
       // Total price of pool
