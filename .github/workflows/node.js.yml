@@ -74,8 +74,8 @@ jobs:
         if: steps.restore-node.outputs.cache-hit != 'true'
         run: yarn install
 
-      - name: yarn run audit
-        run: yarn run audit
+      - name: yarn audit-ci
+        run: yarn audit-ci
 
       - name: Build smart contract dependencies
         if: steps.restore-contracts.outputs.cache-hit != 'true'

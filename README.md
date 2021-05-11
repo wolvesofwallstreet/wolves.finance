@@ -10,10 +10,9 @@ In the project directory, you can run:
 
 Installs the Javascript dependencies of the project.
 
-### `yarn audit`
+### `yarn audit-ci`
 
-Audits installed Javascript dependencies for vulnerabilities.\
-Use `yarn run audit` when running on CI infrastructure.
+Audits installed Javascript dependencies for vulnerabilities.
 
 ### `yarn depends TEST=0`
 
