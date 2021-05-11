@@ -33,8 +33,6 @@ jobs:
           - os: ubuntu-18.04
             node-version: 14
           - os: ubuntu-20.04
-            node-version: 14
-          - os: ubuntu-20.04
             node-version: 16
 
     # Steps represent a sequence of tasks that will be executed as part of the
@@ -74,8 +72,8 @@ jobs:
         if: steps.restore-node.outputs.cache-hit != 'true'
         run: yarn install
 
-      - name: yarn run audit
-        run: yarn run audit
+      - name: yarn audit-ci
+        run: yarn audit-ci
 
       - name: Build smart contract dependencies
         if: steps.restore-contracts.outputs.cache-hit != 'true'

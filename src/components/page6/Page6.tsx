@@ -120,7 +120,7 @@ const Page6 = ({ t }: PAGE6_PROPS) => {
             </ul>
 
             <div className={''}>
-              <button className={'page6-btn mt-3 m-0 font-10'}>
+              <button className={'wolve_btn page6-btn mt-3 m-0 font-10'}>
                 BUY STAKED ETH/WOWS NFT
               </button>
             </div>

@@ -410,7 +410,9 @@ function CFolioManagerPage12({ t }: PROPS) {
               'center-container d-flex flex-column justify-content-center align-items-center'
             }
           >
-            <button className={'w-100 page12-btn-stack'}>MULTI TRANSFER</button>
+            <button className={'wolve_btn w-100 page12-btn-stack'}>
+              MULTI TRANSFER
+            </button>
             <div className={'arrow_down mt-1'} />
           </div>
 

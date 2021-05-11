@@ -9,6 +9,7 @@
 import './App.css';
 import './wolves_scheme.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import './components/theme/button/wolve_button.css';
 
 import React from 'react';
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
@@ -32,6 +33,7 @@ import Page14 from './components/page14';
 import Page15 from './components/page15';
 import { PageStatus } from './components/pageStatus';
 import Stake from './components/stake';
+import NukaSlider from './components/test/NukaSlider';
 import WolfToast from './components/toast/wolftoast';
 import { StoreContainer } from './stores/store';
 
@@ -71,6 +73,7 @@ class App extends React.Component {
               <Route path="/page13" component={Page13} />
               <Route path="/page14" component={Page14} />
               <Route path="/page15" component={Page15} />
+              <Route path="/dev" component={NukaSlider} />
               <Route component={Page1} />
             </Switch>
             <Footer />
