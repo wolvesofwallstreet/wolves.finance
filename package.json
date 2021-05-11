@@ -21,7 +21,7 @@
     "semifungible"
   ],
   "scripts": {
-    "audit-ci": "audit-ci --moderate --package-manager yarn --allowlist hosted-git-info lodash postcss underscore --report-type summary",
+    "audit": "audit-ci --moderate --package-manager yarn --allowlist postcss lodash underscore --report-type summary",
     "build": "react-scripts build",
     "clean": "rimraf artifacts build cache contracts/depends depends deployments node_modules src/abi",
     "compile": "hardhat compile",

@@ -29,32 +29,26 @@ const GENERATED_ADDRESSES = `${__dirname}/../src/config/generated-addresses.json
 const IGNORE_ADDRESSES = process.env.IGNORE_ADDRESSES !== undefined;
 
 // Addressbook constants
-const ADDRESS_BOOK_TEAM_WALLET_KEY = ethers.utils.formatBytes32String(
-  'TEAM_WALLET'
-);
-const ADDRESS_BOOK_MARKETING_WALLET_KEY = ethers.utils.formatBytes32String(
-  'MARKETING_WALLET'
-);
+const ADDRESS_BOOK_TEAM_WALLET_KEY =
+  ethers.utils.formatBytes32String('TEAM_WALLET');
+const ADDRESS_BOOK_MARKETING_WALLET_KEY =
+  ethers.utils.formatBytes32String('MARKETING_WALLET');
 const ADDRESS_BOOK_UNISWAP_V2_ROUTER02_KEY = ethers.utils.formatBytes32String(
   'UNISWAP_V2_ROUTER02'
 );
 const ADDRESS_BOOK_STAKE_FARM_KEY = ethers.utils.formatBytes32String(
   'WETH_WOWS_STAKE_FARM'
 );
-const ADDRESS_BOOK_WOWS_TOKEN_KEY = ethers.utils.formatBytes32String(
-  'WOWS_TOKEN'
-);
-const ADDRESS_BOOK_WOWS_BOOSTER_KEY = ethers.utils.formatBytes32String(
-  'WOWS_BOOSTER'
-);
-const ADDRESS_BOOK_REWARD_HANDLER_KEY = ethers.utils.formatBytes32String(
-  'REWARD_HANDLER'
-);
+const ADDRESS_BOOK_WOWS_TOKEN_KEY =
+  ethers.utils.formatBytes32String('WOWS_TOKEN');
+const ADDRESS_BOOK_WOWS_BOOSTER_KEY =
+  ethers.utils.formatBytes32String('WOWS_BOOSTER');
+const ADDRESS_BOOK_REWARD_HANDLER_KEY =
+  ethers.utils.formatBytes32String('REWARD_HANDLER');
 const ADDRESS_BOOK_DEPLOYER_KEY = ethers.utils.formatBytes32String('DEPLOYER');
 
-const ADDRESS_BOOK_UNIV2_PAIR_KEY = ethers.utils.formatBytes32String(
-  'UNISWAP_V2_PAIR'
-);
+const ADDRESS_BOOK_UNIV2_PAIR_KEY =
+  ethers.utils.formatBytes32String('UNISWAP_V2_PAIR');
 
 // Helper function
 function log_step(step_string) {
