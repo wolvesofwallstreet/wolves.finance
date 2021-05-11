@@ -1,0 +1,26 @@
+diff --git a/es/index.js b/es/index.js
+index 9a3d4b1..d760f13 100644
+--- a/es/index.js
++++ b/es/index.js
+@@ -705,7 +705,7 @@ var Carousel = /*#__PURE__*/function (_React$Component) {
+       var left = this.state.slideWidth * target;
+       var lastSlide = this.state.currentSlide > 0 && target + this.state.slidesToScroll >= this.state.slideCount;
+ 
+-      if (lastSlide && !this.props.wrapAround && this.props.scrollMode === 'remainder') {
++      if (lastSlide && !this.props.wrapAround && this.props.scrollMode === 'remainder' && this.props.cellAlign === 'center') {
+         left = this.state.slideWidth * this.state.slideCount - this.state.frameWidth;
+         offset = 0;
+         offset -= this.props.cellSpacing * (this.state.slideCount - 1);
+diff --git a/lib/index.js b/lib/index.js
+index 95bad27..0aa9df2 100644
+--- a/lib/index.js
++++ b/lib/index.js
+@@ -747,7 +747,7 @@ var Carousel = /*#__PURE__*/function (_React$Component) {
+       var left = this.state.slideWidth * target;
+       var lastSlide = this.state.currentSlide > 0 && target + this.state.slidesToScroll >= this.state.slideCount;
+ 
+-      if (lastSlide && !this.props.wrapAround && this.props.scrollMode === 'remainder') {
++      if (lastSlide && !this.props.wrapAround && this.props.scrollMode === 'remainder' && this.props.cellAlign === 'center') {
+         left = this.state.slideWidth * this.state.slideCount - this.state.frameWidth;
+         offset = 0;
+         offset -= this.props.cellSpacing * (this.state.slideCount - 1);
