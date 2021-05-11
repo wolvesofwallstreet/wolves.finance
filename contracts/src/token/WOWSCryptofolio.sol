@@ -21,6 +21,9 @@ contract WOWSCryptofolio is IWOWSCryptofolio, Context, ERC1155Holder {
   // State
   //////////////////////////////////////////////////////////////////////////////
 
+  // List of all known tradefloors
+  address[] public override _tradefloors;
+
   // Our NFT token parent
   IWOWSERC1155 private _deployer;
 
@@ -30,9 +33,6 @@ contract WOWSCryptofolio is IWOWSCryptofolio, Context, ERC1155Holder {
   // Mapping of cryptofolio items (trade floor to token ID) owned by this
   // cryptofolio
   mapping(address => uint256[]) private _cryptofolios;
-
-  // List of all known tradefloors
-  address[] public override _tradefloors;
 
   //////////////////////////////////////////////////////////////////////////////
   // Events
