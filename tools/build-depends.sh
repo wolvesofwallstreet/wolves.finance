@@ -71,6 +71,8 @@ source "${DEPENDS_DIR}/chain/curve-contracts/package.sh"
 source "${DEPENDS_DIR}/chain/uniswap-lib/package.sh"
 source "${DEPENDS_DIR}/chain/uniswap-v2-core/package.sh"
 source "${DEPENDS_DIR}/chain/uniswap-v2-periphery/package.sh"
+source "${DEPENDS_DIR}/chain/uniswap-v3-core/package.sh"
+source "${DEPENDS_DIR}/chain/uniswap-v3-periphery/package.sh"
 source "${DEPENDS_DIR}/chain/yearn-protocol/package.sh"
 
 #
@@ -82,6 +84,8 @@ checkout_curve
 checkout_uniswap_lib
 checkout_uniswap_v2_core
 checkout_uniswap_v2_periphery
+checkout_uniswap_v3_core
+checkout_uniswap_v3_periphery
 checkout_yearn
 
 #
@@ -93,6 +97,8 @@ build_curve
 build_uniswap_lib
 build_uniswap_v2_core
 build_uniswap_v2_periphery
+build_uniswap_v3_core
+build_uniswap_v3_periphery
 build_yearn
 
 #
@@ -104,4 +110,6 @@ install_curve
 install_uniswap_lib
 install_uniswap_v2_core
 install_uniswap_v2_periphery
+install_uniswap_v3_core
+install_uniswap_v3_periphery
 install_yearn

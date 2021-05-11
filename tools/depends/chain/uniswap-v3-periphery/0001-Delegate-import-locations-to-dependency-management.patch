@@ -1,0 +1,339 @@
+From 074411cc760620715f02a9dd980d5cadaff68b9f Mon Sep 17 00:00:00 2001
+From: juztamau5 <juztamau5@gmail.com>
+Date: Tue, 11 May 2021 15:13:07 -0700
+Subject: [PATCH] Delegate import locations to dependency management
+
+---
+ contracts/NonfungiblePositionManager.sol         |  6 +++---
+ contracts/NonfungibleTokenPositionDescriptor.sol |  4 ++--
+ contracts/SwapRouter.sol                         |  6 +++---
+ contracts/V3Migrator.sol                         |  4 ++--
+ contracts/base/LiquidityManagement.sol           |  6 +++---
+ contracts/base/PeripheryPaymentsWithFee.sol      |  2 +-
+ contracts/base/PoolInitializer.sol               |  4 ++--
+ contracts/interfaces/ISwapRouter.sol             |  2 +-
+ contracts/lens/Quoter.sol                        |  8 ++++----
+ contracts/lens/QuoterV2.sol                      | 10 +++++-----
+ contracts/lens/TickLens.sol                      |  2 +-
+ contracts/libraries/CallbackValidation.sol       |  2 +-
+ contracts/libraries/LiquidityAmounts.sol         |  4 ++--
+ contracts/libraries/NFTDescriptor.sol            |  8 ++++----
+ contracts/libraries/NFTSVG.sol                   |  2 +-
+ contracts/libraries/OracleLibrary.sol            |  8 ++++----
+ contracts/libraries/PoolTicksCounter.sol         |  2 +-
+ contracts/test/PoolTicksCounterTest.sol          |  2 +-
+ contracts/test/TestUniswapV3Callee.sol           |  6 +++---
+ contracts/test/TickLensTest.sol                  |  2 +-
+ 20 files changed, 45 insertions(+), 45 deletions(-)
+
+diff --git a/contracts/NonfungiblePositionManager.sol b/contracts/NonfungiblePositionManager.sol
+index 68532a0..846af08 100644
+--- a/contracts/NonfungiblePositionManager.sol
++++ b/contracts/NonfungiblePositionManager.sol
+@@ -2,9 +2,9 @@
+ pragma solidity =0.7.6;
+ pragma abicoder v2;
+ 
+-import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
+-import '@uniswap/v3-core/contracts/libraries/FixedPoint128.sol';
+-import '@uniswap/v3-core/contracts/libraries/FullMath.sol';
++import 'depends/uniswap-v3-core/interfaces/IUniswapV3Pool.sol';
++import 'depends/uniswap-v3-core/libraries/FixedPoint128.sol';
++import 'depends/uniswap-v3-core/libraries/FullMath.sol';
+ 
+ import './interfaces/INonfungiblePositionManager.sol';
+ import './interfaces/INonfungibleTokenPositionDescriptor.sol';
+diff --git a/contracts/NonfungibleTokenPositionDescriptor.sol b/contracts/NonfungibleTokenPositionDescriptor.sol
+index 554e681..fb45b71 100644
+--- a/contracts/NonfungibleTokenPositionDescriptor.sol
++++ b/contracts/NonfungibleTokenPositionDescriptor.sol
+@@ -2,8 +2,8 @@
+ pragma solidity =0.7.6;
+ pragma abicoder v2;
+ 
+-import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
+-import '@uniswap/lib/contracts/libraries/SafeERC20Namer.sol';
++import 'depends/uniswap-v3-core/interfaces/IUniswapV3Pool.sol';
++import 'depends/uniswap-lib/libraries/SafeERC20Namer.sol';
+ 
+ import './libraries/ChainId.sol';
+ import './interfaces/INonfungiblePositionManager.sol';
+diff --git a/contracts/SwapRouter.sol b/contracts/SwapRouter.sol
+index 0b14d56..5f1d637 100644
+--- a/contracts/SwapRouter.sol
++++ b/contracts/SwapRouter.sol
+@@ -2,9 +2,9 @@
+ pragma solidity =0.7.6;
+ pragma abicoder v2;
+ 
+-import '@uniswap/v3-core/contracts/libraries/SafeCast.sol';
+-import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
+-import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
++import 'depends/uniswap-v3-core/libraries/SafeCast.sol';
++import 'depends/uniswap-v3-core/libraries/TickMath.sol';
++import 'depends/uniswap-v3-core/interfaces/IUniswapV3Pool.sol';
+ 
+ import './interfaces/ISwapRouter.sol';
+ import './base/PeripheryImmutableState.sol';
+diff --git a/contracts/V3Migrator.sol b/contracts/V3Migrator.sol
+index e0376e2..dd2770f 100644
+--- a/contracts/V3Migrator.sol
++++ b/contracts/V3Migrator.sol
+@@ -2,8 +2,8 @@
+ pragma solidity =0.7.6;
+ pragma abicoder v2;
+ 
+-import '@uniswap/v3-core/contracts/libraries/LowGasSafeMath.sol';
+-import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol';
++import 'depends/uniswap-v3-core/libraries/LowGasSafeMath.sol';
++import 'depends/uniswap-v2-core/interfaces/IUniswapV2Pair.sol';
+ 
+ import './interfaces/INonfungiblePositionManager.sol';
+ 
+diff --git a/contracts/base/LiquidityManagement.sol b/contracts/base/LiquidityManagement.sol
+index 0301b39..9e423f8 100644
+--- a/contracts/base/LiquidityManagement.sol
++++ b/contracts/base/LiquidityManagement.sol
+@@ -2,9 +2,9 @@
+ pragma solidity =0.7.6;
+ pragma abicoder v2;
+ 
+-import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol';
+-import '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3MintCallback.sol';
+-import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
++import 'depends/uniswap-v3-core/interfaces/IUniswapV3Factory.sol';
++import 'depends/uniswap-v3-core/interfaces/callback/IUniswapV3MintCallback.sol';
++import 'depends/uniswap-v3-core/libraries/TickMath.sol';
+ 
+ import '../libraries/PoolAddress.sol';
+ import '../libraries/CallbackValidation.sol';
+diff --git a/contracts/base/PeripheryPaymentsWithFee.sol b/contracts/base/PeripheryPaymentsWithFee.sol
+index b7b1a31..4034f0a 100644
+--- a/contracts/base/PeripheryPaymentsWithFee.sol
++++ b/contracts/base/PeripheryPaymentsWithFee.sol
+@@ -2,7 +2,7 @@
+ pragma solidity >=0.7.5;
+ 
+ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+-import '@uniswap/v3-core/contracts/libraries/LowGasSafeMath.sol';
++import 'depends/uniswap-v3-core/libraries/LowGasSafeMath.sol';
+ 
+ import './PeripheryPayments.sol';
+ import '../interfaces/IPeripheryPaymentsWithFee.sol';
+diff --git a/contracts/base/PoolInitializer.sol b/contracts/base/PoolInitializer.sol
+index af8e43e..42208f0 100644
+--- a/contracts/base/PoolInitializer.sol
++++ b/contracts/base/PoolInitializer.sol
+@@ -1,8 +1,8 @@
+ // SPDX-License-Identifier: GPL-2.0-or-later
+ pragma solidity =0.7.6;
+ 
+-import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol';
+-import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
++import 'depends/uniswap-v3-core/interfaces/IUniswapV3Factory.sol';
++import 'depends/uniswap-v3-core/interfaces/IUniswapV3Pool.sol';
+ 
+ import './PeripheryImmutableState.sol';
+ import '../interfaces/IPoolInitializer.sol';
+diff --git a/contracts/interfaces/ISwapRouter.sol b/contracts/interfaces/ISwapRouter.sol
+index 35806a2..f2394ca 100644
+--- a/contracts/interfaces/ISwapRouter.sol
++++ b/contracts/interfaces/ISwapRouter.sol
+@@ -2,7 +2,7 @@
+ pragma solidity >=0.7.5;
+ pragma abicoder v2;
+ 
+-import '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol';
++import 'depends/uniswap-v3-core/interfaces/callback/IUniswapV3SwapCallback.sol';
+ 
+ /// @title Router token swapping functionality
+ /// @notice Functions for swapping tokens via Uniswap V3
+diff --git a/contracts/lens/Quoter.sol b/contracts/lens/Quoter.sol
+index f4a9ed6..a66defa 100644
+--- a/contracts/lens/Quoter.sol
++++ b/contracts/lens/Quoter.sol
+@@ -2,10 +2,10 @@
+ pragma solidity =0.7.6;
+ pragma abicoder v2;
+ 
+-import '@uniswap/v3-core/contracts/libraries/SafeCast.sol';
+-import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
+-import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
+-import '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol';
++import 'depends/uniswap-v3-core/libraries/SafeCast.sol';
++import 'depends/uniswap-v3-core/libraries/TickMath.sol';
++import 'depends/uniswap-v3-core/interfaces/IUniswapV3Pool.sol';
++import 'depends/uniswap-v3-core/interfaces/callback/IUniswapV3SwapCallback.sol';
+ 
+ import '../interfaces/IQuoter.sol';
+ import '../base/PeripheryImmutableState.sol';
+diff --git a/contracts/lens/QuoterV2.sol b/contracts/lens/QuoterV2.sol
+index b82dddd..72990d1 100644
+--- a/contracts/lens/QuoterV2.sol
++++ b/contracts/lens/QuoterV2.sol
+@@ -2,11 +2,11 @@
+ pragma solidity =0.7.6;
+ pragma abicoder v2;
+ 
+-import '@uniswap/v3-core/contracts/libraries/SafeCast.sol';
+-import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
+-import '@uniswap/v3-core/contracts/libraries/TickBitmap.sol';
+-import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
+-import '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol';
++import 'depends/uniswap-v3-core/libraries/SafeCast.sol';
++import 'depends/uniswap-v3-core/libraries/TickMath.sol';
++import 'depends/uniswap-v3-core/libraries/TickBitmap.sol';
++import 'depends/uniswap-v3-core/interfaces/IUniswapV3Pool.sol';
++import 'depends/uniswap-v3-core/interfaces/callback/IUniswapV3SwapCallback.sol';
+ 
+ import '../interfaces/IQuoterV2.sol';
+ import '../base/PeripheryImmutableState.sol';
+diff --git a/contracts/lens/TickLens.sol b/contracts/lens/TickLens.sol
+index 5e9be5f..02919f0 100644
+--- a/contracts/lens/TickLens.sol
++++ b/contracts/lens/TickLens.sol
+@@ -2,7 +2,7 @@
+ pragma solidity >=0.5.0;
+ pragma abicoder v2;
+ 
+-import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
++import 'depends/uniswap-v3-core/interfaces/IUniswapV3Pool.sol';
+ 
+ import '../interfaces/ITickLens.sol';
+ 
+diff --git a/contracts/libraries/CallbackValidation.sol b/contracts/libraries/CallbackValidation.sol
+index 788109f..995c5f0 100644
+--- a/contracts/libraries/CallbackValidation.sol
++++ b/contracts/libraries/CallbackValidation.sol
+@@ -1,7 +1,7 @@
+ // SPDX-License-Identifier: GPL-2.0-or-later
+ pragma solidity =0.7.6;
+ 
+-import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
++import 'depends/uniswap-v3-core/interfaces/IUniswapV3Pool.sol';
+ import './PoolAddress.sol';
+ 
+ /// @notice Provides validation for callbacks from Uniswap V3 Pools
+diff --git a/contracts/libraries/LiquidityAmounts.sol b/contracts/libraries/LiquidityAmounts.sol
+index 1427022..b48cde1 100644
+--- a/contracts/libraries/LiquidityAmounts.sol
++++ b/contracts/libraries/LiquidityAmounts.sol
+@@ -1,8 +1,8 @@
+ // SPDX-License-Identifier: GPL-2.0-or-later
+ pragma solidity >=0.5.0;
+ 
+-import '@uniswap/v3-core/contracts/libraries/FullMath.sol';
+-import '@uniswap/v3-core/contracts/libraries/FixedPoint96.sol';
++import 'depends/uniswap-v3-core/libraries/FullMath.sol';
++import 'depends/uniswap-v3-core/libraries/FixedPoint96.sol';
+ 
+ /// @title Liquidity amount functions
+ /// @notice Provides functions for computing liquidity amounts from token amounts and prices
+diff --git a/contracts/libraries/NFTDescriptor.sol b/contracts/libraries/NFTDescriptor.sol
+index 948290e..59b90e7 100644
+--- a/contracts/libraries/NFTDescriptor.sol
++++ b/contracts/libraries/NFTDescriptor.sol
+@@ -2,10 +2,10 @@
+ pragma solidity >=0.7.0;
+ pragma abicoder v2;
+ 
+-import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
+-import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
+-import '@uniswap/v3-core/contracts/libraries/BitMath.sol';
+-import '@uniswap/v3-core/contracts/libraries/FullMath.sol';
++import 'depends/uniswap-v3-core/interfaces/IUniswapV3Pool.sol';
++import 'depends/uniswap-v3-core/libraries/TickMath.sol';
++import 'depends/uniswap-v3-core/libraries/BitMath.sol';
++import 'depends/uniswap-v3-core/libraries/FullMath.sol';
+ import '@openzeppelin/contracts/utils/Strings.sol';
+ import '@openzeppelin/contracts/math/SafeMath.sol';
+ import '@openzeppelin/contracts/math/SignedSafeMath.sol';
+diff --git a/contracts/libraries/NFTSVG.sol b/contracts/libraries/NFTSVG.sol
+index 2d5ce83..acb16c2 100644
+--- a/contracts/libraries/NFTSVG.sol
++++ b/contracts/libraries/NFTSVG.sol
+@@ -2,7 +2,7 @@
+ pragma solidity >=0.7.6;
+ 
+ import '@openzeppelin/contracts/utils/Strings.sol';
+-import '@uniswap/v3-core/contracts/libraries/BitMath.sol';
++import 'depends/uniswap-v3-core/libraries/BitMath.sol';
+ import 'base64-sol/base64.sol';
+ 
+ /// @title NFTSVG
+diff --git a/contracts/libraries/OracleLibrary.sol b/contracts/libraries/OracleLibrary.sol
+index f546354..9c55f0b 100644
+--- a/contracts/libraries/OracleLibrary.sol
++++ b/contracts/libraries/OracleLibrary.sol
+@@ -1,10 +1,10 @@
+ // SPDX-License-Identifier: GPL-2.0-or-later
+ pragma solidity >=0.5.0 <0.8.0;
+ 
+-import '@uniswap/v3-core/contracts/libraries/FullMath.sol';
+-import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
+-import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
+-import '@uniswap/v3-core/contracts/libraries/LowGasSafeMath.sol';
++import 'depends/uniswap-v3-core/libraries/FullMath.sol';
++import 'depends/uniswap-v3-core/libraries/TickMath.sol';
++import 'depends/uniswap-v3-core/interfaces/IUniswapV3Pool.sol';
++import 'depends/uniswap-v3-core/libraries/LowGasSafeMath.sol';
+ import '../libraries/PoolAddress.sol';
+ 
+ /// @title Oracle library
+diff --git a/contracts/libraries/PoolTicksCounter.sol b/contracts/libraries/PoolTicksCounter.sol
+index fb0682f..f2b9134 100644
+--- a/contracts/libraries/PoolTicksCounter.sol
++++ b/contracts/libraries/PoolTicksCounter.sol
+@@ -1,7 +1,7 @@
+ // SPDX-License-Identifier: GPL-2.0-or-later
+ pragma solidity >=0.6.0;
+ 
+-import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
++import 'depends/uniswap-v3-core/interfaces/IUniswapV3Pool.sol';
+ 
+ library PoolTicksCounter {
+     /// @dev This function counts the number of initialized ticks that would incur a gas cost between tickBefore and tickAfter.
+diff --git a/contracts/test/PoolTicksCounterTest.sol b/contracts/test/PoolTicksCounterTest.sol
+index 3d47bf7..33576b6 100644
+--- a/contracts/test/PoolTicksCounterTest.sol
++++ b/contracts/test/PoolTicksCounterTest.sol
+@@ -1,5 +1,5 @@
+ // SPDX-License-Identifier: GPL-2.0-or-later
+-import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
++import 'depends/uniswap-v3-core/interfaces/IUniswapV3Pool.sol';
+ 
+ pragma solidity >=0.6.0;
+ 
+diff --git a/contracts/test/TestUniswapV3Callee.sol b/contracts/test/TestUniswapV3Callee.sol
+index 1400bd6..7b8c9b4 100644
+--- a/contracts/test/TestUniswapV3Callee.sol
++++ b/contracts/test/TestUniswapV3Callee.sol
+@@ -1,9 +1,9 @@
+ // SPDX-License-Identifier: UNLICENSED
+ pragma solidity =0.7.6;
+ 
+-import '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol';
+-import '@uniswap/v3-core/contracts/libraries/SafeCast.sol';
+-import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
++import 'depends/uniswap-v3-core/interfaces/callback/IUniswapV3SwapCallback.sol';
++import 'depends/uniswap-v3-core/libraries/SafeCast.sol';
++import 'depends/uniswap-v3-core/interfaces/IUniswapV3Pool.sol';
+ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+ 
+ contract TestUniswapV3Callee is IUniswapV3SwapCallback {
+diff --git a/contracts/test/TickLensTest.sol b/contracts/test/TickLensTest.sol
+index 55cb7fd..340446c 100644
+--- a/contracts/test/TickLensTest.sol
++++ b/contracts/test/TickLensTest.sol
+@@ -2,7 +2,7 @@
+ pragma solidity >=0.5.0;
+ pragma abicoder v2;
+ 
+-import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
++import 'depends/uniswap-v3-core/interfaces/IUniswapV3Pool.sol';
+ import '../lens/TickLens.sol';
+ 
+ /// @title Tick Lens contract
+-- 
+2.30.2
+
