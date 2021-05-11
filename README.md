@@ -89,6 +89,8 @@ The following tags are available:
 - `SFTSetup` - additional steps for setting up SFT contracts
 - `TradeFloor` - contracts for the Trade Floor
 - `TradeFloorSetup` - additional steps for the Trade Floor
+- `RewardFarms` - contracts for the reward farms
+- `RewardFarmSetup` - additional steps for the reward farms
 
 Separate multiple tags with a comma, e.g.:
 
