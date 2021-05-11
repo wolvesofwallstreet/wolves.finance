@@ -76,7 +76,7 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
       },
     },
   });
-  glideProperties = (this.glide as unknown) as Properties;
+  glideProperties = this.glide as unknown as Properties;
 
   constructor(props: PROPS) {
     super(props);

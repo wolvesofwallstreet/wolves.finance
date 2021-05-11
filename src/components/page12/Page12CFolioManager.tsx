@@ -29,34 +29,29 @@ function CFolioManagerPage12({ t }: PROPS) {
     {
       id: Math.random(),
       title: 'GORGAN',
-      src:
-        'https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-300.mp4.jpg',
+      src: 'https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-300.mp4.jpg',
     },
     {
       id: Math.random(),
       title: 'GORGAN',
-      src:
-        'https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-300.mp4.jpg',
+      src: 'https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-300.mp4.jpg',
     },
     {
       id: Math.random(),
       title: 'BRYANT',
-      src:
-        'https://4travelers.de/wolves_assets/cards/bois/level2/BRYANT-300.mp4.jpg',
+      src: 'https://4travelers.de/wolves_assets/cards/bois/level2/BRYANT-300.mp4.jpg',
       count: 3,
     },
     {
       id: Math.random(),
       title: 'GORGAN',
-      src:
-        'https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-300.mp4.jpg',
+      src: 'https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-300.mp4.jpg',
       count: 1,
     },
     {
       id: Math.random(),
       title: 'GORGAN',
-      src:
-        'https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-300.mp4.jpg',
+      src: 'https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-300.mp4.jpg',
       type: 'empty_box',
       boxTitle: 'OPEN WALLET',
     },
@@ -65,22 +60,19 @@ function CFolioManagerPage12({ t }: PROPS) {
     {
       id: Math.random(),
       title: 'MOBILE UPGRADE',
-      src:
-        'https://4travelers.de/wolves_assets/cards/wolves/level1/AXEL-300.jpg',
+      src: 'https://4travelers.de/wolves_assets/cards/wolves/level1/AXEL-300.jpg',
       checked: true,
     },
     {
       id: Math.random(),
       title: 'YEARN DAI / USDC',
-      src:
-        'https://4travelers.de/wolves_assets/cards/wolves/level1/KURT-300.jpg',
+      src: 'https://4travelers.de/wolves_assets/cards/wolves/level1/KURT-300.jpg',
       checked: true,
     },
     {
       id: Math.random(),
       title: 'YEARN USDT',
-      src:
-        'https://4travelers.de/wolves_assets/cards/wolves/level1/AXEL-300.jpg',
+      src: 'https://4travelers.de/wolves_assets/cards/wolves/level1/AXEL-300.jpg',
       checked: false,
     },
   ]);
@@ -88,20 +80,17 @@ function CFolioManagerPage12({ t }: PROPS) {
     {
       id: Math.random(),
       title: 'WOWS_BLUE',
-      src:
-        'https://4travelers.de/wolves_assets/cards/wolves/level1/KURT-300.jpg',
+      src: 'https://4travelers.de/wolves_assets/cards/wolves/level1/KURT-300.jpg',
     },
     {
       id: Math.random(),
       title: 'BRYANT',
-      src:
-        'https://4travelers.de/wolves_assets/cards/bois/level2/BRYANT-300.mp4.jpg',
+      src: 'https://4travelers.de/wolves_assets/cards/bois/level2/BRYANT-300.mp4.jpg',
     },
     {
       id: Math.random(),
       title: 'GORGAN',
-      src:
-        'https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-300.mp4.jpg',
+      src: 'https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-300.mp4.jpg',
     },
     {
       id: Math.random(),
@@ -113,20 +102,17 @@ function CFolioManagerPage12({ t }: PROPS) {
     {
       id: Math.random(),
       title: 'GORGAN',
-      src:
-        'https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-300.mp4.jpg',
+      src: 'https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-300.mp4.jpg',
     },
     {
       id: Math.random(),
       title: 'GORGAN',
-      src:
-        'https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-300.mp4.jpg',
+      src: 'https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-300.mp4.jpg',
     },
     {
       id: Math.random(),
       title: 'GORGAN',
-      src:
-        'https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-300.mp4.jpg',
+      src: 'https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-300.mp4.jpg',
     },
   ]);
 
