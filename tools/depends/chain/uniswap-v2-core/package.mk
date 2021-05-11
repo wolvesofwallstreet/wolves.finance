@@ -17,9 +17,9 @@
 ################################################################################
 
 # Dependency name and version
-UNISWAP_CORE_REPO_NAME = uniswap-v2-core
-UNISWAP_CORE_VERSION = 4dd59067c76dea4a0e8e4bfdda41877a6b16dedc
-UNISWAP_CORE_REMOTE_REPO = https://github.com/Uniswap/$(UNISWAP_CORE_REPO_NAME).git
+UNISWAP_V2_CORE_REPO_NAME = uniswap-v2-core
+UNISWAP_V2_CORE_VERSION = 4dd59067c76dea4a0e8e4bfdda41877a6b16dedc
+UNISWAP_V2_CORE_REMOTE_REPO = https://github.com/Uniswap/$(UNISWAP_V2_CORE_REPO_NAME).git
 
 ################################################################################
 #
@@ -28,13 +28,13 @@ UNISWAP_CORE_REMOTE_REPO = https://github.com/Uniswap/$(UNISWAP_CORE_REPO_NAME).
 ################################################################################
 
 # Checkout directory
-REPO_DIR_UNISWAP_CORE = $(REPO_DIR)/$(UNISWAP_CORE_REPO_NAME)
+REPO_DIR_UNISWAP_V2_CORE = $(REPO_DIR)/$(UNISWAP_V2_CORE_REPO_NAME)
 
 # Build directory
-BUILD_DIR_UNISWAP_CORE = $(BUILD_DIR)/$(UNISWAP_CORE_REPO_NAME)
+BUILD_DIR_UNISWAP_V2_CORE = $(BUILD_DIR)/$(UNISWAP_V2_CORE_REPO_NAME)
 
 # Install directory
-INSTALL_DIR_UNISWAP_CORE = $(INSTALL_DIR)/$(UNISWAP_CORE_REPO_NAME)
+INSTALL_DIR_UNISWAP_V2_CORE = $(INSTALL_DIR)/$(UNISWAP_V2_CORE_REPO_NAME)
 
 ################################################################################
 #
@@ -42,19 +42,19 @@ INSTALL_DIR_UNISWAP_CORE = $(INSTALL_DIR)/$(UNISWAP_CORE_REPO_NAME)
 #
 ################################################################################
 
-UNISWAP_CORE_BUILD_DEPENDS = \
-  $(S)/checkout-uniswap-core \
+UNISWAP_V2_CORE_BUILD_DEPENDS = \
+  $(S)/checkout-uniswap-v2-core \
 
-UNISWAP_CORE_TEST_DEPENDS = \
+UNISWAP_V2_CORE_TEST_DEPENDS = \
   $(S)/checkout-nvm \
-  $(S)/build-uniswap-core \
+  $(S)/build-uniswap-v2-core \
 
-UNISWAP_CORE_INSTALL_DEPENDS = \
+UNISWAP_V2_CORE_INSTALL_DEPENDS = \
 
 ifeq ($(TEST),1)
-  UNISWAP_CORE_INSTALL_DEPENDS += $(S)/test-uniswap-core
+  UNISWAP_V2_CORE_INSTALL_DEPENDS += $(S)/test-uniswap-v2-core
 else
-  UNISWAP_CORE_INSTALL_DEPENDS += $(S)/build-uniswap-core
+  UNISWAP_V2_CORE_INSTALL_DEPENDS += $(S)/build-uniswap-v2-core
 endif
 
 ################################################################################
@@ -63,13 +63,13 @@ endif
 #
 ################################################################################
 
-$(S)/checkout-uniswap-core: $(S)/.precheckout
-	[ -d "$(REPO_DIR_UNISWAP_CORE)" ] || ( \
-	  git clone "$(UNISWAP_CORE_REMOTE_REPO)" "$(REPO_DIR_UNISWAP_CORE)" \
+$(S)/checkout-uniswap-v2-core: $(S)/.precheckout
+	[ -d "$(REPO_DIR_UNISWAP_V2_CORE)" ] || ( \
+	  git clone "$(UNISWAP_V2_CORE_REMOTE_REPO)" "$(REPO_DIR_UNISWAP_V2_CORE)" \
 	)
 
-	cd "$(REPO_DIR_UNISWAP_CORE)" && \
-	  git reset --hard $(UNISWAP_CORE_VERSION)
+	cd "$(REPO_DIR_UNISWAP_V2_CORE)" && \
+	  git reset --hard $(UNISWAP_V2_CORE_VERSION)
 
 	touch "$@"
 
@@ -79,13 +79,13 @@ $(S)/checkout-uniswap-core: $(S)/.precheckout
 #
 ################################################################################
 
-$(S)/build-uniswap-core: $(S)/.prebuild $(UNISWAP_CORE_BUILD_DEPENDS)
-	[ -d "$(BUILD_DIR_UNISWAP_CORE)" ] || ( \
-	  git clone "$(REPO_DIR_UNISWAP_CORE)" "$(BUILD_DIR_UNISWAP_CORE)" \
+$(S)/build-uniswap-v2-core: $(S)/.prebuild $(UNISWAP_V2_CORE_BUILD_DEPENDS)
+	[ -d "$(BUILD_DIR_UNISWAP_V2_CORE)" ] || ( \
+	  git clone "$(REPO_DIR_UNISWAP_V2_CORE)" "$(BUILD_DIR_UNISWAP_V2_CORE)" \
 	)
 
-	cd "$(BUILD_DIR_UNISWAP_CORE)" && \
-	  git reset --hard $(UNISWAP_CORE_VERSION)
+	cd "$(BUILD_DIR_UNISWAP_V2_CORE)" && \
+	  git reset --hard $(UNISWAP_V2_CORE_VERSION)
 
 	touch "$@"
 
@@ -95,9 +95,9 @@ $(S)/build-uniswap-core: $(S)/.prebuild $(UNISWAP_CORE_BUILD_DEPENDS)
 #
 ################################################################################
 
-$(S)/test-uniswap-core: $(S)/.pretest $(UNISWAP_CORE_TEST_DEPENDS)
+$(S)/test-uniswap-v2-core: $(S)/.pretest $(UNISWAP_V2_CORE_TEST_DEPENDS)
 	# Install dependencies with yarn
-	cd "$(BUILD_DIR_UNISWAP_CORE)" && \
+	cd "$(BUILD_DIR_UNISWAP_V2_CORE)" && \
 	  unset npm_config_prefix && \
 	  export NVM_DIR="$(REPO_DIR_NVM)" && \
 	  source "$(REPO_DIR_NVM)/nvm.sh" && \
@@ -105,7 +105,7 @@ $(S)/test-uniswap-core: $(S)/.pretest $(UNISWAP_CORE_TEST_DEPENDS)
 	  yarn install --mutex network
 
 	# Compile with yarn
-	cd "$(BUILD_DIR_UNISWAP_CORE)" && \
+	cd "$(BUILD_DIR_UNISWAP_V2_CORE)" && \
 	  unset npm_config_prefix && \
 	  export NVM_DIR="$(REPO_DIR_NVM)" && \
 	  source "$(REPO_DIR_NVM)/nvm.sh" && \
@@ -113,7 +113,7 @@ $(S)/test-uniswap-core: $(S)/.pretest $(UNISWAP_CORE_TEST_DEPENDS)
 	  yarn compile
 
 	# Test with yarn
-	cd "$(BUILD_DIR_UNISWAP_CORE)" && \
+	cd "$(BUILD_DIR_UNISWAP_V2_CORE)" && \
 	  unset npm_config_prefix && \
 	  export NVM_DIR="$(REPO_DIR_NVM)" && \
 	  source "$(REPO_DIR_NVM)/nvm.sh" && \
@@ -128,12 +128,12 @@ $(S)/test-uniswap-core: $(S)/.pretest $(UNISWAP_CORE_TEST_DEPENDS)
 #
 ################################################################################
 
-$(S)/install-uniswap-core: $(S)/.preinstall $(UNISWAP_CORE_INSTALL_DEPENDS)
-	mkdir -p "$(INSTALL_DIR_UNISWAP_CORE)"
+$(S)/install-uniswap-v2-core: $(S)/.preinstall $(UNISWAP_V2_CORE_INSTALL_DEPENDS)
+	mkdir -p "$(INSTALL_DIR_UNISWAP_V2_CORE)"
 
-	cp -r "$(BUILD_DIR_UNISWAP_CORE)/contracts"/* "$(INSTALL_DIR_UNISWAP_CORE)"
+	cp -r "$(BUILD_DIR_UNISWAP_V2_CORE)/contracts"/* "$(INSTALL_DIR_UNISWAP_V2_CORE)"
 
 	# ...but don't include test contracts
-	rm -rf "$(INSTALL_DIR_UNISWAP_CORE)/test"
+	rm -rf "$(INSTALL_DIR_UNISWAP_V2_CORE)/test"
 
 	touch "$@"

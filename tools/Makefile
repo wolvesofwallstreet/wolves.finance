@@ -55,9 +55,9 @@ TEST := 1
 ################################################################################
 
 include depends/chain/canonical-weth/package.mk
-include depends/chain/uniswap-core/package.mk
 include depends/chain/uniswap-lib/package.mk
-include depends/chain/uniswap-periphery/package.mk
+include depends/chain/uniswap-v2-core/package.mk
+include depends/chain/uniswap-v2-periphery/package.mk
 include depends/native/nvm/package.mk
 
 ################################################################################
@@ -74,9 +74,9 @@ include depends/native/nvm/package.mk
 
 CHECKOUT_DEPENDS = \
   $(S)/checkout-nvm \
-  $(S)/checkout-uniswap-core \
   $(S)/checkout-uniswap-lib \
-  $(S)/checkout-uniswap-periphery \
+  $(S)/checkout-uniswap-v2-core \
+  $(S)/checkout-uniswap-v2-periphery \
   $(S)/checkout-weth \
 
 #
@@ -84,9 +84,9 @@ CHECKOUT_DEPENDS = \
 #
 
 BUILD_DEPENDS = \
-  $(S)/build-uniswap-core \
   $(S)/build-uniswap-lib \
-  $(S)/build-uniswap-periphery \
+  $(S)/build-uniswap-v2-core \
+  $(S)/build-uniswap-v2-periphery \
   $(S)/build-weth \
 
 #
@@ -94,9 +94,9 @@ BUILD_DEPENDS = \
 #
 
 TEST_DEPENDS = \
-  $(S)/test-uniswap-core \
   $(S)/test-uniswap-lib \
-  $(S)/test-uniswap-periphery \
+  $(S)/test-uniswap-v2-core \
+  $(S)/test-uniswap-v2-periphery \
   $(S)/test-weth \
 
 #
@@ -104,9 +104,9 @@ TEST_DEPENDS = \
 #
 
 INSTALL_DEPENDS = \
-  $(S)/install-uniswap-core \
   $(S)/install-uniswap-lib \
-  $(S)/install-uniswap-periphery \
+  $(S)/install-uniswap-v2-core \
+  $(S)/install-uniswap-v2-periphery \
   $(S)/install-weth \
 
 #
@@ -123,22 +123,22 @@ install: $(INSTALL_DEPENDS)
 #
 
 .PHONY: nvm
-.PHONY: uniswap-core
 .PHONY: uniswap-lib
-.PHONY: uniswap-periphery
+.PHONY: uniswap-v2-core
+.PHONY: uniswap-v2-periphery
 .PHONY: weth
 
 nvm: \
   $(S)/checkout-nvm
 
-uniswap-core: \
-  $(S)/install-uniswap-core
-
 uniswap-lib: \
   $(S)/install-uniswap-lib
 
-uniswap-periphery: \
-  $(S)/install-uniswap-periphery
+uniswap-v2-core: \
+  $(S)/install-v2-uniswap-core
+
+uniswap-v2-periphery: \
+  $(S)/install-uniswap-v2-periphery
 
 weth: \
   $(S)/install-weth
