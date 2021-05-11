@@ -32,4 +32,12 @@ interface ICFolioItemCallback {
     uint256[] calldata tokenIds,
     address[] calldata cfolioHandlers
   ) external;
+
+  /**
+   * @dev append data we use later for hashing
+   */
+  function appendHash(address cfolioItem, bytes calldata current)
+    external
+    view
+    returns (bytes memory);
 }

@@ -17,8 +17,10 @@ import '../cfolio/interfaces/ICFolioItemHandler.sol';
 import '../investment/interfaces/IRewardHandler.sol';
 import '../token/interfaces/IERC1155BurnMintable.sol';
 import '../token/interfaces/IWOWSERC1155.sol';
+import '../utils/TokenIds.sol';
 
 contract WOWSSftMinter is Context, Ownable {
+  using TokenIds for uint256;
   using SafeERC20 for IERC20;
 
   //////////////////////////////////////////////////////////////////////////////
@@ -216,7 +218,7 @@ contract WOWSSftMinter is Context, Ownable {
     uint256 tokenId = _sftContract.getNextMintableCustomToken();
 
     // Custom baseToken only allowed < 64Bit
-    require(tokenId < 0x10000000000000000, 'Max tokenId reached');
+    require(tokenId.isBaseCard(), 'Max tokenId reached');
 
     // Set card level and uri
     _sftContract.setCustomCardLevel(tokenId, level);
@@ -262,7 +264,7 @@ contract WOWSSftMinter is Context, Ownable {
 
     address sftCFolio = address(0);
     if (sftTokenId != uint256(-1)) {
-      require(sftTokenId < 0x10000000000000000, 'Invalid sftTokenId');
+      require(sftTokenId.isBaseCard(), 'Invalid sftTokenId');
 
       // Get the CFolio contract address, it will be the final recipient
       sftCFolio = _sftContract.tokenIdToAddress(sftTokenId);
@@ -276,6 +278,7 @@ contract WOWSSftMinter is Context, Ownable {
     }
 
     uint256 tokenId = nextCFolioItemNft++;
+    require(tokenId.isCFolioCard(), 'Invalid cfolioItem tokenId');
 
     _sftContract.setCustomURI(tokenId, uri);
 

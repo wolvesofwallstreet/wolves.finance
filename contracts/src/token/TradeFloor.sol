@@ -624,10 +624,10 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
       } else {
         // CFolio SFTs always have one tradefloor / 1 CFolio dummy
         // which is needed to notify the CFolioHandler on SFT burn
-        address cFolioHandler =
-          IWOWSCryptofolio(_sftHolder.tokenIdToAddress(tokenId))._tradefloors(
-            0
-          );
+        address cfolio = _sftHolder.tokenIdToAddress(tokenId.toSftTokenId());
+        require(cfolio != address(0), 'Invalid cfolio');
+
+        address cFolioHandler = IWOWSCryptofolio(cfolio)._tradefloors(0);
 
         uint256 iter = numUniqueCFolioHandlers;
         while (iter > 0 && uniqueCFolioHandlers[iter - 1] != cFolioHandler)
@@ -644,17 +644,20 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
 
     // On Burn we need to transfer SFT ownership back
     if (to == address(0)) {
+      uint256[] memory sftTokenIds = new uint256[](length);
       uint256[] memory amounts = new uint256[](length);
       for (uint256 i = 0; i < length; ++i) {
-        require(_tokenInfos[tokenIds[i]].minted, 'TF: Not minted');
-        _tokenInfos[tokenIds[i]].minted = false;
+        uint256 tokenId = tokenIds[i];
+        require(_tokenInfos[tokenId].minted, 'TF: Not minted');
+        _tokenInfos[tokenId].minted = false;
+        sftTokenIds[i] = tokenId.toSftTokenId();
         amounts[i] = 1;
       }
 
       WOWSMinterPauser(address(_sftHolder)).safeBatchTransferFrom(
         address(this),
         _msgSender(),
-        tokenIds,
+        sftTokenIds,
         amounts,
         ''
       );
@@ -703,24 +706,27 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     } else sftRecipient = from;
 
     // Update state
+    uint256[] memory mintedTokenIds = new uint256[](tokenIds.length);
     for (uint256 i = 0; i < tokenIds.length; ++i) {
-      uint256 tokenId = tokenIds[i];
       require(amounts[i] == 1, 'Amount != 1 not allowed');
-      require(!_tokenInfos[tokenId].minted, 'Token already minted');
 
-      _tokenInfos[tokenId].minted = true;
+      uint256 mintedTokenId = _createTokenId(tokenIds[i]);
+      mintedTokenIds[i] = mintedTokenId;
+      require(!_tokenInfos[mintedTokenId].minted, 'Token already minted');
+
+      _tokenInfos[mintedTokenId].minted = true;
 
       // OpenSea only listens to TransferSingle event on mint
-      _mint(sftRecipient, tokenId, 1, '');
+      _mint(sftRecipient, mintedTokenId, 1, '');
 
       // Even though the tokenId has not changed we fire URI to let clients
       // know that metadata has to be refreshed
-      emit URI(uri(tokenId), tokenId);
+      emit URI(uri(mintedTokenId), mintedTokenId);
 
       // Rarible needs to be informed about fees
-      emit SecondarySaleFees(tokenId, getFeeRecipients(0), getFeeBps(0));
+      emit SecondarySaleFees(mintedTokenId, getFeeRecipients(0), getFeeBps(0));
     }
-    _onTransfer(address(0), sftRecipient, tokenIds);
+    _onTransfer(address(0), sftRecipient, mintedTokenIds);
   }
 
   /**
@@ -788,7 +794,8 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   /**
    * @dev Check if the address is a valid target
    *
-   * If sftHolder returns a valid tokenId, it must be a card. Even though
+   * If sftHolder returns a valid tokenId, it must be a card not owned by
+   * this contract (which means it is locked). Even though
    * Cryptofolio supports multiple TradeFloors, the main SFT lock handling
    * happens only in this contract instance.
    *
@@ -799,6 +806,47 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     return
       test == address(0) ||
       (tokenId = _sftHolder.addressToTokenId(test)) == uint256(-1) ||
-      (tokenId.isBaseCard() && !_tokenInfos[tokenId].minted);
+      (tokenId.isBaseCard() &&
+        IERC1155(address(_sftHolder)).balanceOf(address(this), tokenId) == 0);
+  }
+
+  /**
+   * @dev Calculate a 128 bit hash for making tokenIds unique to nderlying asset
+   *
+   * @param sftTokenId The tokenId from SFT contract from that we use the first 128 bit
+   * TokenIds in SFT contract are limited to max 128 Bit in WowsSftMinter contract.
+   */
+  function _createTokenId(uint256 sftTokenId) internal view returns (uint256) {
+    bytes memory hashData;
+    uint256[] memory tokenIds;
+    uint256 tokenIdsLength;
+    if (sftTokenId.isBaseCard()) {
+      // Its a base card, calculate hash using all cfolioItems
+      address cfolio = _sftHolder.tokenIdToAddress(sftTokenId);
+      require(cfolio != address(0), 'TF: src token invalid');
+      (tokenIds, tokenIdsLength) = IWOWSCryptofolio(cfolio).getCryptofolio(
+        address(this)
+      );
+      hashData = abi.encodePacked(address(this), sftTokenId);
+    } else {
+      // Its a cfolioItem itself, only calculate unerlying value
+      tokenIds = new uint256[](1);
+      tokenIds[0] = sftTokenId;
+      tokenIdsLength = 1;
+    }
+
+    // Run through all cfolioItems and add let their
+    // single CFolioItemHandler append hashable data
+    for (uint256 i = 0; i < tokenIdsLength; ++i) {
+      address cfolio = _sftHolder.tokenIdToAddress(tokenIds[i]);
+      require(cfolio != address(0), 'TF: item token invalid');
+
+      address handler = IWOWSCryptofolio(cfolio)._tradefloors(0);
+      require(handler != address(0), 'TF: item handler invalid');
+
+      hashData = ICFolioItemCallback(handler).appendHash(cfolio, hashData);
+    }
+    uint256 hashNum = uint256(keccak256(hashData));
+    return (hashNum ^ (hashNum << 128)).maskHash() | sftTokenId;
   }
 }
