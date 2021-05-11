@@ -24,8 +24,8 @@ contract SFTEvaluator is ISFTEvaluator {
   // State
   //////////////////////////////////////////////////////////////////////////////
 
-  // Current reward weight of a sft card
-  mapping(uint256 => uint32) private _rewardRate;
+  // Admin
+  address public immutable admin;
 
   // The SFT contract we need for level
   IWOWSERC1155 private immutable _sftHolder;
@@ -33,8 +33,8 @@ contract SFTEvaluator is ISFTEvaluator {
   // The main tradefloor contract
   address private immutable _tradeFloor;
 
-  // Admin
-  address public immutable admin;
+  // Current reward weight of a sft card
+  mapping(uint256 => uint32) private _rewardRate;
 
   //////////////////////////////////////////////////////////////////////////////
   // Events

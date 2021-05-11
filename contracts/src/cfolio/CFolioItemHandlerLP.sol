@@ -54,9 +54,6 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
   // Routing
   //////////////////////////////////////////////////////////////////////////////
 
-  // The SFT contract needed to check if the address is a c-folio
-  IWOWSERC1155 private immutable sftHolder;
-
   // The TradeFloor contract which provides c-folio NFTs. This TradeFloor
   // contract calls the IMinterCallback interface functions.
   address public immutable tradeFloor;
@@ -72,6 +69,9 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
 
   // Admin
   address public immutable admin;
+
+  // The SFT contract needed to check if the address is a c-folio
+  IWOWSERC1155 private immutable sftHolder;
 
   //////////////////////////////////////////////////////////////////////////////
   // Modifiers
