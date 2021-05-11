@@ -356,7 +356,9 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
                     0.3 ETH
                   </span>
                   <button
-                    className={'w-100 m-0 mr-3 page9-btn-stack text-nowrap'}
+                    className={
+                      'wolve_btn w-100 m-0 mr-3 page9-btn-stack text-nowrap'
+                    }
                   >
                     SMART INVEST - SAVE GAS
                   </button>
@@ -370,7 +372,11 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
                   <span className={'font-20 f-light ml-5 text-nowrap'}>
                     0.24 ETH
                   </span>
-                  <button className={'w-100 m-0 page9-btn-stack text-nowrap'}>
+                  <button
+                    className={
+                      'wolve_btn w-100 m-0 page9-btn-stack text-nowrap'
+                    }
+                  >
                     DIRECT INVEST - EARN GAS
                   </button>
                 </div>
