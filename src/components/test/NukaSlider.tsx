@@ -22,11 +22,14 @@ type PROPS = {
   history: RouteComponentProps['history'];
 };
 
+type AnyObjType = { [key: string]: string };
+
 type STATE = {
   input1: string;
   input2: string;
   currentImage: number;
   slideIndex?: number;
+  imgSlides: AnyObjType[];
 };
 
 type IMAGE = { tokenId: number; level: number; index: number };
@@ -48,6 +51,7 @@ class NukaSlider extends React.Component<PROPS, STATE> {
       input2: 'ETH 2300',
       currentImage: 0,
       slideIndex: 0,
+      imgSlides: [],
     };
   }
 
@@ -87,8 +91,36 @@ class NukaSlider extends React.Component<PROPS, STATE> {
     this.content = cards;
   }
 
+  fetchData() {
+    fetch('https://reqres.in/api/users?page=2')
+      .then((res) => res.json().then((r) => r))
+      .then((res) => {
+        this.setState({
+          ...this.state,
+          imgSlides: res.data,
+        });
+      });
+  }
+
   render(): JSX.Element {
     // const { slideIndex } = this.state;
+    const colors = ['7732bb', '047cc0', '00884b', 'e3bc13', 'db7c00'];
+    const slides = [...colors, ...colors.slice(1, 2)].map((color, index) => (
+      <img
+        src={`https://via.placeholder.com/400/${color}/ffffff/&text=slide${
+          index + 1
+        }`}
+        alt={`Slide ${index + 1}`}
+        key={color}
+        style={{
+          width: '100%',
+          height: '150px',
+        }}
+        onClick={() => {
+          this.setState({ slideIndex: index });
+        }}
+      />
+    ));
 
     return (
       <>
@@ -108,45 +140,41 @@ class NukaSlider extends React.Component<PROPS, STATE> {
               </h3>
             </div>
 
-            {/* Card slider */}
+            {/* <button onClick={() => goToSlide(1)}>go to SLide</button> */}
 
+            {/* Card slider */}
             <div
               className={
                 'd-flex justify-content-center bg-transparent-orange mb-3 '
               }
             >
               <div className="vw-80 position-relative glide-border-t glide-border-b center_triange_down center_triange_up">
-                <div className="nuka_slider triange-margin-fixation">
+                <div className="nuka_slider d-flex">
                   <Carousel
-                    // slideIndex={this.state.slideIndex}
-                    afterSlide={(slideIndex: number) =>
-                      this.setState({ slideIndex })
-                    }
+                    wrapAround
+                    cellAlign="center"
+                    cellSpacing={20}
+                    slidesToShow={5}
+                    slideIndex={this.state.slideIndex}
+                    afterSlide={(slideIndex) => {
+                      this.setState({ slideIndex });
+                    }}
                   >
-                    <img
-                      src="https://via.placeholder.com/400/ffffff/c0392b/&text=slide1"
-                      alt={'img-1'}
-                    />
-                    <img
-                      src="https://via.placeholder.com/400/ffffff/c0392b/&text=slide2"
-                      alt={'img-2'}
-                    />
-                    <img
-                      src="https://via.placeholder.com/400/ffffff/c0392b/&text=slide3"
-                      alt={'img-3'}
-                    />
-                    <img
-                      src="https://via.placeholder.com/400/ffffff/c0392b/&text=slide4"
-                      alt={'img-4'}
-                    />
-                    <img
-                      src="https://via.placeholder.com/400/ffffff/c0392b/&text=slide5"
-                      alt={'img-5'}
-                    />
-                    <img
-                      src="https://via.placeholder.com/400/ffffff/c0392b/&text=slide6"
-                      alt={'img-6'}
-                    />
+                    {slides}
+                    {[].map((slide, index) => {
+                      <img
+                        key={Math.random() + index}
+                        src={`'`}
+                        alt={`Slide ${index + 1}`}
+                        onClick={() => {
+                          this.setState({ slideIndex: index });
+                        }}
+                        style={{
+                          width: '100%',
+                          height: '150px',
+                        }}
+                      />;
+                    })}
                   </Carousel>
                 </div>
               </div>
