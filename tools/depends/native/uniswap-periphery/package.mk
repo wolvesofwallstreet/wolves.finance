@@ -115,7 +115,7 @@ $(S)/build-uniswap-periphery: $(S)/.prebuild $(UNISWAP_PERIPHERY_BUILD_DEPENDS)
 #
 ################################################################################
 
-$(S)/test-uniswap-periphery: $(S)/.preinstall $(UNISWAP_PERIPHERY_TEST_DEPENDS)
+$(S)/test-uniswap-periphery: $(S)/.pretest $(UNISWAP_PERIPHERY_TEST_DEPENDS)
 	# Install dependencies with yarn
 	cd "$(BUILD_DIR_UNISWAP_PERIPHERY)" && \
 	  unset npm_config_prefix && \
