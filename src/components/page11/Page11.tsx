@@ -147,7 +147,7 @@ class Page11 extends Component<PAGE11_PROPS, PAGE11_STATE> {
               <div id="page11-content-image">
                 <button
                   className={
-                    'w-100 m-0 mt-2 mb-1 page11-btn-stack bg-blue-transparent-dark text-white'
+                    'wolve_btn w-100 m-0 mt-2 mb-1 page11-btn-stack bg-blue-transparent-dark text-white'
                   }
                 >
                   AUTO UPGRADE : 15 PROWESS 43 : 21 : 56
@@ -216,20 +216,20 @@ class Page11 extends Component<PAGE11_PROPS, PAGE11_STATE> {
                   </div>
 
                   <div></div>
-                  <button className={'page11-btn-stack m-0'}>
+                  <button className={'wolve_btn page11-btn-stack m-0'}>
                     CLAIM REWARDS
                   </button>
                   <button
                     className={
-                      'page11-btn-stack m-0 bg-blue-transparent-dark text-gray'
+                      'wolve_btn page11-btn-stack m-0 bg-blue-transparent-dark text-gray'
                     }
                   >
                     CLAIM REWARDS & DESTROY NFT (UNSTAKE)
                   </button>
-                  <button className={'page11-btn-stack m-0'}>
+                  <button className={'wolve_btn page11-btn-stack m-0'}>
                     LOCK FOR SALE
                   </button>
-                  <button className={'page11-btn-stack m-0'}>
+                  <button className={'wolve_btn page11-btn-stack m-0'}>
                     C-FOLIO TRANSFER MANAGER
                   </button>
                 </div>

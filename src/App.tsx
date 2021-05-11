@@ -9,6 +9,7 @@
 import './App.css';
 import './wolves_scheme.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import './components/theme/button/wolve_button.css';
 
 import React from 'react';
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
