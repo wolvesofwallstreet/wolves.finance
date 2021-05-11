@@ -174,6 +174,9 @@ describe('LP NFTs', function () {
   const wowsTokenIdWolf = ethers.BigNumber.from('0x05020000');
 
   const cfolioItemTokenId = ethers.BigNumber.from('0x10000000000000000');
+  const cfolioItemTokenIdTf = ethers.BigNumber.from(
+    '0x5309971e8790a6fbc5a3571116ad633900000000000000010000000000000000'
+  );
   const cFolioItemType = 0; // Card type 0, registered in minter for cfolioItemHandlerLP
   const cFolioItemURI = 'http://4travelers.de/wolves_assets/cfolio/00.json';
 
@@ -504,7 +507,7 @@ describe('LP NFTs', function () {
       .withArgs(
         cryptofolioAddressWolf,
         tradeFloorProxyContract.address,
-        [cfolioItemTokenId],
+        [cfolioItemTokenIdTf],
         [1]
       );
 
@@ -541,7 +544,7 @@ describe('LP NFTs', function () {
       tradeFloorProxyContract.address
     );
     chai.expect(idsLength).to.equal(1);
-    chai.expect(tokenIds[0]).to.equal(cfolioItemTokenId);
+    chai.expect(tokenIds[0]).to.equal(cfolioItemTokenIdTf);
   });
 
   it('should check cryptofolio for trade floor NFT', async function () {
@@ -550,7 +553,7 @@ describe('LP NFTs', function () {
     // Item in the trade floor contract should belong to the cryptofolio
     const balance = await tradeFloorProxyInstance.balanceOf(
       cryptofolioAddressWolf,
-      cfolioItemTokenId
+      cfolioItemTokenIdTf
     );
     chai.expect(balance).to.equal(1);
   });
@@ -594,7 +597,7 @@ describe('LP NFTs', function () {
     const tx = tradeFloorProxyInstance.safeTransferFrom(
       cryptofolioAddressWolf,
       marketingWallet.address,
-      cfolioItemTokenId,
+      cfolioItemTokenIdTf,
       1,
       []
     );
@@ -635,7 +638,7 @@ describe('LP NFTs', function () {
     // Item in the trade floor contract should belong to the wallet
     const balance = await tradeFloorProxyInstance.balanceOf(
       marketingWallet.address,
-      cfolioItemTokenId
+      cfolioItemTokenIdTf
     );
     chai.expect(balance).to.equal(1);
   });
@@ -667,7 +670,7 @@ describe('LP NFTs', function () {
     // Burn locked cryptofolio NFT
     const tx = tradeFloorProxyInstance.burn(
       marketingWallet.address,
-      cfolioItemTokenId,
+      cfolioItemTokenIdTf,
       1
     );
     await chai.expect(tx).to.not.be.reverted;
@@ -830,7 +833,7 @@ describe('LP NFTs', function () {
     // Item in the trade floor contract should belong to the wallet
     const balance = await tradeFloorProxyInstance.balanceOf(
       marketingWallet.address,
-      cfolioItemTokenId
+      cfolioItemTokenIdTf
     );
     chai.expect(balance).to.equal(1);
   });
@@ -863,7 +866,7 @@ describe('LP NFTs', function () {
     const tx = tradeFloorProxyInstance.safeTransferFrom(
       marketingWallet.address,
       cryptofolioAddressWolf,
-      cfolioItemTokenId,
+      cfolioItemTokenIdTf,
       1,
       []
     );
@@ -898,7 +901,7 @@ describe('LP NFTs', function () {
     // Burn locked cryptofolio NFT
     const tx = tradeFloorProxyInstance.burn(
       cryptofolioAddressWolf,
-      cfolioItemTokenId,
+      cfolioItemTokenIdTf,
       1
     );
     await chai.expect(tx).to.not.be.reverted;

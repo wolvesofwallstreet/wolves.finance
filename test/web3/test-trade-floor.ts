@@ -133,6 +133,9 @@ describe('Trade Floor', function () {
   const cardIdWolf = 2;
   const wowsTokenIdBoi = ethers.BigNumber.from('0x01020000');
   const wowsTokenIdWolf = ethers.BigNumber.from('0x05020000');
+  const wowsTokenIdWolfTf = ethers.BigNumber.from(
+    '0xc8aa430687110a1d9b7784e10057848e00000000000000000000000005020000'
+  );
 
   // Lazily-initialized variables
   let ethUsd = 0;
@@ -313,7 +316,7 @@ describe('Trade Floor', function () {
     chai.expect(balanceWolf).to.equal(1);
 
     // Lock wolf cryptofolio
-    const tx = sftHolderContract.safeTransferFrom(
+    const tx = await sftHolderContract.safeTransferFrom(
       marketingWallet.address,
       tradeFloorProxyContract.address,
       wowsTokenIdWolf,
@@ -330,6 +333,7 @@ describe('Trade Floor', function () {
         wowsTokenIdWolf,
         1
       );
+    //console.log(JSON.stringify(await sftHolderContract.provider.getTransactionReceipt(tx.hash)));
 
     // Log gas cost
     const receipt = await (await tx).wait();
@@ -360,7 +364,7 @@ describe('Trade Floor', function () {
     // Check that we have the locked cryptofolio NFT
     balanceWolf = await tradeFloorProxyInstance.balanceOf(
       marketingWallet.address,
-      wowsTokenIdWolf
+      wowsTokenIdWolfTf
     );
     chai.expect(balanceWolf).to.equal(1);
   });
@@ -372,7 +376,7 @@ describe('Trade Floor', function () {
     const tx = tradeFloorProxyInstance.safeTransferFrom(
       marketingWallet.address,
       signer.address,
-      wowsTokenIdWolf,
+      wowsTokenIdWolfTf,
       1,
       []
     );
@@ -398,14 +402,14 @@ describe('Trade Floor', function () {
     // Check that we don't have the locked cryptofolio NFT
     let balanceWolf = await tradeFloorProxyInstance.balanceOf(
       marketingWallet.address,
-      wowsTokenIdWolf
+      wowsTokenIdWolfTf
     );
     chai.expect(balanceWolf).to.equal(0);
 
     // Check that signer has the locked cryptofolio NFT
     balanceWolf = await tradeFloorProxyInstance.balanceOf(
       signer.address,
-      wowsTokenIdWolf
+      wowsTokenIdWolfTf
     );
     chai.expect(balanceWolf).to.equal(1);
   });
@@ -416,7 +420,7 @@ describe('Trade Floor', function () {
     // Burn locked cryptofolio NFT
     const tx = tradeFloorProxyInstance
       .connect(signer)
-      .burn(signer.address, wowsTokenIdWolf, 1);
+      .burn(signer.address, wowsTokenIdWolfTf, 1);
     await chai.expect(tx).to.not.be.reverted;
 
     // Log gas cost
@@ -492,7 +496,7 @@ describe('Trade Floor', function () {
       .safeTransferFrom(
         signer.address,
         marketingWallet.address,
-        wowsTokenIdWolf,
+        wowsTokenIdWolfTf,
         1,
         []
       );
@@ -501,7 +505,7 @@ describe('Trade Floor', function () {
     // Check that we have the cryptofolio
     balanceWolf = await tradeFloorProxyInstance.balanceOf(
       marketingWallet.address,
-      wowsTokenIdWolf
+      wowsTokenIdWolfTf
     );
     chai.expect(balanceWolf).to.equal(1);
   });
@@ -513,7 +517,7 @@ describe('Trade Floor', function () {
     const tx = tradeFloorProxyInstance.safeTransferFrom(
       marketingWallet.address,
       cryptofolioAddressBoi,
-      wowsTokenIdWolf,
+      wowsTokenIdWolfTf,
       1,
       []
     );
