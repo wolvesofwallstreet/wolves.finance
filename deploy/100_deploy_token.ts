@@ -50,6 +50,8 @@ const ADDRESS_BOOK_DEPLOYER_KEY = ethers.utils.formatBytes32String('DEPLOYER');
 const ADDRESS_BOOK_UNIV2_PAIR_KEY =
   ethers.utils.formatBytes32String('UNISWAP_V2_PAIR');
 
+const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
+
 // Helper function
 function log_step(step_string) {
   console.log(`\n==> ${step_string}\n`);
@@ -141,8 +143,7 @@ const func = async function (hardhat_re) {
 
       // Has to be a non-zero 32bytes string (in hex format)
       // TODO
-      deterministicSalt:
-        '0x0000000000000000000000000000000000000000000000000000000000000001',
+      deterministicSalt: ADDRESS_ZERO,
 
       execute: {
         methodName: 'postUpgrade',
@@ -285,7 +286,7 @@ const func = async function (hardhat_re) {
     log_step('Deploying controller');
 
     // Previous controller: 0 address / only for later updates
-    const PREVIOUS_CONTROLLER = '0x0000000000000000000000000000000000000000';
+    const PREVIOUS_CONTROLLER = ADDRESS_ZERO;
 
     const controllerReceipt = await deploy(CONTROLLER_CONTRACT, {
       from: deployer,
@@ -318,7 +319,7 @@ const func = async function (hardhat_re) {
     const STAKE_FARM_NAME = 'WETH/WOWS LP Farm';
     const REWARD_TOKEN = generatedAddresses.token;
     // Address of UniV2 WETH/USDT pool, can be 0 for test
-    const ROUTE = '0x0000000000000000000000000000000000000000';
+    const ROUTE = ADDRESS_ZERO;
 
     const univ2StakeFarmReceipt = await deploy(UNIV2_STAKE_FARM_CONTRACT, {
       from: deployer,
