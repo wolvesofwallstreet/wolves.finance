@@ -99,7 +99,7 @@ $(S)/build-weth: $(S)/.prebuild $(WETH_BUILD_DEPENDS)
 #
 ################################################################################
 
-$(S)/test-weth: $(S)/.preinstall $(WETH_TEST_DEPENDS)
+$(S)/test-weth: $(S)/.pretest $(WETH_TEST_DEPENDS)
 	# Install dependencies with NPM
 	cd "$(BUILD_DIR_WETH)" && \
 	  unset npm_config_prefix && \

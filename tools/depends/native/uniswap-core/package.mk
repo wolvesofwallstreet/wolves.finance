@@ -95,7 +95,7 @@ $(S)/build-uniswap-core: $(S)/.prebuild $(UNISWAP_CORE_BUILD_DEPENDS)
 #
 ################################################################################
 
-$(S)/test-uniswap-core: $(S)/.preinstall $(UNISWAP_CORE_TEST_DEPENDS)
+$(S)/test-uniswap-core: $(S)/.pretest $(UNISWAP_CORE_TEST_DEPENDS)
 	# Install dependencies with yarn
 	cd "$(BUILD_DIR_UNISWAP_CORE)" && \
 	  unset npm_config_prefix && \

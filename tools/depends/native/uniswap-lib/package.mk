@@ -95,7 +95,7 @@ $(S)/build-uniswap-lib: $(S)/.prebuild $(UNISWAP_LIB_BUILD_DEPENDS)
 #
 ################################################################################
 
-$(S)/test-uniswap-lib: $(S)/.preinstall $(UNISWAP_LIB_TEST_DEPENDS)
+$(S)/test-uniswap-lib: $(S)/.pretest $(UNISWAP_LIB_TEST_DEPENDS)
 	# Install dependencies with yarn
 	cd "$(BUILD_DIR_UNISWAP_LIB)" && \
 	  unset npm_config_prefix && \
