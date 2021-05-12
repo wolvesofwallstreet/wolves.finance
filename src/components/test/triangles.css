@@ -5,11 +5,11 @@
  * SPDX-License-Identifier: Apache-2.0
  * See the file LICENSES/README.md for more information.
  */
- 
+
 .center_triange_up::before {
   content: ' ';
-  position: relative;
-  top: 6px;
+  position: absolute;
+  top: 0;
   width: 0;
   height: 0;
   border-style: solid;
@@ -17,17 +17,19 @@
   border-color: transparent;
   border-width: 10px 20px 0 20px;
   border-top-color: var(--wolves-orange-light);
+  transform: translateX(-20px);
 }
 
 .center_triange_down::after {
-  content: ' ';
-  position: relative;
-  bottom: 6px;
+  content: '';
+  position: absolute;
+  bottom: 0;
   width: 0;
   height: 0;
   border-style: solid;
   background-color: transparent;
   border-color: transparent;
-  border-width: 0 15px 10px 15px;
+  border-width: 0 20px 10px 20px;
   border-bottom-color: var(--wolves-orange-light);
+  transform: translateX(-20px);
 }

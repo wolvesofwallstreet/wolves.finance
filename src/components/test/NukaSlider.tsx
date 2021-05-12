@@ -55,6 +55,7 @@ class NukaSlider extends React.Component<PROPS, STATE> {
       imgSlides: [],
     };
     this.fetchData = this.fetchData.bind(this);
+    this.renderSlideButtons = this.renderSlideButtons.bind(this);
   }
 
   setCurrentImage(val: number) {
@@ -106,6 +107,18 @@ class NukaSlider extends React.Component<PROPS, STATE> {
       });
   }
 
+  renderSlideButtons(
+    cb: React.MouseEventHandler<HTMLButtonElement> | undefined,
+    arrow_direction = 'right'
+  ) {
+    return (
+      <button
+        className={`glide__arrow glide__arrow--${arrow_direction}`}
+        onClick={cb}
+      ></button>
+    );
+  }
+
   render(): JSX.Element {
     const { imgSlides } = this.state;
     let slides = null;
@@ -154,15 +167,21 @@ class NukaSlider extends React.Component<PROPS, STATE> {
                 'd-flex justify-content-center bg-transparent-orange mb-3 '
               }
             >
-              <div className="vw-80 glide-border-t glide-border-b center_triange_down center_triange_up">
-                <div className="nuka_slider">
+              <div className="vw-80 py-2 glide-border-t glide-border-b p_relative center_triange_down center_triange_up">
+                <div className="nuka_slider ">
                   <Carousel
                     wrapAround
                     swiping
                     cellAlign="center"
-                    cellSpacing={20}
+                    cellSpacing={10}
                     slidesToShow={5}
                     slideIndex={this.state.slideIndex}
+                    renderCenterLeftControls={({ previousSlide }) =>
+                      this.renderSlideButtons(previousSlide, 'left')
+                    }
+                    renderCenterRightControls={({ nextSlide }) =>
+                      this.renderSlideButtons(nextSlide)
+                    }
                     afterSlide={(slideIndex) => {
                       this.setState({ slideIndex });
                     }}

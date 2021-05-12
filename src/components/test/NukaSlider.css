@@ -73,3 +73,42 @@
 .glide__slide_test_active .slide_count {
   transform: scale(0.88);
 } */
+
+.glide__arrow {
+  width: 0;
+  height: 0;
+  padding: 0;
+  box-shadow: none;
+  border-style: solid;
+  position: absolute;
+  border-color: transparent;
+  border-width: 10px 10px 10px 10px;
+}
+
+.glide__arrow--left {
+  border-right-width: 10px;
+  border-right-color: var(--wolves-orange-light);
+  --left: 0;
+  left: var(--left);
+}
+
+.glide__arrow--right {
+  border-left-width: 10px;
+  border-left-color: var(--wolves-orange-light);
+  --right: 0;
+  right: var(--right);
+}
+
+/* hover state */
+.glide__arrow:hover {
+  border-color: transparent;
+  background-color: transparent;
+}
+
+.glide__arrow--left:hover {
+  border-right-color: var(--wolves-orange);
+}
+
+.glide__arrow--right:hover {
+  border-left-color: var(--wolves-orange);
+}
