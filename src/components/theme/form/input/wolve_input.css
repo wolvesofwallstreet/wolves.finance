@@ -1,0 +1,26 @@
+.wolve_input {
+  padding: 9px 15px;
+  outline: none;
+  background-color: var(--wolves-orange-transparent);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  width: 100%;
+}
+
+.wolve_input_max {
+  position: absolute;
+  cursor: pointer;
+  font-size: 10px;
+  border-radius: 4px;
+  vertical-align: inherit;
+  padding: 2px;
+  top: 9px;
+  left: 15px;
+  border: rgba(0, 0, 0, 0.63) 1px solid;
+}
+
+.wolve_input_label {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-45%);
+}

@@ -256,11 +256,14 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
                   </p>
                 </div>
 
-                <div className={'d-flex'}>
-                  <div className="d-flex justify-content-between px-3 py-2 font-14 border-white-thin bg-orange-transparent ">
-                    <p className={'m-0'}> BUY MAX </p>
-                    <p className={'m-0 bold'}> WOWS/ETH LP </p>
-                  </div>
+                <div className="p_relative">
+                  <input
+                    type="text"
+                    className="wolve_input text-white font-14"
+                    style={{ paddingRight: '125px' }}
+                  />
+                  <div className="wolve_input_max">MAX</div>
+                  <div className={'wolve_input_label font-14'}>WOWS/ETH LP</div>
                 </div>
 
                 <div className="d-flex justify-content-end mt-1 font-13">

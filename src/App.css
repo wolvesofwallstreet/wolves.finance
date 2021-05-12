@@ -65,7 +65,7 @@ span a:hover {
 }
 
 .bg-orange-transparent {
-  background-color: var(--wolves-orange-transparent);
+  background-color: var(--wolves-orange-transparent) !important;
 }
 
 .t-left {
