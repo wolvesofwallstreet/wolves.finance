@@ -174,9 +174,7 @@ describe('LP NFTs', function () {
   const wowsTokenIdWolf = ethers.BigNumber.from('0x05020000');
 
   const cfolioItemTokenId = ethers.BigNumber.from('0x10000000000000000');
-  const cfolioItemTokenIdTf = ethers.BigNumber.from(
-    '0x5309971e8790a6fbc5a3571116ad633900000000000000010000000000000000'
-  );
+  let cfolioItemTokenIdTf = ethers.BigNumber.from(0);
   const cFolioItemType = 0; // Card type 0, registered in minter for cfolioItemHandlerLP
   const cFolioItemURI = 'http://4travelers.de/wolves_assets/cfolio/00.json';
 
@@ -486,13 +484,21 @@ describe('LP NFTs', function () {
     } = contracts;
 
     // Mint a new LP investment type into Wolf
-    const tx = sftMinterContract.mintCFolioItemSFT(
+    const tx = await sftMinterContract.mintCFolioItemSFT(
       marketingWallet.address,
       cFolioItemType,
       cFolioItemURI,
       wowsTokenIdWolf,
       [lpBalance]
     );
+
+    // Check cryptofolio and the LP NFT should appear
+    const [tokenIds, idsLength] = await cryptofolioContractWolf.getCryptofolio(
+      tradeFloorProxyContract.address
+    );
+    chai.expect(idsLength).to.equal(1);
+    cfolioItemTokenIdTf = tokenIds[0];
+
     await chai
       .expect(tx)
       .to.emit(uniV2PairContract, 'Transfer')
