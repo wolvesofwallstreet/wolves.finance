@@ -23,14 +23,15 @@ type PROPS = {
   history: RouteComponentProps['history'];
 };
 
-type AnyObjType = { [key: string]: string };
+type ObjType = { [key: string]: string };
 
 type STATE = {
   input1: string;
   input2: string;
   currentImage: number;
   slideIndex?: number;
-  imgSlides: AnyObjType[];
+  imgSlides: ObjType[];
+  [key: string]: unknown;
 };
 
 type IMAGE = { tokenId: number; level: number; index: number };
@@ -53,22 +54,69 @@ class NukaSlider extends React.Component<PROPS, STATE> {
       currentImage: 0,
       slideIndex: 0,
       imgSlides: [],
+      windowHeight: window.innerHeight,
+      windowWidth: window.innerWidth,
+      slidesToShow: 5,
     };
     this.fetchData = this.fetchData.bind(this);
     this.renderSlideButtons = this.renderSlideButtons.bind(this);
+    this.windowResized = this.windowResized.bind(this);
   }
 
   setCurrentImage(val: number) {
     this.setState({ currentImage: val });
   }
 
+  windowResized() {
+    let slidesToShow = 5;
+
+    if (window.innerWidth <= 1024) {
+      slidesToShow = 4;
+    }
+
+    if (window.innerWidth <= 768) {
+      slidesToShow = 3;
+    }
+
+    if (window.innerWidth <= 815) {
+      slidesToShow = 2;
+    }
+
+    if (window.innerWidth <= 627) {
+      slidesToShow = 2;
+    }
+
+    if (window.innerWidth <= 375) {
+      slidesToShow = 1;
+    }
+
+    console.log(
+      'NukaSlider.tsx::[90] slidesToShow',
+      window.innerWidth,
+      slidesToShow
+    );
+
+    this.setState({
+      slidesToShow,
+    });
+
+    this.setState({
+      windowHeight: window.innerHeight,
+      windowWidth: window.innerWidth,
+    });
+  }
+
   componentDidMount() {
     this._updateImages();
     this.fetchData();
+
+    window.addEventListener('resize', this.windowResized);
   }
 
   componentWillUnmount() {
-    //
+    return () => {
+      window.removeEventListener('resize', this.windowResized);
+    };
   }
 
   _updateImages() {
@@ -122,7 +170,7 @@ class NukaSlider extends React.Component<PROPS, STATE> {
   }
 
   render(): JSX.Element {
-    const { imgSlides } = this.state;
+    const { imgSlides, slidesToShow } = this.state;
     let slides = null;
     if (imgSlides.length) {
       slides = imgSlides.map((elem, index) => {
@@ -170,19 +218,19 @@ class NukaSlider extends React.Component<PROPS, STATE> {
               }
             >
               <div className="vw-80 py-2 glide-border-t glide-border-b p_relative center_triange_down center_triange_up">
-                <div className="nuka_slider ">
+                <div className="nuka_slider">
                   <Carousel
                     wrapAround
                     swiping
                     cellAlign="center"
                     cellSpacing={10}
-                    slidesToShow={5}
+                    slidesToShow={Number(slidesToShow) || 2}
                     slideIndex={this.state.slideIndex}
                     renderCenterLeftControls={({ previousSlide }) =>
                       this.renderSlideButtons(previousSlide, 'left')
                     }
                     renderCenterRightControls={({ nextSlide }) =>
-                      this.renderSlideButtons(nextSlide)
+                      this.renderSlideButtons(nextSlide, 'right')
                     }
                     afterSlide={(slideIndex) => {
                       this.setState({ slideIndex });
