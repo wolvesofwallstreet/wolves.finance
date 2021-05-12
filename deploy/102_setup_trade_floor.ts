@@ -31,7 +31,7 @@ function log_step(step_string) {
 const func = async function (hardhat_re) {
   const { deployments, getNamedAccounts } = hardhat_re;
 
-  const { execute } = deployments;
+  const { catchUnknownSigner, execute } = deployments;
   const { marketingWallet } = await getNamedAccounts();
 
   // Get chain ID
@@ -47,6 +47,9 @@ const func = async function (hardhat_re) {
   const SFT_HOLDER_INSTANCE = await hardhat_re.ethers.getContract(
     SFT_HOLDER_CONTRACT
   );
+  const SFT_MINTER_INSTANCE = await hardhat_re.ethers.getContract(
+    SFT_MINTER_CONTRACT
+  );
 
   //////////////////////////////////////////////////////////////////////////////
   //
@@ -60,29 +63,46 @@ const func = async function (hardhat_re) {
   // 1.) Call WowsERC1155.sol::grantRole(TRADEFLOOR_ROLE, TradeFloorProxy)
   //
 
-  await execute(
-    SFT_HOLDER_CONTRACT,
-    {
-      from: marketingWallet,
-      log: true,
-    },
-    'grantRole',
-    await SFT_HOLDER_INSTANCE.TRADEFLOOR_ROLE(),
-    generatedAddresses.tradeFloorProxy
-  );
+  if (
+    !(await SFT_HOLDER_INSTANCE.hasRole(
+      await SFT_HOLDER_INSTANCE.TRADEFLOOR_ROLE(),
+      generatedAddresses.tradeFloorProxy
+    ))
+  ) {
+    await catchUnknownSigner(
+      execute(
+        SFT_HOLDER_CONTRACT,
+        {
+          from: marketingWallet,
+          log: true,
+        },
+        'grantRole',
+        await SFT_HOLDER_INSTANCE.TRADEFLOOR_ROLE(),
+        generatedAddresses.tradeFloorProxy
+      )
+    );
+  }
 
   //
   // 2.) Call WOWSSftMinter.sol::setTradeFloor(TradeFloorProxy)
   //
-  await execute(
-    SFT_MINTER_CONTRACT,
-    {
-      from: marketingWallet,
-      log: true,
-    },
-    'setTradeFloor',
+
+  if (
+    (await SFT_MINTER_INSTANCE.tradeFloor()) !==
     generatedAddresses.tradeFloorProxy
-  );
+  ) {
+    await catchUnknownSigner(
+      execute(
+        SFT_MINTER_CONTRACT,
+        {
+          from: marketingWallet,
+          log: true,
+        },
+        'setTradeFloor',
+        generatedAddresses.tradeFloorProxy
+      )
+    );
+  }
 };
 
 module.exports = func;

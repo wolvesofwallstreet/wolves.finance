@@ -116,6 +116,10 @@ const func = async function (hardhat_re) {
   const configAddresses = (!IGNORE_ADDRESSES && configNetworks[chainId]) || {};
   const generatedAddresses = generatedNetworks[chainId] || {};
 
+  console.log('Deployer: ', deployer);
+  console.log('MarketingWallet: ', marketingWallet);
+  console.log('TeamWallet: ', teamWallet);
+
   //////////////////////////////////////////////////////////////////////////////
   //
   // Address registry
