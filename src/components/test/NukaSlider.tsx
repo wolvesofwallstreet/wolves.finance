@@ -54,8 +54,6 @@ class NukaSlider extends React.Component<PROPS, STATE> {
       currentImage: 0,
       slideIndex: 0,
       imgSlides: [],
-      windowHeight: window.innerHeight,
-      windowWidth: window.innerWidth,
       slidesToShow: 5,
     };
     this.fetchData = this.fetchData.bind(this);
@@ -90,33 +88,20 @@ class NukaSlider extends React.Component<PROPS, STATE> {
       slidesToShow = 1;
     }
 
-    console.log(
-      'NukaSlider.tsx::[90] slidesToShow',
-      window.innerWidth,
-      slidesToShow
-    );
-
     this.setState({
       slidesToShow,
-    });
-
-    this.setState({
-      windowHeight: window.innerHeight,
-      windowWidth: window.innerWidth,
     });
   }
 
   componentDidMount() {
     this._updateImages();
     this.fetchData();
-
+    this.windowResized()
     window.addEventListener('resize', this.windowResized);
   }
 
   componentWillUnmount() {
-    return () => {
-      window.removeEventListener('resize', this.windowResized);
-    };
+    window.removeEventListener('resize', this.windowResized);
   }
 
   _updateImages() {
@@ -178,7 +163,7 @@ class NukaSlider extends React.Component<PROPS, STATE> {
         return (
           <div key={Math.random() + index} className={'nuka_slide'}>
             <div
-              className="glide__slide_test__img_container"
+              className="slide_test__img_container"
               style={{
                 ['--url' as string]: `url(${avatar}`,
               }}

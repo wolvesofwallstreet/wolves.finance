@@ -34,7 +34,7 @@
   opacity: 1 !important;
 }
 
-.glide__slide_test__img_container {
+.slide_test__img_container {
   border: 1px solid var(--wolves-white);
 
   position: relative;
@@ -52,7 +52,7 @@
   background-repeat: no-repeat;
 }
 
-.slide-current .glide__slide_test__img_container {
+.slide-current .slide_test__img_container {
   opacity: 1 !important;
   border: 3px solid var(--wolves-white);
   transform: scale(1.15);
