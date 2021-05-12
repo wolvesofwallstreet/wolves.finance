@@ -12,6 +12,12 @@
   overflow: visible !important;
 } */
 
+.nuka_slider {
+  min-height: 150px;
+  margin-left: 8vw;
+  margin-right: 8vw;
+}
+
 .slider-control-bottomcenter {
   display: none;
   visibility: hidden;
@@ -33,11 +39,11 @@
 
   position: relative;
 
-  width: 140px;
-  height: 150px;
+  width: 150px;
+  height: 155px;
 
-  min-width: 140px;
-  min-height: 150px;
+  min-width: 150px;
+  min-height: 155px;
 
   --url: url('../../assets/loading_animated.gif');
   background-image: var(--url);
@@ -68,11 +74,6 @@
   right: 7%;
   transform: scale(0.8);
 }
-/* 
-
-.glide__slide_test_active .slide_count {
-  transform: scale(0.88);
-} */
 
 .glide__arrow {
   width: 0;
@@ -111,4 +112,10 @@
 
 .glide__arrow--right:hover {
   border-left-color: var(--wolves-orange);
+}
+
+.slide__arrows {
+  width: calc(18vw) !important;
+  position: absolute;
+  transform: translateX(-50%);
 }

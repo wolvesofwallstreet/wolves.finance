@@ -112,10 +112,12 @@ class NukaSlider extends React.Component<PROPS, STATE> {
     arrow_direction = 'right'
   ) {
     return (
-      <button
-        className={`glide__arrow glide__arrow--${arrow_direction}`}
-        onClick={cb}
-      ></button>
+      <div className="slide__arrows">
+        <button
+          className={`glide__arrow glide__arrow--${arrow_direction}`}
+          onClick={cb}
+        ></button>
+      </div>
     );
   }
 
