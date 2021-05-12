@@ -133,9 +133,7 @@ describe('Trade Floor', function () {
   const cardIdWolf = 2;
   const wowsTokenIdBoi = ethers.BigNumber.from('0x01020000');
   const wowsTokenIdWolf = ethers.BigNumber.from('0x05020000');
-  const wowsTokenIdWolfTf = ethers.BigNumber.from(
-    '0xc8aa430687110a1d9b7784e10057848e00000000000000000000000005020000'
-  );
+  let wowsTokenIdWolfTf = ethers.BigNumber.from(0);
 
   // Lazily-initialized variables
   let ethUsd = 0;
@@ -333,7 +331,13 @@ describe('Trade Floor', function () {
         wowsTokenIdWolf,
         1
       );
-    //console.log(JSON.stringify(await sftHolderContract.provider.getTransactionReceipt(tx.hash)));
+
+    // Get the new minted TradeFloor tokenId
+    const tokenIds = await tradeFloorProxyInstance.getTokenIds(
+      marketingWallet.address
+    );
+    chai.expect(tokenIds.length).to.equal(1);
+    wowsTokenIdWolfTf = tokenIds[0];
 
     // Log gas cost
     const receipt = await (await tx).wait();
