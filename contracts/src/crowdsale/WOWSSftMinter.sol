@@ -168,6 +168,30 @@ contract WOWSSftMinter is Context, Ownable {
   }
 
   /**
+   * @dev retrieve mint information about cfolioItem
+   */
+  function getCFolioSpec(uint256[] calldata cFolioTypes)
+    external
+    view
+    returns (
+      uint256[] memory prices,
+      uint128[] memory numMinted,
+      uint128[] memory maxMintable
+    )
+  {
+    uint256 length = cFolioTypes.length;
+    prices = new uint256[](length);
+    numMinted = new uint128[](length);
+    maxMintable = new uint128[](length);
+
+    for (uint256 i; i < length; ++i) {
+      CFolioItemSft storage cfi = cfolioItemSfts[cFolioTypes[i]];
+      numMinted[i] = cfi.numMinted;
+      maxMintable[i] = cfi.maxMintable;
+    }
+  }
+
+  /**
    * @dev Mint one of our stock card SFTs
    *
    * Approval of WOWS token required before the call.
