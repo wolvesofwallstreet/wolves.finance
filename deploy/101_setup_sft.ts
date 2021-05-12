@@ -33,7 +33,7 @@ function log_step(step_string) {
 const func = async function (hardhat_re) {
   const { deployments, getNamedAccounts } = hardhat_re;
 
-  const { execute } = deployments;
+  const { catchUnknownSigner, execute } = deployments;
   const { marketingWallet } = await getNamedAccounts();
 
   // Get chain ID
@@ -52,6 +52,9 @@ const func = async function (hardhat_re) {
   const SFT_HOLDER_INSTANCE = await hardhat_re.ethers.getContract(
     SFT_HOLDER_CONTRACT
   );
+  const SFT_MINTER_INSTANCE = await hardhat_re.ethers.getContract(
+    SFT_MINTER_CONTRACT
+  );
 
   //////////////////////////////////////////////////////////////////////////////
   //
@@ -65,52 +68,74 @@ const func = async function (hardhat_re) {
   // 1.) WowsToken:: grantRole (REWARD_ROLE, WOWSSftMinter.sol)
   //
 
-  await execute(
-    REWARD_HANDLER_CONTRACT,
-    {
-      from: marketingWallet,
-      log: true,
-    },
-    'grantRole',
-    await REWARD_HANDLER_INSTANCE.REWARD_ROLE(),
-    generatedAddresses.sftMinter
-  );
+  if (
+    !(await REWARD_HANDLER_INSTANCE.hasRole(
+      await REWARD_HANDLER_INSTANCE.REWARD_ROLE(),
+      generatedAddresses.sftMinter
+    ))
+  ) {
+    await catchUnknownSigner(
+      execute(
+        REWARD_HANDLER_CONTRACT,
+        {
+          from: marketingWallet,
+          log: true,
+        },
+        'grantRole',
+        await REWARD_HANDLER_INSTANCE.REWARD_ROLE(),
+        generatedAddresses.sftMinter
+      )
+    );
+  }
 
   //
   // 2.) Call WOWSSftMinter.sol::setPrices()
   //     For test: ["0", "1", "2", "3"], ["500000000000000000", "1000000000000000000", "2000000000000000000", "4000000000000000000"]
   //
 
-  await execute(
-    SFT_MINTER_CONTRACT,
-    {
-      from: marketingWallet,
-      log: true,
-    },
-    'setPrices',
-    ['0', '1', '4', '5'],
-    [
-      '1000000000000000000',
-      '3000000000000000000',
-      '1000000000000000000',
-      '3000000000000000000',
-    ]
-  );
+  if ((await SFT_MINTER_INSTANCE._pricePerLevel(0)).isZero()) {
+    await catchUnknownSigner(
+      execute(
+        SFT_MINTER_CONTRACT,
+        {
+          from: marketingWallet,
+          log: true,
+        },
+        'setPrices',
+        ['0', '1', '4', '5'],
+        [
+          '1000000000000000000',
+          '3000000000000000000',
+          '1000000000000000000',
+          '3000000000000000000',
+        ]
+      )
+    );
+  }
 
   //
   // 3.) Call WowsERC1155.sol::grantRole(MINTER_ROLE, WOWSSftMinter.sol)
   //
 
-  await execute(
-    SFT_HOLDER_CONTRACT,
-    {
-      from: marketingWallet,
-      log: true,
-    },
-    'grantRole',
-    await SFT_HOLDER_INSTANCE.MINTER_ROLE(),
-    generatedAddresses.sftMinter
-  );
+  if (
+    !(await SFT_HOLDER_INSTANCE.hasRole(
+      await SFT_HOLDER_INSTANCE.MINTER_ROLE(),
+      generatedAddresses.sftMinter
+    ))
+  ) {
+    await catchUnknownSigner(
+      execute(
+        SFT_HOLDER_CONTRACT,
+        {
+          from: marketingWallet,
+          log: true,
+        },
+        'grantRole',
+        await SFT_HOLDER_INSTANCE.MINTER_ROLE(),
+        generatedAddresses.sftMinter
+      )
+    );
+  }
 };
 
 module.exports = func;

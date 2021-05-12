@@ -33,7 +33,7 @@ function log_step(step_string) {
 const func = async function (hardhat_re) {
   const { deployments, getNamedAccounts } = hardhat_re;
 
-  const { execute } = deployments;
+  const { catchUnknownSigner, execute } = deployments;
   const { marketingWallet } = await getNamedAccounts();
 
   // Get chain ID
@@ -46,6 +46,9 @@ const func = async function (hardhat_re) {
   const generatedAddresses = generatedNetworks[chainId] || {};
 
   // Load deployed contract instances
+  const CONTROLLER_INSTANCE = await hardhat_re.ethers.getContract(
+    CONTROLLER_CONTRACT
+  );
   const TOKEN_INSTANCE = await hardhat_re.ethers.getContract(TOKEN_CONTRACT);
   const REWARD_HANDLER_INSTANCE = await hardhat_re.ethers.getContract(
     REWARD_HANDLER_CONTRACT
@@ -65,16 +68,25 @@ const func = async function (hardhat_re) {
   //     rewards.
   //
 
-  await execute(
-    REWARD_HANDLER_CONTRACT,
-    {
-      from: marketingWallet,
-      log: true,
-    },
-    'grantRole',
-    await REWARD_HANDLER_INSTANCE.REWARD_ROLE(),
-    generatedAddresses.controller
-  );
+  if (
+    !(await REWARD_HANDLER_INSTANCE.hasRole(
+      await REWARD_HANDLER_INSTANCE.REWARD_ROLE(),
+      generatedAddresses.controller
+    ))
+  ) {
+    await catchUnknownSigner(
+      execute(
+        REWARD_HANDLER_CONTRACT,
+        {
+          from: marketingWallet,
+          log: false,
+        },
+        'grantRole',
+        await REWARD_HANDLER_INSTANCE.REWARD_ROLE(),
+        generatedAddresses.controller
+      )
+    );
+  }
 
   //
   // 2.) Call WOWSErc20.sol::grantRole(WOWSErc20.sol.REWARD_ROLE(), controller)
@@ -82,16 +94,25 @@ const func = async function (hardhat_re) {
   //     rewards.
   //
 
-  await execute(
-    TOKEN_CONTRACT,
-    {
-      from: marketingWallet,
-      log: true,
-    },
-    'grantRole',
-    await TOKEN_INSTANCE.MINTER_ROLE(),
-    generatedAddresses.rewardHandler
-  );
+  if (
+    !(await TOKEN_INSTANCE.hasRole(
+      await TOKEN_INSTANCE.MINTER_ROLE(),
+      generatedAddresses.rewardHandler
+    ))
+  ) {
+    await catchUnknownSigner(
+      execute(
+        TOKEN_CONTRACT,
+        {
+          from: marketingWallet,
+          log: true,
+        },
+        'grantRole',
+        await TOKEN_INSTANCE.MINTER_ROLE(),
+        generatedAddresses.rewardHandler
+      )
+    );
+  }
 
   //
   // 3.) Call Controller.sol::registerFarm()
@@ -109,35 +130,48 @@ const func = async function (hardhat_re) {
   const REWARD_PROVIDED = 0;
   const REWARD_FEE = 2 * 1e4;
 
-  await execute(
-    CONTROLLER_CONTRACT,
-    {
-      from: marketingWallet,
-      log: true,
-    },
-    'registerFarm',
-    FARM_ADDRESS,
-    REWARD_CAP,
-    REWARD_PER_DURATION,
-    REWARD_PROVIDED,
-    REWARD_FEE
-  );
+  if ((await CONTROLLER_INSTANCE.farms(FARM_ADDRESS)).farmStartedAtBlock.isZero()) {
+    await catchUnknownSigner(
+      execute(
+        CONTROLLER_CONTRACT,
+        {
+          from: marketingWallet,
+          log: true,
+        },
+        'registerFarm',
+        FARM_ADDRESS,
+        REWARD_CAP,
+        REWARD_PER_DURATION,
+        REWARD_PROVIDED,
+        REWARD_FEE
+      )
+    );
+  }
 
   //
   // 4.) Call WOWSErc20.sol::grantRole(WOWSErc20.sol.MINTER_ROLE(), Crowdsale.sol)
   //     !!! ONLY DURING PRESALE !!!
   //
 
-  await execute(
-    TOKEN_CONTRACT,
-    {
-      from: marketingWallet,
-      log: true,
-    },
-    'grantRole',
-    await TOKEN_INSTANCE.MINTER_ROLE(),
-    generatedAddresses.presale
-  );
+  if (
+    !(await TOKEN_INSTANCE.hasRole(
+      await TOKEN_INSTANCE.MINTER_ROLE(),
+      generatedAddresses.presale
+    ))
+  ) {
+    await catchUnknownSigner(
+      execute(
+        TOKEN_CONTRACT,
+        {
+          from: marketingWallet,
+          log: true,
+        },
+        'grantRole',
+        await TOKEN_INSTANCE.MINTER_ROLE(),
+        generatedAddresses.presale
+      )
+    );
+  }
 
   //
   // 5.) Call Controller.sol::setWorker(teamwallet)
