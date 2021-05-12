@@ -57,51 +57,19 @@ class NukaSlider extends React.Component<PROPS, STATE> {
       slidesToShow: 5,
     };
     this.fetchData = this.fetchData.bind(this);
-    this.renderSlideButtons = this.renderSlideButtons.bind(this);
-    this.windowResized = this.windowResized.bind(this);
   }
 
   setCurrentImage(val: number) {
     this.setState({ currentImage: val });
   }
 
-  windowResized() {
-    let slidesToShow = 5;
-
-    if (window.innerWidth <= 1024) {
-      slidesToShow = 4;
-    }
-
-    if (window.innerWidth <= 768) {
-      slidesToShow = 3;
-    }
-
-    if (window.innerWidth <= 815) {
-      slidesToShow = 2;
-    }
-
-    if (window.innerWidth <= 627) {
-      slidesToShow = 2;
-    }
-
-    if (window.innerWidth <= 375) {
-      slidesToShow = 1;
-    }
-
-    this.setState({
-      slidesToShow,
-    });
-  }
-
   componentDidMount() {
     this._updateImages();
     this.fetchData();
-    this.windowResized()
-    window.addEventListener('resize', this.windowResized);
   }
 
   componentWillUnmount() {
-    window.removeEventListener('resize', this.windowResized);
+    //
   }
 
   _updateImages() {
@@ -140,28 +108,14 @@ class NukaSlider extends React.Component<PROPS, STATE> {
       });
   }
 
-  renderSlideButtons(
-    cb: React.MouseEventHandler<HTMLButtonElement> | undefined,
-    arrow_direction = 'right'
-  ) {
-    return (
-      <div className="slide__arrows">
-        <button
-          className={`glide__arrow glide__arrow--${arrow_direction}`}
-          onClick={cb}
-        ></button>
-      </div>
-    );
-  }
-
   render(): JSX.Element {
-    const { imgSlides, slidesToShow } = this.state;
+    const { imgSlides } = this.state;
     let slides = null;
     if (imgSlides.length) {
       slides = imgSlides.map((elem, index) => {
         const { avatar = '' } = elem;
         return (
-          <div key={Math.random() + index} className={'nuka_slide'}>
+          <div key={'n_slide' + index} className={'nuka_slide'}>
             <div
               className="slide_test__img_container"
               style={{
@@ -194,8 +148,6 @@ class NukaSlider extends React.Component<PROPS, STATE> {
               </h3>
             </div>
 
-            {/* <button onClick={() => goToSlide(1)}>go to SLide</button> */}
-
             {/* Card slider */}
             <div
               className={
@@ -208,15 +160,25 @@ class NukaSlider extends React.Component<PROPS, STATE> {
                     wrapAround
                     swiping
                     cellAlign="center"
-                    cellSpacing={10}
-                    slidesToShow={Number(slidesToShow) || 2}
+                    cellSpacing={30}
                     slideIndex={this.state.slideIndex}
-                    renderCenterLeftControls={({ previousSlide }) =>
-                      this.renderSlideButtons(previousSlide, 'left')
-                    }
-                    renderCenterRightControls={({ nextSlide }) =>
-                      this.renderSlideButtons(nextSlide, 'right')
-                    }
+                    slideWidth="120px"
+                    renderCenterLeftControls={({ previousSlide }) => (
+                      <div className="slide__arrows">
+                        <button
+                          className={`glide__arrow glide__arrow--left`}
+                          onClick={previousSlide}
+                        ></button>
+                      </div>
+                    )}
+                    renderCenterRightControls={({ nextSlide }) => (
+                      <div className="slide__arrows">
+                        <button
+                          className={`glide__arrow glide__arrow--right`}
+                          onClick={nextSlide}
+                        ></button>
+                      </div>
+                    )}
                     afterSlide={(slideIndex) => {
                       this.setState({ slideIndex });
                     }}
