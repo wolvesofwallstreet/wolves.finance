@@ -1,0 +1,304 @@
+/*
+ * Copyright (C) 2020 wolves.finance developers
+ * This file is part of wolves.finance - https://github.com/peak3d/wolves.finance
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * See the file LICENSES/README.md for more information.
+ */
+
+/* slider-frame slider-slide slide-visible slide-current */
+
+/* * {
+  overflow: visible !important;
+} */
+
+.nuka_slider {
+  min-height: 150px;
+  margin-left: 8vw;
+  margin-right: 8vw;
+}
+
+.slider-control-bottomcenter {
+  display: none;
+  visibility: hidden;
+}
+
+.nuka_slide {
+  display: flex;
+  justify-content: center;
+  transform: scale(0.8);
+  opacity: 0.6;
+}
+
+.slide-current .nuka_slide {
+  opacity: 1 !important;
+}
+
+.slide_test__img_container {
+  border: 1px solid var(--wolves-white);
+
+  position: relative;
+
+  width: 150px;
+  height: 155px;
+
+  min-width: 150px;
+  min-height: 155px;
+
+  --url: url('../../../assets/loading_animated.gif');
+  background-image: var(--url);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+.slide-current .slide_test__img_container {
+  opacity: 1 !important;
+  border: 3px solid var(--wolves-white);
+  transform: scale(1.15);
+}
+
+.slide_count {
+  width: 27.9px;
+  height: 27.9px;
+  line-height: 27.9px;
+  text-align: center;
+  border-radius: 50%;
+  background-color: #ffb89f;
+  color: black;
+  z-index: 10;
+  position: absolute;
+  line-height: 160%;
+  font-weight: bold;
+  top: 7px;
+  right: 7%;
+  transform: scale(0.8);
+}
+
+.slide__arrow {
+  position: absolute;
+  display: block;
+  top: 50%;
+  z-index: 2;
+  color: transparent;
+  text-transform: uppercase;
+  background-color: transparent;
+  border-radius: 4px;
+  text-shadow: 0 0.25em 0.5em rgba(0, 0, 0, 0.1);
+  opacity: 1;
+  cursor: pointer;
+  transition: opacity 150ms ease, border 300ms ease-in-out;
+  transform: translateY(-50%);
+  line-height: 1;
+  /* custom */
+  width: 0;
+  height: 0;
+  padding: 0;
+  box-shadow: none;
+  border-style: solid;
+  border-color: transparent;
+  border-width: 10px 10px 10px 10px;
+}
+
+.slide__arrow--left {
+  border-right-width: 10px;
+  border-right-color: var(--wolves-orange-light);
+  --left: 0;
+  left: var(--left);
+}
+
+.slide__arrow--right {
+  border-left-width: 10px;
+  border-left-color: var(--wolves-orange-light);
+  --right: 0;
+  right: var(--right);
+}
+
+/* arrow state's */
+.slide__arrow:focus {
+  outline: none;
+}
+
+.slide__arrow:hover {
+  border-color: transparent;
+  background-color: transparent;
+}
+
+.slide__arrow--left:hover {
+  border-right-color: var(--wolves-orange);
+}
+
+.slide__arrow--right:hover {
+  border-left-color: var(--wolves-orange);
+}
+
+.slide__arrows {
+  width: calc(18vw) !important;
+  position: absolute;
+  transform: translateX(-50%);
+}
+
+/*
+
+/
+/
+/
+**/
+
+.glide-border-t {
+  border-top: 1px solid var(--wolves-orange-light);
+}
+
+.glide-border-b {
+  border-bottom: 1px solid var(--wolves-orange-light);
+}
+
+.before_none::before {
+  content: none !important;
+}
+
+.after_none::after {
+  content: none !important;
+}
+
+/* Custom Box */
+.glide__slide_empty_box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  height: 115px;
+  max-width: 105px;
+
+  border: 2px solid var(--wolves-orange-light);
+  font-size: 10px;
+  font-weight: bold;
+  line-height: 1.1;
+}
+
+/* END- Custom Box */
+.slide-img {
+  position: relative;
+  top: 0;
+  width: 100%;
+  opacity: 0.78;
+  max-width: 100px;
+  max-height: 140px;
+  height: 110px;
+  cursor: pointer;
+  background-image: url('../../../assets/loading_animated.gif');
+  background-size: cover;
+  background-position: center;
+}
+
+.slide-img:hover {
+  opacity: 0.88;
+}
+
+.slider_active_slide .slide-img {
+  border: 2px solid var(--wolves-white);
+  transform: scale(1.2);
+  opacity: 1;
+}
+
+.glide__slide--active {
+  opacity: 1;
+  filter: none;
+  transform: scale(1.2);
+}
+
+.slide-count {
+  width: 21px;
+  height: 21px;
+  line-height: 21px;
+  text-align: center;
+  border-radius: 50%;
+  background-color: #ffb89f;
+  color: black;
+  z-index: 10;
+  position: absolute;
+  font-weight: bold;
+  top: 7px;
+  /* right: 25px; */
+  right: 18%;
+}
+
+.slide__arrow {
+  width: 0;
+  height: 0;
+  padding: 0;
+  box-shadow: none;
+  border-style: solid;
+  position: absolute;
+  border-color: transparent;
+  border-width: 10px 10px 10px 10px;
+}
+
+.slide__arrow--left {
+  border-right-width: 10px;
+  border-right-color: var(--wolves-orange-light);
+  --left: 0;
+  left: var(--left);
+}
+
+.slide__arrow--right {
+  border-left-width: 10px;
+  border-left-color: var(--wolves-orange-light);
+  --right: 0;
+  right: var(--right);
+}
+
+/* hover state */
+.slide__arrow:hover {
+  border-color: transparent;
+  background-color: transparent;
+}
+
+.slide__arrow--left:hover {
+  border-right-color: var(--wolves-orange);
+}
+
+.slide__arrow--right:hover {
+  border-left-color: var(--wolves-orange);
+}
+
+/* Slide btn */
+
+/*
+  H-Bar Centered trianges,
+  triange_up, triange_down
+ */
+/*
+ * Copyright (C) 2020 wolves.finance developers
+ * This file is part of wolves.finance - https://github.com/peak3d/wolves.finance
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * See the file LICENSES/README.md for more information.
+ */
+.center_triange_up::before {
+  content: ' ';
+  position: absolute;
+  top: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  background-color: transparent;
+  border-color: transparent;
+  border-width: 10px 20px 0 20px;
+  border-top-color: var(--wolves-orange-light);
+  transform: translateX(-20px);
+}
+
+.center_triange_down::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  background-color: transparent;
+  border-color: transparent;
+  border-width: 0 20px 10px 20px;
+  border-bottom-color: var(--wolves-orange-light);
+  transform: translateX(-20px);
+}
