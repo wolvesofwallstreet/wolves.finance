@@ -66,7 +66,7 @@ type ChainAddresses = {
   stakeFarm: string;
   sftMinter: string;
   sftHolder: string;
-  tradeFloor: string;
+  tradeFloorProxy: string;
 };
 interface IIndexable {
   [key: number]: ChainAddresses;
@@ -529,9 +529,9 @@ class Store {
         SFTMinterAbi,
         signer
       );
-      if (chainAddresses.tradeFloor !== '')
+      if (chainAddresses.tradeFloorProxy !== '')
         this.tradeFloorContract = new ethers.Contract(
-          chainAddresses.tradeFloor,
+          chainAddresses.tradeFloorProxy,
           TradeFloorAbi,
           signer
         );
