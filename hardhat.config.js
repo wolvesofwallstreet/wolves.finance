@@ -32,13 +32,13 @@ const config = {
     },
     marketingWallet: {
       default: 1,
-      rinkeby: '0x7Df8c0E18c6103B1f5037032ca02A960cd4F67E4',
-      mainnet: '0xbb5a7c17adE983f03AFd8B09922b1C117b9eabc0',
+      rinkeby: env.RINKEBY_GNOSIS_MARKETING_WALLET_ADDRESS,
+      mainnet: env.MAINNET_GNOSIS_MARKETING_WALLET_ADDRESS,
     },
     teamWallet: {
       default: 2,
-      rinkeby: '0xb50c5E17B6d665d50AE5c44677086eB20f75Aa35',
-      mainnet: '0x154f41d41B67278c6AB41fc8Ca5db77Fd461f2f2',
+      rinkeby: env.RINKEBY_GNOSIS_TEAM_WALLET_ADDRESS,
+      mainnet: env.MAINNET_GNOSIS_TEAM_WALLET_ADDRESS,
     },
     testUser: {
       default: 3,
