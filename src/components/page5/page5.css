@@ -5,6 +5,28 @@
  * SPDX-License-Identifier: Apache-2.0
  * See LICENSE.txt for more information.
  */
+/* page5=page11 */
+
+.page5-container {
+  padding: 15px 10vw;
+  min-height: 300px;
+  color: white;
+}
+
+.page5-two-col-container {
+  display: flex;
+  padding: 10px 1vw;
+}
+
+.page5-two-col-container div {
+  flex: 1;
+}
+
+@media only screen and (max-width: 800px) {
+  .page5-two-col-container {
+    flex-direction: column;
+  }
+}
 
 #page5-section-header {
   display: flex;
@@ -29,15 +51,7 @@
 #page5-content-image {
   display: flex;
   align-items: baseline;
-  max-width: 500px;
-  flex-basis: 50%;
-  position: relative;
-}
-
-#page5-content-image {
-  display: flex;
-  align-items: baseline;
-  max-width: 500px;
+  /* max-width: 500px; */
   flex-basis: 50%;
   position: relative;
 }
@@ -75,9 +89,9 @@
 }
 
 .page5-info-ribbon li {
-  margin-right: 15px;
-  font-size: 16px;
-  font-weight: bold;
+  margin-right: 12px;
+  font-size: 10 !important;
+  /* font-weight: bold; */
 }
 
 .page5-text-input {
@@ -131,4 +145,28 @@
   .page5-grid-btn {
     grid-template-columns: repeat(auto-fit, minmax(100px, 310px));
   }
+}
+
+/* Buttons  */
+.page5_button_continer {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: 1fr;
+}
+
+@media screen and (min-width: 1024px) {
+  .page5_button_continer {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.page5_btn {
+  background-color: var(--wolves-orange);
+  border: 0.6px solid var(--wolves-white);
+  color: var(--wolves-blue-dk);
+  font-size: 12px;
+  line-height: 100%;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  /* white-space: nowrap; */
 }

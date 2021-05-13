@@ -10,6 +10,11 @@ import './App.css';
 import './wolves_scheme.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './components/theme/button/wolve_button.css';
+import './components/theme/nuka_carousel/nuka_carousel.css';
+import './components/theme/form/input/wolve_input.css';
+import './components/theme/glidejs/glide.core.min.css';
+import './components/theme/glidejs/glide.theme.min.css';
+import './components/theme/glidejs/glide_custom.css';
 
 import React from 'react';
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
