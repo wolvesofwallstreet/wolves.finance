@@ -5,19 +5,41 @@
  * SPDX-License-Identifier: Apache-2.0
  * See LICENSE.txt for more information.
  */
+/* page5=page11 */
 
-.page11-section-header {
+.page11-container {
+  padding: 15px 10vw;
+  min-height: 300px;
+  color: white;
+}
+
+.page11-two-col-container {
+  display: flex;
+  padding: 10px 1vw;
+}
+
+.page11-two-col-container div {
+  flex: 1;
+}
+
+@media only screen and (max-width: 800px) {
+  .page11-two-col-container {
+    flex-direction: column;
+  }
+}
+
+#page11-section-header {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
   width: 85%;
 }
 
-.page11-section-header a {
+#page11-section-header a {
   color: white;
 }
 
-.page11-content-container {
+#page11-content-container {
   margin-top: 15px;
   margin-bottom: 50px;
   display: flex;
@@ -26,15 +48,15 @@
   width: 85%;
 }
 
-.page11-content-image {
+#page11-content-image {
   display: flex;
   align-items: baseline;
-  max-width: 500px;
+  /* max-width: 500px; */
   flex-basis: 50%;
   position: relative;
 }
 
-.page11-content-image-inner {
+#page11-content-image-inner {
   border: grey 1px solid;
   background-image: url('../../assets/loading_animated.gif');
   background-size: cover;
@@ -67,9 +89,9 @@
 }
 
 .page11-info-ribbon li {
-  margin-right: 15px;
-  font-size: 16px;
-  font-weight: bold;
+  margin-right: 12px;
+  font-size: 10 !important;
+  /* font-weight: bold; */
 }
 
 .page11-text-input {
@@ -95,11 +117,11 @@
 }
 
 @media all and (max-width: 800px) {
-  .page11-content-container {
+  #page11-content-container {
     justify-content: center;
   }
 
-  .page11-content-image {
+  #page11-content-image {
     flex-basis: 100%;
   }
 
@@ -123,4 +145,28 @@
   .page11-grid-btn {
     grid-template-columns: repeat(auto-fit, minmax(100px, 310px));
   }
+}
+
+/* Buttons  */
+.page11_button_continer {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: 1fr;
+}
+
+@media screen and (min-width: 1024px) {
+  .page11_button_continer {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.page11_btn {
+  background-color: var(--wolves-orange);
+  border: 0.6px solid var(--wolves-white);
+  color: var(--wolves-blue-dk);
+  font-size: 12px;
+  line-height: 100%;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  /* white-space: nowrap; */
 }
