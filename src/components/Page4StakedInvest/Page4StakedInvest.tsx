@@ -262,7 +262,7 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
                     className="wolve_input text-white font-14"
                     style={{ paddingRight: '125px' }}
                   />
-                  <div className="wolve_input_max">MAX</div>
+                  {/*<div className="wolve_input_max">MAX</div>*/}
                   <div className={'wolve_input_label font-14'}>WOWS/ETH LP</div>
                 </div>
 
