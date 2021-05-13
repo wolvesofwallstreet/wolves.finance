@@ -15,7 +15,7 @@
 
 html,
 body {
-  overflow: overlay;
+  /*overflow: overlay;*/
 }
 
 .no-margin {
@@ -65,7 +65,7 @@ span a:hover {
 }
 
 .bg-orange-transparent {
-  background-color: var(--wolves-orange-transparent);
+  background-color: var(--wolves-orange-transparent) !important;
 }
 
 .t-left {
@@ -104,9 +104,12 @@ span a:hover {
   border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
+.p_relative {
+  position: relative;
+}
+
 /* --- START ARROWS */
 /* Src http://apps.eky.hk/css-triangle-generator/ */
-
 .arrow_up,
 .arrow_down,
 .arrow_left,
