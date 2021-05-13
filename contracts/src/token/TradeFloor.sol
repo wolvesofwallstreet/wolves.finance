@@ -11,6 +11,7 @@ pragma solidity >=0.7.0 <0.8.0;
 import '../../0xerc1155/interfaces/IERC20.sol';
 import '../../0xerc1155/tokens/ERC1155/ERC1155Holder.sol';
 
+import '../crowdsale/interfaces/IWOWSSftMinter.sol';
 import '../token/interfaces/IWOWSCryptofolio.sol';
 import '../token/interfaces/IWOWSERC1155.sol';
 import '../utils/AddressBook.sol';
@@ -712,12 +713,16 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
       require(sftRecipient != address(0), 'TF: invalid recipient');
     } else sftRecipient = from;
 
+    // Get SftMinter for tokenId conversation
+    IWOWSSftMinter minter =
+      IWOWSSftMinter(_addressRegistry.getRegistryEntry(AddressBook.SFT_MINTER));
+
     // Update state
     uint256[] memory mintedTokenIds = new uint256[](tokenIds.length);
     for (uint256 i = 0; i < tokenIds.length; ++i) {
       require(amounts[i] == 1, 'Amount != 1 not allowed');
 
-      uint256 mintedTokenId = _createTokenId(tokenIds[i]);
+      uint256 mintedTokenId = minter.tradeFloorTokenId(tokenIds[i]);
       mintedTokenIds[i] = mintedTokenId;
       require(!_tokenInfos[mintedTokenId].minted, 'Token already minted');
 
@@ -815,45 +820,5 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
       (tokenId = _sftHolder.addressToTokenId(test)) == uint256(-1) ||
       (tokenId.isBaseCard() &&
         IERC1155(address(_sftHolder)).balanceOf(address(this), tokenId) == 0);
-  }
-
-  /**
-   * @dev Calculate a 128 bit hash for making tokenIds unique to nderlying asset
-   *
-   * @param sftTokenId The tokenId from SFT contract from that we use the first 128 bit
-   * TokenIds in SFT contract are limited to max 128 Bit in WowsSftMinter contract.
-   */
-  function _createTokenId(uint256 sftTokenId) internal view returns (uint256) {
-    bytes memory hashData;
-    uint256[] memory tokenIds;
-    uint256 tokenIdsLength;
-    if (sftTokenId.isBaseCard()) {
-      // Its a base card, calculate hash using all cfolioItems
-      address cfolio = _sftHolder.tokenIdToAddress(sftTokenId);
-      require(cfolio != address(0), 'TF: src token invalid');
-      (tokenIds, tokenIdsLength) = IWOWSCryptofolio(cfolio).getCryptofolio(
-        address(this)
-      );
-      hashData = abi.encodePacked(address(this), sftTokenId);
-    } else {
-      // Its a cfolioItem itself, only calculate unerlying value
-      tokenIds = new uint256[](1);
-      tokenIds[0] = sftTokenId;
-      tokenIdsLength = 1;
-    }
-
-    // Run through all cfolioItems and add let their
-    // single CFolioItemHandler append hashable data
-    for (uint256 i = 0; i < tokenIdsLength; ++i) {
-      address cfolio = _sftHolder.tokenIdToAddress(tokenIds[i]);
-      require(cfolio != address(0), 'TF: item token invalid');
-
-      address handler = IWOWSCryptofolio(cfolio)._tradefloors(0);
-      require(handler != address(0), 'TF: item handler invalid');
-
-      hashData = ICFolioItemCallback(handler).appendHash(cfolio, hashData);
-    }
-    uint256 hashNum = uint256(keccak256(hashData));
-    return (hashNum ^ (hashNum << 128)).maskHash() | sftTokenId;
   }
 }

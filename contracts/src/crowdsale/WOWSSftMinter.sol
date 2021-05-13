@@ -16,6 +16,7 @@ import '@openzeppelin/contracts/utils/Context.sol';
 import '../cfolio/interfaces/ICFolioItemHandler.sol';
 import '../investment/interfaces/IRewardHandler.sol';
 import '../token/interfaces/IERC1155BurnMintable.sol';
+import '../token/interfaces/IWOWSCryptofolio.sol';
 import '../token/interfaces/IWOWSERC1155.sol';
 import '../utils/TokenIds.sol';
 
@@ -331,6 +332,47 @@ contract WOWSSftMinter is Context, Ownable {
       // Reset the temporary state which allows holding ERC1155 token
       _setupCFolio = false;
     }
+  }
+
+  /**
+   * @dev See {IWOWSSftMinter-tradeFloorTokenId}.
+   */
+  function tradeFloorTokenId(uint256 sftTokenId)
+    external
+    view
+    returns (uint256)
+  {
+    bytes memory hashData;
+    uint256[] memory tokenIds;
+    uint256 tokenIdsLength;
+    if (sftTokenId.isBaseCard()) {
+      // Its a base card, calculate hash using all cfolioItems
+      address cfolio = _sftContract.tokenIdToAddress(sftTokenId);
+      require(cfolio != address(0), 'WSM: src token invalid');
+      (tokenIds, tokenIdsLength) = IWOWSCryptofolio(cfolio).getCryptofolio(
+        address(this)
+      );
+      hashData = abi.encodePacked(address(this), sftTokenId);
+    } else {
+      // Its a cfolioItem itself, only calculate unerlying value
+      tokenIds = new uint256[](1);
+      tokenIds[0] = sftTokenId;
+      tokenIdsLength = 1;
+    }
+
+    // Run through all cfolioItems and add let their
+    // single CFolioItemHandler append hashable data
+    for (uint256 i = 0; i < tokenIdsLength; ++i) {
+      address cfolio = _sftContract.tokenIdToAddress(tokenIds[i]);
+      require(cfolio != address(0), 'WSM: item token invalid');
+
+      address handler = IWOWSCryptofolio(cfolio)._tradefloors(0);
+      require(handler != address(0), 'WSM: item handler invalid');
+
+      hashData = ICFolioItemCallback(handler).appendHash(cfolio, hashData);
+    }
+    uint256 hashNum = uint256(keccak256(hashData));
+    return (hashNum ^ (hashNum << 128)).maskHash() | sftTokenId;
   }
 
   //////////////////////////////////////////////////////////////////////////////
