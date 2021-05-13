@@ -130,7 +130,9 @@ const func = async function (hardhat_re) {
   const REWARD_PROVIDED = 0;
   const REWARD_FEE = 2 * 1e4;
 
-  if ((await CONTROLLER_INSTANCE.farms(FARM_ADDRESS)).farmStartedAtBlock.isZero()) {
+  if (
+    (await CONTROLLER_INSTANCE.farms(FARM_ADDRESS)).farmStartedAtBlock.isZero()
+  ) {
     await catchUnknownSigner(
       execute(
         CONTROLLER_CONTRACT,
