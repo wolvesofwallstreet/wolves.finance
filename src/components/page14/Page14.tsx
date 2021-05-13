@@ -64,8 +64,8 @@ function Page14({ t, location }: PROPS) {
             </h3>
           </div>
 
-          <div className="w-75 center-container">
-            <div className={'bg-blue-transparent font-16 py-3 px-3 my-2 mt-3'}>
+          <div className="vw-80 center-container">
+            <div className={'bg-blue-transparent font-14 px-4 py-2 my-2 mt-3'}>
               Earned: 2.000000 WOWS, | 10.34 $ | 12 DAI = $303.00 TOTAL
             </div>
 
@@ -73,19 +73,19 @@ function Page14({ t, location }: PROPS) {
               {cards.map((card, i) => {
                 return (
                   <div
-                    className="p-4 bg-blue-transparent "
+                    className="px-4 py-2 bg-blue-transparent "
                     key={i + Math.random()}
                   >
                     <div className={'page14-card justify-content-between'}>
                       <div className="p-1">
                         <div className="">
-                          <h3 className={'tk-vincente-bold h-4'}>
+                          <h3 className={'tk-vincente-bold font-24'}>
                             {card.title}
                           </h3>
                           <div className={'d-flex flex-column '}>
                             <span
                               className={
-                                'font-14 f-light single-line mt-2 mr-5'
+                                'font-14 f-light single-line mt-2 mr-5 text-nowrap'
                               }
                             >
                               LPToken: 0.00
@@ -129,7 +129,7 @@ function Page14({ t, location }: PROPS) {
           </div>
 
           {/* H-Line */}
-          <span className="line-container page13-line">
+          <span className="line-container w-100">
             <span id="left" className="dot" />
             <span className="line" />
             <span id="right" className="dot" />
