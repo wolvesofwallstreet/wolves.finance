@@ -58,6 +58,15 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   string public constant symbol = 'WOWSCFNFT';
 
   //////////////////////////////////////////////////////////////////////////////
+  // Modifier
+  //////////////////////////////////////////////////////////////////////////////
+
+  modifier onlyAdmins() {
+    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admin');
+    _;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
   // State
   //////////////////////////////////////////////////////////////////////////////
 
@@ -384,8 +393,17 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
    */
   function uri(uint256 tokenId) public view override returns (string memory) {
     // Validate state
-    require(_tokenInfos[tokenId].minted, 'Token not minted');
+    require(_tokenInfos[tokenId].minted, 'Not minted');
 
+    // test if cfolioItemHandler provides the URI
+    if (tokenId.isCFolioCard()) {
+      address cfolio = _sftHolder.tokenIdToAddress(tokenId.toSftTokenId());
+      require(cfolio != address(0), 'Invalid');
+      address handler = IWOWSCryptofolio(cfolio)._tradefloors(0);
+      require(handler != address(0), 'Invalid');
+      string memory result = ICFolioItemCallback(handler).uri(tokenId);
+      if (bytes(result).length > 0) return result;
+    }
     // Load state
     return _uri(tokenId, 0);
   }
@@ -481,9 +499,10 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   /**
    * @dev See {ERC1155Metadata-setBaseMetadataURI}.
    */
-  function setBaseMetadataURI(string memory baseMetadataURI) external {
-    // Access control
-    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Access denied');
+  function setBaseMetadataURI(string memory baseMetadataURI)
+    external
+    onlyAdmins
+  {
     // Set state
     _setBaseMetadataURI(baseMetadataURI);
   }
@@ -491,10 +510,10 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   /**
    * @dev Set contract metadata URI
    */
-  function setContractMetadataURI(string memory newContractUri) public {
-    // Access control
-    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admin');
-
+  function setContractMetadataURI(string memory newContractUri)
+    public
+    onlyAdmins
+  {
     _setContractMetadataURI(newContractUri);
   }
 
@@ -523,10 +542,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
    * @param tokenAddress the address of the token to transfer. Cannot be
    * rewardToken.
    */
-  function collectGarbage(address tokenAddress) external {
-    // Validate access
-    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admins');
-
+  function collectGarbage(address tokenAddress) external onlyAdmins {
     // Transfer token to msg.sender
     uint256 amountToken = IERC20(tokenAddress).balanceOf(address(this));
     if (amountToken > 0)
@@ -536,10 +552,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   /**
    * @dev Restrict trading to OPERATOR_ROLE (see setApprovalForAll)
    */
-  function restrictTrading(bool restrict) external {
-    // Validate access
-    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admins');
-
+  function restrictTrading(bool restrict) external onlyAdmins {
     // Update state
     _tradingRestricted = restrict;
   }
@@ -560,18 +573,12 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   // Rarible fees and events
   //////////////////////////////////////////////////////////////////////////////
 
-  function setFee(uint256 fee) external {
-    // Validate access
-    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admin');
-
+  function setFee(uint256 fee) external onlyAdmins {
     // Update state
     _fee = fee;
   }
 
-  function setFeeRecipient(address feeRecipient) external {
-    // Validate access
-    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admin');
-
+  function setFeeRecipient(address feeRecipient) external onlyAdmins {
     // Update state
     _feeRecipient = feeRecipient;
   }
