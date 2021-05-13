@@ -314,6 +314,16 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
       );
   }
 
+  /**
+   * @dev See {ICFolioItemCallback-uri}
+   *
+   */
+  function uri(
+    uint256 /* tokenId*/
+  ) external pure override returns (string memory) {
+    return '';
+  }
+
   //////////////////////////////////////////////////////////////////////////////
   // Maintanace
   //////////////////////////////////////////////////////////////////////////////
