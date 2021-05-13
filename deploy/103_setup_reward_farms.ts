@@ -39,7 +39,7 @@ function log_step(step_string) {
 const func = async function (hardhat_re) {
   const { deployments, getNamedAccounts } = hardhat_re;
 
-  const { execute } = deployments;
+  const { catchUnknownSigner, execute } = deployments;
   const { deployer, marketingWallet } = await getNamedAccounts();
 
   // Get chain ID
@@ -55,6 +55,9 @@ const func = async function (hardhat_re) {
   const SFT_HOLDER_INSTANCE = await hardhat_re.ethers.getContract(
     SFT_HOLDER_CONTRACT
   );
+  const SFT_MINTER_INSTANCE = await hardhat_re.ethers.getContract(
+    SFT_MINTER_CONTRACT
+  );
 
   // Load ABIs
   const cfolioFarmAbi = JSON.parse(fs.readFileSync(CFOLIO_FARM_ABI).toString());
@@ -64,6 +67,10 @@ const func = async function (hardhat_re) {
     generatedAddresses.cfolioFarmLP,
     cfolioFarmAbi,
     SFT_HOLDER_INSTANCE.signer.provider.getSigner(marketingWallet)
+  );
+
+  const CONTROLLER_INSTANCE = await hardhat_re.ethers.getContract(
+    CONTROLLER_CONTRACT
   );
 
   //////////////////////////////////////////////////////////////////////////////
@@ -78,16 +85,25 @@ const func = async function (hardhat_re) {
   // 4.) TradeFloor::grantRole(MINTER_ROLE, TradeClientFloorLP)
   //
 
-  await execute(
-    SFT_HOLDER_CONTRACT,
-    {
-      from: marketingWallet,
-      log: true,
-    },
-    'grantRole',
-    await SFT_HOLDER_INSTANCE.TRADEFLOOR_ROLE(),
-    generatedAddresses.cfolioItemHandlerLP
-  );
+  if (
+    !(await SFT_HOLDER_INSTANCE.hasRole(
+      await SFT_HOLDER_INSTANCE.TRADEFLOOR_ROLE(),
+      generatedAddresses.cfolioItemHandlerLP
+    ))
+  ) {
+    await catchUnknownSigner(
+      execute(
+        SFT_HOLDER_CONTRACT,
+        {
+          from: marketingWallet,
+          log: true,
+        },
+        'grantRole',
+        await SFT_HOLDER_INSTANCE.TRADEFLOOR_ROLE(),
+        generatedAddresses.cfolioItemHandlerLP
+      )
+    );
+  }
 
   //
   // 5.) CFolioFarm.sol::transferOwnership(TradeClientFloorLP)
@@ -98,14 +114,16 @@ const func = async function (hardhat_re) {
     cfolioLpOwner.toLowerCase() !==
     generatedAddresses.cfolioItemHandlerLP.toLowerCase()
   ) {
-    await execute(
-      CFOLIO_FARM_LP_CONTRACT,
-      {
-        from: deployer,
-        log: true,
-      },
-      'transferOwnership',
-      generatedAddresses.cfolioItemHandlerLP
+    await catchUnknownSigner(
+      execute(
+        CFOLIO_FARM_LP_CONTRACT,
+        {
+          from: deployer,
+          log: true,
+        },
+        'transferOwnership',
+        generatedAddresses.cfolioItemHandlerLP
+      )
     );
   }
 
@@ -121,49 +139,58 @@ const func = async function (hardhat_re) {
   //
 
   const FARM_ADDRESS = generatedAddresses.cfolioFarmLP;
-  const REWARD_CAP = ethers.BigNumber.from('15000000000000000000000');
-  const REWARD_PER_DURATION = ethers.BigNumber.from('192307692300000000000');
-  const REWARD_PROVIDED = 0;
-  const REWARD_FEE = 2 * 1e4;
 
-  await execute(
-    CONTROLLER_CONTRACT,
-    {
-      from: marketingWallet,
-      log: true,
-    },
-    'registerFarm',
-    FARM_ADDRESS,
-    REWARD_CAP,
-    REWARD_PER_DURATION,
-    REWARD_PROVIDED,
-    REWARD_FEE
-  );
+  if (
+    (await CONTROLLER_INSTANCE.farms(FARM_ADDRESS)).farmStartedAtBlock.isZero()
+  ) {
+    const REWARD_CAP = ethers.BigNumber.from('15000000000000000000000');
+    const REWARD_PER_DURATION = ethers.BigNumber.from('192307692300000000000');
+    const REWARD_PROVIDED = 0;
+    const REWARD_FEE = 2 * 1e4;
+    await catchUnknownSigner(
+      execute(
+        CONTROLLER_CONTRACT,
+        {
+          from: marketingWallet,
+          log: true,
+        },
+        'registerFarm',
+        FARM_ADDRESS,
+        REWARD_CAP,
+        REWARD_PER_DURATION,
+        REWARD_PROVIDED,
+        REWARD_FEE
+      )
+    );
+  }
 
   //
   // 7.) Call WOWSSftMinter.sol::setCFolioSpec(types, handlers, maxMint, prices)
   //
 
-  // We initialize 8 different LP cards
-  const CFI_TYPES = ['0', '1', '2', '3', '4', '5', '6', '7'];
-  const CFI_HANDLERS = new Array(8).fill(
-    generatedAddresses.cfolioItemHandlerLP
-  );
-  const CFI_MAXMINT = new Array(8).fill('100');
-  const CFI_PRICES = new Array(8).fill('500000000000000000');
-
-  await execute(
-    SFT_MINTER_CONTRACT,
-    {
-      from: marketingWallet,
-      log: true,
-    },
-    'setCFolioSpec',
-    CFI_TYPES,
-    CFI_HANDLERS,
-    CFI_MAXMINT,
-    CFI_PRICES
-  );
+  if ((await SFT_MINTER_INSTANCE.getCFolioSpec([0])).maxMintable[0].isZero()) {
+    // We initialize 8 different LP cards
+    const CFI_TYPES = ['0', '1', '2', '3', '4', '5', '6', '7'];
+    const CFI_HANDLERS = new Array(8).fill(
+      generatedAddresses.cfolioItemHandlerLP
+    );
+    const CFI_MAXMINT = new Array(8).fill('100');
+    const CFI_PRICES = new Array(8).fill('500000000000000000');
+    await catchUnknownSigner(
+      execute(
+        SFT_MINTER_CONTRACT,
+        {
+          from: marketingWallet,
+          log: true,
+        },
+        'setCFolioSpec',
+        CFI_TYPES,
+        CFI_HANDLERS,
+        CFI_MAXMINT,
+        CFI_PRICES
+      )
+    );
+  }
 };
 
 module.exports = func;
