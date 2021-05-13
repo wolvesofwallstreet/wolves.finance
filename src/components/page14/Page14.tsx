@@ -65,8 +65,14 @@ function Page14({ t, location }: PROPS) {
           </div>
 
           <div className="vw-80 center-container">
-            <div className={'bg-blue-transparent font-14 px-4 py-2 my-2 mt-3'}>
-              Earned: 2.000000 WOWS, | 10.34 $ | 12 DAI = $303.00 TOTAL
+            <div
+              className={
+                'd-flex flex-column flex-md-row justify-content-center bg-blue-transparent font-14 py-2 px-3 my-2 mt-3 '
+              }
+            >
+              <span className={' m-1 mr-1'}> Earned: 2.000000 WOWS,</span>
+              <span className={' m-1 mr-1'}> 10.34 $</span>
+              <span className={' m-1 mr-1'}> 12 DAI = $303.00 TOTAL</span>
             </div>
 
             <div className={'page14-grid text-left mb-4'}>
@@ -74,7 +80,7 @@ function Page14({ t, location }: PROPS) {
                 return (
                   <div
                     className="px-4 py-2 bg-blue-transparent "
-                    key={i + Math.random()}
+                    key={'p14' + i}
                   >
                     <div className={'page14-card justify-content-between'}>
                       <div className="p-1">
