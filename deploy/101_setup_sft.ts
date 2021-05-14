@@ -114,7 +114,28 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 3.) Call WowsERC1155.sol::grantRole(MINTER_ROLE, WOWSSftMinter.sol)
+  // 3.) Call WowsSFTMinter.sol::setRewardHandler(rewardHandler)
+  //
+
+  if (
+    (await SFT_MINTER_INSTANCE.rewardHandler()) !==
+    generatedAddresses.rewardHandler
+  ) {
+    await catchUnknownSigner(
+      execute(
+        SFT_MINTER_CONTRACT,
+        {
+          from: marketingWallet,
+          log: true,
+        },
+        'setRewardHandler',
+        generatedAddresses.rewardHandler
+      )
+    );
+  }
+
+  //
+  // 4.) Call WowsERC1155.sol::grantRole(MINTER_ROLE, WOWSSftMinter.sol)
   //
 
   if (

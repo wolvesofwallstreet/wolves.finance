@@ -33,8 +33,14 @@ contract SFTEvaluator is ISFTEvaluator {
   // The main tradefloor contract
   address private immutable _tradeFloor;
 
-  // Current reward weight of a sft card
-  mapping(uint256 => uint32) private _rewardRate;
+  // The AddressRegistry to validate WOWSMinter calls
+  IAddressRegistry private immutable _addressRegistry;
+
+  // Current reward weight of a baseCard
+  mapping(uint256 => uint256) private _rewardRates;
+
+  // cfolioType of cfolioItem
+  mapping(uint256 => uint256) private _cfolioItemTypes;
 
   //////////////////////////////////////////////////////////////////////////////
   // Events
@@ -59,6 +65,8 @@ contract SFTEvaluator is ISFTEvaluator {
     _tradeFloor = addressRegistry.getRegistryEntry(
       AddressBook.TRADE_FLOOR_PROXY
     );
+
+    _addressRegistry = addressRegistry;
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -71,7 +79,22 @@ contract SFTEvaluator is ISFTEvaluator {
   function rewardRate(uint256 tokenId) external view override returns (uint32) {
     require(tokenId.isBaseCard(), 'Invalid tokenId');
     return
-      _rewardRate[tokenId] == 0 ? _baseRate(tokenId) : _rewardRate[tokenId];
+      _rewardRates[tokenId] == 0
+        ? _baseRate(tokenId)
+        : uint32(_rewardRates[tokenId]);
+  }
+
+  /**
+   * @dev See {ISFTEvaluator-cfolioType}.
+   */
+  function getCFolioItemType(uint256 tokenId)
+    external
+    view
+    override
+    returns (uint256)
+  {
+    require(tokenId.isCFolioCard(), 'Invalid tokenId');
+    return _cfolioItemTypes[tokenId];
   }
 
   /**
@@ -89,7 +112,7 @@ contract SFTEvaluator is ISFTEvaluator {
     // First implementation, check timed auto upgrade only
     if (untimed != timed) {
       // Update state
-      _rewardRate[tokenId] = timed;
+      _rewardRates[tokenId] = timed;
 
       IWOWSCryptofolio cFolio =
         IWOWSCryptofolio(_sftHolder.tokenIdToAddress(tokenId));
@@ -128,6 +151,22 @@ contract SFTEvaluator is ISFTEvaluator {
       // Revert if requested
       require(!revertUnchanged, 'Rate unchanged');
     }
+  }
+
+  /**
+   * @dev See {ISFTEvaluator-setCFolioType}.
+   */
+  function setCFolioItemType(uint256 tokenId, uint256 cfolioItemType)
+    external
+    override
+  {
+    require(tokenId.isCFolioCard(), 'Invalid tokenId');
+    require(
+      msg.sender == _addressRegistry.getRegistryEntry(AddressBook.SFT_MINTER),
+      'SFTE: Minter only'
+    );
+
+    _cfolioItemTypes[tokenId] = cfolioItemType;
   }
 
   //////////////////////////////////////////////////////////////////////////////

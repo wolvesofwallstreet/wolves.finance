@@ -191,6 +191,27 @@ const func = async function (hardhat_re) {
       )
     );
   }
+
+  //
+  // 8.) Call WowsSFTMinter.sol::setSFTEvaluator(sftEvaluatorProxy)
+  //
+
+  if (
+    (await SFT_MINTER_INSTANCE.sftEvaluator()) !==
+    generatedAddresses.sftEvaluatorProxy
+  ) {
+    await catchUnknownSigner(
+      execute(
+        SFT_MINTER_CONTRACT,
+        {
+          from: marketingWallet,
+          log: true,
+        },
+        'setSFTEvaluator',
+        generatedAddresses.sftEvaluatorProxy
+      )
+    );
+  }
 };
 
 module.exports = func;
