@@ -428,13 +428,14 @@ contract WOWSSftMinter is Context, Ownable {
     uint256 cfolioType
   ) internal {
     // Transfer WOWS from user to reward handler
-    _wowsToken.safeTransferFrom(_msgSender(), address(_rewardHandler), price);
+    if (price > 0)
+      _wowsToken.safeTransferFrom(_msgSender(), address(_rewardHandler), price);
 
     // Mint the token
     IERC1155BurnMintable(address(_sftContract)).mint(recipient, tokenId, 1, '');
 
     // Distribute the rewards
-    _rewardHandler.distribute2(recipient, price, ALL);
+    if (price > 0) _rewardHandler.distribute2(recipient, price, ALL);
 
     // Log event
     emit Mint(recipient, tokenId, price, cfolioType);
