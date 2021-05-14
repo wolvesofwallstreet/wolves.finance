@@ -72,7 +72,12 @@ class Page5 extends Component<PAGE5_PROPS, PAGE5_STATE> {
 
     return (
       <>
-        <div id="top" className={'wolves-container bg-wolves'}>
+        <div
+          id="top"
+          className={
+            'page5-container d-flex flex-column justify-content-center bg-wolves text-center text-white'
+          }
+        >
           {/* Title & heading */}
           <div>
             {<img src={Logo} alt="Logo" width="50px" height="50px" />}
@@ -90,39 +95,42 @@ class Page5 extends Component<PAGE5_PROPS, PAGE5_STATE> {
           <div className="mt-4 mb-0 pb-0">
             <span className="tk-vincente-lightbold font-24 single-line fixed-pos">
               &lt;
-              <Link to="?page5=back" className="text-white">
+              <Link to="?page6=back" className="text-white">
                 {t('page.back')}
               </Link>
             </span>
             <span className="tk-vincente-lightbold font-24 single-line fixed-pos ml-2 disabled-link">
-              <Link to="?page5=prodigy" className="text-white">
+              <Link to="?page6=prodigy" className="text-white">
                 {'PRODIGY'}
               </Link>
             </span>
           </div>
 
           {/* h-line */}
-          <span className="line-container">
+          <span className="line-container w-100">
             <span id="left" className="dot" />
             <span className="line" />
             <span id="right" className="dot" />
           </span>
 
           {/* sub-navigation 2 */}
-          <div id="page5-section-header">
+          <div className={'page6-section-header'}>
             <span className="tk-vincente-lightbold font-24 single-line wolves-color-orange fixed-pos">
               &lt;
-              <Link to="?cards=previousCard">PREVIOUS CARD</Link>
+              <Link className={'text-white'} to="?cards=previousCard">
+                PREVIOUS CARD
+              </Link>
             </span>
           </div>
 
-          <div id="page5-content-container" className="">
-            <div>
-              <div id="page5-content-image">
+          {/* Content */}
+          <div className={'page6-two-col-container center-container my-5'}>
+            <div className="d-flex flex-column align-items-start justify-content-even pr-sm-0 m pr-md-4 pr-lg-4 mb-3 p_relative">
+              <div className="p_relative">
                 <video
                   id="page5-content-image-inner"
                   disableRemotePlayback={true}
-                  className="card-visual"
+                  className=""
                   autoPlay={true}
                   loop={true}
                   src={'https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-{res}.mp4'.replace(
@@ -144,8 +152,7 @@ class Page5 extends Component<PAGE5_PROPS, PAGE5_STATE> {
                   }
                   alt={'img8'}
                 />
-              </div>
-              <div id="page5-content-image">
+
                 <button
                   className={
                     'wolve_btn w-100 m-0 mt-2 mb-1 page5-btn-stack bg-blue-transparent-dark text-white'
@@ -155,13 +162,16 @@ class Page5 extends Component<PAGE5_PROPS, PAGE5_STATE> {
                 </button>
               </div>
             </div>
-            <div className="page5-content-text">
+
+            <div className={'t-left pl-2'}>
               <div>
                 <div>
                   <ul className="page5-info-ribbon tk-grotesk-lightbold ">
                     {Object.entries(extraInfo).map(([key, value], i) => (
-                      <li key={key + i}>
-                        {key !== undefined && `${key} : ${value}`}
+                      <li key={key + i} className="font-10 ">
+                        <span className="">
+                          {key !== undefined && `${key} : ${value}`}
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -173,9 +183,9 @@ class Page5 extends Component<PAGE5_PROPS, PAGE5_STATE> {
                   <span className="wolves-color-orange">MOTO:</span>
                   BUY WHEN THERE IS BLOOD ON THE STREET
                 </h2>
-                <div>
+                <div className="tk-grotesk-lightbold font-16 line-break-enable">
                   <p
-                    className={'tk-grotesk-lightbold font-16 line-break-enable'}
+                  // className={'tk-grotesk-lightbold font-16 line-break-enable'}
                   >
                     Wall Street Hustler - He’s worked his way up from the actual
                     street. Learning the hustle on the street has given him the
@@ -184,7 +194,7 @@ class Page5 extends Component<PAGE5_PROPS, PAGE5_STATE> {
                     step on toes and ears to make the deals he needs.
                   </p>
                   <p
-                    className={'tk-grotesk-lightbold font-16 line-break-enable'}
+                  // className={'tk-grotesk-lightbold font-16 line-break-enable'}
                   >
                     his is a staker card and allows to stake Wolf on the
                     tradefloor and also Raid. You can sell this character
@@ -192,43 +202,45 @@ class Page5 extends Component<PAGE5_PROPS, PAGE5_STATE> {
                   </p>
                 </div>
 
-                <ul className="tk-vincente-bold font-24 rarity-box">
+                <ul className="rarity-box">
                   <li>
-                    <h2>RARITY: 1/120 </h2>
+                    <h2 className="tk-vincente font-28">RARITY: 1/120 </h2>
                   </li>
                   <li>
-                    <h2>PROWESS: 50% </h2>
+                    <h2 className="tk-vincente font-28">PROWESS: 50% </h2>
                   </li>
                   <li>
-                    <h2>STARTING APY: 120% </h2>
+                    <h2 className="tk-vincente font-28">STARTING APY: 120% </h2>
                   </li>
                 </ul>
 
-                <div className="w-100 page5-grid-btn ">
-                  <div
-                    className={
-                      'd-flex justify-content-between page5-text-input'
-                    }
-                  >
-                    <div className="">MAX</div>
-                    <div className="">50%</div>
+                <div className="d-grid mb-2">
+                  <div className="p_relative">
+                    <input
+                      type="text"
+                      className="wolve_input text-white font-14"
+                      style={{ paddingRight: '125px' }}
+                    />
+                    <div className="wolve_input_max">MAX</div>
+                    <div className={'wolve_input_label font-14'}>50%</div>
                   </div>
+                </div>
 
-                  <div></div>
-                  <button className={'page5-btn-stack m-0'}>
+                <div className="page5_button_continer">
+                  <button className={'wolve_btn page5_btn  font-10'}>
                     CLAIM REWARDS
                   </button>
                   <button
                     className={
-                      'wolve_btn page5-btn-stack m-0 bg-blue-transparent-dark text-gray'
+                      'wolve_btn page5_btn font-10 bg-blue-transparent-dark text-gray'
                     }
                   >
                     CLAIM REWARDS & DESTROY NFT (UNSTAKE)
                   </button>
-                  <button className={'wolve_btn page5-btn-stack m-0'}>
+                  <button className={'wolve_btn page5_btn  font-10'}>
                     LOCK FOR SALE
                   </button>
-                  <button className={'wolve_btn page5-btn-stack m-0'}>
+                  <button className={'wolve_btn page5_btn  font-10'}>
                     C-FOLIO TRANSFER MANAGER
                   </button>
                 </div>

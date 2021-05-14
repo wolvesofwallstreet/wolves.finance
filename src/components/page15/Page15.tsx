@@ -81,36 +81,46 @@ function ExamplePage({ t, location }: PROPS) {
             </h3>
           </div>
 
-          <div className={'bg-blue-transparent font-16 py-2 px-3 my-2 mt-3'}>
-            Earned: 2.000000 WOWS, | 10.348 | 12DAI = $303.00 TOTAL
+          <div
+            className={
+              'd-flex flex-column flex-md-row justify-content-center bg-blue-transparent font-14 py-2 px-3 my-2 mt-3 '
+            }
+          >
+            <span className={' m-1 mr-1'}> Earned: 2.000000 WOWS,</span>
+            <span className={' m-1 mr-1'}> 10.34 $</span>
+            <span className={' m-1 mr-1'}> 12 DAI = $303.00 TOTAL</span>
           </div>
 
           <div className={'page15-grid text-left mb-4'}>
             {cards.map((card, i) => {
               return (
                 <div
-                  className="p-2 px-3 bg-blue-transparent"
+                  className="py-2 px-3 bg-blue-transparent"
                   key={i + Math.random()}
                   // style={{minWidth:'260px'}}
                 >
                   <div className={'page15-card justify-content-between'}>
-                    <div className="w-50 p-1">
-                      <div className="">
-                        <h3 className={'tk-vincente-bold font-22'}>
+                    <div className="">
+                      <div className="mr-1">
+                        <h3 className={'tk-vincente-bold font-20 font-sm-20'}>
                           {card.title}
                         </h3>
                         <div className={'d-flex flex-column '}>
                           <span
-                            className={'font-13 f-light single-line mt-2 mr-5'}
+                            className={
+                              'font-14 f-light single-line mt-1 mr-0 text-nowrap'
+                            }
                           >
                             LPToken: 0.00
                           </span>
                           <span
-                            className={'font-13 f-light single-line mt-2 mr-5'}
+                            className={
+                              'font-14 f-light single-line mt-1 mr-0 text-nowrap'
+                            }
                           >
                             Staked: 0.00
                           </span>
-                          <span className={'font-13 f-light single-line mt-2'}>
+                          <span className={'font-14 f-light single-line mt-1'}>
                             Earned: 0.000000 WOWS
                           </span>
                         </div>
