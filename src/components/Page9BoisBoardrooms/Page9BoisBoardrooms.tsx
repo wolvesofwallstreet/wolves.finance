@@ -8,12 +8,18 @@
 
 import './Page9BoisBoardrooms.css';
 
-import Carousel from 'nuka-carousel';
 import React, { Fragment } from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { RouteComponentProps } from 'react-router-dom';
 
 import Logo from '../../assets/logo.png';
+import { ASSETS_LOADED, SFT_STATE } from '../../stores/constants';
+import { SFTStateresult, StoreClasses } from '../../stores/store';
+import {
+  IMAGE_SLIDER_INTERFACE,
+  IMAGE_SLIDER_SLIDE,
+  ImageSlider,
+} from '../controls/image_slider';
 import { CARDS } from '../types/cards';
 import Modal from './Page9Modal';
 
@@ -52,6 +58,7 @@ class Page9BoisBoardrooms extends React.Component<PROPS, STATE> {
   ];
 
   content: CARDS | undefined = undefined;
+  sliderInterface: IMAGE_SLIDER_INTERFACE | undefined = undefined;
 
   constructor(props: PROPS) {
     super(props);
@@ -80,7 +87,8 @@ class Page9BoisBoardrooms extends React.Component<PROPS, STATE> {
       show: false,
     };
     this.toggleModal = this.toggleModal.bind(this);
-    this.fetchData = this.fetchData.bind(this);
+    this.onSFTState = this.onSFTState.bind(this);
+    this._updateImages = this._updateImages.bind(this);
   }
 
   setCurrentImage(val: number) {
@@ -92,23 +100,46 @@ class Page9BoisBoardrooms extends React.Component<PROPS, STATE> {
   }
 
   componentDidMount() {
-    this.fetchData();
+    StoreClasses.emitter.on(ASSETS_LOADED, this._updateImages);
+    StoreClasses.emitter.on(SFT_STATE, this.onSFTState);
+    this._updateImages();
   }
 
   componentWillUnmount() {
-    //
+    StoreClasses.emitter.off(SFT_STATE, this.onSFTState);
+    StoreClasses.emitter.off(ASSETS_LOADED, this._updateImages);
   }
 
-  fetchData() {
-    fetch('https://reqres.in/api/users?page=2')
-      .then((res) => res.json().then((r) => r))
-      .then((res) => {
-        this.setState({
-          ...this.state,
-          imgSlides: res.data,
-        });
-        this.receiverImages = res.data;
-      });
+  onSFTState(result: SFTStateresult) {
+    if (result.status === 'user') this._updateImages();
+  }
+
+  _updateImages() {
+    const cards = StoreClasses.store.getAssets().cards;
+    const tokenIds = StoreClasses.store.getAssets().userSFT;
+
+    const newImages: IMAGE[] = [];
+    tokenIds.forEach((elem) => {
+      if (elem.isStockCard && elem.id.toNumber() >> 24 < 4) {
+        const tokenId = elem.id.toNumber();
+        const newLevel = cards.cards.findIndex(
+          (level) => level.chainRef === tokenId >> 24
+        );
+        const newIndex = cards.cards[newLevel].cards.findIndex(
+          (card) => card.chainRef === ((tokenId >> 16) & 0xff)
+        );
+        newImages.push({ tokenId: tokenId, level: newLevel, index: newIndex });
+      }
+    });
+    if (newImages !== this.receiverImages) {
+      this.receiverImages = newImages;
+      this.setCurrentImage(this.state.currentImage);
+    }
+    this.content = cards;
+  }
+
+  sliderInit(id: string | undefined, iface: IMAGE_SLIDER_INTERFACE) {
+    this.sliderInterface = iface;
   }
 
   render(): JSX.Element {
@@ -123,26 +154,8 @@ class Page9BoisBoardrooms extends React.Component<PROPS, STATE> {
 
       return this.setCurrentImage(this.state.currentImage + change);
     };
-    const { imgSlides = [], barsInfo, show: modal } = this.state;
-    let slides = null;
-    if (imgSlides.length) {
-      slides = imgSlides.map((elem, index) => {
-        const { avatar = '' } = elem;
-        return (
-          <div key={'n_slide' + index} className={'nuka_slide'}>
-            <div
-              className="slide_test__img_container"
-              style={{
-                ['--url' as string]: `url(${avatar}`,
-              }}
-              onClick={() => this.setState({ slideIndex: index })}
-            >
-              <div className="slide_count">{index}</div>
-            </div>
-          </div>
-        );
-      });
-    }
+    const { barsInfo, show: modal } = this.state;
+
     return (
       <>
         <Modal
@@ -197,37 +210,24 @@ class Page9BoisBoardrooms extends React.Component<PROPS, STATE> {
             }
           >
             <div className="vw-80 py-2 glide-border-t glide-border-b p_relative center_triange_down center_triange_up">
-              <div className="nuka_slider">
-                <Carousel
-                  wrapAround
-                  swiping
-                  cellAlign="center"
-                  cellSpacing={30}
-                  slideIndex={this.state.slideIndex}
-                  slideWidth="120px"
-                  renderCenterLeftControls={({ previousSlide }) => (
-                    <div className="slide__arrows">
-                      <button
-                        className={`slide__arrow slide__arrow--left`}
-                        onClick={previousSlide}
-                      />
-                    </div>
-                  )}
-                  renderCenterRightControls={({ nextSlide }) => (
-                    <div className="slide__arrows">
-                      <button
-                        className={`slide__arrow slide__arrow--right`}
-                        onClick={nextSlide}
-                      />
-                    </div>
-                  )}
-                  afterSlide={(slideIndex) => {
-                    this.setState({ slideIndex });
-                  }}
-                >
-                  {slides}
-                </Carousel>
-              </div>
+              <ImageSlider
+                sliderId="0"
+                initCallback={this.sliderInit.bind(this)}
+                onSlideChanged={(index) => {
+                  if (index !== this.state.slideIndex)
+                    this.setState({ slideIndex: index });
+                }}
+                slideWidth={120}
+                slides={this.receiverImages.map((elem) => {
+                  const slide = {
+                    url:
+                      this.content?.cards[elem.level].cards[
+                        elem.index
+                      ].url.replace('{res}', '300') || '',
+                  } as IMAGE_SLIDER_SLIDE;
+                  return slide;
+                })}
+              />
             </div>
           </div>
 

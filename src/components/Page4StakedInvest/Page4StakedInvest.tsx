@@ -155,9 +155,10 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
                 <ImageSlider
                   sliderId="0"
                   initCallback={this.sliderInit.bind(this)}
-                  onSlideChanged={(index) =>
-                    this.setState({ slideIndex: index })
-                  }
+                  onSlideChanged={(index) => {
+                    if (index !== this.state.slideIndex)
+                      this.setState({ slideIndex: index });
+                  }}
                   slideWidth={120}
                   slides={this.receiverImages.map((elem) => {
                     const slide = {
@@ -169,9 +170,6 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
                     return slide;
                   })}
                 />
-                <button onClick={() => this.sliderInterface?.next()}>
-                  Next
-                </button>
               </div>
             </div>
 
