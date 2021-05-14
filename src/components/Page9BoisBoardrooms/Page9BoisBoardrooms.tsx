@@ -209,7 +209,7 @@ class Page9BoisBoardrooms extends React.Component<PROPS, STATE> {
               'd-flex justify-content-center bg-transparent-orange mb-3 '
             }
           >
-            <div className="vw-80 py-2 glide-border-t glide-border-b p_relative center_triange_down center_triange_up">
+            <div className="vw-80 py-2 border_thin_t border_thin_b p_relative center_triangle_down center_triangle_up">
               <ImageSlider
                 sliderId="0"
                 initCallback={this.sliderInit.bind(this)}

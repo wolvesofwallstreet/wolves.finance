@@ -75,6 +75,7 @@ span a:hover {
 .text-white {
   color: var(--wolves-white);
 }
+
 .text-gray {
   color: gray !important;
 }
@@ -108,6 +109,41 @@ span a:hover {
   position: relative;
 }
 
+.border_thin_t {
+  border-top: 1px solid var(--wolves-orange-light);
+}
+
+.border_thin_b {
+  border-bottom: 1px solid var(--wolves-orange-light);
+}
+.center_triangle_up::before {
+  content: ' ';
+  position: absolute;
+  top: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  background-color: transparent;
+  border-color: transparent;
+  border-width: 10px 20px 0 20px;
+  border-top-color: var(--wolves-orange-light);
+  transform: translateX(-20px);
+}
+
+.center_triangle_down::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  background-color: transparent;
+  border-color: transparent;
+  border-width: 0 20px 10px 20px;
+  border-bottom-color: var(--wolves-orange-light);
+  transform: translateX(-20px);
+}
+
 /* --- START ARROWS */
 /* Src http://apps.eky.hk/css-triangle-generator/ */
 .arrow_up,
@@ -120,22 +156,28 @@ span a:hover {
   background-color: transparent;
   border-color: transparent;
 }
+
 .arrow_down {
   border-width: 15px 25px 0 25px;
   border-top-color: var(--wolves-orange-light);
 }
+
 .arrow_left {
   border-width: 20px 15px 20px 0;
   border-right-color: var(--wolves-orange-light);
 }
+
 .arrow_right {
   border-width: 20px 0 20px 15px;
   border-left-color: var(--wolves-orange-light);
 }
+
 .arrow_left:hover {
   border-right-color: var(--wolves-orange);
 }
+
 .arrow_right:hover {
   border-left-color: var(--wolves-orange);
 }
+
 /* --- ARROWS END*/
