@@ -8,12 +8,13 @@
 
 import './Page4StakedInvest.css';
 
-import React from 'react';
+import {BigNumber} from "ethers";
+import React, {createRef} from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { RouteComponentProps } from 'react-router-dom';
 
-import { ASSETS_LOADED, SFT_STATE } from '../../stores/constants';
-import { SFTStateresult, StoreClasses } from '../../stores/store';
+import { ADD_SFT_TO_CFOLIO, ASSETS_LOADED, CONNECTION_CHANGED, SFT_STATE } from '../../stores/constants';
+import { ConnectResult, SFTStateresult, StatusResult, StoreClasses } from '../../stores/store';
 import {
   IMAGE_SLIDER_INTERFACE,
   IMAGE_SLIDER_SLIDE,
@@ -27,11 +28,34 @@ type PROPS = {
   history: RouteComponentProps['history'];
 };
 
+interface IWolvesCards {
+  id: string;
+  chainRef: number;
+  minted: number;
+  constraint: string;
+  name: string;
+  motto: string;
+  description: string;
+  type: string;
+  url: string;
+}
+
+type ObjType = { [key: string]: string };
+type QueryType = 'wolves' | 'bois' | 'myPack';
 type STATE = {
   input1: string;
   input2: string;
   currentImage: number;
   slideIndex: number;
+  imgSlides?: ObjType[];
+  cardId: string | number;
+  cardDetails: IWolvesCards | ObjType | undefined,
+  isWalletConnected: boolean,
+  type: QueryType | string,
+  txPending: boolean,
+  inputValid: boolean;
+  buyInput: number;
+  [key: string]: unknown;
 };
 
 type IMAGE = { tokenId: number; level: number; index: number };
@@ -39,6 +63,7 @@ type IMAGE = { tokenId: number; level: number; index: number };
 // Page 4 Stake Invest
 
 class Page4StakedInvest extends React.Component<PROPS, STATE> {
+  inputRef: React.RefObject<HTMLInputElement> = createRef();
   receiverImages: IMAGE[] = [];
   investImages = [
     'https://4travelers.de/wolves_assets/cards/wolves/level1/AXEL-500.jpg',
@@ -54,9 +79,21 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
       input2: 'ETH 2300',
       currentImage: 0,
       slideIndex: 0,
+      imgSlides: [],
+      slidesToShow: 5,
+      cardId: '',
+      cardDetails: undefined,
+      isWalletConnected: false,
+      type: 'wolves',
+      txPending: false,
+      inputValid: false,
+      buyInput: 0,
     };
     this.onSFTState = this.onSFTState.bind(this);
     this._updateImages = this._updateImages.bind(this);
+    this.onAddSFTToCFolio = this.onAddSFTToCFolio.bind(this);
+    this.onConnectionChanged = this.onConnectionChanged.bind(this);
+    this.handleOnChange = this.handleOnChange.bind(this);
   }
 
   setInput1(val: string) {
@@ -72,14 +109,71 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
   }
 
   componentDidMount() {
+    const { location } = this.props;
+    const query = new URLSearchParams(location.search);
+    const cardId = query.get('cardId') || 0;
+    const type = query.get('type') || 'wolves';
+    this.setState({ cardId, type }, () => {this._getCardDetails()});
+    this.setState({ isWalletConnected: StoreClasses.store.isConnected() });
     StoreClasses.emitter.on(ASSETS_LOADED, this._updateImages);
     StoreClasses.emitter.on(SFT_STATE, this.onSFTState);
+    StoreClasses.emitter.on(ADD_SFT_TO_CFOLIO, this.onAddSFTToCFolio);
+    StoreClasses.emitter.on(CONNECTION_CHANGED, this.onConnectionChanged);
     this._updateImages();
   }
 
   componentWillUnmount() {
     StoreClasses.emitter.off(SFT_STATE, this.onSFTState);
     StoreClasses.emitter.off(ASSETS_LOADED, this._updateImages);
+    StoreClasses.emitter.off(ADD_SFT_TO_CFOLIO, this.onAddSFTToCFolio);
+    StoreClasses.emitter.off(CONNECTION_CHANGED, this.onConnectionChanged);
+  }
+
+  onConnectionChanged(params: ConnectResult): void {
+    if (params.type === 'prod') {
+      this.setState({ isWalletConnected: params.address !== '' });
+    }
+  }
+
+  onAddSFTToCFolio(status: StatusResult): void {
+    if (status.status === 'success' || status.status === 'error')
+      this.setState({ txPending: false });
+  }
+
+  _getCardDetails() {
+    if (this.state.cardId) {
+      import('../../locales/en_US/cFolioItems.json').then(cFolioItems => {
+        const items: IWolvesCards[] = cFolioItems[this.state.type] as IWolvesCards[];
+        const cardDetails = items.find((card: IWolvesCards) => Number(card.id) === Number(this.state.cardId))
+        this.setState({ cardDetails });
+      })
+    }
+  }
+
+  handleOnChange(event: React.ChangeEvent<HTMLInputElement>): void {
+    event.target.value = event.target.value
+        .replace(/[^0-9,.]/gi, '')
+        .replace(',', '.');
+    const newState = parseFloat(event.target.value) > 0;
+    this.setState({buyInput: parseFloat(event.target.value)})
+    if (newState !== this.state.inputValid)
+      this.setState({ inputValid: newState });
+  }
+
+  _onBuy(): void {
+    if (this.state.cardDetails) {
+      const payload = {
+        type: ADD_SFT_TO_CFOLIO,
+        content: {},
+      };
+      payload.content = {
+        amount: [this.state.buyInput],
+        id: BigNumber.from(this.state.cardDetails.chainRef),
+        tokenId: BigNumber.from(this.receiverImages[this.state.slideIndex].tokenId),
+      };
+      this.setState({ txPending: true });
+      StoreClasses.dispatcher.dispatch(payload);
+    }
   }
 
   onSFTState(result: SFTStateresult) {
@@ -89,7 +183,7 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
   _updateImages() {
     const cards = StoreClasses.store.getAssets().cards;
     const tokenIds = StoreClasses.store.getAssets().userSFT;
-
+    console.log('update images clled');
     const newImages: IMAGE[] = [];
     tokenIds.forEach((elem) => {
       if (elem.isStockCard && elem.id.toNumber() >> 24 >= 4) {
@@ -115,6 +209,7 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
   }
 
   render(): JSX.Element {
+    const { inputValid, isWalletConnected, txPending } = this.state;
     const handleImageChange = (change: number) => {
       if (this.state.currentImage + change < 0) {
         return this.setCurrentImage(this.investImages.length - 1);
@@ -177,44 +272,52 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
             <div className={'page4sInvest-container center-container my-5'}>
               <div className="d-flex align-items-center justify-content-even mb-3">
                 <button
-                  className="arrow_left m-0 mr-2"
+                  className="arrow_left m-0 mr-2 d-none"
                   onClick={() => handleImageChange(-1)}
                 />
                 <img
-                  className={'w-80'}
-                  src={this.investImages[this.state.currentImage]}
-                  alt={this.investImages[this.state.currentImage]}
-                  style={{ maxWidth: '500px' }}
+                    className={'w-80'}
+                    src={this.state.cardDetails?.url}
+                    alt={this.state.cardDetails?.url}
+                    style={{ maxWidth: '500px' }}
                 />
+                {/*<img*/}
+                {/*  className={'w-80'}*/}
+                {/*  src={this.investImages[this.state.currentImage]}*/}
+                {/*  alt={this.investImages[this.state.currentImage]}*/}
+                {/*  style={{ maxWidth: '500px' }}*/}
+                {/*/>*/}
                 <button
-                  className="arrow_right m-0 ml-2"
+                  className="arrow_right m-0 ml-2 d-none"
                   onClick={() => handleImageChange(1)}
                 />
               </div>
 
               <div className={'t-left'}>
-                <h1 className={'tk-vincente h-1'}> WOLVES WOWS/ETH NFT </h1>
+                <h1 className={'tk-vincente h-1'}> {this.state.cardDetails?.name} </h1>
 
                 <div
                   className={'tk-grotesk-lightbold font-16 line-break-enable'}
                 >
                   <p>
-                    Wall Street Hustler - He’s worked his way up from the actual
-                    street. Learning the hustle on the street has given him the
-                    perfect grounding for working the trade floor. Forget rough
-                    diamond this trader is a blood diamond, and isnt afraid to
-                    step on toes and ears to make the deals he needs.
+                    {this.state.cardDetails?.description}
                   </p>
                   <p>
-                    This is a staker card and allows to stake Wolf on the
-                    tradefloor and also Raid. You can sell this character
-                    licence at any point wither on our platform or on opensea
+                    {this.state.cardDetails?.motto}
                   </p>
                 </div>
 
                 <div className="p_relative">
                   <input
                     type="text"
+                    onFocus={() => this.setState({ buyMaxVisible: false })}
+                    onBlur={() =>
+                        this.setState({
+                          buyMaxVisible: this.inputRef.current?.value === '',
+                        })
+                    }
+                    onChange={this.handleOnChange}
+                    ref={this.inputRef}
                     className="wolve_input text-white font-14"
                     style={{ paddingRight: '125px' }}
                   />
@@ -227,6 +330,8 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
                 </div>
 
                 <button
+                  onClick={() => this._onBuy()}
+                  disabled={!inputValid || !isWalletConnected || txPending}
                   className={
                     'wolve_btn page4sInvest-text-input mt-3 m-0 page4sInvest-btn-stack font-10'
                   }

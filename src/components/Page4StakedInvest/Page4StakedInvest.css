@@ -64,3 +64,39 @@
   outline: none;
   flex: 1 1 100%;
 }
+
+.buy-input-container {
+  position: relative;
+  font-size: 20px;
+}
+
+.buy-opaque {
+  opacity: 1;
+}
+
+.buy-input {
+  margin-right: 5px;
+  height: 32px;
+  width: 100%;
+  padding: 0 135px 0 5px;
+  vertical-align: bottom;
+}
+
+.buy-input-max {
+  position: absolute;
+  vertical-align: inherit;
+  padding: 1px;
+  top: 3px;
+  left: 4px;
+  color: #000000;
+  font-size: 15px;
+}
+
+.buy-input-currency {
+  vertical-align: middle;
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  color: #000000;
+  font-size: 15px;
+}

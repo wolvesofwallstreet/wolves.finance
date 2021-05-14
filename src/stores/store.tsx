@@ -31,6 +31,7 @@ import { CARD_LEVEL, CARDS } from '../components/types/cards';
 import { addresses } from '../config/addresses';
 import { privateNetworkRPC, privateNetworkWS } from '../config/networks';
 import {
+  ADD_SFT_TO_CFOLIO,
   ASSETS_LOADED,
   CONNECTION_CHANGED,
   ERC20_TOKEN_CONTRACT,
@@ -54,6 +55,7 @@ type PayloadContent = {
   amount?: number;
   id?: ethers.BigNumber;
   filter?: Array<string>;
+  tokenId?: ethers.BigNumber;
 };
 
 type Payload = {
@@ -241,6 +243,9 @@ class Store {
           break;
         case SFT_USER:
           this._getUserSft(_payload.content);
+          break;
+        case ADD_SFT_TO_CFOLIO:
+          this._doAddStfToCfolio(_payload.content);
           break;
         default: {
           return;
@@ -698,6 +703,13 @@ class Store {
     );
   };
 
+  _getCFolioSpec = async (payloadContent: PayloadContent) => {
+    const data: ethers.ContractFunction = await this.sftMintContract?.getCFolioSpec([
+      0, 1, 2, 3, 4, 5, 6, 7,
+    ]);
+    console.log(data);
+    return data;
+  };
   /************** TX ****************/
 
   _doStakeAdd = async (payloadContent: PayloadContent) => {
@@ -1014,6 +1026,47 @@ class Store {
       } as StatusResult);
     }
   };
+
+  _doAddStfToCfolio = async(payloadContent: PayloadContent) => {
+    const { id, amount, tokenId } = payloadContent;
+    if (id === undefined) {
+      emitter.emit(ADD_SFT_TO_CFOLIO, {
+        status: 'error',
+        errorMessage: 'Invalid id',
+      } as StatusResult);
+      return;
+    }
+
+    if (!this.sftMintContract) {
+      emitter.emit(ADD_SFT_TO_CFOLIO, {
+        status: 'error',
+        errorMessage: 'Invalid contract state',
+      } as StatusResult);
+      return;
+    }
+
+    try {
+      const tx: ethers.ContractTransaction | undefined =
+          await this.sftMintContract.mintCFolioItemSFT(this.address, id, '', tokenId, amount);
+      emitter.emit(ADD_SFT_TO_CFOLIO, {
+        status: 'tx',
+        tx: tx?.hash,
+      } as StatusResult);
+
+      await tx?.wait();
+
+      emitter.emit(ADD_SFT_TO_CFOLIO, {
+        status: 'success',
+        tx: tx?.hash,
+      } as StatusResult);
+    } catch (e) {
+      emitter.emit(ADD_SFT_TO_CFOLIO, {
+        status: 'error',
+        errorMessage: e.error ? e.error.message : e.message,
+      } as StatusResult);
+    }
+    return;
+  }
 
   /************** Getter ****************/
 
