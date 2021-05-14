@@ -6,21 +6,19 @@
  * See the file LICENSES/README.md for more information.
  */
 
-import '../theme/glidejs/glide.core.min.css';
-import '../theme/glidejs/glide.theme.min.css';
-import '../theme/glidejs/glide_custom.css';
 import './Page4StakedInvest.css';
 
-import Glide, { Properties } from '@glidejs/glide';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import { Breakpoints, Controls } from '@glidejs/glide/dist/glide.modular.esm';
-import React, { Fragment } from 'react';
+import React from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { RouteComponentProps } from 'react-router-dom';
 
 import { ASSETS_LOADED, SFT_STATE } from '../../stores/constants';
 import { SFTStateresult, StoreClasses } from '../../stores/store';
+import {
+  IMAGE_SLIDER_INTERFACE,
+  IMAGE_SLIDER_SLIDE,
+  ImageSlider,
+} from '../controls/image_slider';
 import { CARDS } from '../types/cards';
 
 type PROPS = {
@@ -33,6 +31,7 @@ type STATE = {
   input1: string;
   input2: string;
   currentImage: number;
+  slideIndex: number;
 };
 
 type IMAGE = { tokenId: number; level: number; index: number };
@@ -46,37 +45,7 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
     'https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-500.mp4.jpg',
   ];
   content: CARDS | undefined = undefined;
-
-  glide = new Glide('.page4sInvest-slider-1', {
-    classes: {
-      activeSlide: 'slider_active_slide',
-    },
-    gap: 23,
-    peek: 10,
-    type: 'slider', // carousel
-    perView: 5,
-    startAt: 0,
-    focusAt: 'center',
-    rewind: true,
-    breakpoints: {
-      1200: {
-        perView: 5,
-      },
-      1000: {
-        perView: 4,
-      },
-      900: {
-        perView: 3,
-      },
-      800: {
-        perView: 3,
-      },
-      600: {
-        perView: 2,
-      },
-    },
-  });
-  glideProperties = this.glide as unknown as Properties;
+  sliderInterface: IMAGE_SLIDER_INTERFACE | undefined = undefined;
 
   constructor(props: PROPS) {
     super(props);
@@ -84,6 +53,7 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
       input1: 'ETH 2300',
       input2: 'ETH 2300',
       currentImage: 0,
+      slideIndex: 0,
     };
     this.onSFTState = this.onSFTState.bind(this);
     this._updateImages = this._updateImages.bind(this);
@@ -92,18 +62,16 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
   setInput1(val: string) {
     this.setState({ input1: val });
   }
+
   setInput2(val: string) {
     this.setState({ input2: val });
   }
+
   setCurrentImage(val: number) {
     this.setState({ currentImage: val });
   }
 
   componentDidMount() {
-    this.glide.mount({
-      Controls,
-      Breakpoints,
-    });
     StoreClasses.emitter.on(ASSETS_LOADED, this._updateImages);
     StoreClasses.emitter.on(SFT_STATE, this.onSFTState);
     this._updateImages();
@@ -112,7 +80,6 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
   componentWillUnmount() {
     StoreClasses.emitter.off(SFT_STATE, this.onSFTState);
     StoreClasses.emitter.off(ASSETS_LOADED, this._updateImages);
-    this.glideProperties.destroy();
   }
 
   onSFTState(result: SFTStateresult) {
@@ -143,6 +110,10 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
     this.content = cards;
   }
 
+  sliderInit(id: string | undefined, iface: IMAGE_SLIDER_INTERFACE) {
+    this.sliderInterface = iface;
+  }
+
   render(): JSX.Element {
     const handleImageChange = (change: number) => {
       if (this.state.currentImage + change < 0) {
@@ -155,6 +126,7 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
 
       return this.setCurrentImage(this.state.currentImage + change);
     };
+
     return (
       <>
         <>
@@ -174,63 +146,32 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
             </div>
 
             {/* Card slider */}
-
             <div
-              className={'d-flex justify-content-center bg-transparent-orange '}
+              className={
+                'd-flex justify-content-center bg-transparent-orange mb-3 '
+              }
             >
-              <div className="vw-80 position-relative glide-border-t glide-border-b center_triange_down center_triange_up">
-                <div className="page4sInvest-slider-1 triange-margin-fixation">
-                  <div className="glide__track" data-glide-el="track">
-                    <ul className="glide__slides">
-                      {this.receiverImages.map((card, i) => {
-                        return (
-                          <Fragment key={'p4si' + i}>
-                            <div
-                              className="glide__slide"
-                              onClick={() => {
-                                this.glideProperties.go(`=${i}`);
-                              }}
-                            >
-                              <div className="slide-count"> {i} </div>
-                              <img
-                                className={'responsive-img slide-img'}
-                                src={
-                                  this.content
-                                    ? this.content.cards[card.level].cards[
-                                        card.index
-                                      ].url.replace('{res}', '300')
-                                    : ''
-                                }
-                                alt=""
-                              />
-                            </div>
-                          </Fragment>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                  <div className="glide__arrows" data-glide-el="controls">
-                    <button
-                      className="glide__arrow glide__arrow--left"
-                      data-glide-dir="<"
-                      style={{
-                        ['--left' as string]: '0%',
-                      }}
-                    >
-                      {/*<i className="fas fa-arrow-left"/>*/}
-                    </button>
-
-                    <button
-                      className="glide__arrow glide__arrow--right"
-                      data-glide-dir=">"
-                      style={{
-                        ['--right' as string]: '-0%',
-                      }}
-                    >
-                      {/*<i className="fas fa-arrow-right"/>*/}
-                    </button>
-                  </div>
-                </div>
+              <div className="vw-80 py-2 glide-border-t glide-border-b p_relative center_triange_down center_triange_up">
+                <ImageSlider
+                  sliderId="0"
+                  initCallback={this.sliderInit.bind(this)}
+                  onSlideChanged={(index) =>
+                    this.setState({ slideIndex: index })
+                  }
+                  slideWidth={120}
+                  slides={this.receiverImages.map((elem) => {
+                    const slide = {
+                      url:
+                        this.content?.cards[elem.level].cards[
+                          elem.index
+                        ].url.replace('{res}', '300') || '',
+                    } as IMAGE_SLIDER_SLIDE;
+                    return slide;
+                  })}
+                />
+                <button onClick={() => this.sliderInterface?.next()}>
+                  Next
+                </button>
               </div>
             </div>
 
@@ -273,11 +214,14 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
                   </p>
                 </div>
 
-                <div className={'d-flex'}>
-                  <div className="d-flex justify-content-between px-3 py-2 font-14 border-white-thin bg-orange-transparent ">
-                    <p className={'m-0'}> BUY MAX </p>
-                    <p className={'m-0 bold'}> WOWS/ETH LP </p>
-                  </div>
+                <div className="p_relative">
+                  <input
+                    type="text"
+                    className="wolve_input text-white font-14"
+                    style={{ paddingRight: '125px' }}
+                  />
+                  {/*<div className="wolve_input_max">MAX</div>*/}
+                  <div className={'wolve_input_label font-14'}>WOWS/ETH LP</div>
                 </div>
 
                 <div className="d-flex justify-content-end mt-1 font-13">
@@ -301,8 +245,3 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
 }
 
 export default withTranslation()(Page4StakedInvest);
-
-/*
-var style = { "--my-css-var": 10 } as React.CSSProperties;
-return <div style={style}>...</div>
-*/

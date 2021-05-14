@@ -21,6 +21,11 @@
   background-size: cover;
 }
 
+.page13_container_secondary {
+  width: 80vw;
+  max-width: 750px;
+}
+
 .page13-triangle-down {
   width: 0;
   height: 0;

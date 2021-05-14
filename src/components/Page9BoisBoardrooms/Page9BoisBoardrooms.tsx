@@ -6,15 +6,9 @@
  * See the file LICENSES/README.md for more information.
  */
 
-import '../theme/glidejs/glide.core.min.css';
-import '../theme/glidejs/glide.theme.min.css';
-import '../theme/glidejs/glide_custom.css';
 import './Page9BoisBoardrooms.css';
 
-import Glide, { Properties } from '@glidejs/glide';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import { Breakpoints, Controls } from '@glidejs/glide/dist/glide.modular.esm';
+import Carousel from 'nuka-carousel';
 import React, { Fragment } from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { RouteComponentProps } from 'react-router-dom';
@@ -29,22 +23,28 @@ type PROPS = {
   history: RouteComponentProps['history'];
 };
 
+type ObjType = { [key: string]: string };
 type BarInfoType = {
   name: string | number;
   value: string | number;
+  slideIndex?: number;
+  imgSlides?: ObjType[];
+  [key: string]: unknown;
 };
 
 type STATE = {
   barsInfo: BarInfoType[];
-  currentImage: number;
   show: boolean;
+  currentImage: number;
+  slideIndex?: number;
+  imgSlides?: ObjType[];
+  [key: string]: unknown;
 };
 
 type IMAGE = { tokenId: number; level: number; index: number };
 
 // Page 4 Stake Invest
-
-class Page4StakedInvest extends React.Component<PROPS, STATE> {
+class Page9BoisBoardrooms extends React.Component<PROPS, STATE> {
   receiverImages: IMAGE[] = [];
   investImages = [
     'https://4travelers.de/wolves_assets/cards/wolves/level1/AXEL-500.jpg',
@@ -52,38 +52,6 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
   ];
 
   content: CARDS | undefined = undefined;
-
-  glide = new Glide('.page9-slider', {
-    classes: {
-      activeSlide: 'slider_active_slide',
-    },
-    gap: 23,
-    peek: 10,
-    type: 'slider', // carousel
-    perView: 5,
-    startAt: 0,
-    focusAt: 'center',
-    rewind: true,
-    breakpoints: {
-      1200: {
-        perView: 5,
-      },
-      1000: {
-        perView: 4,
-      },
-      900: {
-        perView: 3,
-      },
-      800: {
-        perView: 3,
-      },
-      600: {
-        perView: 2,
-      },
-    },
-  });
-
-  glideProperties = this.glide as unknown as Properties;
 
   constructor(props: PROPS) {
     super(props);
@@ -107,9 +75,12 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
         },
       ],
       currentImage: 0,
+      slideIndex: 0,
+      imgSlides: [],
       show: false,
     };
     this.toggleModal = this.toggleModal.bind(this);
+    this.fetchData = this.fetchData.bind(this);
   }
 
   setCurrentImage(val: number) {
@@ -121,14 +92,23 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
   }
 
   componentDidMount() {
-    this.glide.mount({
-      Controls,
-      Breakpoints,
-    });
+    this.fetchData();
   }
 
   componentWillUnmount() {
-    this.glideProperties.destroy();
+    //
+  }
+
+  fetchData() {
+    fetch('https://reqres.in/api/users?page=2')
+      .then((res) => res.json().then((r) => r))
+      .then((res) => {
+        this.setState({
+          ...this.state,
+          imgSlides: res.data,
+        });
+        this.receiverImages = res.data;
+      });
   }
 
   render(): JSX.Element {
@@ -143,7 +123,26 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
 
       return this.setCurrentImage(this.state.currentImage + change);
     };
-    const { barsInfo, show: modal } = this.state;
+    const { imgSlides = [], barsInfo, show: modal } = this.state;
+    let slides = null;
+    if (imgSlides.length) {
+      slides = imgSlides.map((elem, index) => {
+        const { avatar = '' } = elem;
+        return (
+          <div key={'n_slide' + index} className={'nuka_slide'}>
+            <div
+              className="slide_test__img_container"
+              style={{
+                ['--url' as string]: `url(${avatar}`,
+              }}
+              onClick={() => this.setState({ slideIndex: index })}
+            >
+              <div className="slide_count">{index}</div>
+            </div>
+          </div>
+        );
+      });
+    }
     return (
       <>
         <Modal
@@ -193,60 +192,41 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
 
           {/* Card slider */}
           <div
-            className={'d-flex justify-content-center bg-transparent-orange '}
+            className={
+              'd-flex justify-content-center bg-transparent-orange mb-3 '
+            }
           >
-            <div className="vw-80 position-relative glide-border-t glide-border-b center_triange_up center_triange_down">
-              <div className="page9-slider triange-margin-fixation">
-                <div className="glide__track" data-glide-el="track">
-                  <ul className="glide__slides">
-                    {this.receiverImages.map((card, i) => {
-                      return (
-                        <Fragment key={'p4si' + i}>
-                          <div
-                            className="glide__slide"
-                            onClick={() => {
-                              this.glideProperties.go(`=${i}`);
-                            }}
-                          >
-                            <div className="slide-count"> {i} </div>
-                            <img
-                              className={'responsive-img slide-img'}
-                              src={
-                                this.content
-                                  ? this.content.cards[card.level].cards[
-                                      card.index
-                                    ].url.replace('{res}', '300')
-                                  : ''
-                              }
-                              alt=""
-                            />
-                          </div>
-                        </Fragment>
-                      );
-                    })}
-                  </ul>
-                </div>
-                <div className="glide__arrows" data-glide-el="controls">
-                  <button
-                    className="glide__arrow glide__arrow--left"
-                    data-glide-dir="<"
-                    style={{
-                      ['--left' as string]: '0%',
-                    }}
-                  >
-                    {/*<i className="fas fa-arrow-left"/>*/}
-                  </button>
-
-                  <button
-                    className="glide__arrow glide__arrow--right"
-                    data-glide-dir=">"
-                    style={{
-                      ['--right' as string]: '-0%',
-                    }}
-                  >
-                    {/*<i className="fas fa-arrow-right"/>*/}
-                  </button>
-                </div>
+            <div className="vw-80 py-2 glide-border-t glide-border-b p_relative center_triange_down center_triange_up">
+              <div className="nuka_slider">
+                <Carousel
+                  wrapAround
+                  swiping
+                  cellAlign="center"
+                  cellSpacing={30}
+                  slideIndex={this.state.slideIndex}
+                  slideWidth="120px"
+                  renderCenterLeftControls={({ previousSlide }) => (
+                    <div className="slide__arrows">
+                      <button
+                        className={`slide__arrow slide__arrow--left`}
+                        onClick={previousSlide}
+                      />
+                    </div>
+                  )}
+                  renderCenterRightControls={({ nextSlide }) => (
+                    <div className="slide__arrows">
+                      <button
+                        className={`slide__arrow slide__arrow--right`}
+                        onClick={nextSlide}
+                      />
+                    </div>
+                  )}
+                  afterSlide={(slideIndex) => {
+                    this.setState({ slideIndex });
+                  }}
+                >
+                  {slides}
+                </Carousel>
               </div>
             </div>
           </div>
@@ -393,7 +373,7 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
   }
 }
 
-export default withTranslation()(Page4StakedInvest);
+export default withTranslation()(Page9BoisBoardrooms);
 
 /*
 var style = { "--my-css-var": 10 } as React.CSSProperties;

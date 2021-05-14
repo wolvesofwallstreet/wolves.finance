@@ -33,7 +33,7 @@
   min-height: 130px;
 }
 
-@media only screen and (max-width: 800px) {
+@media only screen and (max-width: 1024px) {
   .page15-grid {
     grid-template-columns: repeat(2, minmax(200px, auto));
   }
