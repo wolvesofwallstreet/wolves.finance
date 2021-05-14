@@ -19,9 +19,19 @@ interface ISFTEvaluator {
   function rewardRate(uint256 sftTokenId) external view returns (uint32);
 
   /**
+   * @dev Returns the cFolioItemType of a given cFolioItem tokenId
+   */
+  function getCFolioItemType(uint256 tokenId) external view returns (uint256);
+
+  /**
    * @dev Calculate the current reward rate, and notify TFC in case of change
    *
    * Optional revert on unchange to save gas on external calls.
    */
   function setRewardRate(uint256 tokenId, bool revertUnchanged) external;
+
+  /**
+   * @dev Sets the cfolioItemType of a cfolioItem tokenId, not yet used
+   */
+  function setCFolioItemType(uint256 tokenId, uint256 cfolioItemType_) external;
 }

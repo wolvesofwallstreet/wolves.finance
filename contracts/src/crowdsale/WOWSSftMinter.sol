@@ -14,6 +14,7 @@ import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import '@openzeppelin/contracts/utils/Context.sol';
 
 import '../cfolio/interfaces/ICFolioItemHandler.sol';
+import '../cfolio/interfaces/ISFTEvaluator.sol';
 import '../investment/interfaces/IRewardHandler.sol';
 import '../token/interfaces/IERC1155BurnMintable.sol';
 import '../token/interfaces/IWOWSCryptofolio.sol';
@@ -39,8 +40,6 @@ contract WOWSSftMinter is Context, Ownable {
   }
   mapping(uint256 => CFolioItemSft) public cfolioItemSfts; // C-folio type to c-folio data
 
-  address public tradeFloor;
-
   uint256 public nextCFolioItemNft = 0x10000000000000000;
 
   // The ERC1155 contract we are minting from
@@ -50,7 +49,13 @@ contract WOWSSftMinter is Context, Ownable {
   IERC20 private immutable _wowsToken;
 
   // Reward handler which distributes WOWS
-  IRewardHandler private _rewardHandler;
+  IRewardHandler public rewardHandler;
+
+  // TradeFloor Proxy contract
+  address public tradeFloor;
+
+  // SFTEvaluator to store the cfolioItemType
+  ISFTEvaluator public sftEvaluator;
 
   // Set while minting CFolioToken
   bool private _setupCFolio;
@@ -78,17 +83,20 @@ contract WOWSSftMinter is Context, Ownable {
    *
    * @param owner Owner of this contract
    * @param wowsToken The WOWS ERC-20 token contract
-   * @param rewardHandler Handler which distributes
+   * @param rewardHandler_ Handler which distributes
    * @param sftContract Cryptofolio SFT source
    */
   constructor(
     address owner,
     IERC20 wowsToken,
-    IRewardHandler rewardHandler,
+    IRewardHandler rewardHandler_,
     IWOWSERC1155 sftContract
   ) {
     // Validate parameters
-    require(owner != address(0), 'Invalid owner');
+    require(owner != address(0), 'O: 0 address');
+    require(address(wowsToken) != address(0), 'WT: 0 address');
+    require(address(rewardHandler_) != address(0), 'RH: 0 address');
+    require(address(sftContract) != address(0), 'SFT: 0 address');
 
     // Initialize {Ownable}
     transferOwnership(owner);
@@ -96,7 +104,7 @@ contract WOWSSftMinter is Context, Ownable {
     // Initialize state
     _sftContract = sftContract;
     _wowsToken = wowsToken;
-    _rewardHandler = rewardHandler;
+    rewardHandler = rewardHandler_;
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -128,7 +136,7 @@ contract WOWSSftMinter is Context, Ownable {
     onlyOwner
   {
     // Update state
-    _rewardHandler = newRewardHandler;
+    rewardHandler = newRewardHandler;
   }
 
   /**
@@ -140,6 +148,17 @@ contract WOWSSftMinter is Context, Ownable {
 
     // Update state
     tradeFloor = tradeFloor_;
+  }
+
+  /**
+   * @dev Set Trade Floor
+   */
+  function setSFTEvaluator(ISFTEvaluator sftEvaluator_) external onlyOwner {
+    // Validate parameters
+    require(address(sftEvaluator_) != address(0), 'Invalid TF');
+
+    // Update state
+    sftEvaluator = sftEvaluator_;
   }
 
   /**
@@ -276,6 +295,8 @@ contract WOWSSftMinter is Context, Ownable {
   ) external {
     // Validate state
     require(!_setupCFolio, 'Already setting up');
+    require(tradeFloor != address(0), 'TF not set');
+    require(address(sftEvaluator) != address(0), 'SFTE not set');
 
     // Validate parameters
     require(recipient != address(0), 'Invalid recipient');
@@ -306,6 +327,7 @@ contract WOWSSftMinter is Context, Ownable {
     require(tokenId.isCFolioCard(), 'Invalid cfolioItem tokenId');
 
     _sftContract.setCustomURI(tokenId, uri);
+    sftEvaluator.setCFolioItemType(tokenId, cfolioItemType);
 
     // Update state, mint SFT token
     _mint(recipient, tokenId, sftData.price, cfolioItemType);
@@ -429,13 +451,13 @@ contract WOWSSftMinter is Context, Ownable {
   ) internal {
     // Transfer WOWS from user to reward handler
     if (price > 0)
-      _wowsToken.safeTransferFrom(_msgSender(), address(_rewardHandler), price);
+      _wowsToken.safeTransferFrom(_msgSender(), address(rewardHandler), price);
 
     // Mint the token
     IERC1155BurnMintable(address(_sftContract)).mint(recipient, tokenId, 1, '');
 
     // Distribute the rewards
-    if (price > 0) _rewardHandler.distribute2(recipient, price, ALL);
+    if (price > 0) rewardHandler.distribute2(recipient, price, ALL);
 
     // Log event
     emit Mint(recipient, tokenId, price, cfolioType);
