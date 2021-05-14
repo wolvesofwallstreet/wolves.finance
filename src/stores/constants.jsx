@@ -27,5 +27,4 @@ export const SFT_STATE = 'SFT_STATE'; // SFT cap and minted asset state changed
 export const SFT_UNLOCK = 'SFT_UNLOCK'; // Burn NFT, transfer SFT back
 export const SFT_USER = 'SFT_USER'; // List of SFT owned by address
 
-
 export const ADD_SFT_TO_CFOLIO = 'ADD_SFT_TO_CFOLIO'; // Add SFT to CFolio

@@ -8,13 +8,23 @@
 
 import './Page4StakedInvest.css';
 
-import {BigNumber} from "ethers";
-import React, {createRef} from 'react';
+import { BigNumber } from 'ethers';
+import React, { createRef } from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { RouteComponentProps } from 'react-router-dom';
 
-import { ADD_SFT_TO_CFOLIO, ASSETS_LOADED, CONNECTION_CHANGED, SFT_STATE } from '../../stores/constants';
-import { ConnectResult, SFTStateresult, StatusResult, StoreClasses } from '../../stores/store';
+import {
+  ADD_SFT_TO_CFOLIO,
+  ASSETS_LOADED,
+  CONNECTION_CHANGED,
+  SFT_STATE,
+} from '../../stores/constants';
+import {
+  ConnectResult,
+  SFTStateresult,
+  StatusResult,
+  StoreClasses,
+} from '../../stores/store';
 import {
   IMAGE_SLIDER_INTERFACE,
   IMAGE_SLIDER_SLIDE,
@@ -49,10 +59,10 @@ type STATE = {
   slideIndex: number;
   imgSlides?: ObjType[];
   cardId: string | number;
-  cardDetails: IWolvesCards | ObjType | undefined,
-  isWalletConnected: boolean,
-  type: QueryType | string,
-  txPending: boolean,
+  cardDetails: IWolvesCards | ObjType | undefined;
+  isWalletConnected: boolean;
+  type: QueryType | string;
+  txPending: boolean;
   inputValid: boolean;
   buyInput: number;
   [key: string]: unknown;
@@ -113,7 +123,9 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
     const query = new URLSearchParams(location.search);
     const cardId = query.get('cardId') || 0;
     const type = query.get('type') || 'wolves';
-    this.setState({ cardId, type }, () => {this._getCardDetails()});
+    this.setState({ cardId, type }, () => {
+      this._getCardDetails();
+    });
     this.setState({ isWalletConnected: StoreClasses.store.isConnected() });
     StoreClasses.emitter.on(ASSETS_LOADED, this._updateImages);
     StoreClasses.emitter.on(SFT_STATE, this.onSFTState);
@@ -142,20 +154,24 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
 
   _getCardDetails() {
     if (this.state.cardId) {
-      import('../../locales/en_US/cFolioItems.json').then(cFolioItems => {
-        const items: IWolvesCards[] = cFolioItems[this.state.type] as IWolvesCards[];
-        const cardDetails = items.find((card: IWolvesCards) => Number(card.id) === Number(this.state.cardId))
+      import('../../locales/en_US/cFolioItems.json').then((cFolioItems) => {
+        const items: IWolvesCards[] = cFolioItems[
+          this.state.type
+        ] as IWolvesCards[];
+        const cardDetails = items.find(
+          (card: IWolvesCards) => Number(card.id) === Number(this.state.cardId)
+        );
         this.setState({ cardDetails });
-      })
+      });
     }
   }
 
   handleOnChange(event: React.ChangeEvent<HTMLInputElement>): void {
     event.target.value = event.target.value
-        .replace(/[^0-9,.]/gi, '')
-        .replace(',', '.');
+      .replace(/[^0-9,.]/gi, '')
+      .replace(',', '.');
     const newState = parseFloat(event.target.value) > 0;
-    this.setState({buyInput: parseFloat(event.target.value)})
+    this.setState({ buyInput: parseFloat(event.target.value) });
     if (newState !== this.state.inputValid)
       this.setState({ inputValid: newState });
   }
@@ -169,7 +185,9 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
       payload.content = {
         amount: [this.state.buyInput],
         id: BigNumber.from(this.state.cardDetails.chainRef),
-        tokenId: BigNumber.from(this.receiverImages[this.state.slideIndex].tokenId),
+        tokenId: BigNumber.from(
+          this.receiverImages[this.state.slideIndex].tokenId
+        ),
       };
       this.setState({ txPending: true });
       StoreClasses.dispatcher.dispatch(payload);
@@ -276,10 +294,10 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
                   onClick={() => handleImageChange(-1)}
                 />
                 <img
-                    className={'w-80'}
-                    src={this.state.cardDetails?.url}
-                    alt={this.state.cardDetails?.url}
-                    style={{ maxWidth: '500px' }}
+                  className={'w-80'}
+                  src={this.state.cardDetails?.url}
+                  alt={this.state.cardDetails?.url}
+                  style={{ maxWidth: '500px' }}
                 />
                 {/*<img*/}
                 {/*  className={'w-80'}*/}
@@ -294,17 +312,16 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
               </div>
 
               <div className={'t-left'}>
-                <h1 className={'tk-vincente h-1'}> {this.state.cardDetails?.name} </h1>
+                <h1 className={'tk-vincente h-1'}>
+                  {' '}
+                  {this.state.cardDetails?.name}{' '}
+                </h1>
 
                 <div
                   className={'tk-grotesk-lightbold font-16 line-break-enable'}
                 >
-                  <p>
-                    {this.state.cardDetails?.description}
-                  </p>
-                  <p>
-                    {this.state.cardDetails?.motto}
-                  </p>
+                  <p>{this.state.cardDetails?.description}</p>
+                  <p>{this.state.cardDetails?.motto}</p>
                 </div>
 
                 <div className="p_relative">
@@ -312,9 +329,9 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
                     type="text"
                     onFocus={() => this.setState({ buyMaxVisible: false })}
                     onBlur={() =>
-                        this.setState({
-                          buyMaxVisible: this.inputRef.current?.value === '',
-                        })
+                      this.setState({
+                        buyMaxVisible: this.inputRef.current?.value === '',
+                      })
                     }
                     onChange={this.handleOnChange}
                     ref={this.inputRef}

@@ -170,34 +170,33 @@ class Page3TradeFloor extends Component<PAGE7_PROPS, PAGE7_STATE> {
     const { cFolioItems } = this.state;
 
     const cardRender =
-        cFolioItems?.length &&
-        cFolioItems
-            .map((card, index) => {
-              return (
-                  <div className="page3Trade-card" key={index + Math.random()}>
-                    <Link to={`staked-invest?type=wolves&levelId=0&cardId=${card.id}`}>
-                      <video
-                          className="card-media"
-                          src={card.url}
-                          poster={card.url}
-                          autoPlay
-                          loop
-                          playsInline
-                      />
-                    </Link>
-                    <span className="tk-vincente-lightbold font-32 m-0 mt-2 line-h">
-                {card?.name}
-              </span>
-                    <span className="tk-grotesk-lightbold font-14 ellipsis">
-                MOTTO: {card?.motto}
-              </span>
-                    <hr className="wolves"/>
-                    <span className="tk-vincente font-32 m-0 line-h ellipsis">
-                {card?.minted || 1}/100
-              </span>
-                  </div>
-              );
-            });
+      cFolioItems?.length &&
+      cFolioItems.map((card, index) => {
+        return (
+          <div className="page3Trade-card" key={index + Math.random()}>
+            <Link to={`staked-invest?type=wolves&levelId=0&cardId=${card.id}`}>
+              <video
+                className="card-media"
+                src={card.url}
+                poster={card.url}
+                autoPlay
+                loop
+                playsInline
+              />
+            </Link>
+            <span className="tk-vincente-lightbold font-32 m-0 mt-2 line-h">
+              {card?.name}
+            </span>
+            <span className="tk-grotesk-lightbold font-14 ellipsis">
+              MOTTO: {card?.motto}
+            </span>
+            <hr className="wolves" />
+            <span className="tk-vincente font-32 m-0 line-h ellipsis">
+              {card?.minted || 1}/100
+            </span>
+          </div>
+        );
+      });
 
     return (
       <>
@@ -230,7 +229,7 @@ class Page3TradeFloor extends Component<PAGE7_PROPS, PAGE7_STATE> {
           {/* Cards listing */}
           <div className="page3Trade-card-container mt-5">{cardRender}</div>
         </div>
-        </>
+      </>
     );
   }
 }

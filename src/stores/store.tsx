@@ -704,9 +704,8 @@ class Store {
   };
 
   _getCFolioSpec = async (payloadContent: PayloadContent) => {
-    const data: ethers.ContractFunction = await this.sftMintContract?.getCFolioSpec([
-      0, 1, 2, 3, 4, 5, 6, 7,
-    ]);
+    const data: ethers.ContractFunction =
+      await this.sftMintContract?.getCFolioSpec([0, 1, 2, 3, 4, 5, 6, 7]);
     console.log(data);
     return data;
   };
@@ -1027,7 +1026,7 @@ class Store {
     }
   };
 
-  _doAddStfToCfolio = async(payloadContent: PayloadContent) => {
+  _doAddStfToCfolio = async (payloadContent: PayloadContent) => {
     const { id, amount, tokenId } = payloadContent;
     if (id === undefined) {
       emitter.emit(ADD_SFT_TO_CFOLIO, {
@@ -1047,7 +1046,13 @@ class Store {
 
     try {
       const tx: ethers.ContractTransaction | undefined =
-          await this.sftMintContract.mintCFolioItemSFT(this.address, id, '', tokenId, amount);
+        await this.sftMintContract.mintCFolioItemSFT(
+          this.address,
+          id,
+          '',
+          tokenId,
+          amount
+        );
       emitter.emit(ADD_SFT_TO_CFOLIO, {
         status: 'tx',
         tx: tx?.hash,
@@ -1066,7 +1071,7 @@ class Store {
       } as StatusResult);
     }
     return;
-  }
+  };
 
   /************** Getter ****************/
 
