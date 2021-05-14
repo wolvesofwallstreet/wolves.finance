@@ -36,6 +36,7 @@ const ImageSlider = ({
 }: PROPS): JSX.Element => {
   const containerRef: RefObject<HTMLDivElement> = useRef(null);
   const [currentIndex, setCurrentIndex] = React.useState(0);
+  const [displayIndex, setDisplayIndex] = React.useState(0);
   const [left, setLeft] = React.useState(0);
   const [width, setWidth] = React.useState(0);
 
@@ -52,8 +53,14 @@ const ImageSlider = ({
   }, [currentIndex, slideWidth, width]);
 
   useEffect(() => {
-    if (onSlideChanged) onSlideChanged(currentIndex);
-  }, [currentIndex, onSlideChanged]);
+    if (onSlideChanged) {
+      if (displayIndex !== currentIndex) {
+        setDisplayIndex(-1);
+        setTimeout(() => setDisplayIndex(currentIndex), 250);
+      }
+      onSlideChanged(currentIndex);
+    }
+  }, [currentIndex, displayIndex, onSlideChanged]);
 
   useEffect(() => {
     if (containerRef.current) setWidth(containerRef.current.clientWidth);
@@ -79,7 +86,7 @@ const ImageSlider = ({
             <div
               key={'si_' + index}
               className={
-                'image_slide' + (index === currentIndex ? ' active' : '')
+                'image_slide' + (index === displayIndex ? ' active' : '')
               }
               style={{ width: slideWidth + 'px' }}
               onClick={() => go(index)}
