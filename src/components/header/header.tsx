@@ -149,10 +149,10 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
             to: '/shop?type=bois&levelId=' + levelId,
             disabled: type === 'bois',
           },
-          {
+          /*{
             id: 'BOIS BOARDROOMS',
             to: '/bois_boardrooms',
-          },
+          },*/
           {
             id: 'YEARN INVESTMENT SFTS',
             to: '/yearn_investment_sfts',
