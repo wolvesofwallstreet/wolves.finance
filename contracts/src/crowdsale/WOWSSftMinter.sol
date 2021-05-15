@@ -67,12 +67,19 @@ contract WOWSSftMinter is Context, Ownable {
   // Events
   //////////////////////////////////////////////////////////////////////////////
 
+  // Emitted if a new SFT is minted
   event Mint(
     address indexed recipient,
     uint256 tokenId,
     uint256 price,
     uint256 cfolioType
   );
+
+  // Emitted if cFolio mint specifications (e.g. limits / price) have changed
+  event CFolioSpecChanged(uint256[] ids, WOWSSftMinter upgradeFrom);
+
+  // Emitted if the contract gets destroyed
+  event Destruct();
 
   //////////////////////////////////////////////////////////////////////////////
   // Constructor
@@ -168,7 +175,8 @@ contract WOWSSftMinter is Context, Ownable {
     uint256[] calldata cFolioTypes,
     address[] calldata handlers,
     uint128[] calldata maxMint,
-    uint256[] calldata prices
+    uint256[] calldata prices,
+    WOWSSftMinter oldMinter
   ) external onlyOwner {
     // Validate parameters
     require(
@@ -185,30 +193,22 @@ contract WOWSSftMinter is Context, Ownable {
       cfi.maxMintable = maxMint[i];
       cfi.price = prices[i];
     }
+    if (address(oldMinter) != address(0)) {
+      for (uint256 i = 0; i < cFolioTypes.length; ++i) {
+        (, , uint128 numMinted, ) = oldMinter.cfolioItemSfts(cFolioTypes[i]);
+        cfolioItemSfts[cFolioTypes[i]].numMinted = numMinted;
+      }
+      nextCFolioItemNft = oldMinter.nextCFolioItemNft();
+    }
+    emit CFolioSpecChanged(cFolioTypes, oldMinter);
   }
 
   /**
-   * @dev retrieve mint information about cfolioItem
+   * @dev upgrades state from an existing WOWSSFTMinter
    */
-  function getCFolioSpec(uint256[] calldata cFolioTypes)
-    external
-    view
-    returns (
-      uint256[] memory prices,
-      uint128[] memory numMinted,
-      uint128[] memory maxMintable
-    )
-  {
-    uint256 length = cFolioTypes.length;
-    prices = new uint256[](length);
-    numMinted = new uint128[](length);
-    maxMintable = new uint128[](length);
-
-    for (uint256 i; i < length; ++i) {
-      CFolioItemSft storage cfi = cfolioItemSfts[cFolioTypes[i]];
-      numMinted[i] = cfi.numMinted;
-      maxMintable[i] = cfi.maxMintable;
-    }
+  function destructContract() external onlyOwner {
+    emit Destruct();
+    selfdestruct(msg.sender);
   }
 
   /**
@@ -353,6 +353,71 @@ contract WOWSSftMinter is Context, Ownable {
     }
   }
 
+  //////////////////////////////////////////////////////////////////////////////
+  // ERC1155Holder
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * @dev We are a temorary token holder during CFolioToken mint step
+   *
+   * Only accept ERC1155 tokens during this setup.
+   */
+  function onERC1155Received(
+    address,
+    address,
+    uint256,
+    uint256,
+    bytes memory
+  ) external view returns (bytes4) {
+    // Validate state
+    require(_setupCFolio, 'Only during setup');
+
+    // Call ancestor
+    return this.onERC1155Received.selector;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Getters
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * @dev Query prices for given levels
+   */
+  function getPrices(uint16[] memory levels)
+    external
+    view
+    returns (uint256[] memory)
+  {
+    uint256[] memory result = new uint256[](levels.length);
+    for (uint256 i = 0; i < levels.length; ++i)
+      result[i] = _pricePerLevel[levels[i]];
+    return result;
+  }
+
+  /**
+   * @dev retrieve mint information about cfolioItem
+   */
+  function getCFolioSpec(uint256[] calldata cFolioTypes)
+    external
+    view
+    returns (
+      uint256[] memory prices,
+      uint128[] memory numMinted,
+      uint128[] memory maxMintable
+    )
+  {
+    uint256 length = cFolioTypes.length;
+    prices = new uint256[](length);
+    numMinted = new uint128[](length);
+    maxMintable = new uint128[](length);
+
+    for (uint256 i; i < length; ++i) {
+      CFolioItemSft storage cfi = cfolioItemSfts[cFolioTypes[i]];
+      numMinted[i] = cfi.numMinted;
+      maxMintable[i] = cfi.maxMintable;
+    }
+  }
+
   /**
    * @dev See {IWOWSSftMinter-tradeFloorTokenId}.
    */
@@ -393,47 +458,6 @@ contract WOWSSftMinter is Context, Ownable {
 
     uint256 hashNum = uint256(keccak256(hashData));
     return (hashNum ^ (hashNum << 128)).maskHash() | sftTokenId;
-  }
-
-  //////////////////////////////////////////////////////////////////////////////
-  // ERC1155Holder
-  //////////////////////////////////////////////////////////////////////////////
-
-  /**
-   * @dev We are a temorary token holder during CFolioToken mint step
-   *
-   * Only accept ERC1155 tokens during this setup.
-   */
-  function onERC1155Received(
-    address,
-    address,
-    uint256,
-    uint256,
-    bytes memory
-  ) external view returns (bytes4) {
-    // Validate state
-    require(_setupCFolio, 'Only during setup');
-
-    // Call ancestor
-    return this.onERC1155Received.selector;
-  }
-
-  //////////////////////////////////////////////////////////////////////////////
-  // Getters
-  //////////////////////////////////////////////////////////////////////////////
-
-  /**
-   * @dev Query prices for given levels
-   */
-  function getPrices(uint16[] memory levels)
-    external
-    view
-    returns (uint256[] memory)
-  {
-    uint256[] memory result = new uint256[](levels.length);
-    for (uint256 i = 0; i < levels.length; ++i)
-      result[i] = _pricePerLevel[levels[i]];
-    return result;
   }
 
   //////////////////////////////////////////////////////////////////////////////

@@ -17,7 +17,9 @@ require('hardhat-deploy-ethers');
 // TODO: Fully qualified contract names
 const SFT_HOLDER_CONTRACT = 'WOWSERC1155';
 const SFT_MINTER_CONTRACT = 'WOWSSftMinter';
+const SFT_MINTER_UPDATE_CONTRACT = 'WOWSSftMinterUpdate';
 const CONTROLLER_CONTRACT = 'Controller';
+const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 // Deployed aliases
 const CFOLIO_FARM_LP_CONTRACT = 'CFolioFarmLP';
@@ -26,7 +28,9 @@ const CFOLIO_FARM_LP_CONTRACT = 'CFolioFarmLP';
 const CFOLIO_FARM_ABI = `${__dirname}/../src/abi/contracts/src/investment/CFolioFarm.sol/CFolioFarm.json`;
 
 // Path to generated addresses file
+const CONFIG_ADDRESSES = `${__dirname}/../src/config/addresses.json`;
 const GENERATED_ADDRESSES = `${__dirname}/../src/config/generated-addresses.json`;
+const IGNORE_ADDRESSES = process.env.IGNORE_ADDRESSES !== undefined;
 
 // Helper function
 function log_step(step_string) {
@@ -46,9 +50,13 @@ const func = async function (hardhat_re) {
   const chainId = await hardhat_re.getChainId();
 
   // Load contract addresses
+  const configNetworks = JSON.parse(
+    fs.readFileSync(CONFIG_ADDRESSES).toString()
+  );
   const generatedNetworks = JSON.parse(
     fs.readFileSync(GENERATED_ADDRESSES).toString()
   );
+  const configAddresses = (!IGNORE_ADDRESSES && configNetworks[chainId]) || {};
   const generatedAddresses = generatedNetworks[chainId] || {};
 
   // Deployment instances
@@ -187,9 +195,27 @@ const func = async function (hardhat_re) {
         CFI_TYPES,
         CFI_HANDLERS,
         CFI_MAXMINT,
-        CFI_PRICES
+        CFI_PRICES,
+        configAddresses.sftMinterUpdate || NULL_ADDRESS
       )
     );
+    // Assumption: SFTMinter is newly deployed, lets upgrade
+    if (
+      configAddresses.sftMinterUpdate &&
+      configAddresses.sftMinterUpdate !== generatedAddresses.sftMinter
+    ) {
+      // old contracts don't have destructContract
+      await catchUnknownSigner(
+        execute(
+          SFT_MINTER_UPDATE_CONTRACT,
+          {
+            from: marketingWallet,
+            log: true,
+          },
+          'destructContract'
+        )
+      );
+    }
   }
 
   //
