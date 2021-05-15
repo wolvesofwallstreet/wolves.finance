@@ -23,7 +23,7 @@ import {
   IMAGE_SLIDER_SLIDE,
   ImageSlider,
 } from '../controls/image_slider';
-import { CARDS } from '../types/cards';
+import { CARDS, CFOLIO_ITEMS } from '../types/cards';
 
 type PROPS = {
   t: TFunction;
@@ -32,8 +32,6 @@ type PROPS = {
 };
 
 type STATE = {
-  input1: string;
-  input2: string;
   currentImage: number;
 };
 
@@ -43,31 +41,18 @@ type IMAGE = { tokenId: number; level: number; index: number };
 
 class Page4StakedInvest extends React.Component<PROPS, STATE> {
   receiverImages: IMAGE[] = [];
-  investImages = [
-    'https://4travelers.de/wolves_assets/cards/wolves/level1/AXEL-500.jpg',
-    'https://4travelers.de/wolves_assets/cards/wolves/level2/GORGAN-500.mp4.jpg',
-  ];
-  content: CARDS | undefined = undefined;
-  sliderInterface: IMAGE_SLIDER_INTERFACE | undefined = undefined;
+  cards?: CARDS;
+  cfolioItems?: CFOLIO_ITEMS;
+  sliderInterface?: IMAGE_SLIDER_INTERFACE;
   slideIndex = 0;
 
   constructor(props: PROPS) {
     super(props);
     this.state = {
-      input1: 'ETH 2300',
-      input2: 'ETH 2300',
       currentImage: 0,
     };
     this.onSFTState = this.onSFTState.bind(this);
     this._updateImages = this._updateImages.bind(this);
-  }
-
-  setInput1(val: string) {
-    this.setState({ input1: val });
-  }
-
-  setInput2(val: string) {
-    this.setState({ input2: val });
   }
 
   setCurrentImage(val: number) {
@@ -90,8 +75,9 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
   }
 
   _updateImages() {
-    const cards = StoreClasses.store.getAssets().cards;
-    const tokenIds = StoreClasses.store.getAssets().userSFT;
+    const assets = StoreClasses.store.getAssets();
+    const cards = assets.cards;
+    const tokenIds = assets.userSFT;
 
     const newImages: IMAGE[] = [];
     tokenIds.forEach((elem) => {
@@ -110,7 +96,11 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
       this.receiverImages = newImages;
       this.setCurrentImage(this.state.currentImage);
     }
-    this.content = cards;
+    this.cards = cards;
+    if (assets.cfolioItems.length > 0)
+      this.cfolioItems = assets.cfolioItems.filter(
+        (elem) => elem.type === 'lpInvestment'
+      )[0];
   }
 
   handleBuy(): void {
@@ -132,16 +122,22 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
 
   render(): JSX.Element {
     const handleImageChange = (change: number) => {
-      if (this.state.currentImage + change < 0) {
-        return this.setCurrentImage(this.investImages.length - 1);
-      }
+      if (this.cfolioItems) {
+        if (this.state.currentImage + change < 0) {
+          return this.setCurrentImage(this.cfolioItems.cards.length - 1);
+        }
 
-      if (this.state.currentImage + change >= this.investImages.length) {
-        return this.setCurrentImage(0);
-      }
+        if (this.state.currentImage + change >= this.cfolioItems.cards.length) {
+          return this.setCurrentImage(0);
+        }
 
-      return this.setCurrentImage(this.state.currentImage + change);
+        return this.setCurrentImage(this.state.currentImage + change);
+      }
     };
+
+    const cfolioItem = this.cfolioItems
+      ? this.cfolioItems.cards[this.state.currentImage]
+      : undefined;
 
     return (
       <>
@@ -183,7 +179,7 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
                     slides={this.receiverImages.map((elem) => {
                       const slide = {
                         url:
-                          this.content?.cards[elem.level].cards[
+                          this.cards?.cards[elem.level].cards[
                             elem.index
                           ].url.replace('{res}', '300') || '',
                       } as IMAGE_SLIDER_SLIDE;
@@ -207,12 +203,14 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
                   className="arrow_left m-0 mr-2"
                   onClick={() => handleImageChange(-1)}
                 />
-                <img
-                  className={'w-80'}
-                  src={this.investImages[this.state.currentImage]}
-                  alt={this.investImages[this.state.currentImage]}
-                  style={{ maxWidth: '500px' }}
-                />
+                {cfolioItem && (
+                  <img
+                    className={'w-80'}
+                    src={cfolioItem.url.replace('{res}', '500')}
+                    alt=""
+                    style={{ maxWidth: '500px' }}
+                  />
+                )}
                 <button
                   className="arrow_right m-0 ml-2"
                   onClick={() => handleImageChange(1)}
@@ -220,7 +218,10 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
               </div>
 
               <div className={'t-left'}>
-                <h1 className={'tk-vincente h-1'}> WOLVES WOWS/ETH NFT </h1>
+                <h1 className={'tk-vincente h-1'}>
+                  {' '}
+                  {cfolioItem ? cfolioItem.name : 'WOLVES WOWS/ETH NFT'}{' '}
+                </h1>
 
                 <div
                   className={'tk-grotesk-lightbold font-16 line-break-enable'}
