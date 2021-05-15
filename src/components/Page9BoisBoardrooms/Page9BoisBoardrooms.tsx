@@ -209,25 +209,48 @@ class Page9BoisBoardrooms extends React.Component<PROPS, STATE> {
               'd-flex justify-content-center bg-transparent-orange mb-3 '
             }
           >
-            <div className="vw-80 py-2 border_thin_t border_thin_b p_relative center_triangle_down center_triangle_up">
-              <ImageSlider
-                sliderId="0"
-                initCallback={this.sliderInit.bind(this)}
-                onSlideChanged={(index) => {
-                  if (index !== this.state.slideIndex)
-                    this.setState({ slideIndex: index });
-                }}
-                slideWidth={120}
-                slides={this.receiverImages.map((elem) => {
-                  const slide = {
-                    url:
-                      this.content?.cards[elem.level].cards[
-                        elem.index
-                      ].url.replace('{res}', '300') || '',
-                  } as IMAGE_SLIDER_SLIDE;
-                  return slide;
-                })}
-              />
+            <div className={'p_relative'}>
+              <button
+                onClick={() => this.sliderInterface?.prev()}
+                className={'slide__arrow slide__arrow--left slide__arrows'}
+              >
+                {'<'}
+              </button>
+              <div className="vw-80 py-3  border_thin_t border_thin_b p_relative center_triangle_up center_triangle_down">
+                <ImageSlider
+                  sliderId="0"
+                  initCallback={this.sliderInit.bind(this)}
+                  onSlideChanged={(index) => {
+                    if (index !== this.state.slideIndex)
+                      this.setState({ slideIndex: index });
+                  }}
+                  slideWidth={135}
+                  // slides={this.receiverImages.map((elem) => {
+                  //   const slide = {
+                  //     url:
+                  //       this.content?.cards[elem.level].cards[
+                  //         elem.index
+                  //       ].url.replace('{res}', '300') || '',
+                  //   } as IMAGE_SLIDER_SLIDE;
+                  //   return slide;
+                  // })}
+                  slides={Array(5)
+                    .fill(null)
+                    .map(
+                      (elem, i) =>
+                        ({
+                          url: `https://reqres.in/img/faces/${1 + i}-image.jpg`,
+                          count: i,
+                        } as IMAGE_SLIDER_SLIDE)
+                    )}
+                />
+              </div>
+              <button
+                onClick={() => this.sliderInterface?.next()}
+                className={'slide__arrow slide__arrow--right slide__arrows'}
+              >
+                {'>'}
+              </button>
             </div>
           </div>
 
