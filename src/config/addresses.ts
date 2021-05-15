@@ -18,13 +18,13 @@
  *   - sftHolder - The ERC-1155 SFT contract
  *   - tradeFloor - The Trade Floor contract for locking and trading SFTs
  *   - stakingTest - The test staking contract for the Trade Floor
+ *   - cfolioItemHandlerLP - The handler of CFolioItem WOWS/WETH LP
  *
  * It also contains addresses for the following dependencies:
  *
  *   - weth: The W-ETH contract
  *   - uniV2Factory: The Uniswap V2 factory
  *   - uniV2Router: The Uniswap V2 router
- *   - openSeaProxyRegistry - The OpenSea proxy registry
  *
  * Addresses are available for the following networks:
  *
