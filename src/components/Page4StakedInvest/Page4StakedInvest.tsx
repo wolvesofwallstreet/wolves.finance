@@ -12,7 +12,11 @@ import React from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { RouteComponentProps } from 'react-router-dom';
 
-import { ASSETS_LOADED, SFT_STATE } from '../../stores/constants';
+import {
+  ASSETS_LOADED,
+  CFOLIO_ITEM_BUY,
+  SFT_STATE,
+} from '../../stores/constants';
 import { SFTStateresult, StoreClasses } from '../../stores/store';
 import {
   IMAGE_SLIDER_INTERFACE,
@@ -31,7 +35,6 @@ type STATE = {
   input1: string;
   input2: string;
   currentImage: number;
-  slideIndex: number;
 };
 
 type IMAGE = { tokenId: number; level: number; index: number };
@@ -46,6 +49,7 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
   ];
   content: CARDS | undefined = undefined;
   sliderInterface: IMAGE_SLIDER_INTERFACE | undefined = undefined;
+  slideIndex = 0;
 
   constructor(props: PROPS) {
     super(props);
@@ -53,7 +57,6 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
       input1: 'ETH 2300',
       input2: 'ETH 2300',
       currentImage: 0,
-      slideIndex: 0,
     };
     this.onSFTState = this.onSFTState.bind(this);
     this._updateImages = this._updateImages.bind(this);
@@ -110,6 +113,19 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
     this.content = cards;
   }
 
+  handleBuy(): void {
+    const payload = {
+      type: CFOLIO_ITEM_BUY,
+      content: {
+        wowsAmount: 0.5,
+        investAmount: [0.1],
+        sftTokenId: this.receiverImages[this.slideIndex].tokenId,
+        cfolioType: 0,
+      },
+    };
+    StoreClasses.dispatcher.dispatch(payload);
+  }
+
   sliderInit(id: string | undefined, iface: IMAGE_SLIDER_INTERFACE) {
     this.sliderInterface = iface;
   }
@@ -162,31 +178,17 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
                   <ImageSlider
                     sliderId="0"
                     initCallback={this.sliderInit.bind(this)}
-                    onSlideChanged={(index) => {
-                      if (index !== this.state.slideIndex)
-                        this.setState({ slideIndex: index });
-                    }}
+                    onSlideChanged={(index) => (this.slideIndex = index)}
                     slideWidth={135}
-                    // slides={this.receiverImages.map((elem) => {
-                    //   const slide = {
-                    //     url:
-                    //       this.content?.cards[elem.level].cards[
-                    //         elem.index
-                    //       ].url.replace('{res}', '300') || '',
-                    //   } as IMAGE_SLIDER_SLIDE;
-                    //   return slide;
-                    // })}
-                    slides={Array(5)
-                      .fill(null)
-                      .map(
-                        (elem, i) =>
-                          ({
-                            url: `https://reqres.in/img/faces/${
-                              1 + i
-                            }-image.jpg`,
-                            count: i,
-                          } as IMAGE_SLIDER_SLIDE)
-                      )}
+                    slides={this.receiverImages.map((elem) => {
+                      const slide = {
+                        url:
+                          this.content?.cards[elem.level].cards[
+                            elem.index
+                          ].url.replace('{res}', '300') || '',
+                      } as IMAGE_SLIDER_SLIDE;
+                      return slide;
+                    })}
                   />
                 </div>
                 <button
@@ -255,6 +257,7 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
                   className={
                     'wolve_btn page4sInvest-text-input mt-3 m-0 page4sInvest-btn-stack font-10'
                   }
+                  onClick={() => this.handleBuy()}
                 >
                   BUY STAKED ETH/WOWS NFT
                 </button>

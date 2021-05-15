@@ -42,7 +42,6 @@ type STATE = {
   barsInfo: BarInfoType[];
   show: boolean;
   currentImage: number;
-  slideIndex?: number;
   imgSlides?: ObjType[];
   [key: string]: unknown;
 };
@@ -59,6 +58,7 @@ class Page9BoisBoardrooms extends React.Component<PROPS, STATE> {
 
   content: CARDS | undefined = undefined;
   sliderInterface: IMAGE_SLIDER_INTERFACE | undefined = undefined;
+  slideIndex = 0;
 
   constructor(props: PROPS) {
     super(props);
@@ -220,29 +220,17 @@ class Page9BoisBoardrooms extends React.Component<PROPS, STATE> {
                 <ImageSlider
                   sliderId="0"
                   initCallback={this.sliderInit.bind(this)}
-                  onSlideChanged={(index) => {
-                    if (index !== this.state.slideIndex)
-                      this.setState({ slideIndex: index });
-                  }}
+                  onSlideChanged={(index) => (this.slideIndex = index)}
                   slideWidth={135}
-                  // slides={this.receiverImages.map((elem) => {
-                  //   const slide = {
-                  //     url:
-                  //       this.content?.cards[elem.level].cards[
-                  //         elem.index
-                  //       ].url.replace('{res}', '300') || '',
-                  //   } as IMAGE_SLIDER_SLIDE;
-                  //   return slide;
-                  // })}
-                  slides={Array(5)
-                    .fill(null)
-                    .map(
-                      (elem, i) =>
-                        ({
-                          url: `https://reqres.in/img/faces/${1 + i}-image.jpg`,
-                          count: i,
-                        } as IMAGE_SLIDER_SLIDE)
-                    )}
+                  slides={this.receiverImages.map((elem) => {
+                    const slide = {
+                      url:
+                        this.content?.cards[elem.level].cards[
+                          elem.index
+                        ].url.replace('{res}', '300') || '',
+                    } as IMAGE_SLIDER_SLIDE;
+                    return slide;
+                  })}
                 />
               </div>
               <button

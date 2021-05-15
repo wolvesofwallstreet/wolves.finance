@@ -26,3 +26,5 @@ export const SFT_LOCK = 'SFT_LOCK'; // Transfer SFT to TradingFloor contract
 export const SFT_STATE = 'SFT_STATE'; // SFT cap and minted asset state changed
 export const SFT_UNLOCK = 'SFT_UNLOCK'; // Burn NFT, transfer SFT back
 export const SFT_USER = 'SFT_USER'; // List of SFT owned by address
+
+export const CFOLIO_ITEM_BUY = 'CFOLIO_ITEM_BUY'; // Buy (mint) cfolioItem

@@ -32,6 +32,7 @@ import { addresses } from '../config/addresses';
 import { privateNetworkRPC, privateNetworkWS } from '../config/networks';
 import {
   ASSETS_LOADED,
+  CFOLIO_ITEM_BUY,
   CONNECTION_CHANGED,
   ERC20_TOKEN_CONTRACT,
   NEW_BLOCK,
@@ -52,8 +53,17 @@ const dispatcher = new Dispatcher.Dispatcher();
 
 type PayloadContent = {
   amount?: number;
+  investment?: number;
   id?: ethers.BigNumber;
+  type?: number;
   filter?: Array<string>;
+};
+
+type PayloadContentCFolioItem = {
+  wowsAmount: number;
+  investAmount: number[];
+  sftTokenId: ethers.BigNumber;
+  cfolioType: number;
 };
 
 type Payload = {
@@ -67,6 +77,7 @@ type ChainAddresses = {
   sftMinter: string;
   sftHolder: string;
   tradeFloorProxy: string;
+  cfolioItemHandlerLP: string;
 };
 interface IIndexable {
   [key: number]: ChainAddresses;
@@ -136,6 +147,8 @@ class Store {
   sftHolderContractRO: ethers.Contract | null = null;
   stakeContractRO: ethers.Contract | null = null;
   uniDaiWethPairContractRO: ethers.Contract | null = null;
+
+  cFolioItemHandlerLpAddress = '';
 
   static nullAddress = '0x0000000000000000000000000000000000000000';
   static BASE_CARD_MAX = ethers.BigNumber.from('0xFFFFFFFFFFFFFFFF');
@@ -207,6 +220,9 @@ class Store {
     dispatcher.register((payload) => {
       const _payload = payload as Payload;
       switch (_payload.type) {
+        case CFOLIO_ITEM_BUY:
+          this._doCFolioItemBuy(_payload.content as PayloadContentCFolioItem);
+          break;
         case ERC20_TOKEN_CONTRACT:
           this._getTokenContractData(_payload.content);
           break;
@@ -360,6 +376,7 @@ class Store {
       this.tokenContract = null;
       this.sftMintContract = null;
       this.ethersProvider = null;
+      this.cFolioItemHandlerLpAddress = '';
     }
     this.address = '';
     if (clearCache) {
@@ -529,6 +546,7 @@ class Store {
         SFTMinterAbi,
         signer
       );
+      this.cFolioItemHandlerLpAddress = chainAddresses.cfolioItemHandlerLP;
       if (chainAddresses.tradeFloorProxy !== '')
         this.tradeFloorContract = new ethers.Contract(
           chainAddresses.tradeFloorProxy,
@@ -1009,6 +1027,112 @@ class Store {
     } catch (e) {
       this.pauseSFTUser = true;
       emitter.emit(SFT_UNLOCK, {
+        status: 'error',
+        errorMessage: e.error ? e.error.message : e.message,
+      } as StatusResult);
+    }
+  };
+
+  _doCFolioItemBuy = async (payloadContent: PayloadContentCFolioItem) => {
+    const { wowsAmount, investAmount, sftTokenId, cfolioType } = payloadContent;
+
+    if (
+      !this.sftMintContract ||
+      !this.tokenContract ||
+      !this.lPContract ||
+      this.cFolioItemHandlerLpAddress === ''
+    ) {
+      emitter.emit(CFOLIO_ITEM_BUY, {
+        status: 'error',
+        errorMessage: 'Contract not initialized',
+      } as StatusResult);
+      return;
+    }
+
+    try {
+      if (wowsAmount > 0) {
+        const weiAmount = this.toWei(wowsAmount);
+        const walletAmount = await this.tokenContract.balanceOf(this.address);
+
+        if (weiAmount.gt(walletAmount)) {
+          emitter.emit(CFOLIO_ITEM_BUY, {
+            status: 'error',
+            errorMessage: 'Insufficient WOWS balances',
+          } as StatusResult);
+          return;
+        }
+      }
+
+      let investWeiAmount = ethers.BigNumber.from(0);
+      if (investAmount[0] > 0) {
+        investWeiAmount = this.toWei(investAmount[0]);
+        const walletAmount = await this.lPContract.balanceOf(this.address);
+        if (investWeiAmount.gt(walletAmount)) {
+          emitter.emit(CFOLIO_ITEM_BUY, {
+            status: 'error',
+            errorMessage: 'Insufficient LP balances',
+          } as StatusResult);
+          return;
+        }
+      }
+
+      if (wowsAmount > 0) {
+        const allowance = await this.tokenContract.allowance(
+          this.address,
+          this.sftMintContract.address
+        );
+        const weiAmount = this.toWei(wowsAmount);
+        if (allowance.lt(weiAmount)) {
+          const tx = await this.tokenContract.approve(
+            this.sftMintContract.address,
+            weiAmount
+          );
+          emitter.emit(CFOLIO_ITEM_BUY, {
+            status: 'approve',
+            tx: tx?.hash,
+          } as StatusResult);
+          await tx.wait();
+        }
+      }
+
+      if (!investWeiAmount.isZero()) {
+        const allowance = await this.lPContract.allowance(
+          this.address,
+          this.cFolioItemHandlerLpAddress
+        );
+        if (allowance.lt(investWeiAmount)) {
+          const tx = await this.lPContract.approve(
+            this.cFolioItemHandlerLpAddress,
+            investWeiAmount
+          );
+          emitter.emit(CFOLIO_ITEM_BUY, {
+            status: 'approve',
+            tx: tx?.hash,
+          } as StatusResult);
+          await tx.wait();
+        }
+      }
+
+      const tx: ethers.ContractTransaction | undefined =
+        await this.sftMintContract?.mintCFolioItemSFT(
+          this.address,
+          cfolioType,
+          '',
+          sftTokenId,
+          [investWeiAmount]
+        );
+      emitter.emit(CFOLIO_ITEM_BUY, {
+        status: 'tx',
+        tx: tx?.hash,
+      } as StatusResult);
+
+      await tx?.wait();
+      emitter.emit(CFOLIO_ITEM_BUY, {
+        status: 'success',
+        tx: tx?.hash,
+      } as StatusResult);
+    } catch (e) {
+      emitter.emit(CFOLIO_ITEM_BUY, {
         status: 'error',
         errorMessage: e.error ? e.error.message : e.message,
       } as StatusResult);
