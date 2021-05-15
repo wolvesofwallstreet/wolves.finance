@@ -9,20 +9,104 @@
 .image_slide_container {
   width: 100%;
   text-align: left;
+  overflow: hidden;
 }
 
 .image_slide_track {
   position: relative;
   display: inline-flex;
-  transition-timing-function: ease-in-out;
-  transition: left 500ms;
+  transition: all 0.2s ease-in-out;
 }
 
 .image_slide_track div {
-  padding: 12px 10px;
+  /*padding: 12px 10px;*/
+  transition: transform 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.image_slide {
+  position: relative;
+  min-height: 130px;
+  height: 100%;
+  transform: scale(0.8);
+  border: 1px solid var(--wolves-white);
+
+  --url: url(../../assets/loading_animated.gif);
+  background-image: var(--url);
+  background-size: cover;
+  cursor: pointer;
+  opacity: 0.7;
 }
 
 .image_slide.active {
-  padding: 0px;
-  border: 2px solid white;
+  /*padding: 0;*/
+  border-width: 2px;
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* Arrow*/
+.slide__arrow {
+  position: absolute;
+  display: block;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  padding: 0;
+  color: transparent;
+  z-index: 3;
+  cursor: pointer;
+  background-color: transparent;
+  border-style: solid;
+  border-color: transparent;
+  border-width: 10px 10px 10px 10px;
+}
+
+.slide__arrow--left {
+  border-right-width: 10px;
+  border-right-color: var(--wolves-orange-light);
+  --left: 0;
+  left: var(--left);
+}
+
+.slide__arrow--right {
+  border-left-width: 10px;
+  border-left-color: var(--wolves-orange-light);
+  --right: 0;
+  right: var(--right);
+}
+
+/* arrow state's */
+.slide__arrow:focus {
+  outline: none;
+}
+
+.slide__arrow:hover {
+  border-color: transparent;
+  background-color: transparent;
+}
+
+.slide__arrow--left:hover {
+  border-right-color: var(--wolves-orange);
+}
+
+.slide__arrow--right:hover {
+  border-left-color: var(--wolves-orange);
+}
+
+.slide_count {
+  width: 27px;
+  height: 27px;
+  line-height: 30px;
+  text-align: center;
+  border-radius: 50%;
+  background-color: #ffb89f;
+  color: black;
+  z-index: 10;
+  position: absolute;
+  font-weight: bold;
+  font-size: 13px;
+  top: 7px;
+  right: 6%;
 }

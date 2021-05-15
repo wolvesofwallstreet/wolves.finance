@@ -40,9 +40,20 @@ const ImageSlider = ({
   const [left, setLeft] = React.useState(0);
   const [width, setWidth] = React.useState(0);
 
-  const prev = () => slides.length > 0 && setCurrentIndex(currentIndex - 1);
-  const next = () =>
+  const prev = () => {
+    if (currentIndex === 0) {
+      return setCurrentIndex(slides.length - 1);
+    }
+    slides.length > 0 && setCurrentIndex(currentIndex - 1);
+  };
+
+  const next = () => {
+    if (currentIndex + 1 === slides.length) {
+      return setCurrentIndex(0);
+    }
     slides.length > currentIndex + 1 && setCurrentIndex(currentIndex + 1);
+  };
+
   const go = (index: number) =>
     index >= 0 && index < slides.length && setCurrentIndex(index);
 
@@ -53,6 +64,7 @@ const ImageSlider = ({
   }, [currentIndex, slideWidth, width]);
 
   useEffect(() => {
+    // if (onSlideChanged) onSlideChanged(currentIndex);
     if (onSlideChanged) {
       if (displayIndex !== currentIndex) {
         setDisplayIndex(-1);
@@ -83,16 +95,22 @@ const ImageSlider = ({
       <div className="image_slide_track" style={{ left: left + 'px' }}>
         {slides.map((elem, index) => {
           return (
-            <div
-              key={'si_' + index}
-              className={
-                'image_slide' + (index === displayIndex ? ' active' : '')
-              }
-              style={{ width: slideWidth + 'px' }}
-              onClick={() => go(index)}
-            >
-              <img width="100%" src={elem.url} alt="" />
-            </div>
+            <React.Fragment key={'si_' + index}>
+              <div
+                className={
+                  // 'image_slide' + (index === currentIndex ? ' active' : '')
+                  'image_slide' + (index === displayIndex ? ' active' : '')
+                }
+                style={{
+                  width: slideWidth + 'px',
+                  // ['--url' as string]: `url(${elem.url}`,
+                }}
+                onClick={() => go(index)}
+              >
+                <div className={'slide_count'}>{index}</div>
+                <img width="100%" height="100%" src={elem.url} alt="" />
+              </div>
+            </React.Fragment>
           );
         })}
       </div>

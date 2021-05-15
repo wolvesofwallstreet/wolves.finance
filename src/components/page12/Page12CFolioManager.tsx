@@ -5,14 +5,11 @@
  * SPDX-License-Identifier: Apache-2.0
  * See the file LICENSES/README.md for more information.
  */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import '../theme/checkbox/wolve_checkbox.css';
 import './Page12CFolioManager.css';
 
-import GlideJS from '@glidejs/glide';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import { Breakpoints, Controls } from '@glidejs/glide/dist/glide.modular.esm';
 import React, { Fragment, useState } from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { RouteComponentProps } from 'react-router-dom';
@@ -116,104 +113,6 @@ function CFolioManagerPage12({ t }: PROPS) {
     },
   ]);
 
-  const initGlide = () => {
-    // Slider-1
-    new GlideJS('.slider-1', {
-      classes: {
-        activeSlide: 'slider_active_slide',
-      },
-      gap: 10,
-      peek: 10,
-      type: 'slider', // carousel
-      perView: 6,
-      startAt: 2,
-      focusAt: 'center',
-      rewind: true,
-      breakpoints: {
-        1200: {
-          perView: 6,
-        },
-        900: {
-          perView: 3,
-        },
-        800: {
-          perView: 2,
-        },
-        600: {
-          perView: 2,
-        },
-        400: {
-          perView: 2,
-        },
-      },
-    }).mount({
-      Controls,
-      Breakpoints,
-    });
-
-    // Slider-2
-    new GlideJS('.slider-2', {
-      classes: {
-        activeSlide: 'slider_active_slide',
-      },
-      gap: 15,
-      peek: 10,
-      type: 'slider', // carousel
-      perView: 5,
-      // startAt: 1,
-      focusAt: 'center',
-      rewind: true,
-      breakpoints: {
-        1200: {
-          perView: 6,
-        },
-        800: {
-          perView: 2,
-        },
-        600: {
-          perView: 2,
-        },
-        400: {
-          perView: 2,
-        },
-      },
-    }).mount({
-      Controls,
-      Breakpoints,
-    });
-
-    // Slider-3
-    new GlideJS('.slider-3', {
-      classes: {
-        activeSlide: 'slider_active_slide',
-      },
-      gap: 20,
-      peek: 10,
-      type: 'slider', // carousel
-      perView: 7,
-      startAt: 3,
-      focusAt: 'center',
-      rewind: true,
-      breakpoints: {
-        1200: {
-          perView: 7,
-        },
-        800: {
-          perView: 4,
-        },
-        600: {
-          perView: 3,
-        },
-        400: {
-          perView: 2,
-        },
-      },
-    }).mount({
-      Controls,
-      Breakpoints,
-    });
-  };
-
   const SliderCardBox = ({
     id = '',
     src = '',
@@ -247,10 +146,6 @@ function CFolioManagerPage12({ t }: PROPS) {
     </Fragment>
   );
 
-  React.useEffect(() => {
-    initGlide();
-  });
-
   return (
     <>
       <div className={'page12-container bg-wolves'}>
@@ -271,120 +166,12 @@ function CFolioManagerPage12({ t }: PROPS) {
         >
           {/* Card slider-1 */}
           <div className={'w-75 center-container'}>
-            <div className={'slider-wrap-bar before_none after_none'}>
-              <div className={'wrap'} style={{ maxWidth: '950px' }}>
-                <div className="slider-1 images glide">
-                  <div className="glide__track" data-glide-el="track">
-                    <ul className="glide__slides">
-                      {slider1Cards.map((card, i) => {
-                        const { id, src, count = -1, title } = card;
-                        if (card.type === 'empty_box') {
-                          return <EmptyBox {...card} key={i + Math.random()} />;
-                        }
-                        return (
-                          <SliderCardBox
-                            id={id}
-                            title={title}
-                            src={src}
-                            count={count}
-                            key={i + Math.random()}
-                          />
-                        );
-                      })}
-                    </ul>
-                  </div>
-                  <div className="glide__arrows" data-glide-el="controls">
-                    <button
-                      className="glide__arrow glide__arrow--left"
-                      data-glide-dir="<"
-                      style={{
-                        ['--left' as string]: '-13%',
-                      }}
-                    >
-                      {/*<i className="fas fa-arrow-left"/>*/}
-                    </button>
-
-                    <button
-                      className="glide__arrow glide__arrow--right"
-                      data-glide-dir=">"
-                      style={{
-                        ['--right' as string]: '-13%',
-                      }}
-                    >
-                      {/*<i className="fas fa-arrow-right"/>*/}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <div className={'slider-wrap-bar before_none after_none'}></div>
           </div>
 
           {/* Card slider-2 */}
           <div className={'w-75 center-container pt-4'}>
-            <div className={'slider-wrap-bar before_none after_none'}>
-              <div className={'wrap'}>
-                <div className="slider-2 glide">
-                  <div className="glide__track" data-glide-el="track">
-                    <ul className="glide__slides">
-                      {slider2Cards.map((card, i) => {
-                        const { id, title, src, checked } = card;
-                        return (
-                          <Fragment key={i + Math.random()}>
-                            <div className="glide__slide d-flex flex-column align-items-center">
-                              <h5 className={'font-13 font-weight-normal'}>
-                                {title}
-                              </h5>
-                              <img
-                                className={'responsive-img'}
-                                style={{ width: '85px', height: '100px' }}
-                                src={src}
-                                alt={'img-' + title}
-                              />
-                              <span className={'font-13 font-weight-bold'}>
-                                <label
-                                  className="control font-13 mt-2 control-checkbox"
-                                  form={`slide-${id}`}
-                                >
-                                  <span className={'font-10'}>SELECT</span>
-                                  <input
-                                    type="checkbox"
-                                    id={`slide-${id}`}
-                                    name={`slide-${id}`}
-                                    defaultChecked={checked}
-                                  />
-                                  <div className="control_indicator" />
-                                </label>
-                              </span>
-                            </div>
-                          </Fragment>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                  <div className="glide__arrows" data-glide-el="controls">
-                    <button
-                      className="glide__arrow glide__arrow--left"
-                      data-glide-dir="<"
-                      style={{
-                        ['--left' as string]: '-30%',
-                      }}
-                    >
-                      {/*<i className="fas fa-arrow-left"/>*/}
-                    </button>
-
-                    <button
-                      className="glide__arrow glide__arrow--right"
-                      data-glide-dir=">"
-                      style={{
-                        ['--right' as string]: '-30%',
-                      }}
-                    >
-                      {/*<i className="fas fa-arrow-right"/>*/}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <div className={'slider-wrap-bar before_none after_none'}></div>
           </div>
 
           {/* H-line */}
@@ -407,51 +194,7 @@ function CFolioManagerPage12({ t }: PROPS) {
 
           {/* Card slider-3 */}
           <div className={'w-100 mt-2 center-container'}>
-            <div className={'slider-wrap-bar before_none after_none'}>
-              <div className={'wrap'} style={{ maxWidth: '1000px' }}>
-                <div className="slider-3 images glide">
-                  <div className="glide__track" data-glide-el="track">
-                    <ul className="glide__slides">
-                      {slider3Cards.map((card, i) => {
-                        const { id, src, title } = card;
-                        if (card.type === 'empty_box') {
-                          return <EmptyBox {...card} key={i + Math.random()} />;
-                        }
-                        return (
-                          <SliderCardBox
-                            id={id}
-                            title={title}
-                            src={src}
-                            key={i + Math.random()}
-                          />
-                        );
-                      })}
-                    </ul>
-                  </div>
-                  <div className="glide__arrows" data-glide-el="controls">
-                    <button
-                      className="glide__arrow glide__arrow--left"
-                      data-glide-dir="<"
-                      style={{
-                        ['--left' as string]: '-8%',
-                      }}
-                    >
-                      {/*<i className="fas fa-arrow-left"/>*/}
-                    </button>
-
-                    <button
-                      className="glide__arrow glide__arrow--right"
-                      data-glide-dir=">"
-                      style={{
-                        ['--right' as string]: '-8%',
-                      }}
-                    >
-                      {/*<i className="fas fa-arrow-right"/>*/}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <div className={'slider-wrap-bar before_none after_none'}></div>
           </div>
         </div>
       </div>
