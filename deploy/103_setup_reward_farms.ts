@@ -19,6 +19,7 @@ const SFT_HOLDER_CONTRACT = 'WOWSERC1155';
 const SFT_MINTER_CONTRACT = 'WOWSSftMinter';
 const SFT_MINTER_UPDATE_CONTRACT = 'WOWSSftMinterUpdate';
 const CONTROLLER_CONTRACT = 'Controller';
+const SFT_EVALUATOR_PROXY_CONTRACT = 'SFTEvaluatorProxy';
 const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 // Deployed aliases
@@ -235,6 +236,26 @@ const func = async function (hardhat_re) {
         },
         'setSFTEvaluator',
         generatedAddresses.sftEvaluatorProxy
+      )
+    );
+  }
+
+  //
+  // 9.) Check if we have to upgrade the sftEvaluator implementation
+  //
+  if (
+    configAddresses.sftEvaluatorUpdate &&
+    configAddresses.sftEvaluatorUpdate !== generatedAddresses.sftEvaluator
+  ) {
+    await catchUnknownSigner(
+      execute(
+        SFT_EVALUATOR_PROXY_CONTRACT,
+        {
+          from: marketingWallet,
+          log: true,
+        },
+        'upgradeTo',
+        generatedAddresses.sftEvaluator
       )
     );
   }

@@ -24,6 +24,8 @@ contract SFTEvaluator is ISFTEvaluator {
   // State
   //////////////////////////////////////////////////////////////////////////////
 
+  // Attention: Proxy implementation: Only add new state at the end
+
   // Admin
   address public immutable admin;
 
