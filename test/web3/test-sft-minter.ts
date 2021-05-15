@@ -25,6 +25,7 @@ import TradeFloorAbi from '../../src/abi/contracts/src/token/TradeFloor.sol/Trad
 import WOWSCryptofolioAbi from '../../src/abi/contracts/src/token/WOWSCryptofolio.sol/WOWSCryptofolio.json';
 import WOWSTokenAbi from '../../src/abi/contracts/src/token/WOWSErc20.sol/WowsToken.json';
 import WOWSERC1155Abi from '../../src/abi/contracts/src/token/WOWSErc1155.sol/WOWSERC1155.json';
+import { ADDRESS_ZERO } from '../utils/constants';
 import { hardhat } from '../utils/hardhat';
 
 chai.use(solidity);
@@ -477,18 +478,14 @@ describe('SFT minter', function () {
       wowsTokenIdBoi
     );
     chai.expect(cryptofolioAddressBoi).to.be.properAddress;
-    chai
-      .expect(cryptofolioAddressBoi)
-      .to.not.equal('0x0000000000000000000000000000000000000000');
+    chai.expect(cryptofolioAddressBoi).to.not.equal(ADDRESS_ZERO);
 
     // Get the address of the clone contract
     cryptofolioAddressWolf = await sftHolderContract.tokenIdToAddress(
       wowsTokenIdWolf
     );
     chai.expect(cryptofolioAddressWolf).to.be.properAddress;
-    chai
-      .expect(cryptofolioAddressBoi)
-      .to.not.equal('0x0000000000000000000000000000000000000000');
+    chai.expect(cryptofolioAddressBoi).to.not.equal(ADDRESS_ZERO);
   });
 
   it('should know the token IDs of clone contracts', async function () {
