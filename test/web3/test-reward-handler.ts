@@ -18,15 +18,13 @@ import fs from 'fs';
 import BoosterAbi from '../../src/abi/contracts/src/booster/Booster.sol/Booster.json';
 import RewardHandlerAbi from '../../src/abi/contracts/src/investment/RewardHandler.sol/RewardHandler.json';
 import WOWSTokenAbi from '../../src/abi/contracts/src/token/WOWSErc20.sol/WowsToken.json';
+import { ADDRESS_ZERO } from '../utils/constants';
 import { hardhat } from '../utils/hardhat';
 
 chai.use(solidity);
 
 // Path to generated address registry file
 const GENERATED_ADDRESSES = `${__dirname}/../../src/config/generated-addresses.json`;
-
-// Useful constant
-const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 // Addresses are lazy-loaded
 let addresses = null;
@@ -222,7 +220,7 @@ describe('Reward handler', function () {
 
     // Check logs for tokens being minted
     await chai.expect(tx).to.emit(tokenContract, 'Transfer').withArgs(
-      ZERO_ADDRESS,
+      ADDRESS_ZERO,
       rewardHandlerContract.address,
       '100000000000000000000' // 100 WOWS
     );
@@ -279,7 +277,7 @@ describe('Reward handler', function () {
       1 * 1e5
     );
     await chai.expect(tx).to.emit(tokenContract, 'Transfer').withArgs(
-      ZERO_ADDRESS,
+      ADDRESS_ZERO,
       rewardHandlerContract.address,
       '100000000000000000000' // 100 WOWS
     );
@@ -290,7 +288,7 @@ describe('Reward handler', function () {
     );
 
     // Transfer to address 0 should revert
-    tx = rewardHandlerContract.terminate(ZERO_ADDRESS, false);
+    tx = rewardHandlerContract.terminate(ADDRESS_ZERO, false);
     await chai.expect(tx).to.be.revertedWith("Can't transfer to address 0");
 
     // Transfer to self should revert
@@ -366,7 +364,7 @@ describe('Reward handler', function () {
       1 * 1e5
     );
     await chai.expect(tx).to.emit(tokenContract, 'Transfer').withArgs(
-      ZERO_ADDRESS,
+      ADDRESS_ZERO,
       rewardHandlerContract.address,
       '100000000000000000000' // 100 WOWS
     );
@@ -377,7 +375,7 @@ describe('Reward handler', function () {
     );
 
     // Transfer to address 0 should revert
-    tx = rewardHandlerContract.terminate(ZERO_ADDRESS, true);
+    tx = rewardHandlerContract.terminate(ADDRESS_ZERO, true);
     await chai.expect(tx).to.be.revertedWith("Can't transfer to address 0");
 
     // Transfer to self should revert
