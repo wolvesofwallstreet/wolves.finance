@@ -30,10 +30,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          #- os: ubuntu-18.04
-          #  node-version: 14
-          #- os: ubuntu-20.04
-          #  node-version: 16
+          - os: ubuntu-18.04
+            node-version: 14
+          - os: ubuntu-20.04
+            node-version: 16
           - os: starship-18.04
             node-version: 14
           - os: cinder-20.04
