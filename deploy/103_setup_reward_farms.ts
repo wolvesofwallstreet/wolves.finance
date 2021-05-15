@@ -275,7 +275,7 @@ const func = async function (hardhat_re) {
       execute(
         CFOLIO_ITEM_HANDLER_LP_CONTRACT,
         {
-          from: deployer,
+          from: marketingWallet,
           log: true,
         },
         'setMinter',
