@@ -20,6 +20,7 @@ import UniswapV2ERC20Abi from '../../src/abi/contracts/depends/uniswap-v2-core/U
 import CFolioItemHandlerLpAbi from '../../src/abi/contracts/src/cfolio/CFolioItemHandlerLP.sol/CFolioItemHandlerLP.json';
 import PresaleAbi from '../../src/abi/contracts/src/crowdsale/Crowdsale.sol/Crowdsale.json';
 import WOWSSftMinterAbi from '../../src/abi/contracts/src/crowdsale/WOWSSftMinter.sol/WOWSSftMinter.json';
+import CFolioFarmAbi from '../../src/abi/contracts/src/investment/CFolioFarm.sol/CFolioFarm.json';
 import UpgradeProxyAbi from '../../src/abi/contracts/src/proxy/UpgradeProxy.sol/UpgradeProxy.json';
 import TradeFloorAbi from '../../src/abi/contracts/src/token/TradeFloor.sol/TradeFloor.json';
 import WOWSCryptofolioAbi from '../../src/abi/contracts/src/token/WOWSCryptofolio.sol/WOWSCryptofolio.json';
@@ -124,6 +125,11 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
     CFolioItemHandlerLpAbi,
     marketingWallet
   );
+  const cfolioFarmLPContract = new ethers.Contract(
+    addresses.cfolioFarmLP,
+    CFolioFarmAbi,
+    marketingWallet
+  );
   const presaleContract = new ethers.Contract(
     addresses.presale,
     PresaleAbi,
@@ -138,6 +144,7 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
     tradeFloorContract,
     tradeFloorProxyContract,
     cfolioItemHandlerLPContract,
+    cfolioFarmLPContract,
     presaleContract,
   };
 });
@@ -152,6 +159,9 @@ describe('SFT minter', function () {
 
   let cryptofolioContractBoi: ethers.Contract;
   let cryptofolioContractWolf: ethers.Contract;
+
+  let cfolioItemAddress1: string; // Address of CFolioLItem with LP deposit
+  let cfolioItemAddress2: string; // Address of CFolioLItem without LP deposit
 
   let tradeFloorProxyInstance: ethers.Contract;
 
@@ -561,13 +571,13 @@ describe('SFT minter', function () {
         .mul(await getGasPrice())
         .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
     console.log(
-      `    Mint investment SFT gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+      `    Mint investment SFT (with LP) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
         gasCost
       )})`
     );
   });
 
-  it('should check balance of investment SFT', async function () {
+  it('should check balance of investment SFT (with LP)', async function () {
     this.timeout(60 * 1000);
 
     const { sftHolderContract } = contracts;
@@ -578,5 +588,95 @@ describe('SFT minter', function () {
       cfolioItemTokenId
     );
     chai.expect(balance).to.equal(1);
+  });
+
+  it('should get address of investment SFT (with LP))', async function () {
+    this.timeout(60 * 1000);
+
+    const { sftHolderContract } = contracts;
+
+    // Get the address of the c-folio contract
+    cfolioItemAddress1 = await sftHolderContract.tokenIdToAddress(
+      cfolioItemTokenId
+    );
+    chai.expect(cfolioItemAddress1).to.be.properAddress;
+    chai.expect(cfolioItemAddress1).to.not.equal(ADDRESS_ZERO);
+  });
+
+  it('should check deposit of investment SFT (with LP)', async function () {
+    this.timeout(60 * 1000);
+
+    const { cfolioFarmLPContract } = contracts;
+
+    // Check LP balance of investment SFT
+    const balance = await cfolioFarmLPContract.balanceOf(cfolioItemAddress1);
+    chai.expect(balance).to.equal(lpBalance);
+  });
+
+  it('should allow 0 price mint', async function () {
+    this.timeout(60 * 1000);
+
+    const { sftMinterContract } = contracts;
+
+    // Mint a new LP investment type into marketing wallet
+    const tx = sftMinterContract.mintCFolioItemSFT(
+      marketingWallet.address,
+      cFolioItemType,
+      cFolioItemURI,
+      // uint256(-1) == No parent cryptofolio, mint to recipient (marketing wallet)
+      ethers.BigNumber.from(
+        '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+      ),
+      [0]
+    );
+
+    // Log gas cost
+    const receipt = await (await tx).wait();
+    const gasUsedGwei = receipt.gasUsed;
+    const gasCost =
+      gasUsedGwei
+        .mul(await getGasPrice())
+        .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
+    console.log(
+      `    Mint investment SFT (without LP) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+        gasCost
+      )})`
+    );
+  });
+
+  it('should check balance of investment SFT (without LP)', async function () {
+    this.timeout(60 * 1000);
+
+    const { sftHolderContract } = contracts;
+
+    // Item in the SFT holder should belong to the marketing wallet
+    const balance = await sftHolderContract.balanceOf(
+      marketingWallet.address,
+      cfolioItemTokenId.add(1)
+    );
+    chai.expect(balance).to.equal(1);
+  });
+
+  it('should get address of investment SFT (without LP))', async function () {
+    this.timeout(60 * 1000);
+
+    const { sftHolderContract } = contracts;
+
+    // Get the address of the c-folio contract
+    cfolioItemAddress2 = await sftHolderContract.tokenIdToAddress(
+      cfolioItemTokenId.add(1)
+    );
+    chai.expect(cfolioItemAddress2).to.be.properAddress;
+    chai.expect(cfolioItemAddress2).to.not.equal(ADDRESS_ZERO);
+  });
+
+  it('should check deposit of investment SFT (without LP)', async function () {
+    this.timeout(60 * 1000);
+
+    const { cfolioFarmLPContract } = contracts;
+
+    // Check LP balance of investment SFT
+    const balance = await cfolioFarmLPContract.balanceOf(cfolioItemAddress2);
+    chai.expect(balance).to.equal(0);
   });
 });
