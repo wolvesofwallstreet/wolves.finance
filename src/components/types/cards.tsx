@@ -33,3 +33,22 @@ export type CARDS = {
   cards: CARD_LEVEL[];
   myPackLevelDescriptions: string[];
 };
+
+export type CFOLIO_ITEM = {
+  id: string;
+  chainRef: number;
+  price: number;
+  minted: number;
+  maxMintable: number;
+  name: string;
+  description: string;
+  type: string;
+  url: string;
+};
+
+export type CFOLIO_ITEMS = {
+  type: string;
+  description: string;
+  constraints?: 'wolves' | 'bois';
+  cards: CFOLIO_ITEM[];
+};

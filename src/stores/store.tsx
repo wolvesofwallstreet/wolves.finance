@@ -27,7 +27,7 @@ import Web3Modal, {
 } from 'web3modal';
 
 import WalletLinkLogo from '../assets/coinbase-wallet.svg';
-import { CARD_LEVEL, CARDS } from '../components/types/cards';
+import { CARD_LEVEL, CARDS, CFOLIO_ITEMS } from '../components/types/cards';
 import { addresses } from '../config/addresses';
 import { privateNetworkRPC, privateNetworkWS } from '../config/networks';
 import {
@@ -130,6 +130,7 @@ type ASSETS = {
     locked: boolean;
   }[];
   cards: CARDS;
+  cfolioItems: CFOLIO_ITEMS[];
 };
 
 class Store {
@@ -165,6 +166,7 @@ class Store {
   assets = {
     userSFT: [],
     cards: { levelNames: [], cards: [], myPackLevelDescriptions: [] },
+    cfolioItems: [],
   } as ASSETS;
 
   constructor() {
@@ -270,9 +272,13 @@ class Store {
       this.assets.cards.myPackLevelDescriptions =
         content.default.myPackLevelDescriptions;
       this.assets.cards.cards = content.default.levels as CARD_LEVEL[];
+      // Temporary remove NOLE and WARG
       this.assets.cards.cards[1].cards.splice(3, 1);
       this.assets.cards.cards[5].cards.splice(3, 1);
-      emitter.emit(ASSETS_LOADED);
+      import('locales/en_US/cFolioItems.json').then((content) => {
+        this.assets.cfolioItems = content.default as CFOLIO_ITEMS[];
+        emitter.emit(ASSETS_LOADED);
+      });
     });
   }
 
