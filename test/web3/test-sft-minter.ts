@@ -119,7 +119,7 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
     UpgradeProxyAbi,
     marketingWallet
   );
-  const cfolioItemHandlerLP = new ethers.Contract(
+  const cfolioItemHandlerLPContract = new ethers.Contract(
     addresses.cfolioItemHandlerLP,
     CFolioItemHandlerLpAbi,
     marketingWallet
@@ -137,7 +137,7 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
     sftMinterContract,
     tradeFloorContract,
     tradeFloorProxyContract,
-    cfolioItemHandlerLP,
+    cfolioItemHandlerLPContract,
     presaleContract,
   };
 });
@@ -330,16 +330,16 @@ describe('SFT minter', function () {
   it('should approve CFIHLP to transfer tokens', async function () {
     this.timeout(60 * 1000);
 
-    const { uniV2PairContract, cfolioItemHandlerLP } = contracts;
+    const { uniV2PairContract, cfolioItemHandlerLPContract } = contracts;
 
     // Approve CFIHLP to transfer our tokens
     const tx = await uniV2PairContract.approve(
-      cfolioItemHandlerLP.address,
+      cfolioItemHandlerLPContract.address,
       lpBalance
     );
     await chai.expect(tx).to.emit(uniV2PairContract, 'Approval').withArgs(
       marketingWallet.address, // owner
-      cfolioItemHandlerLP.address, // spender
+      cfolioItemHandlerLPContract.address, // spender
       lpBalance // balance
     );
   });
@@ -527,8 +527,11 @@ describe('SFT minter', function () {
   it('should mint investment SFT', async function () {
     this.timeout(60 * 1000);
 
-    const { cfolioItemHandlerLP, sftMinterContract, uniV2PairContract } =
-      contracts;
+    const {
+      cfolioItemHandlerLPContract,
+      sftMinterContract,
+      uniV2PairContract,
+    } = contracts;
 
     // Mint a new LP investment type into marketing wallet
     const tx = sftMinterContract.mintCFolioItemSFT(
@@ -546,7 +549,7 @@ describe('SFT minter', function () {
       .to.emit(uniV2PairContract, 'Transfer')
       .withArgs(
         marketingWallet.address,
-        cfolioItemHandlerLP.address,
+        cfolioItemHandlerLPContract.address,
         lpBalance
       );
 
