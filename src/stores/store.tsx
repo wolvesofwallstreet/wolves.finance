@@ -1123,7 +1123,6 @@ class Store {
         await this.sftMintContract?.mintCFolioItemSFT(
           this.address,
           cfolioType,
-          '',
           sftTokenId,
           [investWeiAmount]
         );
