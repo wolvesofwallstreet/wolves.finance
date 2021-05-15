@@ -79,7 +79,10 @@ contract SFTEvaluator is ISFTEvaluator {
    * @dev See {ISFTEvaluator-rewardRate}.
    */
   function rewardRate(uint256 tokenId) external view override returns (uint32) {
+    // Validate parameters
     require(tokenId.isBaseCard(), 'Invalid tokenId');
+
+    // Load state
     return
       _rewardRates[tokenId] == 0
         ? _baseRate(tokenId)
@@ -95,7 +98,10 @@ contract SFTEvaluator is ISFTEvaluator {
     override
     returns (uint256)
   {
+    // Validate parameters
     require(tokenId.isCFolioCard(), 'Invalid tokenId');
+
+    // Load state
     return _cfolioItemTypes[tokenId];
   }
 
@@ -106,7 +112,10 @@ contract SFTEvaluator is ISFTEvaluator {
     external
     override
   {
+    // Validate parameters
     require(tokenId.isBaseCard(), 'Invalid tokenId');
+
+    // Load state
     (uint32 untimed, uint32 timed) =
       // solhint-disable-next-line not-rely-on-time
       _baseRates(tokenId, uint64(block.timestamp - 60 days));
