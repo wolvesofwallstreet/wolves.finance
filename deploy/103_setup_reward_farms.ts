@@ -18,6 +18,7 @@ require('hardhat-deploy-ethers');
 const SFT_HOLDER_CONTRACT = 'WOWSERC1155';
 const SFT_MINTER_CONTRACT = 'WOWSSftMinter';
 const SFT_MINTER_UPDATE_CONTRACT = 'WOWSSftMinterUpdate';
+const CFOLIO_ITEM_HANDLER_LP_CONTRACT = 'CFolioItemHandlerLP';
 const CONTROLLER_CONTRACT = 'Controller';
 const SFT_EVALUATOR_PROXY_CONTRACT = 'SFTEvaluatorProxy';
 const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
@@ -66,6 +67,9 @@ const func = async function (hardhat_re) {
   );
   const SFT_MINTER_INSTANCE = await hardhat_re.ethers.getContract(
     SFT_MINTER_CONTRACT
+  );
+  const CFOLIO_ITEM_HANDLER_LP_INSTANCE = await hardhat_re.ethers.getContract(
+    CFOLIO_ITEM_HANDLER_LP_CONTRACT
   );
 
   // Load ABIs
@@ -256,6 +260,26 @@ const func = async function (hardhat_re) {
         },
         'upgradeTo',
         generatedAddresses.sftEvaluator
+      )
+    );
+  }
+
+  //
+  // 10.) Set the SFTMinter in CFIHLP contract if required
+  //
+  if (
+    (await CFOLIO_ITEM_HANDLER_LP_INSTANCE.sftMinter()) !==
+    generatedAddresses.sftMinter
+  ) {
+    await catchUnknownSigner(
+      execute(
+        CFOLIO_ITEM_HANDLER_LP_CONTRACT,
+        {
+          from: deployer,
+          log: true,
+        },
+        'setMinter',
+        generatedAddresses.sftMinter
       )
     );
   }
