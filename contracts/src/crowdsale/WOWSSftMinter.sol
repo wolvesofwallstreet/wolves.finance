@@ -281,7 +281,6 @@ contract WOWSSftMinter is Context, Ownable {
    *
    * @param recipient Recipient of the SFT, unused if sftTokenId is != -1
    * @param cfolioItemType The item type of the SFT
-   * @param uri The URI for this NFT
    * @param sftTokenId If <> -1 recipient is the SFT c-folio / handler must be called
    * @param investAmounts Arguments needed for the handler (in general investments).
    * Investments may be zero if the user is just buying an SFT.
@@ -289,7 +288,6 @@ contract WOWSSftMinter is Context, Ownable {
   function mintCFolioItemSFT(
     address recipient,
     uint256 cfolioItemType,
-    string calldata uri,
     uint256 sftTokenId,
     uint256[] calldata investAmounts
   ) external {
@@ -326,7 +324,6 @@ contract WOWSSftMinter is Context, Ownable {
     uint256 tokenId = nextCFolioItemNft++;
     require(tokenId.isCFolioCard(), 'Invalid cfolioItem tokenId');
 
-    _sftContract.setCustomURI(tokenId, uri);
     sftEvaluator.setCFolioItemType(tokenId, cfolioItemType);
 
     // Update state, mint SFT token
