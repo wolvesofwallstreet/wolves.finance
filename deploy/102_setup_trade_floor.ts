@@ -16,9 +16,12 @@ require('hardhat-deploy-ethers');
 // TODO: Fully qualified contract names
 const SFT_HOLDER_CONTRACT = 'WOWSERC1155';
 const SFT_MINTER_CONTRACT = 'WOWSSftMinter';
+const TRADE_FLOOR_PROXY_CONTRACT = 'TradeFloorProxy';
 
 // Path to generated addresses file
+const CONFIG_ADDRESSES = `${__dirname}/../src/config/addresses.json`;
 const GENERATED_ADDRESSES = `${__dirname}/../src/config/generated-addresses.json`;
+const IGNORE_ADDRESSES = process.env.IGNORE_ADDRESSES !== undefined;
 
 // Helper function
 function log_step(step_string) {
@@ -38,9 +41,13 @@ const func = async function (hardhat_re) {
   const chainId = await hardhat_re.getChainId();
 
   // Load contract addresses
+  const configNetworks = JSON.parse(
+    fs.readFileSync(CONFIG_ADDRESSES).toString()
+  );
   const generatedNetworks = JSON.parse(
     fs.readFileSync(GENERATED_ADDRESSES).toString()
   );
+  const configAddresses = (!IGNORE_ADDRESSES && configNetworks[chainId]) || {};
   const generatedAddresses = generatedNetworks[chainId] || {};
 
   // Load contract instances
@@ -100,6 +107,25 @@ const func = async function (hardhat_re) {
         },
         'setTradeFloor',
         generatedAddresses.tradeFloorProxy
+      )
+    );
+  }
+  //
+  // 3.) Check if we have to upgrade the tradeFloor implementation
+  //
+  if (
+    configAddresses.tradeFloorUpdate &&
+    configAddresses.tradeFloorUpdate !== generatedAddresses.tradeFloor
+  ) {
+    await catchUnknownSigner(
+      execute(
+        TRADE_FLOOR_PROXY_CONTRACT,
+        {
+          from: marketingWallet,
+          log: true,
+        },
+        'upgradeTo',
+        generatedAddresses.tradeFloor
       )
     );
   }
