@@ -31,7 +31,7 @@
   transform: scale(0.8);
   border: 1px solid var(--wolves-white);
 
-  --url: url(../../assets/loading_animated.gif);
+  --url: url(../../assets/loading_animated_small.gif);
   background-image: var(--url);
   background-size: cover;
   cursor: pointer;
