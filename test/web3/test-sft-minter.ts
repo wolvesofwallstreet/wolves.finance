@@ -176,7 +176,6 @@ describe('SFT minter', function () {
   const wowsTokenIdWolf = ethers.BigNumber.from('0x05020000');
   const cfolioItemTokenId = ethers.BigNumber.from('0x10000000000000000');
   const cFolioItemType = 0; // Card type 0, registered in minter for cfolioItemHandlerLP
-  const cFolioItemURI = 'http://4travelers.de/wolves_assets/cfolio/00.json';
   const lpBalance = ethers.BigNumber.from('12000000000000000000'); // 12 UNI-V2 LP tokens
 
   // Lazily-initialized variables
@@ -547,7 +546,6 @@ describe('SFT minter', function () {
     const tx = sftMinterContract.mintCFolioItemSFT(
       marketingWallet.address,
       cFolioItemType,
-      cFolioItemURI,
       // uint256(-1) == No parent cryptofolio, mint to recipient (marketing wallet)
       ethers.BigNumber.from(
         '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
@@ -622,7 +620,6 @@ describe('SFT minter', function () {
     const tx = sftMinterContract.mintCFolioItemSFT(
       marketingWallet.address,
       cFolioItemType,
-      cFolioItemURI,
       // uint256(-1) == No parent cryptofolio, mint to recipient (marketing wallet)
       ethers.BigNumber.from(
         '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'

@@ -176,7 +176,6 @@ describe('LP NFTs', function () {
   const cfolioItemTokenId = ethers.BigNumber.from('0x10000000000000000');
   let cfolioItemTokenIdTf = ethers.BigNumber.from(0);
   const cFolioItemType = 0; // Card type 0, registered in minter for cfolioItemHandlerLP
-  const cFolioItemURI = 'http://4travelers.de/wolves_assets/cfolio/00.json';
 
   // Lazily-initialized variables
   let ethUsd = 0;
@@ -458,7 +457,6 @@ describe('LP NFTs', function () {
     const tx = sftMinterContract.mintCFolioItemSFT(
       marketingWallet.address,
       cFolioItemType,
-      cFolioItemURI,
       wowsTokenIdBoi,
       []
     );
@@ -487,7 +485,6 @@ describe('LP NFTs', function () {
     const tx = await sftMinterContract.mintCFolioItemSFT(
       marketingWallet.address,
       cFolioItemType,
-      cFolioItemURI,
       wowsTokenIdWolf,
       [lpBalance]
     );
