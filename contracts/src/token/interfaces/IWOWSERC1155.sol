@@ -84,6 +84,14 @@ interface IWOWSERC1155 {
     view
     returns (uint64 mintTimestamp, uint8 level);
 
+  /**
+   * @dev Return all tokenIds owned by account
+   */
+  function getTokenIds(address account)
+    external
+    view
+    returns (uint256[] memory);
+
   //////////////////////////////////////////////////////////////////////////////
   // State modifiers
   //////////////////////////////////////////////////////////////////////////////

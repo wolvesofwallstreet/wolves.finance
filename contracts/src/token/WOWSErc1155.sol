@@ -444,11 +444,12 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
   }
 
   /**
-   * @dev Return list of tokenIds owned by `account`
+   * @dev See {IWOWSERC1155-getTokenIds}.
    */
   function getTokenIds(address account)
     external
     view
+    override
     returns (uint256[] memory)
   {
     // Load state
