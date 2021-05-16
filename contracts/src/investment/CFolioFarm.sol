@@ -50,7 +50,7 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
   mapping(address => uint256) private _balances;
 
   // The address of the controller
-  IController public controller;
+  IController public override controller;
 
   //////////////////////////////////////////////////////////////////////////////
   // Events

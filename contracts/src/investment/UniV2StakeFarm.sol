@@ -57,7 +57,7 @@ contract UniV2StakeFarm is
   // Uniswap route to get price for token 0 in pair
   IUniswapV2Pair public immutable route;
   // The address of the controller
-  IController public controller;
+  IController public override controller;
   // The direction of the uniswap pairs
   uint8 public pairDirection;
 

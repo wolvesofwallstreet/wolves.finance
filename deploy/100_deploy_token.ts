@@ -283,14 +283,15 @@ const func = async function (hardhat_re) {
   //
   //////////////////////////////////////////////////////////////////////////////
 
-  if (configAddresses.token) {
+  if (configAddresses.controller) {
     log_step(`Using deployed controller: ${configAddresses.controller}`);
     generatedAddresses.controller = configAddresses.controller;
   } else {
     log_step('Deploying controller');
 
     // Previous controller: 0 address / only for later updates
-    const PREVIOUS_CONTROLLER = ADDRESS_ZERO;
+    const PREVIOUS_CONTROLLER =
+      configAddresses.controllerUpdate || ADDRESS_ZERO;
 
     const controllerReceipt = await deploy(CONTROLLER_CONTRACT, {
       from: deployer,
