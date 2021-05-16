@@ -28,9 +28,6 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
   // Role granted to distribute funds
   bytes32 public constant REWARD_ROLE = 'reward_role';
 
-  // Role granted to access the private API for testing
-  bytes32 public constant TESTER_ROLE = 'test';
-
   //////////////////////////////////////////////////////////////////////////////
   // Constants
   //////////////////////////////////////////////////////////////////////////////
@@ -333,28 +330,5 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
       );
     }
     return rewardToken;
-  }
-
-  //////////////////////////////////////////////////////////////////////////////
-  // Private testing API
-  //
-  // These functions must not modity the contract or have any side effects.
-  // They are for testing only.
-  //////////////////////////////////////////////////////////////////////////////
-
-  function getMinimalMintAmount() public view returns (uint256) {
-    // Validate access
-    require(hasRole(TESTER_ROLE, _msgSender()), 'Only testers');
-
-    // Access state
-    return _minimalMintAmount;
-  }
-
-  function getDistributeAmount() public view returns (uint256) {
-    // Validate access
-    require(hasRole(TESTER_ROLE, _msgSender()), 'Only testers');
-
-    // Access state
-    return _distributeAmount;
   }
 }
