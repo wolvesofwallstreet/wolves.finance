@@ -12,6 +12,11 @@ interface IFarm {
   /**
    * @dev Return a unique farm name
    */
+  function controller() external view returns (address);
+
+  /**
+   * @dev Return a unique farm name
+   */
   function farmName() external view returns (string memory);
 
   /**

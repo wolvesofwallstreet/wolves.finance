@@ -17,10 +17,14 @@ require('hardhat-deploy-ethers');
 // TODO: Fully qualified contract names
 const TOKEN_CONTRACT = 'WowsToken';
 const CONTROLLER_CONTRACT = 'Controller';
+const CONTROLLER_UPDATE_CONTRACT = 'Controller';
 const REWARD_HANDLER_CONTRACT = 'RewardHandler';
+const UNIV2_STAKE_FARM_CONTRACT = 'UniV2StakeFarm';
 
 // Path to generated addresses file
+const CONFIG_ADDRESSES = `${__dirname}/../src/config/addresses.json`;
 const GENERATED_ADDRESSES = `${__dirname}/../src/config/generated-addresses.json`;
+const IGNORE_ADDRESSES = process.env.IGNORE_ADDRESSES !== undefined;
 
 // Helper function
 function log_step(step_string) {
@@ -40,9 +44,13 @@ const func = async function (hardhat_re) {
   const chainId = await hardhat_re.getChainId();
 
   // Load contract addresses
+  const configNetworks = JSON.parse(
+    fs.readFileSync(CONFIG_ADDRESSES).toString()
+  );
   const generatedNetworks = JSON.parse(
     fs.readFileSync(GENERATED_ADDRESSES).toString()
   );
+  const configAddresses = (!IGNORE_ADDRESSES && configNetworks[chainId]) || {};
   const generatedAddresses = generatedNetworks[chainId] || {};
 
   // Load deployed contract instances
@@ -52,6 +60,9 @@ const func = async function (hardhat_re) {
   const TOKEN_INSTANCE = await hardhat_re.ethers.getContract(TOKEN_CONTRACT);
   const REWARD_HANDLER_INSTANCE = await hardhat_re.ethers.getContract(
     REWARD_HANDLER_CONTRACT
+  );
+  const UNIV2_STAKE_FARM_INSTANCE = await hardhat_re.ethers.getContract(
+    UNIV2_STAKE_FARM_CONTRACT
   );
 
   //////////////////////////////////////////////////////////////////////////////
@@ -123,6 +134,7 @@ const func = async function (hardhat_re) {
   //       * rewardProvided      0 Wei
   //       * rewardFee           2 * 1e4 (0.02 == 2%)
   //
+  // We can only register the farm into matching Contoller
 
   const FARM_ADDRESS = generatedAddresses.stakeFarm;
   const REWARD_CAP = ethers.BigNumber.from('15000000000000000000000');
@@ -131,6 +143,8 @@ const func = async function (hardhat_re) {
   const REWARD_FEE = 2 * 1e4;
 
   if (
+    (await UNIV2_STAKE_FARM_INSTANCE.controller()) ===
+      CONTROLLER_INSTANCE.address &&
     (await CONTROLLER_INSTANCE.farms(FARM_ADDRESS)).farmStartedAtBlock.isZero()
   ) {
     await catchUnknownSigner(
@@ -151,7 +165,28 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 4.) Call WOWSErc20.sol::grantRole(WOWSErc20.sol.MINTER_ROLE(), Crowdsale.sol)
+  // 4.) If we have an Controller Upgrade, call OldController::transferAllFarms(newController)
+  // !! In deployments a ControllerUpdate.json file is expected with the old Controller
+  //
+  if (
+    configAddresses.controllerUpdate &&
+    configAddresses.controllerUpdate !== generatedAddresses.controller
+  ) {
+    await catchUnknownSigner(
+      execute(
+        CONTROLLER_UPDATE_CONTRACT,
+        {
+          from: marketingWallet,
+          log: true,
+        },
+        'transferAllFarms',
+        generatedAddresses.controller
+      )
+    );
+  }
+
+  //
+  // 5.) Call WOWSErc20.sol::grantRole(WOWSErc20.sol.MINTER_ROLE(), Crowdsale.sol)
   //     !!! ONLY DURING PRESALE !!!
   //
 

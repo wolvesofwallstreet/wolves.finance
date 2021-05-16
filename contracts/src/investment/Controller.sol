@@ -219,7 +219,11 @@ contract Controller is IController, Context, Ownable {
     );
 
     // Validate parameters
-    require(_farmAddress != address(0), 'Invalid farm');
+    require(_farmAddress != address(0), 'Invalid farm (0)');
+    require(
+      IFarm(_farmAddress).controller() == address(this),
+      'Invalid farm (C)'
+    );
 
     // Farm existent, add new reward logic
     Farm storage farm = farms[_farmAddress];

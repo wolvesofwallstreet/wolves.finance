@@ -154,6 +154,8 @@ const func = async function (hardhat_re) {
   const FARM_ADDRESS = generatedAddresses.cfolioFarmLP;
 
   if (
+    (await CFOLIO_FARM_LP_INSTANCE.controller()) ===
+      CONTROLLER_INSTANCE.address &&
     (await CONTROLLER_INSTANCE.farms(FARM_ADDRESS)).farmStartedAtBlock.isZero()
   ) {
     const REWARD_CAP = ethers.BigNumber.from('15000000000000000000000');
