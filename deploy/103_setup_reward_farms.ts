@@ -19,6 +19,7 @@ const SFT_HOLDER_CONTRACT = 'WOWSERC1155';
 const SFT_MINTER_CONTRACT = 'WOWSSftMinter';
 const SFT_MINTER_UPDATE_CONTRACT = 'WOWSSftMinterUpdate';
 const CFOLIO_ITEM_HANDLER_LP_CONTRACT = 'CFolioItemHandlerLP';
+const CFOLIO_ITEM_HANDLER_LP_PROXY_CONTRACT = 'CFolioItemHandlerLPProxy';
 const CONTROLLER_CONTRACT = 'Controller';
 const SFT_EVALUATOR_PROXY_CONTRACT = 'SFTEvaluatorProxy';
 const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
@@ -45,7 +46,7 @@ function log_step(step_string) {
 const func = async function (hardhat_re) {
   const { deployments, getNamedAccounts } = hardhat_re;
 
-  const { catchUnknownSigner, execute } = deployments;
+  const { catchUnknownSigner, execute, rawTx } = deployments;
   const { deployer, marketingWallet } = await getNamedAccounts();
 
   // Get chain ID
@@ -68,8 +69,9 @@ const func = async function (hardhat_re) {
   const SFT_MINTER_INSTANCE = await hardhat_re.ethers.getContract(
     SFT_MINTER_CONTRACT
   );
-  const CFOLIO_ITEM_HANDLER_LP_INSTANCE = await hardhat_re.ethers.getContract(
-    CFOLIO_ITEM_HANDLER_LP_CONTRACT
+  const CFOLIO_ITEM_HANDLER_LP_INSTANCE = await hardhat_re.ethers.getContractAt(
+    CFOLIO_ITEM_HANDLER_LP_CONTRACT,
+    CFOLIO_ITEM_HANDLER_LP_PROXY_CONTRACT
   );
 
   // Load ABIs
@@ -101,7 +103,7 @@ const func = async function (hardhat_re) {
   if (
     !(await SFT_HOLDER_INSTANCE.hasRole(
       await SFT_HOLDER_INSTANCE.TRADEFLOOR_ROLE(),
-      generatedAddresses.cfolioItemHandlerLP
+      generatedAddresses.cfolioItemHandlerLPProxy
     ))
   ) {
     await catchUnknownSigner(
@@ -113,19 +115,18 @@ const func = async function (hardhat_re) {
         },
         'grantRole',
         await SFT_HOLDER_INSTANCE.TRADEFLOOR_ROLE(),
-        generatedAddresses.cfolioItemHandlerLP
+        generatedAddresses.cfolioItemHandlerLPProxy
       )
     );
   }
 
   //
-  // 5.) CFolioFarm.sol::transferOwnership(TradeClientFloorLP)
+  // 5.) CFolioFarm.sol::transferOwnership(CFolioItemHandlerLP)
   //
 
-  const cfolioLpOwner = await CFOLIO_FARM_LP_INSTANCE.owner();
   if (
-    cfolioLpOwner.toLowerCase() !==
-    generatedAddresses.cfolioItemHandlerLP.toLowerCase()
+    (await CFOLIO_FARM_LP_INSTANCE).owner().toLowerCase() !==
+    generatedAddresses.cfolioItemHandlerLPProxy.toLowerCase()
   ) {
     await catchUnknownSigner(
       execute(
@@ -135,7 +136,7 @@ const func = async function (hardhat_re) {
           log: true,
         },
         'transferOwnership',
-        generatedAddresses.cfolioItemHandlerLP
+        generatedAddresses.cfolioItemHandlerLPProxy
       )
     );
   }
@@ -187,7 +188,7 @@ const func = async function (hardhat_re) {
     // We initialize 8 different LP cards
     const CFI_TYPES = ['0', '1', '2', '3', '4', '5', '6', '7'];
     const CFI_HANDLERS = new Array(8).fill(
-      generatedAddresses.cfolioItemHandlerLP
+      generatedAddresses.cfolioItemHandlerLPProxy
     );
     const CFI_MAXMINT = new Array(8).fill('100');
     const CFI_PRICES = new Array(8).fill('500000000000000000');
@@ -273,15 +274,37 @@ const func = async function (hardhat_re) {
     (await CFOLIO_ITEM_HANDLER_LP_INSTANCE.sftMinter()) !==
     generatedAddresses.sftMinter
   ) {
+    // Call through Proxy, to is not supported by execute
+    await catchUnknownSigner(
+      rawTx({
+        from: marketingWallet,
+        to: CFOLIO_ITEM_HANDLER_LP_PROXY_CONTRACT,
+        log: true,
+        data: CFOLIO_ITEM_HANDLER_LP_INSTANCE.interface.encodeFunctionData(
+          'setMinter',
+          [generatedAddresses.sftMinter]
+        ),
+      })
+    );
+  }
+
+  //
+  // 11.) Check if we have to upgrade the cfolioItemHandlerLP implementation
+  //
+  if (
+    configAddresses.cfolioItemHandlerLPUpdate &&
+    configAddresses.cfolioItemHandlerLPUpdate !==
+      generatedAddresses.cfolioItemHandlerLP
+  ) {
     await catchUnknownSigner(
       execute(
-        CFOLIO_ITEM_HANDLER_LP_CONTRACT,
+        CFOLIO_ITEM_HANDLER_LP_PROXY_CONTRACT,
         {
           from: marketingWallet,
           log: true,
         },
-        'setMinter',
-        generatedAddresses.sftMinter
+        'upgradeTo',
+        generatedAddresses.cfolioItemHandlerLP
       )
     );
   }
