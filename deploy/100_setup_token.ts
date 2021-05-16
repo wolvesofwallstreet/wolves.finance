@@ -17,7 +17,7 @@ require('hardhat-deploy-ethers');
 // TODO: Fully qualified contract names
 const TOKEN_CONTRACT = 'WowsToken';
 const CONTROLLER_CONTRACT = 'Controller';
-const CONTROLLER_UPDATE_CONTRACT = 'Controller';
+const CONTROLLER_UPDATE_CONTRACT = 'ControllerUpdate';
 const REWARD_HANDLER_CONTRACT = 'RewardHandler';
 const UNIV2_STAKE_FARM_CONTRACT = 'UniV2StakeFarm';
 
