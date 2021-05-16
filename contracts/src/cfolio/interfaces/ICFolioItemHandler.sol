@@ -67,4 +67,14 @@ interface ICFolioItemHandler is ICFolioItemCallback {
    * @param tokenId SFT base card tokenId, must be unlocked
    */
   function getRewards(address recipient, uint256 tokenId) external;
+
+  /**
+   * @dev Get amounts (handler specific) for a cfolioItem
+   *
+   * @param cfolioItem address of CFolioItem contract
+   */
+  function getAmounts(address cfolioItem)
+    external
+    view
+    returns (uint256[] memory);
 }

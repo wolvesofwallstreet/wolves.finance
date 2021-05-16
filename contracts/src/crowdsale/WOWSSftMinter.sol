@@ -17,6 +17,7 @@ import '../cfolio/interfaces/ICFolioItemHandler.sol';
 import '../cfolio/interfaces/ISFTEvaluator.sol';
 import '../investment/interfaces/IRewardHandler.sol';
 import '../token/interfaces/IERC1155BurnMintable.sol';
+import '../token/interfaces/ITradeFloor.sol';
 import '../token/interfaces/IWOWSCryptofolio.sol';
 import '../token/interfaces/IWOWSERC1155.sol';
 import '../utils/TokenIds.sol';
@@ -458,6 +459,74 @@ contract WOWSSftMinter is Context, Ownable {
 
     uint256 hashNum = uint256(keccak256(hashData));
     return (hashNum ^ (hashNum << 128)).maskHash() | sftTokenId;
+  }
+
+  /**
+   * @dev Get all tokenIds from SFT and TF contract owned by account.
+   */
+  function getTokenIds(address account)
+    external
+    view
+    returns (uint256[] memory sftTokenIds, uint256[] memory tfTokenIds)
+  {
+    require(account != address(0), 'Null address');
+    sftTokenIds = _sftContract.getTokenIds(account);
+    tfTokenIds = ITradeFloor(tradeFloor).getTokenIds(account);
+  }
+
+  /**
+   * @dev Get underlying information (cFolioItems / value) for given tokenIds.
+   *
+   * @param tokenIds the tokenIds information should be queried
+   * @return result [%,MintTime,NumItems,[tokenId,type,numAssetValues,[assetValue]]]...
+   */
+  function getTokenInformation(uint256[] calldata tokenIds)
+    external
+    view
+    returns (bytes memory result)
+  {
+    uint256[] memory cFolioItems;
+    uint256[] memory oneCFolioItem = new uint256[](1);
+    uint256 cfolioLength;
+    uint256 rewardRate;
+    uint256 timestamp;
+
+    for (uint256 i = 0; i < tokenIds.length; ++i) {
+      if (tokenIds[i].isBaseCard()) {
+        // only main TradeFloor supported
+        uint256 sftTokenId = tokenIds[i].toSftTokenId();
+        address cfolio = _sftContract.tokenIdToAddress(sftTokenId);
+        if (address(cfolio) != address(0)) {
+          (cFolioItems, cfolioLength) = IWOWSCryptofolio(cfolio).getCryptofolio(
+            tradeFloor
+          );
+        } else {
+          cFolioItems = oneCFolioItem;
+          cfolioLength = 0;
+        }
+        rewardRate = sftEvaluator.rewardRate(tokenIds[i]);
+        (timestamp, ) = _sftContract.getTokenData(sftTokenId);
+      } else {
+        oneCFolioItem[0] = tokenIds[i];
+        cfolioLength = 1;
+        cFolioItems = oneCFolioItem; //Reference, no copy
+        rewardRate = 0;
+        timestamp = 0;
+      }
+      result = abi.encodePacked(result, rewardRate, timestamp, cfolioLength);
+      for (uint256 j = 0; j < cfolioLength; ++j) {
+        uint256 sftTokenId = cFolioItems[i].toSftTokenId();
+        uint256 cfolioType = sftEvaluator.getCFolioItemType(sftTokenId);
+        uint256[] memory amounts;
+        address cfolio = _sftContract.tokenIdToAddress(sftTokenId);
+        if (address(cfolio) != address(0)) {
+          address handler = IWOWSCryptofolio(cfolio)._tradefloors(0);
+          if (handler != address(0))
+            amounts = ICFolioItemHandler(handler).getAmounts(cfolio);
+        }
+        abi.encodePacked(result, cFolioItems[i], cfolioType, amounts);
+      }
+    }
   }
 
   //////////////////////////////////////////////////////////////////////////////

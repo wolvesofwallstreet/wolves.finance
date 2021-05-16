@@ -315,12 +315,25 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
 
   /**
    * @dev See {ICFolioItemCallback-uri}
-   *
    */
   function uri(
     uint256 /* tokenId*/
   ) external pure override returns (string memory) {
     return '';
+  }
+
+  /**
+   * @dev See {ICFolioItemHandler-getAmounts}
+   */
+  function getAmounts(address cfolioItem)
+    external
+    view
+    override
+    returns (uint256[] memory)
+  {
+    uint256[] memory result = new uint256[](1);
+    result[0] = cfolioFarm.balanceOf(cfolioItem);
+    return result;
   }
 
   //////////////////////////////////////////////////////////////////////////////
