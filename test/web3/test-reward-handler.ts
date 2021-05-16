@@ -149,17 +149,9 @@ describe('Reward handler', function () {
     // Test parameters
     const minimalMintAmount = '100000000000000000'; // 0.1 WOWS
 
-    // Check initial value using private testing API
-    let amount = await rewardHandlerContract.getMinimalMintAmount();
-    chai.expect(amount).to.equal('100000000000000000000'); // 100 WOWS
-
     // Set amount using public API
     const tx = rewardHandlerContract.setMinimalMintAmount(minimalMintAmount);
     await chai.expect(tx).to.not.be.reverted;
-
-    // Check updated amount using private testing API
-    amount = await rewardHandlerContract.getMinimalMintAmount();
-    chai.expect(amount).to.equal(minimalMintAmount);
   });
 
   it('should distribute to targets', async function () {
@@ -170,10 +162,6 @@ describe('Reward handler', function () {
 
     // Test parameters
     const amountToDistribute = '1000000000000000000'; // 1 WOWS
-
-    // Verify no initial funds
-    let distributeAmount = await rewardHandlerContract.getDistributeAmount();
-    chai.expect(distributeAmount).to.equal('0');
 
     // Distribute with no funds should fail
     let tx = rewardHandlerContract.distributeAll();
@@ -232,10 +220,6 @@ describe('Reward handler', function () {
       '900000000000000000' // 0.9 WOWS
     );
 
-    // Check that distribute amount was updated
-    distributeAmount = await rewardHandlerContract.getDistributeAmount();
-    chai.expect(distributeAmount).to.equal('100000000000000000'); // 0.1 WOWS
-
     // Distribute with funds now should succeed
     tx = rewardHandlerContract.distributeAll();
 
@@ -255,10 +239,6 @@ describe('Reward handler', function () {
       boosterContract.address,
       '40000000000000000' // 0.04 WOWS
     );
-
-    // Check that distribute amount was reset
-    distributeAmount = await rewardHandlerContract.getDistributeAmount();
-    chai.expect(distributeAmount).to.equal('0');
   });
 
   it('should terminate contract without selfdestruct', async function () {
