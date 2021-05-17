@@ -77,7 +77,7 @@ type ChainAddresses = {
   sftMinter: string;
   sftHolder: string;
   tradeFloorProxy: string;
-  cfolioItemHandlerLP: string;
+  cfolioItemHandlerLPProxy: string;
 };
 interface IIndexable {
   [key: number]: ChainAddresses;
@@ -119,6 +119,10 @@ export type StakeResult = {
     earned: number; // amount of reward tokens earned
   };
 };
+
+export const BIGNUMBER_MAX = ethers.BigNumber.from(
+  '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
+);
 
 type cbf = async.AsyncResultCallback<unknown, Error>;
 
@@ -552,7 +556,7 @@ class Store {
         SFTMinterAbi,
         signer
       );
-      this.cFolioItemHandlerLpAddress = chainAddresses.cfolioItemHandlerLP;
+      this.cFolioItemHandlerLpAddress = chainAddresses.cfolioItemHandlerLPProxy;
       if (chainAddresses.tradeFloorProxy !== '')
         this.tradeFloorContract = new ethers.Contract(
           chainAddresses.tradeFloorProxy,
@@ -1140,6 +1144,7 @@ class Store {
         tx: tx?.hash,
       } as StatusResult);
     } catch (e) {
+      console.log(e);
       emitter.emit(CFOLIO_ITEM_BUY, {
         status: 'error',
         errorMessage: e.error ? e.error.message : e.message,

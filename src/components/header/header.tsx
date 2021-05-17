@@ -131,7 +131,7 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
           },
           {
             id: 'WOLF TRADE FLOOR',
-            to: '/wolf_trade_floor',
+            to: '/cfolio-sfts?type=lpInvestment',
           },
           {
             id: 'STAKED INVEST',
@@ -155,11 +155,11 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
           },*/
           {
             id: 'YEARN INVESTMENT SFTS',
-            to: '/yearn_investment_sfts',
+            to: '/cfolio-sfts?type=yearnInvestment',
           },
           {
             id: 'YEARN INVEST',
-            to: '/yearn_invest',
+            to: '/yearn-invest',
           },
         ],
       },
