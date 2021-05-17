@@ -1,8 +1,10 @@
 [
   {
     "type": "lpInvestment",
-    "description": "This is a staker card and allows to stake Wolf on the tradefloor and also Raid. You can sell this character licence at any point wither on our platform or on opensea",
-    "constraint": "wolves",
+    "title": " WELCOME TO THE WOWS/WETH STAKERS NFTs",
+    "shortDescription": "UNIV2 WOWS/WETH STAKING INVESTMENT NFTs",
+    "description": "This is a staker card and allows to stake WOWS/WETH on the tradefloor and also Raid. You can sell this character licence at any point wither on our platform or on opensea",
+    "constraints": "wolves",
     "cards": [
       {
         "id": "0",
@@ -93,5 +95,13 @@
         "url": "https://4travelers.de/wolves_assets/cfolio/images/07-{res}.jpg"
       }
     ]
+  },
+  {
+    "type": "yearnInvestment",
+    "title": " WELCOME TO THE YEARN CRV POOL NFTs",
+    "shortDescription": "YEARN NFTs FOR YOUR LENDING FOR DAI / USDT / USDC / TUSD",
+    "description": "This is a staker card and allows to invest stable coin on the tradefloor and also Raid. You can sell this character licence at any point wither on our platform or on opensea",
+    "constraints": "bois",
+    "cards": []
   }
 ]

@@ -48,7 +48,17 @@ export type CFOLIO_ITEM = {
 
 export type CFOLIO_ITEMS = {
   type: string;
+  title: string;
+  shortDescription: string;
   description: string;
   constraints?: 'wolves' | 'bois';
   cards: CFOLIO_ITEM[];
+};
+
+export const INITIAL_CFOLIO_ITEMS: CFOLIO_ITEMS = {
+  type: '',
+  title: '',
+  shortDescription: '',
+  description: '',
+  cards: [],
 };

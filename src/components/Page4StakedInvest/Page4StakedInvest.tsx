@@ -8,16 +8,22 @@
 
 import './Page4StakedInvest.css';
 
+import { ethers } from 'ethers';
 import React from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { RouteComponentProps } from 'react-router-dom';
 
+import WalletLogo from '../../assets/openwallet.png';
 import {
   ASSETS_LOADED,
   CFOLIO_ITEM_BUY,
   SFT_STATE,
 } from '../../stores/constants';
-import { SFTStateresult, StoreClasses } from '../../stores/store';
+import {
+  BIGNUMBER_MAX,
+  SFTStateresult,
+  StoreClasses,
+} from '../../stores/store';
 import {
   IMAGE_SLIDER_INTERFACE,
   IMAGE_SLIDER_SLIDE,
@@ -48,8 +54,13 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
 
   constructor(props: PROPS) {
     super(props);
+
+    const { location } = this.props;
+    const query = new URLSearchParams(location.search);
+    const index = parseInt(query.get('item') || '0');
+
     this.state = {
-      currentImage: 0,
+      currentImage: index,
     };
     this.onSFTState = this.onSFTState.bind(this);
     this._updateImages = this._updateImages.bind(this);
@@ -79,7 +90,7 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
     const cards = assets.cards;
     const tokenIds = assets.userSFT;
 
-    const newImages: IMAGE[] = [];
+    const newImages: IMAGE[] = [{ tokenId: -1, level: 0, index: 0 }];
     tokenIds.forEach((elem) => {
       if (elem.isStockCard && elem.id.toNumber() >> 24 >= 4) {
         const tokenId = elem.id.toNumber();
@@ -92,6 +103,7 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
         newImages.push({ tokenId: tokenId, level: newLevel, index: newIndex });
       }
     });
+
     if (newImages !== this.receiverImages) {
       this.receiverImages = newImages;
       this.setCurrentImage(this.state.currentImage);
@@ -109,7 +121,12 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
       content: {
         wowsAmount: 0.5,
         investAmount: [0.1],
-        sftTokenId: this.receiverImages[this.slideIndex].tokenId,
+        sftTokenId:
+          this.receiverImages[this.slideIndex].tokenId >= 0
+            ? ethers.BigNumber.from(
+                this.receiverImages[this.slideIndex].tokenId.toString()
+              )
+            : BIGNUMBER_MAX,
         cfolioType: 0,
       },
     };
@@ -179,9 +196,11 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
                     slides={this.receiverImages.map((elem) => {
                       const slide = {
                         url:
-                          this.cards?.cards[elem.level].cards[
-                            elem.index
-                          ].url.replace('{res}', '300') || '',
+                          elem.tokenId === -1
+                            ? WalletLogo
+                            : this.cards?.cards[elem.level].cards[
+                                elem.index
+                              ].url.replace('{res}', '300') || '',
                       } as IMAGE_SLIDER_SLIDE;
                       return slide;
                     })}
