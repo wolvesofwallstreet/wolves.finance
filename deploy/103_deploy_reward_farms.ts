@@ -18,6 +18,7 @@ require('hardhat-deploy-ethers');
 const CFOLIO_FARM_CONTRACT = 'CFolioFarm';
 const ADDRESS_REGISTRY_CONTRACT = 'AddressRegistry';
 const CFOLIO_ITEM_HANDLER_LP_CONTRACT = 'CFolioItemHandlerLP';
+const CFOLIO_ITEM_HANDLER_LP_PROXY_CONTRACT = 'CFolioItemHandlerLPProxy';
 const SFT_EVALUATOR_CONTRACT = 'SFTEvaluator';
 const SFT_EVALUATOR_PROXY_CONTRACT = 'SFTEvaluatorProxy';
 const UPGRADE_PROXY_CONTRACT = 'UpgradeProxy';
@@ -202,8 +203,6 @@ const func = async function (hardhat_re) {
     generatedAddresses.cfolioFarmLP = cfolioFarmLPReceipt.address;
   }
 
-  const CFOLIO_FARM_LP_ADDRESS = generatedAddresses.cfolioFarmLP;
-
   //////////////////////////////////////////////////////////////////////////////
   //
   // Register addresses for CFolioFarmLP
@@ -217,7 +216,7 @@ const func = async function (hardhat_re) {
     execute,
     ADDRESS_REGISTRY_INSTANCE,
     WOLVES_REWARDS_KEY,
-    CFOLIO_FARM_LP_ADDRESS
+    generatedAddresses.cfolioFarmLP
   );
 
   //////////////////////////////////////////////////////////////////////////////
@@ -247,6 +246,40 @@ const func = async function (hardhat_re) {
 
     generatedAddresses.cfolioItemHandlerLP =
       cfolioItemHandlerLPContractReceipt.address;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // Deploy CFolioItemHandlerLPProxy
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  if (configAddresses.cfolioItemHandlerLPProxy) {
+    log_step(
+      `Using CFolioItemHandlerLP proxy: ${configAddresses.cfolioItemHandlerLPProxy}`
+    );
+    generatedAddresses.cfolioItemHandlerLPProxy =
+      configAddresses.cfolioItemHandlerLPProxy;
+  } else {
+    log_step('Deploying CFolioItemHandlerLP proxy');
+
+    const cfolioItemHandlerLPProxyReceipt = await deploy(
+      CFOLIO_ITEM_HANDLER_LP_PROXY_CONTRACT,
+      {
+        contract: UPGRADE_PROXY_CONTRACT,
+        from: deployer,
+        args: [
+          ADDRESS_REGISTRY_ADDRESS,
+          generatedAddresses.cfolioItemHandlerLP,
+          [],
+        ],
+        log: true,
+        deterministicDeployment: true,
+      }
+    );
+
+    generatedAddresses.cfolioItemHandlerLPProxy =
+      cfolioItemHandlerLPProxyReceipt.address;
   }
 
   //////////////////////////////////////////////////////////////////////////////

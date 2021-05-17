@@ -1,0 +1,22 @@
+diff --git a/dist/src/helpers.js b/dist/src/helpers.js
+index e862bc1..9751e5a 100644
+--- a/dist/src/helpers.js
++++ b/dist/src/helpers.js
+@@ -939,7 +939,7 @@ data: ${data}
+             value: options.value ? bignumber_1.BigNumber.from(options.value) : undefined,
+             nonce: options.nonce,
+         };
+-        const ethersContract = new contracts_1.Contract(deployment.address, abi, ethersSigner || provider);
++        const ethersContract = new contracts_1.Contract(options.to || deployment.address, abi, ethersSigner || provider);
+         if (!ethersContract.functions[methodName]) {
+             throw new Error(`No method named "${methodName}" on contract deployed as "${name}"`);
+         }
+@@ -953,7 +953,7 @@ data: ${data}
+             const { data } = await ethersContract.populateTransaction[methodName](...ethersArgs);
+             throw new errors_1.UnknownSignerError({
+                 from,
+-                to: deployment.address,
++                to: options.to || deployment.address,
+                 data,
+                 value: options.value,
+                 contract: {
