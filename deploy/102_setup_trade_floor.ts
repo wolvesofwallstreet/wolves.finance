@@ -19,13 +19,19 @@ const SFT_MINTER_CONTRACT = 'WOWSSftMinter';
 const TRADE_FLOOR_PROXY_CONTRACT = 'TradeFloorProxy';
 
 // Path to generated addresses file
-const CONFIG_ADDRESSES = `${__dirname}/../src/config/addresses.json`;
 const GENERATED_ADDRESSES = `${__dirname}/../src/config/generated-addresses.json`;
-const IGNORE_ADDRESSES = process.env.IGNORE_ADDRESSES !== undefined;
 
 // Helper function
 function log_step(step_string) {
   console.log(`\n==> ${step_string}\n`);
+}
+
+async function getProxyImplementation(hre, contractAddress) {
+  const data = await hre.ethers.provider.getStorageAt(
+    contractAddress,
+    '0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc'
+  );
+  return hre.ethers.utils.getAddress(ethers.BigNumber.from(data).toHexString());
 }
 
 /**
@@ -41,13 +47,9 @@ const func = async function (hardhat_re) {
   const chainId = await hardhat_re.getChainId();
 
   // Load contract addresses
-  const configNetworks = JSON.parse(
-    fs.readFileSync(CONFIG_ADDRESSES).toString()
-  );
   const generatedNetworks = JSON.parse(
     fs.readFileSync(GENERATED_ADDRESSES).toString()
   );
-  const configAddresses = (!IGNORE_ADDRESSES && configNetworks[chainId]) || {};
   const generatedAddresses = generatedNetworks[chainId] || {};
 
   // Load contract instances
@@ -114,8 +116,10 @@ const func = async function (hardhat_re) {
   // 3.) Check if we have to upgrade the tradeFloor implementation
   //
   if (
-    configAddresses.tradeFloorUpdate &&
-    configAddresses.tradeFloorUpdate !== generatedAddresses.tradeFloor
+    (await getProxyImplementation(
+      hardhat_re,
+      generatedAddresses.tradeFloorProxy
+    )) !== generatedAddresses.tradeFloor
   ) {
     await catchUnknownSigner(
       execute(
