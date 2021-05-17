@@ -85,19 +85,6 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
     marketingWallet
   );
 
-  // Grant permissions
-  const TESTER_ROLE = await rewardHandlerContract.TESTER_ROLE();
-
-  const tx = rewardHandlerContract.grantRole(
-    TESTER_ROLE, // Role
-    marketingWallet.address // Account
-  );
-  await chai.expect(tx).to.emit(rewardHandlerContract, 'RoleGranted').withArgs(
-    TESTER_ROLE, // Role
-    marketingWallet.address, // Account
-    marketingWallet.address // Sender
-  );
-
   return {
     tokenContract,
     boosterContract,
