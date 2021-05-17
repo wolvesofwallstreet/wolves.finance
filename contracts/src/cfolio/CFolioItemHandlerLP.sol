@@ -336,6 +336,38 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
     return result;
   }
 
+  /**
+   * @dev See {ICFolioItemHandler-getRewardInfo}
+   */
+  function getRewardInfo(uint256[] calldata tokenIds)
+    external
+    view
+    override
+    returns (bytes memory result)
+  {
+    uint256[5] memory uiData;
+
+    // get basic data once
+    uiData = cfolioFarm.getUIData(address(0));
+    // total / rewardDuration / rewardPerDuration
+    result = abi.encodePacked(uiData[0], uiData[2], uiData[3]);
+
+    for (uint256 i = 0; i < tokenIds.length; ++i) {
+      uint256 sftTokenId = tokenIds[i].toSftTokenId();
+      uint256 share = 0;
+      uint256 earned = 0;
+      if (sftTokenId.isBaseCard()) {
+        address cfolio = sftHolder.tokenIdToAddress(sftTokenId);
+        if (cfolio != address(0)) {
+          uiData = cfolioFarm.getUIData(cfolio);
+          share = uiData[1];
+          earned = uiData[4];
+        }
+      }
+      result = abi.encodePacked(result, share, earned);
+    }
+  }
+
   //////////////////////////////////////////////////////////////////////////////
   // Maintanace
   //////////////////////////////////////////////////////////////////////////////

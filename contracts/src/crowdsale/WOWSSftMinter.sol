@@ -524,7 +524,7 @@ contract WOWSSftMinter is Context, Ownable {
           if (handler != address(0))
             amounts = ICFolioItemHandler(handler).getAmounts(cfolio);
         }
-        abi.encodePacked(result, cFolioItems[i], cfolioType, amounts);
+        result = abi.encodePacked(result, cFolioItems[i], cfolioType, amounts);
       }
     }
   }

@@ -20,6 +20,11 @@ interface ICFolioFarm {
   function balanceOf(address account) external view returns (uint256);
 
   /**
+   * @dev Return total, balances[account], rewardDuration, rewardForDuration, earned[account]
+   */
+  function getUIData(address account) external view returns (uint256[5] memory);
+
+  /**
    * @dev Increase amount of non-rewarded asset
    */
   function addAssets(address account, uint256 amount) external;
