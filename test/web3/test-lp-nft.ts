@@ -121,7 +121,7 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
     marketingWallet
   );
   const cfolioItemHandlerLPContract = new ethers.Contract(
-    addresses.cfolioItemHandlerLP,
+    addresses.cfolioItemHandlerLPProxy,
     CFolioItemHandlerLpAbi,
     marketingWallet
   );
