@@ -169,6 +169,7 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
   function getUIData(address account)
     external
     view
+    override
     returns (uint256[5] memory)
   {
     uint256[5] memory result =

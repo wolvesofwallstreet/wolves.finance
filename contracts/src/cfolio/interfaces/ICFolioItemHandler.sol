@@ -77,4 +77,15 @@ interface ICFolioItemHandler is ICFolioItemCallback {
     external
     view
     returns (uint256[] memory);
+
+  /**
+   * @dev Get information obout the rewardFarm
+   *
+   * @param tokenIds List of basecard tokenIds
+   * @return bytes of uint256[]: total, rewardDur, rewardRateForDur, [share, earned]
+   */
+  function getRewardInfo(uint256[] calldata tokenIds)
+    external
+    view
+    returns (bytes memory);
 }
