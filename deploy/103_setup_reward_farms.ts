@@ -40,6 +40,14 @@ function log_step(step_string) {
   console.log(`\n==> ${step_string}\n`);
 }
 
+async function getProxyImplementation(hre, contractAddress) {
+  const data = await hre.ethers.provider.getStorageAt(
+    contractAddress,
+    '0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc'
+  );
+  return hre.ethers.utils.getAddress(ethers.BigNumber.from(data).toHexString());
+}
+
 /**
  * Steps to deploy the WOWS SFT environment
  */
@@ -252,8 +260,10 @@ const func = async function (hardhat_re) {
   // 9.) Check if we have to upgrade the sftEvaluator implementation
   //
   if (
-    configAddresses.sftEvaluatorUpdate &&
-    configAddresses.sftEvaluatorUpdate !== generatedAddresses.sftEvaluator
+    (await getProxyImplementation(
+      hardhat_re,
+      generatedAddresses.sftEvaluatorProxy
+    )) !== generatedAddresses.sftEvaluator
   ) {
     await catchUnknownSigner(
       execute(
@@ -293,9 +303,10 @@ const func = async function (hardhat_re) {
   // 11.) Check if we have to upgrade the cfolioItemHandlerLP implementation
   //
   if (
-    configAddresses.cfolioItemHandlerLPUpdate &&
-    configAddresses.cfolioItemHandlerLPUpdate !==
-      generatedAddresses.cfolioItemHandlerLP
+    (await getProxyImplementation(
+      hardhat_re,
+      generatedAddresses.cfolioItemHandlerLPProxy
+    )) !== generatedAddresses.cfolioItemHandlerLP
   ) {
     await catchUnknownSigner(
       execute(
