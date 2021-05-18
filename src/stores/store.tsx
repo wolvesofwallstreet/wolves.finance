@@ -120,6 +120,24 @@ export type StakeResult = {
   };
 };
 
+type SFTCHILD = {
+  id: ethers.BigNumber;
+  locked: boolean;
+  type: number;
+  assets: number[];
+};
+
+export type SFT = {
+  id: ethers.BigNumber;
+  isBaseCard: boolean;
+  isStockCard: boolean;
+  isWallet: boolean;
+  locked: boolean;
+  rewardRate: number;
+  mintTimestamp: number;
+  cfolioItems: SFTCHILD[];
+};
+
 export const BIGNUMBER_MAX = ethers.BigNumber.from(
   '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
 );
@@ -127,12 +145,7 @@ export const BIGNUMBER_MAX = ethers.BigNumber.from(
 type cbf = async.AsyncResultCallback<unknown, Error>;
 
 type ASSETS = {
-  userSFT: {
-    id: ethers.BigNumber;
-    isBaseCard: boolean;
-    isStockCard: boolean;
-    locked: boolean;
-  }[];
+  userSFT: SFT[];
   cards: CARDS;
   cfolioItems: CFOLIO_ITEMS[];
 };
@@ -387,6 +400,8 @@ class Store {
       this.ethersProvider.removeAllListeners();
       this.lPContract = null;
       this.tokenContract = null;
+      this.tradeFloorContract = null;
+      this.stakeContract = null;
       this.ethersProvider = null;
       this.cFolioItemHandlerLpAddress = '';
     }
@@ -452,7 +467,10 @@ class Store {
     } as ConnectResult);
     // Request new SFT List
     if (this.address !== '') dispatcher.dispatch({ type: SFT_USER } as Payload);
-    else this.assets.userSFT = [];
+    else {
+      this.assets.userSFT = [];
+      emitter.emit(SFT_STATE, { status: 'user' } as SFTStateresult);
+    }
   }
 
   _launchEventProvider = async () => {
@@ -681,47 +699,68 @@ class Store {
   };
 
   _getUserSft = async (payloadContent: PayloadContent | undefined) => {
-    if (this.address === '' || !this.sftHolderContractRO) return;
+    if (this.address === '' || !this.sftMintContractRO) return;
 
     try {
-      const result: ethers.BigNumber[] | undefined =
-        await this.sftHolderContractRO.getTokenIds(this.address);
+      const result: [ethers.BigNumber[], ethers.BigNumber[]] =
+        await this.sftMintContractRO.getTokenIds(this.address);
 
-      if (result) {
-        this.assets.userSFT = result.map((bn) => {
+      let newUserSFT = result[0].map((bn) => {
+        return {
+          id: bn,
+          isBaseCard: bn.lt(Store.BASE_CARD_MAX),
+          isStockCard: bn.lt(Store.STOCK_CARD_MAX),
+          isWallet: false,
+          locked: false,
+          rewardRate: 0,
+          mintTimestamp: 0,
+          cfolioItems: [],
+        };
+      });
+
+      newUserSFT = newUserSFT.concat(
+        result[1].map((bn) => {
           return {
             id: bn,
             isBaseCard: bn.lt(Store.BASE_CARD_MAX),
             isStockCard: bn.lt(Store.STOCK_CARD_MAX),
-            locked: false,
+            isWallet: false,
+            locked: true,
+            rewardRate: 0,
+            mintTimestamp: 0,
+            cfolioItems: [],
           };
-        });
-      } else this.assets.userSFT = [];
-
-      console.log(this.assets.userSFT);
-      if (this.tradeFloorContract) {
-        const result: ethers.BigNumber[] | undefined =
-          await this.tradeFloorContract.getTokenIds(this.address);
-
-        if (result) {
-          this.assets.userSFT = this.assets.userSFT.concat(
-            result.map((bn) => {
-              return {
-                id: bn,
-                isBaseCard: bn.lt(Store.BASE_CARD_MAX),
-                isStockCard: bn.lt(Store.STOCK_CARD_MAX),
-                locked: true,
-              };
-            })
-          );
-        }
-      }
-      this.assets.userSFT = this.assets.userSFT
+        })
+      );
+      newUserSFT = newUserSFT
         .filter(
           (n) =>
-            n.id.toNumber() >> 16 !== 0x0103 && n.id.toNumber() >> 16 !== 0x0503
+            !n.isBaseCard ||
+            (n.id.mask(128).toNumber() >> 16 !== 0x0103 &&
+              n.id.mask(128).toNumber() >> 16 !== 0x0503)
         )
-        .sort((a, b) => a.id.toNumber() - b.id.toNumber());
+        .sort((a, b) =>
+          a.id.mask(128).gt(b.id.mask(128))
+            ? 1
+            : a.id.mask(128).lt(b.id.mask(128))
+            ? -1
+            : 0
+        );
+      // Create a dummy UserTokenId UINT256Max for the users wallet
+      newUserSFT.unshift({
+        id: BIGNUMBER_MAX,
+        isBaseCard: false,
+        isStockCard: false,
+        isWallet: true,
+        locked: false,
+        rewardRate: 0,
+        mintTimestamp: 0,
+        cfolioItems: [],
+      });
+      this.assets.userSFT = newUserSFT;
+
+      // Get all CFolio Items and tokenId information, root cFolioItems go into wallet (-1)
+
       emitter.emit(SFT_STATE, { status: 'user' } as SFTStateresult);
     } catch (e) {
       console.log(e.message);

@@ -60,11 +60,14 @@ const ImageSlider = ({
   initCallback(sliderId, { prev, next, go });
 
   useEffect(() => {
-    setLeft((width - slideWidth) / 2 - currentIndex * slideWidth);
-  }, [currentIndex, slideWidth, width]);
+    if (slides.length && currentIndex >= slides.length) {
+      setCurrentIndex(0);
+    } else {
+      setLeft((width - slideWidth) / 2 - currentIndex * slideWidth);
+    }
+  }, [currentIndex, slideWidth, width, slides.length]);
 
   useEffect(() => {
-    // if (onSlideChanged) onSlideChanged(currentIndex);
     if (onSlideChanged) {
       if (displayIndex !== currentIndex) {
         setDisplayIndex(-1);
