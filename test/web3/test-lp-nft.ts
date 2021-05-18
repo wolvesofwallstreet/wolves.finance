@@ -176,6 +176,9 @@ describe('LP NFTs', function () {
   const cfolioItemTokenId = ethers.BigNumber.from('0x10000000000000000');
   let cfolioItemTokenIdTf = ethers.BigNumber.from(0);
   const cFolioItemType = 0; // Card type 0, registered in minter for cfolioItemHandlerLP
+  const MAX_UINT256 = ethers.BigNumber.from(
+    '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
+  );
 
   // Lazily-initialized variables
   let ethUsd = 0;
@@ -656,9 +659,11 @@ describe('LP NFTs', function () {
 
     const { cfolioItemHandlerLPContract } = contracts;
 
-    const tx = cfolioItemHandlerLPContract.withdraw(cfolioItemTokenId, [
-      lpBalance.div(2),
-    ]);
+    const tx = cfolioItemHandlerLPContract.withdraw(
+      MAX_UINT256,
+      cfolioItemTokenId,
+      [lpBalance.div(2)]
+    );
     await chai.expect(tx).to.be.revertedWith('CFHI: Access denied');
   });
 
@@ -714,9 +719,11 @@ describe('LP NFTs', function () {
 
     const { cfolioItemHandlerLPContract } = contracts;
 
-    const tx = cfolioItemHandlerLPContract.withdraw(cfolioItemTokenId, [
-      lpBalance.add(1),
-    ]);
+    const tx = cfolioItemHandlerLPContract.withdraw(
+      MAX_UINT256,
+      cfolioItemTokenId,
+      [lpBalance.add(1)]
+    );
     await chai.expect(tx).to.be.revertedWith('SafeMath: subtraction overflow');
   });
 
@@ -725,9 +732,11 @@ describe('LP NFTs', function () {
 
     const { cfolioItemHandlerLPContract } = contracts;
 
-    const tx = cfolioItemHandlerLPContract.withdraw(cfolioItemTokenId, [
-      lpBalance.div(2),
-    ]);
+    const tx = cfolioItemHandlerLPContract.withdraw(
+      MAX_UINT256,
+      cfolioItemTokenId,
+      [lpBalance.div(2)]
+    );
     await chai.expect(tx).to.not.be.reverted;
 
     // Log gas cost
@@ -773,9 +782,11 @@ describe('LP NFTs', function () {
 
     const { cfolioItemHandlerLPContract } = contracts;
 
-    const tx = cfolioItemHandlerLPContract.deposit(cfolioItemTokenId, [
-      lpBalance.div(2),
-    ]);
+    const tx = cfolioItemHandlerLPContract.deposit(
+      MAX_UINT256,
+      cfolioItemTokenId,
+      [lpBalance.div(2)]
+    );
     await chai.expect(tx).to.not.be.reverted;
 
     // Log gas cost
@@ -946,9 +957,11 @@ describe('LP NFTs', function () {
 
     const { cfolioItemHandlerLPContract } = contracts;
 
-    const tx = cfolioItemHandlerLPContract.withdraw(cfolioItemTokenId, [
-      lpBalance,
-    ]);
+    const tx = cfolioItemHandlerLPContract.withdraw(
+      MAX_UINT256,
+      cfolioItemTokenId,
+      [lpBalance]
+    );
     await chai.expect(tx).to.not.be.reverted;
   });
 

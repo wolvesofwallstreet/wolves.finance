@@ -39,6 +39,7 @@ import '../utils/TokenIds.sol';
  * transfered and calculate the new rewardable LP amount based on the reward %
  * of the base NFT.
  */
+
 contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
   using SafeMath for uint256;
   using TokenIds for uint256;
@@ -227,46 +228,60 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
   /**
    * @dev See {ICFolioItemCallback-deposit}
    *
-   * Note: tokenId cannot be owned by a base SFT.
+   * Note: tokenId can be owned by a base SFT
+   * In this case base SFT cannot be locked
    *
-   * There is no need to update any rewards.
+   * There is only need to update rewards if tokenId
+   * is part of an unlocked base SFT
    */
-  function deposit(uint256 tokenId, uint256[] calldata amounts)
-    external
-    override
-  {
+  function deposit(
+    uint256 baseTokenId,
+    uint256 tokenId,
+    uint256[] calldata amounts
+  ) external override {
     // Validate parameters
     require(amounts.length == 1 && amounts[0] > 0, 'CFIH: invalid amount');
-    IWOWSCryptofolio cFolio = _verifyAssetAccess(tokenId);
+    (address baseCFolio, address itemCFolio) =
+      _verifyAssetAccess(baseTokenId, tokenId);
 
     // Transfer LP token to this contract
     stakingToken.transferFrom(_msgSender(), address(this), amounts[0]);
 
     // Record assets in the Farm contract. They don't earn rewards.
     // addAssets must only be called from Investment CFolios
-    cfolioFarm.addAssets(address(cFolio), amounts[0]);
+    cfolioFarm.addAssets(itemCFolio, amounts[0]);
+
+    if (baseTokenId != uint256(-1))
+      _updateRewards(baseCFolio, sftEvaluator.rewardRate(baseTokenId));
   }
 
   /**
    * @dev See {ICFolioItemCallback-withdraw}
    *
-   * Note: tokenId cannot be owned by a base SFT.
+   * Note: tokenId can be owned by a base SFT
+   * In this case base SFT cannot be locked
    *
-   * There is no need to update any rewards.
+   * There is only need to update rewards if tokenId
+   * is part of an unlocked base SFT
    */
-  function withdraw(uint256 tokenId, uint256[] calldata amounts)
-    external
-    override
-  {
+  function withdraw(
+    uint256 baseTokenId,
+    uint256 tokenId,
+    uint256[] calldata amounts
+  ) external override {
     require(amounts.length == 1 && amounts[0] > 0, 'CFIH: invalid amount');
-    IWOWSCryptofolio cFolio = _verifyAssetAccess(tokenId);
+    (address baseCFolio, address itemCFolio) =
+      _verifyAssetAccess(baseTokenId, tokenId);
 
     // Record assets in Farm contract. They don't earn rewards.
     // addAsset must only be called from Investment CFolios
-    cfolioFarm.removeAssets(address(cFolio), amounts[0]);
+    cfolioFarm.removeAssets(itemCFolio, amounts[0]);
 
     // Transfer LP token from this contract
     stakingToken.transfer(_msgSender(), amounts[0]);
+
+    if (baseTokenId != uint256(-1))
+      _updateRewards(baseCFolio, sftEvaluator.rewardRate(baseTokenId));
   }
 
   /**
@@ -477,27 +492,50 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
   /**
    * @dev Verifies if an asset access operation is allowed
    */
-  function _verifyAssetAccess(uint256 tokenId)
+  function _verifyAssetAccess(uint256 baseTokenId, uint256 tokenId)
     private
     view
-    returns (IWOWSCryptofolio)
+    returns (address, address)
   {
     // Verify it's a cfolioItemTokenId
     require(tokenId.isCFolioCard(), 'CFHI: Not CFolioCard');
 
     // Verify that the tokenId is one of ours
-    IWOWSCryptofolio cFolio =
-      IWOWSCryptofolio(sftHolder.tokenIdToAddress(tokenId));
-    require(address(cFolio) != address(0), 'CFIH: Invalid cFolioTokenId');
-    require(cFolio._tradefloors(0) == address(this), 'CFIH: Not our SFT');
-
-    // Verify that the tokenId is owned by msg.sender in SFT contract.
-    // This also verifies that the token is not locked in TradeFloor.
+    address cFolio = sftHolder.tokenIdToAddress(tokenId.toSftTokenId());
+    require(cFolio != address(0), 'CFIH: Invalid cFolioTokenId');
     require(
-      IERC1155(address(sftHolder)).balanceOf(_msgSender(), tokenId) == 1,
-      'CFHI: Access denied'
+      IWOWSCryptofolio(cFolio)._tradefloors(0) == address(this),
+      'CFIH: Not our SFT'
     );
 
-    return cFolio;
+    address baseCFolio = address(0);
+
+    if (baseTokenId != uint256(-1)) {
+      // Verify it's a cfolio base card
+      require(baseTokenId.isBaseCard(), 'CFHI: Not baseCard');
+      baseCFolio = sftHolder.tokenIdToAddress(baseTokenId.toSftTokenId());
+      require(baseCFolio != address(0), 'CFIH: Invalid baseCFolioTokenId');
+
+      // Verify that the tokenId is owned by msg.sender in SFT contract.
+      // This also verifies that the token is not locked in TradeFloor.
+      require(
+        IERC1155(address(sftHolder)).balanceOf(_msgSender(), baseTokenId) == 1,
+        'CFHI: Access denied (T)'
+      );
+
+      // Verify that the tokenId is owned by given baseCFolio.
+      require(
+        IERC1155(address(sftHolder)).balanceOf(baseCFolio, tokenId) == 1,
+        'CFHI: Access denied (B)'
+      );
+    } else {
+      // Verify that the tokenId is owned by msg.sender in SFT contract.
+      // This also verifies that the token is not locked in TradeFloor.
+      require(
+        IERC1155(address(sftHolder)).balanceOf(_msgSender(), tokenId) == 1,
+        'CFHI: Access denied'
+      );
+    }
+    return (baseCFolio, cFolio);
   }
 }
