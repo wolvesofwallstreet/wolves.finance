@@ -11,8 +11,8 @@ import { Component } from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { Link, RouteComponentProps } from 'react-router-dom';
 
-import { ASSETS_LOADED } from '../../stores/constants';
-import { StoreClasses } from '../../stores/store';
+import { ASSETS_LOADED, SFT_STATE } from '../../stores/constants';
+import { SFTStateresult, StoreClasses } from '../../stores/store';
 import { INITIAL_CFOLIO_ITEMS } from '../types/cards';
 
 type PROPS = {
@@ -36,10 +36,12 @@ class CFolioItemSfts extends Component<PROPS, STATE> {
     this.state = INITIAL_STATE;
 
     this.onAssetsLoaded = this.onAssetsLoaded.bind(this);
+    this.onSftState = this.onSftState.bind(this);
   }
 
   componentDidMount() {
     StoreClasses.emitter.on(ASSETS_LOADED, this.onAssetsLoaded);
+    StoreClasses.emitter.on(SFT_STATE, this.onSftState);
     this._updateContent();
   }
 
@@ -48,7 +50,12 @@ class CFolioItemSfts extends Component<PROPS, STATE> {
   }
 
   componentWillUnmount() {
+    StoreClasses.emitter.off(SFT_STATE, this.onSftState);
     StoreClasses.emitter.off(ASSETS_LOADED, this.onAssetsLoaded);
+  }
+
+  onSftState(status: SFTStateresult) {
+    if (status.status === 'caps') this.onAssetsLoaded();
   }
 
   onAssetsLoaded() {
@@ -75,7 +82,7 @@ class CFolioItemSfts extends Component<PROPS, STATE> {
   }
 
   render(): JSX.Element {
-    // const { t } = this.props;
+    const { t } = this.props;
     const storeItems = StoreClasses.store
       .getAssets()
       .cfolioItems.filter((elem) => elem.type === this.state.currentType);
@@ -84,7 +91,7 @@ class CFolioItemSfts extends Component<PROPS, STATE> {
       items.cards.length &&
       items.cards.map((card, index) => {
         return (
-          <div className="page8-card" key={'CFIS' + index}>
+          <div className="page8-card" key={this.state.currentType + index}>
             <Link to={`${this.target}?item=${index}`}>
               <img
                 className="card-media"
@@ -95,12 +102,15 @@ class CFolioItemSfts extends Component<PROPS, STATE> {
             <span className="tk-vincente-lightbold font-32 m-0 mt-2 line-h">
               {card.name}
             </span>
-            {/*<span className="tk-grotesk-lightbold font-14 ellipsis">
-              MOTTO: {card?.moto}
-            </span>*/}
             <hr className="wolves" />
-            <span className="tk-vincente font-32 m-0 line-h ellipsis">
-              {card.minted}/{card.maxMintable}
+            {
+              <span className="tk-grotesk-lightbold font-14 ellipsis">
+                {t('page.available')}: {card.maxMintable - card.minted}/
+                {card.maxMintable}
+              </span>
+            }
+            <span className="tk-grotesk-lightbold font-14 m-0 line-h ellipsis">
+              {t('page.price')}: {card.price.toFixed(2)}
             </span>
           </div>
         );

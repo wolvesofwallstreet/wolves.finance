@@ -146,10 +146,10 @@ class Store {
   tokenContract: ethers.Contract | null = null;
   stakeContract: ethers.Contract | null = null;
   lPContract: ethers.Contract | null = null;
-  sftMintContract: ethers.Contract | null = null;
   tradeFloorContract: ethers.Contract | null = null;
 
   sftHolderContractRO: ethers.Contract | null = null;
+  sftMintContractRO: ethers.Contract | null = null;
   stakeContractRO: ethers.Contract | null = null;
   uniDaiWethPairContractRO: ethers.Contract | null = null;
 
@@ -166,6 +166,8 @@ class Store {
   address = '';
   tokenContractAddress = Store.nullAddress;
   pauseSFTUser = false;
+
+  dispatchQueue: Payload[] = [];
 
   assets = {
     userSFT: [],
@@ -279,6 +281,7 @@ class Store {
       // Temporary remove NOLE and WARG
       this.assets.cards.cards[1].cards.splice(3, 1);
       this.assets.cards.cards[5].cards.splice(3, 1);
+      // Load CFolioItems
       import('locales/en_US/cFolioItems.json').then((content) => {
         this.assets.cfolioItems = content.default as CFOLIO_ITEMS[];
         emitter.emit(ASSETS_LOADED);
@@ -384,7 +387,6 @@ class Store {
       this.ethersProvider.removeAllListeners();
       this.lPContract = null;
       this.tokenContract = null;
-      this.sftMintContract = null;
       this.ethersProvider = null;
       this.cFolioItemHandlerLpAddress = '';
     }
@@ -398,6 +400,7 @@ class Store {
   close = async () => {
     this.stakeContractRO = null;
     this.sftHolderContractRO = null;
+    this.sftMintContractRO = null;
     await this.disconnect(false);
     if (this.eventProvider) {
       this.eventProvider?.removeAllListeners();
@@ -416,21 +419,27 @@ class Store {
   };
 
   _setupEvents(): boolean {
+    const addDQ = (payload: Payload) => {
+      if (!this.dispatchQueue.find((elem) => elem === payload))
+        this.dispatchQueue.push(payload);
+    };
     this.eventProvider?.removeAllListeners();
     this.sftHolderContractRO?.removeAllListeners();
     // Our Block ticker
     this.eventProvider?.on('block', (blockNumber) => {
       emitter.emit(NEW_BLOCK, { blockNumber: blockNumber });
+      this.dispatchQueue.forEach((payload) => dispatcher.dispatch(payload));
+      this.dispatchQueue = [];
     });
     this.sftHolderContractRO?.on('TransferSingle', (operator, from, to) => {
-      dispatcher.dispatch({ type: SFT_STATE } as Payload);
+      addDQ({ type: SFT_STATE } as Payload);
       if (!this.pauseSFTUser && (from === this.address || to === this.address))
-        dispatcher.dispatch({ type: SFT_USER } as Payload);
+        addDQ({ type: SFT_USER } as Payload);
     });
     this.sftHolderContractRO?.on('TransferBatch', (operator, from, to) => {
-      dispatcher.dispatch({ type: SFT_STATE } as Payload);
+      addDQ({ type: SFT_STATE } as Payload);
       if (!this.pauseSFTUser && (from === this.address || to === this.address))
-        dispatcher.dispatch({ type: SFT_USER } as Payload);
+        addDQ({ type: SFT_USER } as Payload);
     });
     return true;
   }
@@ -517,6 +526,11 @@ class Store {
         SFTHolderAbi,
         provider
       );
+      this.sftMintContractRO = new ethers.Contract(
+        chainAddresses.sftMinter,
+        SFTMinterAbi,
+        provider
+      );
       // Temporary because of missing route in stakefarm
       if (this.chainId === 1) {
         this.uniDaiWethPairContractRO = new ethers.Contract(
@@ -549,11 +563,6 @@ class Store {
       this.lPContract = new ethers.Contract(
         await this.stakeContract.stakingToken(),
         IERC20Abi,
-        signer
-      );
-      this.sftMintContract = new ethers.Contract(
-        chainAddresses.sftMinter,
-        SFTMinterAbi,
         signer
       );
       this.cFolioItemHandlerLpAddress = chainAddresses.cfolioItemHandlerLPProxy;
@@ -632,19 +641,40 @@ class Store {
     );
 
     try {
-      const result: number[] | undefined =
+      const sftResult: number[] | undefined =
         await this.sftHolderContractRO?.getCardDataBatch(levels, cardIds);
 
-      if (result !== undefined && result.length > 0) {
+      if (sftResult !== undefined && sftResult.length > 0) {
         let index = 0;
         this.assets.cards.cards.forEach((level) =>
           level.cards.forEach((card) => {
-            level.quantity = result[index++];
-            card.minted = result[index++];
+            level.quantity = sftResult[index++];
+            card.minted = sftResult[index++];
           })
         );
-        emitter.emit(SFT_STATE, { status: 'caps' } as SFTStateresult);
       }
+
+      const cfolioTypes: number[] = [];
+      this.assets.cfolioItems.forEach((elem) =>
+        elem.cards.forEach((card) => cfolioTypes.push(card.chainRef))
+      );
+
+      const cfolioResult: [
+        ethers.BigNumber[],
+        ethers.BigNumber[],
+        ethers.BigNumber[]
+      ] = await this.sftMintContractRO?.getCFolioSpec(cfolioTypes);
+      let index = 0;
+
+      this.assets.cfolioItems.forEach((elem) =>
+        elem.cards.forEach((card) => {
+          card.price = this.fromWei(cfolioResult[0][index]);
+          card.minted = cfolioResult[1][index].toNumber();
+          card.maxMintable = cfolioResult[2][index].toNumber();
+          ++index;
+        })
+      );
+      emitter.emit(SFT_STATE, { status: 'caps' } as SFTStateresult);
     } catch (e) {
       console.log(e.message);
     }
@@ -864,7 +894,7 @@ class Store {
     }
 
     if (
-      !this.sftMintContract ||
+      !this.sftMintContractRO ||
       !this.tokenContract ||
       !this.sftHolderContractRO
     ) {
@@ -899,18 +929,18 @@ class Store {
         return;
       }
 
+      const sftMintContract = this.sftMintContractRO.connect(
+        this.tokenContract.signer
+      );
       const allowance = await this.tokenContract.allowance(
         this.address,
-        this.sftMintContract.address
+        sftMintContract.address
       );
 
       if (allowance.lt(sftAmount)) {
         const tx = await this.tokenContract.approve(
-          this.sftMintContract.address,
-          ethers.BigNumber.from(
-            '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
-          )
-          //sftAmount
+          sftMintContract.address,
+          sftAmount
         );
         emitter.emit(SFT_BUY, {
           status: 'approve',
@@ -921,7 +951,7 @@ class Store {
       }
 
       const tx: ethers.ContractTransaction | undefined =
-        await this.sftMintContract?.mintWowsSFT(
+        await sftMintContract?.mintWowsSFT(
           this.address,
           id.toNumber() >> 8,
           id.toNumber() & 0xff,
@@ -1050,7 +1080,7 @@ class Store {
     const { wowsAmount, investAmount, sftTokenId, cfolioType } = payloadContent;
 
     if (
-      !this.sftMintContract ||
+      !this.sftMintContractRO ||
       !this.tokenContract ||
       !this.lPContract ||
       this.cFolioItemHandlerLpAddress === ''
@@ -1089,15 +1119,19 @@ class Store {
         }
       }
 
+      const sftMintContract = this.sftMintContractRO.connect(
+        this.tokenContract.signer
+      );
+
       if (wowsAmount > 0) {
         const allowance = await this.tokenContract.allowance(
           this.address,
-          this.sftMintContract.address
+          sftMintContract.address
         );
         const weiAmount = this.toWei(wowsAmount);
         if (allowance.lt(weiAmount)) {
           const tx = await this.tokenContract.approve(
-            this.sftMintContract.address,
+            sftMintContract.address,
             weiAmount
           );
           emitter.emit(CFOLIO_ITEM_BUY, {
@@ -1127,7 +1161,7 @@ class Store {
       }
 
       const tx: ethers.ContractTransaction | undefined =
-        await this.sftMintContract?.mintCFolioItemSFT(
+        await sftMintContract?.mintCFolioItemSFT(
           this.address,
           cfolioType,
           sftTokenId,
