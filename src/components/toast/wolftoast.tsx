@@ -20,6 +20,7 @@ import {
 import logo from '../../assets/wolves-token_99.png';
 import {
   ADDRESS_COPIED,
+  CFOLIO_ITEM_BUY,
   CONNECTION_CHANGED,
   SFT_BUY,
   SFT_LOCK,
@@ -67,9 +68,11 @@ class WolfToast extends Component<TOASTPROPS, TOASTSTATE> {
     StoreClasses.emitter.on(SFT_BUY, this.onTransaction);
     StoreClasses.emitter.on(SFT_LOCK, this.onTransaction);
     StoreClasses.emitter.on(SFT_UNLOCK, this.onTransaction);
+    StoreClasses.emitter.on(CFOLIO_ITEM_BUY, this.onTransaction);
   }
 
   componentWillUnmount(): void {
+    StoreClasses.emitter.off(CFOLIO_ITEM_BUY, this.onTransaction);
     StoreClasses.emitter.off(SFT_UNLOCK, this.onTransaction);
     StoreClasses.emitter.off(SFT_LOCK, this.onTransaction);
     StoreClasses.emitter.off(SFT_BUY, this.onTransaction);

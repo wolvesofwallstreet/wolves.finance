@@ -414,6 +414,7 @@ contract WOWSSftMinter is Context, Ownable {
 
     for (uint256 i; i < length; ++i) {
       CFolioItemSft storage cfi = cfolioItemSfts[cFolioTypes[i]];
+      prices[i] = cfi.price;
       numMinted[i] = cfi.numMinted;
       maxMintable[i] = cfi.maxMintable;
     }
