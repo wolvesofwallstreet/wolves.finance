@@ -38,6 +38,7 @@ type PROPS = {
 };
 
 type STATE = {
+  cfolioItems?: CFOLIO_ITEMS;
   currentImage: number;
 };
 
@@ -48,7 +49,6 @@ type IMAGE = { tokenId: number; level: number; index: number };
 class Page4StakedInvest extends React.Component<PROPS, STATE> {
   receiverImages: IMAGE[] = [];
   cards?: CARDS;
-  cfolioItems?: CFOLIO_ITEMS;
   sliderInterface?: IMAGE_SLIDER_INTERFACE;
   slideIndex = 0;
 
@@ -90,9 +90,9 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
     const cards = assets.cards;
     const tokenIds = assets.userSFT;
 
-    const newImages: IMAGE[] = [{ tokenId: -1, level: 0, index: 0 }];
+    const newImages: IMAGE[] = [];
     tokenIds.forEach((elem) => {
-      if (elem.isStockCard && elem.id.toNumber() >> 24 >= 4) {
+      if (elem.isStockCard && !elem.locked && elem.id.toNumber() >> 24 >= 4) {
         const tokenId = elem.id.toNumber();
         const newLevel = cards.cards.findIndex(
           (level) => level.chainRef === tokenId >> 24
@@ -101,18 +101,26 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
           (card) => card.chainRef === ((tokenId >> 16) & 0xff)
         );
         newImages.push({ tokenId: tokenId, level: newLevel, index: newIndex });
+      } else if (elem.isWallet) {
+        newImages.push({ tokenId: -1, level: -1, index: -1 });
       }
     });
 
-    if (newImages !== this.receiverImages) {
+    if (newImages.toString() !== this.receiverImages.toString()) {
       this.receiverImages = newImages;
       this.setCurrentImage(this.state.currentImage);
     }
     this.cards = cards;
-    if (assets.cfolioItems.length > 0)
-      this.cfolioItems = assets.cfolioItems.filter(
+    if (assets.cfolioItems.length > 0) {
+      const cfolioItems = assets.cfolioItems.filter(
         (elem) => elem.type === 'lpInvestment'
       )[0];
+      if (
+        !this.state.cfolioItems ||
+        this.state.cfolioItems.cards.length !== cfolioItems.cards.length
+      )
+        this.setState({ cfolioItems });
+    }
   }
 
   handleBuy(): void {
@@ -139,12 +147,15 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
 
   render(): JSX.Element {
     const handleImageChange = (change: number) => {
-      if (this.cfolioItems) {
+      if (this.state.cfolioItems) {
         if (this.state.currentImage + change < 0) {
-          return this.setCurrentImage(this.cfolioItems.cards.length - 1);
+          return this.setCurrentImage(this.state.cfolioItems.cards.length - 1);
         }
 
-        if (this.state.currentImage + change >= this.cfolioItems.cards.length) {
+        if (
+          this.state.currentImage + change >=
+          this.state.cfolioItems.cards.length
+        ) {
           return this.setCurrentImage(0);
         }
 
@@ -152,8 +163,8 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
       }
     };
 
-    const cfolioItem = this.cfolioItems
-      ? this.cfolioItems.cards[this.state.currentImage]
+    const cfolioItem = this.state.cfolioItems
+      ? this.state.cfolioItems.cards[this.state.currentImage]
       : undefined;
 
     return (

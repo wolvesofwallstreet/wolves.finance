@@ -91,7 +91,7 @@ class CFolioItemSfts extends Component<PROPS, STATE> {
       items.cards.length &&
       items.cards.map((card, index) => {
         return (
-          <div className="page8-card" key={this.state.currentType + index}>
+          <div className="cfisft-card" key={this.state.currentType + index}>
             <Link to={`${this.target}?item=${index}`}>
               <img
                 className="card-media"
@@ -110,7 +110,7 @@ class CFolioItemSfts extends Component<PROPS, STATE> {
               </span>
             }
             <span className="tk-grotesk-lightbold font-14 m-0 line-h ellipsis">
-              {t('page.price')}: {card.price.toFixed(2)}
+              {t('page.price')}: {card.price.toFixed(2)} WOWS
             </span>
           </div>
         );
@@ -128,7 +128,7 @@ class CFolioItemSfts extends Component<PROPS, STATE> {
           </div>
 
           {/* Line */}
-          <span className="line-container page8-line-w-80">
+          <span className="line-container cfisft-line-w-80">
             <span id="left" className="dot" />
             <span className="line" />
             <span id="right" className="dot" />
@@ -143,7 +143,7 @@ class CFolioItemSfts extends Component<PROPS, STATE> {
           </span>
 
           {/* Cards listing */}
-          <div className="page8-card-container mt-5">{cardRender}</div>
+          <div className="cfisft-card-container mt-1">{cardRender}</div>
         </div>
       </>
     );

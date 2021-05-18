@@ -7,7 +7,7 @@
  */
 import './page4.css';
 
-import { BigNumber } from 'ethers';
+import { BigNumber, ethers } from 'ethers';
 import { Component } from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { RouteComponentProps } from 'react-router-dom';
@@ -56,7 +56,7 @@ const INITIAL_PAGE4_STATE: PAGE4_STATE = {
 class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
   content: CARD_LEVEL | undefined = undefined;
   cardIndex = 0;
-  tokenId: number | undefined = undefined;
+  tokenId?: ethers.BigNumber;
   tokenLocked = false;
   levelName = '';
   nextUrl = '';
@@ -129,34 +129,38 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     let newCardId = '';
 
     const cards = StoreClasses.store.getAssets().cards;
-    const tokenIds = StoreClasses.store.getAssets().userSFT;
+    const tokenIds = StoreClasses.store
+      .getAssets()
+      .userSFT.filter((sft) => sft.isStockCard);
     const query = new URLSearchParams(location.search);
 
     // check if we have tokenId given
-    const tokenId = parseInt(query.get('tokenId') || '-1');
+    const tokenId = query.get('tokenId')
+      ? ethers.BigNumber.from(query.get('tokenId'))
+      : undefined;
     const oldTokenId = this.tokenId;
     this.tokenId = undefined;
     this.tokenLocked = false;
-    const tokenIndex =
-      tokenId >= 0
-        ? tokenIds.findIndex((e) => e.id.toNumber() === tokenId)
-        : -1;
-    if (tokenIndex >= 0) {
+    const tokenIndex = tokenId
+      ? tokenIds.findIndex((e) => e.id.eq(tokenId))
+      : -1;
+    if (tokenId && tokenIndex >= 0) {
       // retrieve levelId and cardId from tokenId
       this.tokenLocked = tokenIds[tokenIndex].locked;
       newLevelId = cards.cards.findIndex(
-        (level) => level.chainRef === tokenId >> 24
+        (level) => level.chainRef === tokenId.mask(128).toNumber() >> 24
       );
       if (newLevelId >= 0) {
         newType = cards.cards[newLevelId].type === 'wolves' ? 'wolves' : 'bois';
         const newCardIndex = cards.cards[newLevelId].cards.findIndex(
-          (card) => card.chainRef === ((tokenId >> 16) & 0xff)
+          (card) =>
+            card.chainRef === ((tokenId.mask(128).toNumber() >> 16) & 0xff)
         );
         if (newCardIndex >= 0) {
           newCardId = cards.cards[newLevelId].cards[newCardIndex].id;
           newLevelId = cards.cards[newLevelId].levelId;
           this.tokenId = tokenId;
-          if (oldTokenId !== tokenId) cardId = '';
+          if (!oldTokenId?.eq(tokenId)) cardId = '';
         }
       }
     }
@@ -199,17 +203,17 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         if (this.tokenId !== undefined) {
           if (tokenIds.length > 1) {
             let nextTokenId =
-              tokenIds.findIndex((e) => e.id.toNumber() === this.tokenId) + 1;
+              tokenIds.findIndex((e) => e.id.eq(this.tokenId || '0')) + 1;
             let prevTokenId = nextTokenId - 2;
             if (nextTokenId >= tokenIds.length) nextTokenId = 0;
             if (prevTokenId < 0) prevTokenId = tokenIds.length - 1;
             this.prevUrl =
               '?type=myPack&tokenId=' +
-              tokenIds[prevTokenId].id +
+              tokenIds[prevTokenId].id.toHexString() +
               '&scroll=false';
             this.nextUrl =
               '?type=myPack&tokenId=' +
-              tokenIds[nextTokenId].id +
+              tokenIds[nextTokenId].id.toHexString() +
               '&scroll=false';
           }
         } else {
@@ -402,7 +406,9 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                     <h2 className="tk-vincente-lightbold font-24">
                       <span>
                         {` ${t('page4.tokenId')}: 0x${this.tokenId
-                          .toString(16)
+                          .toHexString()
+                          .replace('0x', '')
+                          .toUpperCase()
                           .padStart(8, '0')}`}
                       </span>
                     </h2>

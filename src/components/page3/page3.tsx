@@ -20,6 +20,7 @@ import {
 } from '../../stores/constants';
 import {
   ConnectResult,
+  SFT,
   SFTStateresult,
   StoreClasses,
 } from '../../stores/store';
@@ -56,7 +57,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
     myPackLevelDescriptions: [],
   };
   levelDescription = '';
-  tokenIds: { id: ethers.BigNumber; locked: boolean }[] = [];
+  tokenIds: SFT[] = [];
   levelFilter = 0;
   nextLevel = -1;
   prevLevel = -1;
@@ -152,16 +153,24 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
               id: ethers.BigNumber.from(
                 (this.content.cards[idx].chainRef << 24) | (card.chainRef << 16)
               ),
+              isBaseCard: true,
+              isStockCard: true,
+              isWallet: false,
               locked: false,
+              rewardRate: 0,
+              mintTimestamp: 0,
+              cfolioItems: [],
             };
           });
         } else {
-          this.tokenIds = StoreClasses.store.getAssets().userSFT;
+          this.tokenIds = StoreClasses.store
+            .getAssets()
+            .userSFT.filter((n) => n.isStockCard);
 
           // collect tokenId bitmask
           let tokenIdBits = 0;
           this.tokenIds.forEach(
-            (n) => (tokenIdBits |= 1 << (n.id.toNumber() >> 24))
+            (n) => (tokenIdBits |= 1 << (n.id.mask(32).toNumber() >> 24))
           );
           this.content.cards.forEach((level) => {
             if (tokenIdBits & (1 << level.chainRef)) {
@@ -306,9 +315,10 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
                       const tokenId = (level.chainRef << 8) | card.chainRef;
                       while (
                         tokenIdx < this.tokenIds.length &&
-                        this.tokenIds[tokenIdx].id.toNumber() >> 16 <= tokenId
+                        this.tokenIds[tokenIdx].id.mask(32).toNumber() >> 16 <=
+                          tokenId
                       ) {
-                        this.tokenIds[tokenIdx].id.toNumber() >> 16 ===
+                        this.tokenIds[tokenIdx].id.mask(32).toNumber() >> 16 ===
                           tokenId &&
                           collection.push(
                             <CardBox
