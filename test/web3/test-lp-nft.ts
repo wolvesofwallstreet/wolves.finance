@@ -620,7 +620,7 @@ describe('LP NFTs', function () {
         .mul(await getGasPrice())
         .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
     console.log(
-      `    Transfer LP NFT (out of card) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+      `    Transfer LP NFT (from card to wallet) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
         gasCost
       )})`
     );
@@ -747,7 +747,7 @@ describe('LP NFTs', function () {
         .mul(await getGasPrice())
         .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
     console.log(
-      `    Withdraw from LP SFT gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+      `    Withdraw from LP SFT (in wallet) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
         gasCost
       )})`
     );
@@ -797,7 +797,7 @@ describe('LP NFTs', function () {
         .mul(await getGasPrice())
         .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
     console.log(
-      `    Deposit into LP SFT gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+      `    Deposit into LP SFT (in wallet) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
         gasCost
       )})`
     );
@@ -897,7 +897,7 @@ describe('LP NFTs', function () {
         .mul(await getGasPrice())
         .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
     console.log(
-      `    Transfer LP NFT (into card) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+      `    Transfer LP NFT (from wallet to card) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
         gasCost
       )})`
     );
