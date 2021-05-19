@@ -31,7 +31,6 @@ export type CARD_LEVEL = {
 export type CARDS = {
   levelNames: string[];
   cards: CARD_LEVEL[];
-  myPackLevelDescriptions: string[];
 };
 
 export type CFOLIO_ITEM = {

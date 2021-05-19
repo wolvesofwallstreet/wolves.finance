@@ -1,12 +1,5 @@
 {
   "levelNames": ["PRODIGY", "PHENOM", "ELITE", "ALPHA"],
-  "myPackLevelDescriptions": [
-    "1/20 RARITY - 25% PROFIT SHARE",
-    "1/20 RARITY - 50% PROFIT SHARE",
-    "1/0 RARITY - 75% PROFIT SHARE",
-    "1/0 RARITY - 100% PROFIT SHARE"
-  ],
-
   "levels": [
     {
       "levelId": 0,
