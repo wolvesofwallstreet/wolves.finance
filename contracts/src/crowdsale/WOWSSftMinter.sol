@@ -440,7 +440,7 @@ contract WOWSSftMinter is Context, Ownable {
       );
       hashData = abi.encodePacked(address(this), sftTokenId);
     } else {
-      // It's a cfolioItem itself, only calculate unerlying value
+      // It's a cfolioItem itself, only calculate underlying value
       tokenIds = new uint256[](1);
       tokenIds[0] = sftTokenId;
       tokenIdsLength = 1;
