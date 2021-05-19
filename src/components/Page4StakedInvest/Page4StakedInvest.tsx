@@ -211,7 +211,9 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
                             ? WalletLogo
                             : this.cards?.cards[elem.level].cards[
                                 elem.index
-                              ].url.replace('{res}', '300') || '',
+                              ].url
+                                .replace('{res}', '300')
+                                .replace('.mp4', '.mp4.jpg') || '',
                       } as IMAGE_SLIDER_SLIDE;
                       return slide;
                     })}
@@ -256,18 +258,8 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
                 <div
                   className={'tk-grotesk-lightbold font-16 line-break-enable'}
                 >
-                  <p>
-                    Wall Street Hustler - He’s worked his way up from the actual
-                    street. Learning the hustle on the street has given him the
-                    perfect grounding for working the trade floor. Forget rough
-                    diamond this trader is a blood diamond, and isnt afraid to
-                    step on toes and ears to make the deals he needs.
-                  </p>
-                  <p>
-                    This is a staker card and allows to stake Wolf on the
-                    tradefloor and also Raid. You can sell this character
-                    licence at any point wither on our platform or on opensea
-                  </p>
+                  <p>{cfolioItem?.description}</p>
+                  <p>{this.state.cfolioItems?.description}</p>
                 </div>
 
                 <div className="p_relative">

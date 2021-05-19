@@ -54,7 +54,6 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
   content: CARDS = {
     levelNames: [],
     cards: [],
-    myPackLevelDescriptions: [],
   };
   levelDescription = '';
   tokenIds: SFT[] = [];
@@ -180,7 +179,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
           this.levelDescription =
             this.levelFilter === 0
               ? ''
-              : this.content.myPackLevelDescriptions[newLevelId];
+              : `RARITY: 1/${this.content.cards[newLevelId].quantity} - ${this.content.cards[newLevelId].profitReward}% PROFIT SHARE`;
         }
 
         if (this.levelFilter && (this.levelFilter & (1 << newLevelId)) === 0) {

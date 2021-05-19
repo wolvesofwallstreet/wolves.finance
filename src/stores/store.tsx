@@ -288,8 +288,6 @@ class Store {
     /** Load assets **/
     import('locales/en_US/cards.json').then((content) => {
       this.assets.cards.levelNames = content.default.levelNames;
-      this.assets.cards.myPackLevelDescriptions =
-        content.default.myPackLevelDescriptions;
       this.assets.cards.cards = content.default.levels as CARD_LEVEL[];
       // Temporary remove NOLE and WARG
       this.assets.cards.cards[1].cards.splice(3, 1);
