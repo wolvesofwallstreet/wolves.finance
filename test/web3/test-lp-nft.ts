@@ -26,7 +26,7 @@ import TradeFloorAbi from '../../src/abi/contracts/src/token/TradeFloor.sol/Trad
 import WOWSCryptofolioAbi from '../../src/abi/contracts/src/token/WOWSCryptofolio.sol/WOWSCryptofolio.json';
 import WOWSTokenAbi from '../../src/abi/contracts/src/token/WOWSErc20.sol/WowsToken.json';
 import WOWSERC1155Abi from '../../src/abi/contracts/src/token/WOWSErc1155.sol/WOWSERC1155.json';
-import { ADDRESS_ZERO } from '../utils/constants';
+import { ADDRESS_ZERO, HASH_MASK } from '../utils/constants';
 import { hardhat } from '../utils/hardhat';
 
 chai.use(solidity);
@@ -172,6 +172,7 @@ describe('LP NFTs', function () {
   const cardIdWolf = 2;
   const wowsTokenIdBoi = ethers.BigNumber.from('0x01020000');
   const wowsTokenIdWolf = ethers.BigNumber.from('0x05020000');
+  let wowsTokenIdWolfTf = ethers.BigNumber.from(0);
 
   const cfolioItemTokenId = ethers.BigNumber.from('0x10000000000000000');
   let cfolioItemTokenIdTf = ethers.BigNumber.from(0);
@@ -540,6 +541,10 @@ describe('LP NFTs', function () {
     );
   });
 
+  it('should check trade floor ID', async function () {
+    chai.expect(cfolioItemTokenIdTf.and(HASH_MASK)).to.equal(cfolioItemTokenId);
+  });
+
   it('should check cryptofolio for LP NFT', async function () {
     this.timeout(60 * 1000);
 
@@ -901,6 +906,156 @@ describe('LP NFTs', function () {
         gasCost
       )})`
     );
+  });
+
+  //
+  // Test depositing into a locked CFolioItem that sits inside an unlocked
+  // CFolio. This optimization allows for us to avoid a transfer -> unlock ->
+  // deposit -> lock -> transfer transaction.
+  //
+
+  it('should withdraw from CFIHLP (locked NFT, unlocked card)', async function () {
+    this.timeout(60 * 1000);
+
+    const { cfolioItemHandlerLPContract } = contracts;
+
+    const tx = cfolioItemHandlerLPContract.withdraw(
+      wowsTokenIdWolf,
+      cfolioItemTokenIdTf,
+      [lpBalance.div(2)]
+    );
+    await chai.expect(tx).to.not.be.reverted;
+
+    // Log gas cost
+    const receipt = await (await tx).wait();
+    const gasUsedGwei = receipt.gasUsed;
+    const gasCost =
+      gasUsedGwei
+        .mul(await getGasPrice())
+        .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
+    console.log(
+      `    Withdraw from LP NFT (in card) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+        gasCost
+      )})`
+    );
+  });
+
+  it('should check wallet for withdrawn LP tokens', async function () {
+    this.timeout(60 * 1000);
+
+    const { uniV2PairContract } = contracts;
+
+    // Check wallet balance
+    const currentLpBalance = await uniV2PairContract.balanceOf(
+      marketingWallet.address
+    );
+    chai.expect(currentLpBalance).to.equal(lpBalance.div(2));
+  });
+
+  it('should check CFIHLP for remaining LP tokens', async function () {
+    this.timeout(60 * 1000);
+
+    const { cfolioItemHandlerLPContract, uniV2PairContract } = contracts;
+
+    // Check CFolioItemHandlerLP balance
+    const currentLpBalance = await uniV2PairContract.balanceOf(
+      cfolioItemHandlerLPContract.address
+    );
+    chai.expect(currentLpBalance).to.equal(lpBalance.div(2));
+  });
+
+  it('should deposit to CFIHLP', async function () {
+    this.timeout(60 * 1000);
+
+    const { cfolioItemHandlerLPContract } = contracts;
+
+    const tx = cfolioItemHandlerLPContract.deposit(
+      wowsTokenIdWolf,
+      cfolioItemTokenIdTf,
+      [lpBalance.div(2)]
+    );
+    await chai.expect(tx).to.not.be.reverted;
+
+    // Log gas cost
+    const receipt = await (await tx).wait();
+    const gasUsedGwei = receipt.gasUsed;
+    const gasCost =
+      gasUsedGwei
+        .mul(await getGasPrice())
+        .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
+    console.log(
+      `    Deposit into LP NFT (in card) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+        gasCost
+      )})`
+    );
+  });
+
+  //
+  // Here we lock the cryptofolio, and try interacting with the locked NFT again
+  //
+
+  it('should lock cryptofolio', async function () {
+    this.timeout(60 * 1000);
+
+    const { sftHolderContract, tradeFloorProxyContract } = contracts;
+
+    // Check that we have the cryptofolio
+    const balanceWolf = await sftHolderContract.balanceOf(
+      marketingWallet.address,
+      wowsTokenIdWolf
+    );
+    chai.expect(balanceWolf).to.equal(1);
+
+    // Lock wolf cryptofolio
+    const tx = await sftHolderContract.safeTransferFrom(
+      marketingWallet.address,
+      tradeFloorProxyContract.address,
+      wowsTokenIdWolf,
+      1,
+      []
+    );
+    await chai
+      .expect(tx)
+      .to.emit(sftHolderContract, 'TransferSingle')
+      .withArgs(
+        marketingWallet.address,
+        marketingWallet.address,
+        tradeFloorProxyContract.address,
+        wowsTokenIdWolf,
+        1
+      );
+
+    // Get the new minted TradeFloor tokenId
+    const tokenIds = await tradeFloorProxyInstance.getTokenIds(
+      marketingWallet.address
+    );
+    chai.expect(tokenIds.length).to.equal(1);
+    wowsTokenIdWolfTf = tokenIds[0];
+  });
+
+  it('should fail to withdraw from CFIHLP (locked NFT, locked card)', async function () {
+    this.timeout(60 * 1000);
+
+    const { cfolioItemHandlerLPContract } = contracts;
+
+    const tx = cfolioItemHandlerLPContract.withdraw(
+      wowsTokenIdWolf,
+      cfolioItemTokenIdTf,
+      [lpBalance.div(2)]
+    );
+    await chai.expect(tx).to.be.revertedWith('CFHI: Access denied (B)');
+  });
+
+  it('should burn locked cryptofolio NFT', async function () {
+    this.timeout(60 * 1000);
+
+    // Burn locked cryptofolio NFT
+    const tx = tradeFloorProxyInstance.burn(
+      marketingWallet.address,
+      wowsTokenIdWolfTf,
+      1
+    );
+    await chai.expect(tx).to.not.be.reverted;
   });
 
   //
