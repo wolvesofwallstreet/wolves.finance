@@ -39,7 +39,6 @@ import '../utils/TokenIds.sol';
  * transfered and calculate the new rewardable LP amount based on the reward %
  * of the base NFT.
  */
-
 contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
   using SafeMath for uint256;
   using TokenIds for uint256;

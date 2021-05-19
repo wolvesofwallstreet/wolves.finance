@@ -12,7 +12,7 @@ import './IController.sol';
 
 interface IFarm {
   /**
-   * @dev Return a unique farm name
+   * @dev Return the farm's controller
    */
   function controller() external view returns (IController);
 
