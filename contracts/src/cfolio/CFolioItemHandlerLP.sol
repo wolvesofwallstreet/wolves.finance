@@ -491,17 +491,25 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
 
   /**
    * @dev Verifies if an asset access operation is allowed
+   *
+   * @param baseTokenId Base card tokenId or uint(-1)
+   * @param cfolioItemTokenId CFolioItem tokenId handled by this contract
+   *
+   * A tokenId is "unlocked", if msg.sender is the owner of a tokenId in SFT contract.
+   * If baseTokenId is uint(-1), cfolioItemTokenId has to be be unlocked, otherwise
+   * baseTokenId has to be unlocked and the locked cfolioItemTokenId inside its cfolio.
    */
-  function _verifyAssetAccess(uint256 baseTokenId, uint256 tokenId)
+  function _verifyAssetAccess(uint256 baseTokenId, uint256 cfolioItemTokenId)
     private
     view
     returns (address, address)
   {
     // Verify it's a cfolioItemTokenId
-    require(tokenId.isCFolioCard(), 'CFHI: Not CFolioCard');
+    require(cfolioItemTokenId.isCFolioCard(), 'CFHI: Not CFolioCard');
 
     // Verify that the tokenId is one of ours
-    address cFolio = sftHolder.tokenIdToAddress(tokenId.toSftTokenId());
+    address cFolio =
+      sftHolder.tokenIdToAddress(cfolioItemTokenId.toSftTokenId());
     require(cFolio != address(0), 'CFIH: Invalid cFolioTokenId');
     require(
       IWOWSCryptofolio(cFolio)._tradefloors(0) == address(this),
@@ -520,19 +528,25 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
       // This also verifies that the token is not locked in TradeFloor.
       require(
         IERC1155(address(sftHolder)).balanceOf(_msgSender(), baseTokenId) == 1,
-        'CFHI: Access denied (T)'
+        'CFHI: Access denied (B)'
       );
 
       // Verify that the tokenId is owned by given baseCFolio.
       require(
-        IERC1155(address(sftHolder)).balanceOf(baseCFolio, tokenId) == 1,
-        'CFHI: Access denied (B)'
+        IERC1155(address(tradeFloor)).balanceOf(
+          baseCFolio,
+          cfolioItemTokenId
+        ) == 1,
+        'CFHI: Access denied (CF)'
       );
     } else {
       // Verify that the tokenId is owned by msg.sender in SFT contract.
       // This also verifies that the token is not locked in TradeFloor.
       require(
-        IERC1155(address(sftHolder)).balanceOf(_msgSender(), tokenId) == 1,
+        IERC1155(address(sftHolder)).balanceOf(
+          _msgSender(),
+          cfolioItemTokenId
+        ) == 1,
         'CFHI: Access denied'
       );
     }
