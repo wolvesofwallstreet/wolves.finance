@@ -699,44 +699,39 @@ class Store {
   _getUserSft = async (payloadContent: PayloadContent | undefined) => {
     if (this.address === '' || !this.sftMintContractRO) return;
 
+    const filterSpecialCards = (data: ethers.BigNumber[]) =>
+      data.filter(
+        (n) =>
+          n.mask(128).gt(Store.BASE_CARD_MAX) ||
+          (n.mask(128).toNumber() >> 16 !== 0x0103 &&
+            n.mask(128).toNumber() >> 16 !== 0x0503)
+      );
+
+    const readUint256 = (s: string, i: number) =>
+      ethers.BigNumber.from('0x' + s.substr(i * 64 + 2, 64));
+
     try {
       const result: [ethers.BigNumber[], ethers.BigNumber[]] =
         await this.sftMintContractRO.getTokenIds(this.address);
 
-      let newUserSFT = result[0].map((bn) => {
-        return {
-          id: bn,
-          isBaseCard: bn.lt(Store.BASE_CARD_MAX),
-          isStockCard: bn.lt(Store.STOCK_CARD_MAX),
-          isWallet: false,
-          locked: false,
-          rewardRate: 0,
-          mintTimestamp: 0,
-          cfolioItems: [],
-        };
-      });
+      const mergeList = filterSpecialCards(result[0]);
+      const numUnlocked = mergeList.length;
+      mergeList.push(...filterSpecialCards(result[1]));
 
-      newUserSFT = newUserSFT.concat(
-        result[1].map((bn) => {
+      const newUserSFT: SFT[] = mergeList
+        .filter((n) => n.mask(128).lte(Store.BASE_CARD_MAX))
+        .map((bn, index) => {
           return {
             id: bn,
-            isBaseCard: bn.lt(Store.BASE_CARD_MAX),
-            isStockCard: bn.lt(Store.STOCK_CARD_MAX),
+            isBaseCard: bn.lte(Store.BASE_CARD_MAX),
+            isStockCard: bn.lte(Store.STOCK_CARD_MAX),
             isWallet: false,
-            locked: true,
+            locked: index >= numUnlocked,
             rewardRate: 0,
             mintTimestamp: 0,
             cfolioItems: [],
           };
         })
-      );
-      newUserSFT = newUserSFT
-        .filter(
-          (n) =>
-            !n.isBaseCard ||
-            (n.id.mask(128).toNumber() >> 16 !== 0x0103 &&
-              n.id.mask(128).toNumber() >> 16 !== 0x0503)
-        )
         .sort((a, b) =>
           a.id.mask(128).gt(b.id.mask(128))
             ? 1
@@ -755,10 +750,49 @@ class Store {
         mintTimestamp: 0,
         cfolioItems: [],
       });
-      this.assets.userSFT = newUserSFT;
 
       // Get all CFolio Items and tokenId information, root cFolioItems go into wallet (-1)
+      // We expect uint256: [%,MintTime,NumItems,[tokenId,type,numAssetValues,[assetValue]]]...
+      const result2: string = await this.sftMintContractRO.getTokenInformation(
+        mergeList
+      );
+      let readIndex = 0;
+      // We have now a string of uint256Hex values
+      mergeList.forEach((tokenId) => {
+        //get destination tokenId
+        let destinationId: number;
+        if (tokenId.mask(128).gt(Store.BASE_CARD_MAX)) destinationId = 0;
+        else destinationId = newUserSFT.findIndex((sft) => sft.id.eq(tokenId));
+        if (destinationId >= 0) {
+          newUserSFT[destinationId].rewardRate = readUint256(
+            result2,
+            readIndex++
+          ).toNumber();
+          newUserSFT[destinationId].mintTimestamp = readUint256(
+            result2,
+            readIndex++
+          ).toNumber();
 
+          let numCFolios = readUint256(result2, readIndex++).toNumber();
+          while (numCFolios > 0) {
+            const child: SFTCHILD = {
+              id: readUint256(result2, readIndex++),
+              locked: destinationId !== 0,
+              type: readUint256(result2, readIndex++).toNumber(),
+              assets: [],
+            };
+            let numAssets = readUint256(result2, readIndex++).toNumber();
+            while (numAssets > 0) {
+              child.assets.push(readUint256(result2, readIndex++).toNumber());
+              --numAssets;
+            }
+            newUserSFT[destinationId].cfolioItems.push(child);
+            --numCFolios;
+          }
+        } else throw new Error('Mismatch in tokenId array');
+      });
+
+      this.assets.userSFT = newUserSFT;
       emitter.emit(SFT_STATE, { status: 'user' } as SFTStateresult);
     } catch (e) {
       console.log(e.message);
