@@ -146,6 +146,7 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
   }
 
   render(): JSX.Element {
+    const { t } = this.props;
     const handleImageChange = (change: number) => {
       if (this.state.cfolioItems) {
         if (this.state.currentImage + change < 0) {
@@ -166,6 +167,9 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
     const cfolioItem = this.state.cfolioItems
       ? this.state.cfolioItems.cards[this.state.currentImage]
       : undefined;
+    const scroll = this.state.cfolioItems
+      ? this.state.cfolioItems.cards.length > 1
+      : false;
 
     return (
       <>
@@ -198,7 +202,7 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
                 >
                   {'<'}
                 </button>
-                <div className="vw-80 py-3  border_thin_t border_thin_b p_relative center_triangle_up center_triangle_down">
+                <div className="vw-90-24px py-3  border_thin_t border_thin_b p_relative center_triangle_up center_triangle_down">
                   <ImageSlider
                     sliderId="0"
                     initCallback={this.sliderInit.bind(this)}
@@ -228,28 +232,41 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
               </div>
             </div>
 
+            <div
+              id="page4sInvest-nav"
+              className="tk-vincente-lightbold font-20 single-line"
+            >
+              <span
+                className={`tk-vincente-lightbold font-24 single-line ${
+                  scroll ? 'c-pointer' : 'disabled-link'
+                }`}
+                onClick={() => handleImageChange(-1)}
+              >
+                &lt;{t('page.previousCard')}
+              </span>
+              <span
+                className={`tk-vincente-lightbold font-24 single-line ${
+                  scroll ? 'c-pointer' : 'disabled-link'
+                } `}
+                onClick={() => handleImageChange(1)}
+              >
+                {t('page.nextCard')}&gt;
+              </span>
+            </div>
+
             {/* Content */}
-            <div className={'page4sInvest-container center-container my-5'}>
-              <div className="d-flex align-items-center justify-content-even mb-3">
-                <button
-                  className="arrow_left m-0 mr-2"
-                  onClick={() => handleImageChange(-1)}
-                />
+            <div className={'page4sInvest-container center-container my-3'}>
+              <div className="left d-flex flex-column align-items-center justify-content-even mb-3">
                 {cfolioItem && (
                   <img
-                    className={'w-80'}
                     src={cfolioItem.url.replace('{res}', '500')}
                     alt=""
-                    style={{ maxWidth: '500px' }}
+                    style={{ width: '100%' }}
                   />
                 )}
-                <button
-                  className="arrow_right m-0 ml-2"
-                  onClick={() => handleImageChange(1)}
-                />
               </div>
 
-              <div className={'t-left'}>
+              <div className={'right t-left'}>
                 <h1 className={'tk-vincente h-1'}>
                   {' '}
                   {cfolioItem ? cfolioItem.name : 'WOLVES WOWS/ETH NFT'}{' '}

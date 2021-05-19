@@ -16,16 +16,34 @@
   margin-bottom: -20px !important;
 }
 
+#page4sInvest-nav {
+  display: flex;
+  justify-content: space-between;
+  padding: 0px 8vw;
+}
+
+#page4sInvest-nav .c-pointer:hover {
+  color: var(--wolves-orange);
+}
+
 .page4sInvest-container {
   display: flex;
   flex-direction: row;
-  padding: 15px 12vw;
+  padding: 15px 8vw;
 }
 
-.page4sInvest-container div {
-  flex: 1;
+.page4sInvest-container .left {
+  flex-basis: 50%;
   align-self: flex-start;
-  /*border: 1px solid blue;*/
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.page4sInvest-container .right {
+  flex-basis: 50%;
+  align-self: flex-start;
+  margin-left: 16px;
 }
 
 @media only screen and (max-width: 800px) {

@@ -97,6 +97,10 @@ span a:hover {
   width: 80vw;
 }
 
+.vw-90-24px {
+  width: 90vw;
+  min-width: calc(100% - 24px);
+}
 .responsive-img {
   width: 100%;
 }

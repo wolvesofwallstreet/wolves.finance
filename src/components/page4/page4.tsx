@@ -414,8 +414,9 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                     {currentCard.name}
                   </h1>
                   <h2 className="tk-vincente-lightbold font-24">
-                    <span>{t('page.motto')}: </span>
-                    {currentCard.motto}
+                    <span>
+                      {t('page.motto')}:{currentCard.motto}
+                    </span>
                   </h2>
                   {currentRender?.id !== undefined && (
                     <h2 className="tk-vincente-lightbold font-24">
