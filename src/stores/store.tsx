@@ -120,7 +120,7 @@ export type StakeResult = {
   };
 };
 
-type SFTCHILD = {
+export type SFTCHILD = {
   id: ethers.BigNumber;
   locked: boolean;
   type: number;

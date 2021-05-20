@@ -21,6 +21,7 @@ import {
 } from '../../stores/constants';
 import {
   BIGNUMBER_MAX,
+  SFTCHILD,
   SFTStateresult,
   StoreClasses,
 } from '../../stores/store';
@@ -37,18 +38,29 @@ type PROPS = {
   history: RouteComponentProps['history'];
 };
 
+type CFI_RENDER = {
+  cfolioItem?: SFTCHILD;
+  index: number;
+};
+
 type STATE = {
-  cfolioItems?: CFOLIO_ITEMS;
+  cfiRender: CFI_RENDER[];
   currentImage: number;
 };
 
-type IMAGE = { tokenId: number; level: number; index: number };
+type IMAGE = {
+  tokenId: number;
+  tokenIdIdx: number;
+  level: number;
+  index: number;
+};
 
 // Page 4 Stake Invest
 
 class Page4StakedInvest extends React.Component<PROPS, STATE> {
   receiverImages: IMAGE[] = [];
   cards?: CARDS;
+  cfolioItems?: CFOLIO_ITEMS;
   sliderInterface?: IMAGE_SLIDER_INTERFACE;
   slideIndex = 0;
 
@@ -60,6 +72,7 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
     const index = parseInt(query.get('item') || '0');
 
     this.state = {
+      cfiRender: [],
       currentImage: index,
     };
     this.onSFTState = this.onSFTState.bind(this);
@@ -91,35 +104,35 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
     const tokenIds = assets.userSFT;
 
     const newImages: IMAGE[] = [];
-    tokenIds.forEach((elem) => {
+    tokenIds.forEach((elem, tokenIdIdx) => {
       if (elem.isStockCard && !elem.locked && elem.id.toNumber() >> 24 >= 4) {
         const tokenId = elem.id.toNumber();
-        const newLevel = cards.cards.findIndex(
-          (level) => level.chainRef === tokenId >> 24
+        const level = cards.cards.findIndex(
+          (l) => l.chainRef === tokenId >> 24
         );
-        const newIndex = cards.cards[newLevel].cards.findIndex(
+        const index = cards.cards[level].cards.findIndex(
           (card) => card.chainRef === ((tokenId >> 16) & 0xff)
         );
-        newImages.push({ tokenId: tokenId, level: newLevel, index: newIndex });
+        newImages.push({ tokenId, tokenIdIdx, level, index });
       } else if (elem.isWallet) {
-        newImages.push({ tokenId: -1, level: -1, index: -1 });
+        newImages.push({ tokenId: -1, tokenIdIdx, level: -1, index: -1 });
       }
     });
 
-    if (newImages.toString() !== this.receiverImages.toString()) {
-      this.receiverImages = newImages;
-      this.setCurrentImage(this.state.currentImage);
-    }
+    this.receiverImages = newImages;
+    this.setCurrentImage(this.state.currentImage);
+
     this.cards = cards;
     if (assets.cfolioItems.length > 0) {
-      const cfolioItems = assets.cfolioItems.filter(
+      this.cfolioItems = assets.cfolioItems.filter(
         (elem) => elem.type === 'lpInvestment'
       )[0];
-      if (
-        !this.state.cfolioItems ||
-        this.state.cfolioItems.cards.length !== cfolioItems.cards.length
-      )
-        this.setState({ cfolioItems });
+      // Get all cFolioItems from selected card.
+      // Get all New cards
+      const cfiRender: CFI_RENDER[] = this.cfolioItems.cards.map((_, index) => {
+        return { index };
+      });
+      this.setState({ cfiRender });
     }
   }
 
@@ -147,16 +160,15 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
 
   render(): JSX.Element {
     const { t } = this.props;
+    const { cfiRender } = this.state;
+
     const handleImageChange = (change: number) => {
-      if (this.state.cfolioItems) {
+      if (cfiRender.length > 1) {
         if (this.state.currentImage + change < 0) {
-          return this.setCurrentImage(this.state.cfolioItems.cards.length - 1);
+          return this.setCurrentImage(cfiRender.length - 1);
         }
 
-        if (
-          this.state.currentImage + change >=
-          this.state.cfolioItems.cards.length
-        ) {
+        if (this.state.currentImage + change >= cfiRender.length) {
           return this.setCurrentImage(0);
         }
 
@@ -164,12 +176,11 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
       }
     };
 
-    const cfolioItem = this.state.cfolioItems
-      ? this.state.cfolioItems.cards[this.state.currentImage]
-      : undefined;
-    const scroll = this.state.cfolioItems
-      ? this.state.cfolioItems.cards.length > 1
-      : false;
+    const cfolioItem =
+      this.cfolioItems && this.state.currentImage < cfiRender.length
+        ? this.cfolioItems.cards[cfiRender[this.state.currentImage].index]
+        : undefined;
+    const scroll = cfiRender.length > 1;
 
     return (
       <>
@@ -276,7 +287,7 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
                   className={'tk-grotesk-lightbold font-16 line-break-enable'}
                 >
                   <p>{cfolioItem?.description}</p>
-                  <p>{this.state.cfolioItems?.description}</p>
+                  <p>{this.cfolioItems?.description}</p>
                 </div>
 
                 <div className="p_relative">

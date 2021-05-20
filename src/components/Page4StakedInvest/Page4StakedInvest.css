@@ -19,7 +19,7 @@
 #page4sInvest-nav {
   display: flex;
   justify-content: space-between;
-  padding: 0px 8vw;
+  padding: 0px 4vw;
 }
 
 #page4sInvest-nav .c-pointer:hover {
@@ -29,7 +29,7 @@
 .page4sInvest-container {
   display: flex;
   flex-direction: row;
-  padding: 15px 8vw;
+  padding: 15px 4vw;
 }
 
 .page4sInvest-container .left {
