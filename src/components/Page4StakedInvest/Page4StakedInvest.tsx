@@ -323,28 +323,42 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
                   <p>{this.cfolioItems?.description}</p>
                 </div>
 
-                <div className="p_relative">
-                  <input
-                    type="text"
-                    className="wolve_input text-white font-14"
-                    style={{ paddingRight: '125px' }}
-                  />
-                  {/*<div className="wolve_input_max">MAX</div>*/}
-                  <div className={'wolve_input_label font-14'}>WOWS/ETH LP</div>
-                </div>
-
-                <div className="d-flex justify-content-end mt-1 font-13">
-                  BUY V.2 ETH/WOWS LP TOKENS HERE
-                </div>
-
-                <button
-                  className={
-                    'wolve_btn page4sInvest-text-input mt-3 m-0 page4sInvest-btn-stack font-10'
-                  }
-                  onClick={() => this.handleBuy()}
+                <div
+                  id="page4sInvest-control"
+                  className="bg-blue-transparent-light"
                 >
-                  BUY STAKED ETH/WOWS NFT
-                </button>
+                  <div
+                    id="page4sInvest-control-nav"
+                    className="tk-vincente-lightbold font-22"
+                  >
+                    <span>STAKE MORE</span>
+                    <span>UNSTAKE</span>
+                  </div>
+                  <div className="p_relative">
+                    <input
+                      type="text"
+                      className="wolve_input text-white font-14"
+                      style={{ paddingRight: '125px' }}
+                    />
+                    {/*<div className="wolve_input_max">MAX</div>*/}
+                    <div className={'wolve_input_label font-14'}>
+                      WOWS/ETH LP
+                    </div>
+                  </div>
+
+                  <div className="d-flex justify-content-end mt-1 font-13">
+                    BUY V.2 ETH/WOWS LP TOKENS HERE
+                  </div>
+
+                  <button
+                    className={
+                      'wolve_btn page4sInvest-text-input mt-3 m-0 page4sInvest-btn-stack font-10'
+                    }
+                    onClick={() => this.handleBuy()}
+                  >
+                    BUY STAKED ETH/WOWS NFT
+                  </button>
+                </div>
               </div>
             </div>
           </div>

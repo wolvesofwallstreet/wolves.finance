@@ -56,6 +56,10 @@ span a:hover {
   cursor: pointer;
 }
 
+.bg-blue-transparent-light {
+  background-color: rgba(4, 29, 52, 0.2) !important;
+}
+
 .bg-blue-transparent {
   background-color: rgba(4, 29, 52, 0.44) !important;
 }

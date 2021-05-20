@@ -82,3 +82,14 @@
   outline: none;
   flex: 1 1 100%;
 }
+
+#page4sInvest-control {
+  padding: 8px;
+}
+
+#page4sInvest-control-nav {
+  border-bottom: 1px solid var(--wolves-orange);
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-around;
+}
