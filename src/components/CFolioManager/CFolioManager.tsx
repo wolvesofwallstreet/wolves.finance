@@ -93,6 +93,11 @@ class CFolioManager extends React.Component<PROPS, STATE> {
     this.setState({ cards });
   }
 
+  setSliderIndex(pos: number, index: number) {
+    if (this.state.sliderIndexTop !== index)
+      this.setState({ sliderIndexTop: index });
+  }
+
   sliderInit(id: string | undefined, iface: IMAGE_SLIDER_INTERFACE) {
     this.sliderInterfaces[id || 'default'] = iface;
   }
@@ -119,13 +124,14 @@ class CFolioManager extends React.Component<PROPS, STATE> {
             {/* Card slider-1 */}
             <div
               className={
-                'w-75 p_relative center-container center_triangle_up center_triangle_down'
+                'w-90-36px py-3 p_relative center-container center_triangle_down'
               }
             >
               <ImageSlider
                 sliderId="0"
                 initCallback={this.sliderInit.bind(this)}
                 slideWidth={135}
+                onSlideChanged={(index) => this.setSliderIndex(0, index)}
                 slides={this.sliderImages.map((elem) => {
                   const slide = {
                     url: elem.sft.isWallet
