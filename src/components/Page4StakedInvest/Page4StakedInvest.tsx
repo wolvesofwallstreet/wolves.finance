@@ -231,7 +231,12 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
               <div className={'p_relative'}>
                 <button
                   onClick={() => this.sliderInterface?.prev()}
-                  className={'slide__arrow slide__arrow--left slide__arrows'}
+                  className={
+                    'slide__arrow slide__arrow--left slide__arrow _btn'
+                  }
+                  style={{
+                    ['--left' as string]: '-25px',
+                  }}
                 >
                   {'<'}
                 </button>
@@ -260,7 +265,9 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
                 </div>
                 <button
                   onClick={() => this.sliderInterface?.next()}
-                  className={'slide__arrow slide__arrow--right slide__arrows'}
+                  className={'slide__arrow slide__arrow--right slide__arrows'}style={{
+                    ['--right' as string]: '-25px',
+                  }}
                 >
                   {'>'}
                 </button>
@@ -272,7 +279,7 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
               className="tk-vincente-lightbold font-20 single-line"
             >
               <span
-                className={`tk-vincente-lightbold font-24 single-line ${
+                className={`tk-vincente-lightbold font-24 single-line user_select_none _btn _btn_effect ${
                   scroll ? 'c-pointer' : 'disabled-link'
                 }`}
                 onClick={() => handleImageChange(-1)}
@@ -280,7 +287,7 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
                 &lt;{t('page.previousCard')}
               </span>
               <span
-                className={`tk-vincente-lightbold font-24 single-line ${
+                className={`tk-vincente-lightbold font-24 single-line user_select_none _btn _btn_effect ${
                   scroll ? 'c-pointer' : 'disabled-link'
                 } `}
                 onClick={() => handleImageChange(1)}

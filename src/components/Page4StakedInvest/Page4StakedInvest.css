@@ -29,7 +29,8 @@
 .page4sInvest-container {
   display: flex;
   flex-direction: row;
-  padding: 15px 4vw;
+  justify-content: center;
+  padding: 15px 8vw;
 }
 
 .page4sInvest-container .left {
@@ -41,9 +42,9 @@
 }
 
 .page4sInvest-container .right {
-  flex-basis: 50%;
+  flex-basis: 48%;
   align-self: flex-start;
-  margin-left: 16px;
+  /* margin-left: 16px; */
 }
 
 @media only screen and (max-width: 800px) {
@@ -73,11 +74,13 @@
 }
 
 .page4sInvest-btn-stack {
+  width: 100%;
   background-color: var(--wolves-orange);
   border: 0.6px solid var(--wolves-white);
   text-align: center;
+  font-weight: bold;
   color: var(--wolves-blue-dk);
-  padding: 13px 19px;
+  padding: 10px 19px;
   font-size: 12px;
   outline: none;
   flex: 1 1 100%;

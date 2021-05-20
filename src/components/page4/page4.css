@@ -40,12 +40,14 @@
   flex-basis: 50%;
 }
 
+
 #page4-content-image-inner {
-  border: grey 1px solid;
+  /* border: grey 1px solid;  TODO:: */ 
   background-image: url(../../assets/loading_animated.gif);
   background-size: cover;
   width: 100%;
 }
+
 
 #page4-content-image-inner::before {
   content: '';

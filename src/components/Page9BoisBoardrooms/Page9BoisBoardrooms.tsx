@@ -189,7 +189,7 @@ class Page9BoisBoardrooms extends React.Component<PROPS, STATE> {
 
         <div
           className={
-            'flex-column justify-content-center bg-flat2 text-white text-center '
+            'flex-column justify-content-center bg-flat2 text-white text-center py-2'
           }
         >
           {/* Title & heading */}
@@ -373,7 +373,12 @@ class Page9BoisBoardrooms extends React.Component<PROPS, STATE> {
                 </div>
               </div>
 
-              <div className={'w-100 mt-1 font-13'} onClick={this.toggleModal}>
+              <div
+                className={
+                  'w-100 mt-1 font-13 c-pointer user_select_none hover_wolve'
+                }
+                onClick={this.toggleModal}
+              >
                 WHAT DOES PACK STRENGTH MEAN AND HOW CAN I SAVE GAS?
               </div>
             </div>

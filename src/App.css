@@ -53,7 +53,15 @@ span a:hover {
 }
 
 .c-pointer {
-  cursor: pointer;
+  cursor: pointer !important;
+}
+
+.user_select_none {
+  user-select: none;
+}
+
+:hover.hover_wolve {
+  color: var(--wolves-orange-light);
 }
 
 .bg-blue-transparent-light {
