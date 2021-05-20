@@ -235,7 +235,7 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
                 >
                   {'<'}
                 </button>
-                <div className="vw-90-24px py-3  border_thin_t border_thin_b p_relative center_triangle_up center_triangle_down">
+                <div className="vw-90-36px py-3  border_thin_t border_thin_b p_relative center_triangle_up center_triangle_down">
                   <ImageSlider
                     sliderId="0"
                     initCallback={this.sliderInit.bind(this)}

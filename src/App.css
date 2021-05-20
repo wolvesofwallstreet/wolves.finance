@@ -101,9 +101,14 @@ span a:hover {
   width: 80vw;
 }
 
-.vw-90-24px {
+.w-90-36px {
+  width: 90%;
+  max-width: calc(100% - 36px);
+}
+
+.vw-90-36px {
   width: 90vw;
-  min-width: calc(100% - 24px);
+  max-width: calc(100% - 36px);
 }
 .responsive-img {
   width: 100%;
