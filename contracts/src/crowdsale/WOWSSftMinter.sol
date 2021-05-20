@@ -328,6 +328,7 @@ contract WOWSSftMinter is Context, Ownable {
     sftEvaluator.setCFolioItemType(tokenId, cfolioItemType);
 
     // Update state, mint SFT token
+    sftData.numMinted += 1;
     _mint(recipient, tokenId, sftData.price, cfolioItemType);
 
     // Let CFolioHandler setup the new minted token
