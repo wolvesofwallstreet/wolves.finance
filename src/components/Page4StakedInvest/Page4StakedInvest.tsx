@@ -79,7 +79,6 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
 
   setCurrentImage(val: number) {
     this.setState({ currentImage: val });
-    this._updateCFolioItems();
   }
 
   componentDidMount() {
@@ -240,7 +239,12 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
                   <ImageSlider
                     sliderId="0"
                     initCallback={this.sliderInit.bind(this)}
-                    onSlideChanged={(index) => (this.slideIndex = index)}
+                    onSlideChanged={(index) => {
+                      if (index !== this.slideIndex) {
+                        this.slideIndex = index;
+                        this._updateCFolioItems();
+                      }
+                    }}
                     slideWidth={135}
                     slides={this.receiverImages.map((elem) => {
                       const slide = {
@@ -311,7 +315,9 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
                   <p>
                     {renderItem &&
                       renderItem.cfolioItem &&
-                      `TOKEN ID: ${renderItem.cfolioItem.id.toHexString()}`}
+                      `TOKEN ID: ${renderItem.cfolioItem.id
+                        .mask(128)
+                        .toHexString()}`}
                   </p>
                   <p>{cfolioItemCard && cfolioItemCard.description}</p>
                   <p>{this.cfolioItems?.description}</p>
