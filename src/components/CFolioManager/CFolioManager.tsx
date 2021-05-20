@@ -14,8 +14,14 @@ import React, { Fragment, useState } from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { RouteComponentProps } from 'react-router-dom';
 
+import WalletLogo from '../../assets/openwallet.png';
 import { ASSETS_LOADED, SFT_STATE } from '../../stores/constants';
 import { SFT, SFTStateresult, StoreClasses } from '../../stores/store';
+import {
+  IMAGE_SLIDER_INTERFACE,
+  IMAGE_SLIDER_SLIDE,
+  ImageSlider,
+} from '../controls/image_slider';
 import { CARDS } from '../types/cards';
 
 type IMAGE = {
@@ -32,11 +38,12 @@ type PROPS = {
 
 type STATE = {
   sliderIndexTop: number;
+  cards?: CARDS;
 };
 
 class CFolioManager extends React.Component<PROPS, STATE> {
-  sliderImagesTop: IMAGE[] = [];
-  cards?: CARDS;
+  sliderImages: IMAGE[] = [];
+  sliderInterfaces: { [id: string]: IMAGE_SLIDER_INTERFACE } = {};
 
   constructor(props: PROPS) {
     super(props);
@@ -68,7 +75,7 @@ class CFolioManager extends React.Component<PROPS, STATE> {
 
     const newImages: IMAGE[] = [];
     tokenIds.forEach((sft, tokenIdIdx) => {
-      if (sft.isStockCard && !sft.locked && sft.id.toNumber() >> 24 >= 4) {
+      if (sft.isStockCard && !sft.locked) {
         const tokenId = sft.id.toNumber();
         const level = cards.cards.findIndex(
           (l) => l.chainRef === tokenId >> 24
@@ -82,44 +89,15 @@ class CFolioManager extends React.Component<PROPS, STATE> {
       }
     });
 
-    this.sliderImagesTop = newImages;
-    this.cards = cards;
+    this.sliderImages = newImages;
+    this.setState({ cards });
+  }
+
+  sliderInit(id: string | undefined, iface: IMAGE_SLIDER_INTERFACE) {
+    this.sliderInterfaces[id || 'default'] = iface;
   }
 
   render() {
-    const SliderCardBox = ({
-      id = '',
-      src = '',
-      count = -1,
-      title = 'thumb',
-    }: {
-      src: string;
-      [key: string]: string | number;
-    }) => {
-      return (
-        <Fragment key={Math.random()}>
-          <div className="glide__slide">
-            {count > -1 && <div className="slide-count"> {count} </div>}
-            <img
-              className={'responsive-img slide-img'}
-              src={src}
-              alt={title + '-img'}
-            />
-          </div>
-        </Fragment>
-      );
-    };
-
-    const EmptyBox = ({ boxTitle }: { boxTitle: string }) => (
-      <Fragment>
-        <div className="glide__slide">
-          <div className={'glide__slide_empty_box'}>
-            <div>{boxTitle}</div>
-          </div>
-        </div>
-      </Fragment>
-    );
-
     return (
       <>
         <div className={'cfm-container bg-wolves'}>
@@ -139,8 +117,28 @@ class CFolioManager extends React.Component<PROPS, STATE> {
             }
           >
             {/* Card slider-1 */}
-            <div className={'w-75 center-container'}>
-              <div className={'slider-wrap-bar before_none after_none'}></div>
+            <div
+              className={
+                'w-75 p_relative center-container center_triangle_up center_triangle_down'
+              }
+            >
+              <ImageSlider
+                sliderId="0"
+                initCallback={this.sliderInit.bind(this)}
+                slideWidth={135}
+                slides={this.sliderImages.map((elem) => {
+                  const slide = {
+                    url: elem.sft.isWallet
+                      ? WalletLogo
+                      : this.state.cards?.cards[elem.level].cards[
+                          elem.index
+                        ].url
+                          .replace('{res}', '300')
+                          .replace('.mp4', '.mp4.jpg') || '',
+                  } as IMAGE_SLIDER_SLIDE;
+                  return slide;
+                })}
+              />
             </div>
 
             {/* Card slider-2 */}
