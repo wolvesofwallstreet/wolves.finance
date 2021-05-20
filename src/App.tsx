@@ -16,6 +16,7 @@ import React from 'react';
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
 
 import CFolioItemSfts from './components/CFolioItemSfts';
+import CFolioManager from './components/CFolioManager/CFolioManager';
 import Footer from './components/footer';
 import Header from './components/header';
 import Page1 from './components/page1';
@@ -27,7 +28,6 @@ import Page6 from './components/page6';
 //import Page7BoisBoardrooms from './components/page7';
 import Page9BoisBoardrooms from './components/Page9BoisBoardrooms';
 import Page11 from './components/page11';
-import Page12CFolioManager from './components/page12';
 import Page13 from './components/page13';
 import Page14 from './components/page14';
 import Page15 from './components/page15';
@@ -64,7 +64,7 @@ class App extends React.Component {
               {/*<Route path="/bois_boardrooms" component={Page7BoisBoardrooms} />*/}
               <Route path="/yearn-invest" component={Page9BoisBoardrooms} />
               <Route path="/page11" component={Page11} />
-              <Route path="/c_folio_manager" component={Page12CFolioManager} />
+              <Route path="/c_folio_manager" component={CFolioManager} />
               <Route path="/page13" component={Page13} />
               <Route path="/page14" component={Page14} />
               <Route path="/page15" component={Page15} />

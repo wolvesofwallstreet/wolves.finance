@@ -6,7 +6,7 @@
  * See LICENSE.txt for more information.
  */
 
-.page12-container {
+.cfm-container {
   /*position: relative;*/
 
   display: flex;
@@ -23,13 +23,13 @@
   background-size: cover;
 }
 
-.page12-h-line {
+.cfm-h-line {
   border-top: 1px solid var(--wolves-orange-light);
   margin-top: 10px;
   margin-bottom: 10px;
 }
 
-.page12-btn-stack {
+.cfm-btn-stack {
   padding: 5px 60px;
   margin-top: 10px;
 
