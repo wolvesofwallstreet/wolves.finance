@@ -8,7 +8,6 @@
 
 import './Page4StakedInvest.css';
 
-import { ethers } from 'ethers';
 import React from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { RouteComponentProps } from 'react-router-dom';
@@ -20,7 +19,7 @@ import {
   SFT_STATE,
 } from '../../stores/constants';
 import {
-  BIGNUMBER_MAX,
+  SFT,
   SFTCHILD,
   SFTStateresult,
   StoreClasses,
@@ -49,8 +48,7 @@ type STATE = {
 };
 
 type IMAGE = {
-  tokenId: number;
-  tokenIdIdx: number;
+  sft: SFT;
   level: number;
   index: number;
 };
@@ -104,18 +102,18 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
     const tokenIds = assets.userSFT;
 
     const newImages: IMAGE[] = [];
-    tokenIds.forEach((elem, tokenIdIdx) => {
-      if (elem.isStockCard && !elem.locked && elem.id.toNumber() >> 24 >= 4) {
-        const tokenId = elem.id.toNumber();
+    tokenIds.forEach((sft, tokenIdIdx) => {
+      if (sft.isStockCard && !sft.locked && sft.id.toNumber() >> 24 >= 4) {
+        const tokenId = sft.id.toNumber();
         const level = cards.cards.findIndex(
           (l) => l.chainRef === tokenId >> 24
         );
         const index = cards.cards[level].cards.findIndex(
           (card) => card.chainRef === ((tokenId >> 16) & 0xff)
         );
-        newImages.push({ tokenId, tokenIdIdx, level, index });
-      } else if (elem.isWallet) {
-        newImages.push({ tokenId: -1, tokenIdIdx, level: -1, index: -1 });
+        newImages.push({ sft, level, index });
+      } else if (sft.isWallet) {
+        newImages.push({ sft, level: -1, index: -1 });
       }
     });
 
@@ -127,11 +125,26 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
       this.cfolioItems = assets.cfolioItems.filter(
         (elem) => elem.type === 'lpInvestment'
       )[0];
-      // Get all cFolioItems from selected card.
-      // Get all New cards
-      const cfiRender: CFI_RENDER[] = this.cfolioItems.cards.map((_, index) => {
-        return { index };
-      });
+
+      const cfiRender: CFI_RENDER[] = [];
+      if (this.cfolioItems) {
+        // Get all cFolioItems from selected card.
+        if (this.slideIndex >= 0 && this.slideIndex < newImages.length) {
+          newImages[this.slideIndex].sft.cfolioItems.forEach((cfolioItem) => {
+            const index = this.cfolioItems?.cards.findIndex(
+              (card) => card.chainRef === cfolioItem.type
+            );
+            if (index !== undefined && index >= 0)
+              cfiRender.push({ cfolioItem, index });
+          });
+        }
+        // Get all New cards
+        cfiRender.push(
+          ...this.cfolioItems.cards.map((_, index) => {
+            return { index };
+          })
+        );
+      }
       this.setState({ cfiRender });
     }
   }
@@ -141,13 +154,8 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
       type: CFOLIO_ITEM_BUY,
       content: {
         wowsAmount: 0.5,
-        investAmount: [0.1],
-        sftTokenId:
-          this.receiverImages[this.slideIndex].tokenId >= 0
-            ? ethers.BigNumber.from(
-                this.receiverImages[this.slideIndex].tokenId.toString()
-              )
-            : BIGNUMBER_MAX,
+        investAmount: [0],
+        sftTokenId: this.receiverImages[this.slideIndex].sft.id,
         cfolioType: 0,
       },
     };
@@ -221,14 +229,11 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
                     slideWidth={135}
                     slides={this.receiverImages.map((elem) => {
                       const slide = {
-                        url:
-                          elem.tokenId === -1
-                            ? WalletLogo
-                            : this.cards?.cards[elem.level].cards[
-                                elem.index
-                              ].url
-                                .replace('{res}', '300')
-                                .replace('.mp4', '.mp4.jpg') || '',
+                        url: elem.sft.isWallet
+                          ? WalletLogo
+                          : this.cards?.cards[elem.level].cards[elem.index].url
+                              .replace('{res}', '300')
+                              .replace('.mp4', '.mp4.jpg') || '',
                       } as IMAGE_SLIDER_SLIDE;
                       return slide;
                     })}
