@@ -196,10 +196,13 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
       }
     };
 
-    const cfolioItem =
-      this.cfolioItems && this.state.currentImage < cfiRender.length
-        ? this.cfolioItems.cards[cfiRender[this.state.currentImage].index]
-        : undefined;
+    const renderItem =
+      this.state.currentImage < cfiRender.length &&
+      cfiRender[this.state.currentImage];
+    const cfolioItemCard =
+      this.cfolioItems &&
+      renderItem &&
+      this.cfolioItems.cards[renderItem.index];
     const scroll = cfiRender.length > 1;
 
     return (
@@ -285,9 +288,9 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
             {/* Content */}
             <div className={'page4sInvest-container center-container my-3'}>
               <div className="left d-flex flex-column align-items-center justify-content-even mb-3">
-                {cfolioItem && (
+                {cfolioItemCard && (
                   <img
-                    src={cfolioItem.url.replace('{res}', '500')}
+                    src={cfolioItemCard.url.replace('{res}', '500')}
                     alt=""
                     style={{ width: '100%' }}
                   />
@@ -297,13 +300,20 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
               <div className={'right t-left'}>
                 <h1 className={'tk-vincente h-1'}>
                   {' '}
-                  {cfolioItem ? cfolioItem.name : 'WOLVES WOWS/ETH NFT'}{' '}
+                  {cfolioItemCard
+                    ? cfolioItemCard.name
+                    : 'WOLVES WOWS/ETH NFT'}{' '}
                 </h1>
 
                 <div
                   className={'tk-grotesk-lightbold font-16 line-break-enable'}
                 >
-                  <p>{cfolioItem?.description}</p>
+                  <p>
+                    {renderItem &&
+                      renderItem.cfolioItem &&
+                      `TOKEN ID: ${renderItem.cfolioItem.id.toHexString()}`}
+                  </p>
+                  <p>{cfolioItemCard && cfolioItemCard.description}</p>
                   <p>{this.cfolioItems?.description}</p>
                 </div>
 
