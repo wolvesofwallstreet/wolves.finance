@@ -79,6 +79,7 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
 
   setCurrentImage(val: number) {
     this.setState({ currentImage: val });
+    this._updateCFolioItems();
   }
 
   componentDidMount() {
@@ -121,22 +122,33 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
     this.setCurrentImage(this.state.currentImage);
 
     this.cards = cards;
-    if (assets.cfolioItems.length > 0) {
-      this.cfolioItems = assets.cfolioItems.filter(
+    this._updateCFolioItems();
+  }
+
+  _updateCFolioItems() {
+    const cfolioItems = StoreClasses.store.getAssets().cfolioItems;
+    const cfiRender: CFI_RENDER[] = [];
+
+    if (cfolioItems.length > 0) {
+      this.cfolioItems = cfolioItems.filter(
         (elem) => elem.type === 'lpInvestment'
       )[0];
 
-      const cfiRender: CFI_RENDER[] = [];
       if (this.cfolioItems) {
         // Get all cFolioItems from selected card.
-        if (this.slideIndex >= 0 && this.slideIndex < newImages.length) {
-          newImages[this.slideIndex].sft.cfolioItems.forEach((cfolioItem) => {
-            const index = this.cfolioItems?.cards.findIndex(
-              (card) => card.chainRef === cfolioItem.type
-            );
-            if (index !== undefined && index >= 0)
-              cfiRender.push({ cfolioItem, index });
-          });
+        if (
+          this.slideIndex >= 0 &&
+          this.slideIndex < this.receiverImages.length
+        ) {
+          this.receiverImages[this.slideIndex].sft.cfolioItems.forEach(
+            (cfolioItem) => {
+              const index = this.cfolioItems?.cards.findIndex(
+                (card) => card.chainRef === cfolioItem.type
+              );
+              if (index !== undefined && index >= 0)
+                cfiRender.push({ cfolioItem, index });
+            }
+          );
         }
         // Get all New cards
         cfiRender.push(
@@ -145,8 +157,8 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
           })
         );
       }
-      this.setState({ cfiRender });
     }
+    this.setState({ cfiRender });
   }
 
   handleBuy(): void {
