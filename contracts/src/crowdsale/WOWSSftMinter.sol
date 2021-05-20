@@ -517,7 +517,7 @@ contract WOWSSftMinter is Context, Ownable {
       }
       result = abi.encodePacked(result, rewardRate, timestamp, cfolioLength);
       for (uint256 j = 0; j < cfolioLength; ++j) {
-        uint256 sftTokenId = cFolioItems[i].toSftTokenId();
+        uint256 sftTokenId = cFolioItems[j].toSftTokenId();
         uint256 cfolioType = sftEvaluator.getCFolioItemType(sftTokenId);
         uint256[] memory amounts;
         address cfolio = _sftContract.tokenIdToAddress(sftTokenId);
@@ -526,7 +526,7 @@ contract WOWSSftMinter is Context, Ownable {
           if (handler != address(0))
             amounts = ICFolioItemHandler(handler).getAmounts(cfolio);
         }
-        result = abi.encodePacked(result, cFolioItems[i], cfolioType, amounts);
+        result = abi.encodePacked(result, cFolioItems[j], cfolioType, amounts);
       }
     }
   }
