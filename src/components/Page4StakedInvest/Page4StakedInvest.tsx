@@ -47,11 +47,11 @@ type STATE = {
   currentImage: number;
 };
 
-type IMAGE = {
+interface IMAGE extends IMAGE_SLIDER_SLIDE {
   sft: SFT;
   level: number;
   index: number;
-};
+}
 
 // Page 4 Stake Invest
 
@@ -111,9 +111,25 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
         const index = cards.cards[level].cards.findIndex(
           (card) => card.chainRef === ((tokenId >> 16) & 0xff)
         );
-        newImages.push({ sft, level, index });
+        const url =
+          cards.cards[level].cards[index].url
+            .replace('{res}', '300')
+            .replace('.mp4', '.mp4.jpg') || '';
+        newImages.push({
+          url,
+          cfolioItems: sft.cfolioItems,
+          sft,
+          level,
+          index,
+        });
       } else if (sft.isWallet) {
-        newImages.push({ sft, level: -1, index: -1 });
+        newImages.push({
+          url: WalletLogo,
+          cfolioItems: sft.cfolioItems,
+          sft,
+          level: -1,
+          index: -1,
+        });
       }
     });
 
@@ -246,16 +262,7 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
                       }
                     }}
                     slideWidth={135}
-                    slides={this.receiverImages.map((elem) => {
-                      const slide = {
-                        url: elem.sft.isWallet
-                          ? WalletLogo
-                          : this.cards?.cards[elem.level].cards[elem.index].url
-                              .replace('{res}', '300')
-                              .replace('.mp4', '.mp4.jpg') || '',
-                      } as IMAGE_SLIDER_SLIDE;
-                      return slide;
-                    })}
+                    slides={this.receiverImages}
                   />
                 </div>
                 <button

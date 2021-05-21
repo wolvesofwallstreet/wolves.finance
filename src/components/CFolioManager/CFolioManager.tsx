@@ -10,7 +10,7 @@
 import '../theme/checkbox/wolve_checkbox.css';
 import './CFolioManager.css';
 
-import React, { Fragment, useState } from 'react';
+import React from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { RouteComponentProps } from 'react-router-dom';
 
@@ -22,13 +22,17 @@ import {
   IMAGE_SLIDER_SLIDE,
   ImageSlider,
 } from '../controls/image_slider';
-import { CARDS } from '../types/cards';
+import { CARDS, CFOLIO_ITEM, CFOLIO_ITEMS } from '../types/cards';
 
-type IMAGE = {
+interface IMAGE extends IMAGE_SLIDER_SLIDE {
   sft: SFT;
   level: number;
   index: number;
-};
+}
+
+interface SUBIMAGE extends IMAGE_SLIDER_SLIDE {
+  cfolioItem: CFOLIO_ITEM;
+}
 
 type PROPS = {
   t: TFunction;
@@ -37,17 +41,22 @@ type PROPS = {
 };
 
 type STATE = {
-  sliderIndexTop: number;
-  cards?: CARDS;
+  sliderImagesTop: IMAGE[];
+  sliderImagesMiddle: SUBIMAGE[];
 };
 
 class CFolioManager extends React.Component<PROPS, STATE> {
-  sliderImages: IMAGE[] = [];
+  cards?: CARDS;
+  cfolioItemCards: CFOLIO_ITEMS[] = [];
   sliderInterfaces: { [id: string]: IMAGE_SLIDER_INTERFACE } = {};
+  sliderIndex = [0, 0, 0];
 
   constructor(props: PROPS) {
     super(props);
-    this.state = { sliderIndexTop: 0 };
+    this.state = {
+      sliderImagesTop: [],
+      sliderImagesMiddle: [],
+    };
 
     this.onSFTState = this.onSFTState.bind(this);
     this._updateImages = this._updateImages.bind(this);
@@ -73,9 +82,10 @@ class CFolioManager extends React.Component<PROPS, STATE> {
     const cards = assets.cards;
     const tokenIds = assets.userSFT;
 
+    // Create top images
     const newImages: IMAGE[] = [];
     tokenIds.forEach((sft, tokenIdIdx) => {
-      if (sft.isStockCard && !sft.locked) {
+      if (sft.isStockCard && !sft.locked && sft.cfolioItems.length > 0) {
         const tokenId = sft.id.toNumber();
         const level = cards.cards.findIndex(
           (l) => l.chainRef === tokenId >> 24
@@ -83,19 +93,63 @@ class CFolioManager extends React.Component<PROPS, STATE> {
         const index = cards.cards[level].cards.findIndex(
           (card) => card.chainRef === ((tokenId >> 16) & 0xff)
         );
-        newImages.push({ sft, level, index });
+        const url =
+          cards.cards[level].cards[index].url
+            .replace('{res}', '300')
+            .replace('.mp4', '.mp4.jpg') || '';
+        newImages.push({
+          url,
+          cfolioItems: sft.cfolioItems,
+          sft,
+          level,
+          index,
+        });
       } else if (sft.isWallet) {
-        newImages.push({ sft, level: -1, index: -1 });
+        newImages.push({
+          url: WalletLogo,
+          cfolioItems: sft.cfolioItems,
+          sft,
+          level: -1,
+          index: -1,
+        });
       }
     });
+    this.setState({ sliderImagesTop: newImages });
+    this.cards = cards;
+    this.cfolioItemCards = assets.cfolioItems;
 
-    this.sliderImages = newImages;
-    this.setState({ cards });
+    this._createSliderImages();
+  }
+
+  _createSliderImages() {
+    const sliderImagesMiddle: SUBIMAGE[] = [];
+    if (this.sliderIndex[0] < this.state.sliderImagesTop.length) {
+      const cfolioItems =
+        this.state.sliderImagesTop[this.sliderIndex[0]].sft.cfolioItems;
+      cfolioItems.forEach((cfi) => {
+        let cfiCard: CFOLIO_ITEM | undefined;
+        this.cfolioItemCards.find(
+          (category) =>
+            (cfiCard = category.cards.find(
+              (card) => card.chainRef === cfi.type
+            ))
+        );
+        if (cfiCard) {
+          sliderImagesMiddle.push({
+            url: cfiCard?.url.replace('{res}', '300'),
+            cfolioItem: cfiCard,
+          });
+        }
+      });
+    }
+    this.setState({ sliderImagesMiddle });
   }
 
   setSliderIndex(pos: number, index: number) {
-    if (this.state.sliderIndexTop !== index)
-      this.setState({ sliderIndexTop: index });
+    if (this.sliderIndex[pos] !== index) {
+      this.sliderIndex[pos] = index;
+      if (pos === 0) this._createSliderImages();
+    }
   }
 
   sliderInit(id: string | undefined, iface: IMAGE_SLIDER_INTERFACE) {
@@ -132,24 +186,19 @@ class CFolioManager extends React.Component<PROPS, STATE> {
                 initCallback={this.sliderInit.bind(this)}
                 slideWidth={135}
                 onSlideChanged={(index) => this.setSliderIndex(0, index)}
-                slides={this.sliderImages.map((elem) => {
-                  const slide = {
-                    url: elem.sft.isWallet
-                      ? WalletLogo
-                      : this.state.cards?.cards[elem.level].cards[
-                          elem.index
-                        ].url
-                          .replace('{res}', '300')
-                          .replace('.mp4', '.mp4.jpg') || '',
-                  } as IMAGE_SLIDER_SLIDE;
-                  return slide;
-                })}
+                slides={this.state.sliderImagesTop}
               />
             </div>
 
             {/* Card slider-2 */}
-            <div className={'w-75 center-container pt-4'}>
-              <div className={'slider-wrap-bar before_none after_none'}></div>
+            <div className={'w-90-36px center-container pt-4'}>
+              <ImageSlider
+                sliderId="1"
+                initCallback={this.sliderInit.bind(this)}
+                slideWidth={135}
+                onSlideChanged={(index) => this.setSliderIndex(1, index)}
+                slides={this.state.sliderImagesMiddle}
+              />
             </div>
 
             {/* H-line */}

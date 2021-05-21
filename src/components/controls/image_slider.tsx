@@ -9,9 +9,12 @@ import './image_slider.css';
 
 import React, { RefObject, useEffect, useRef } from 'react';
 
-export type IMAGE_SLIDER_SLIDE = {
+import { SFTCHILD } from '../../stores/store';
+
+export interface IMAGE_SLIDER_SLIDE {
   url: string;
-};
+  cfolioItems?: SFTCHILD[];
+}
 
 export type IMAGE_SLIDER_INTERFACE = {
   prev: () => void;
@@ -110,7 +113,9 @@ const ImageSlider = ({
                 }}
                 onClick={() => go(index)}
               >
-                <div className={'slide_count'}>{index}</div>
+                {elem.cfolioItems && elem.cfolioItems.length > 0 && (
+                  <div className={'slide_count'}>{elem.cfolioItems.length}</div>
+                )}
                 <img width="100%" height="100%" src={elem.url} alt="" />
               </div>
             </React.Fragment>
