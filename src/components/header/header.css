@@ -31,8 +31,17 @@
 .navbar-collapse span {
   color: var(--wolves-orange);
 }
+
 .navbar-collapse {
   justify-content: space-evenly;
+}
+
+@media only screen and (min-width: 992px) and (max-width: 1160px) {
+  .navbar-collapse {
+    zoom: 0.95;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
 }
 
 .logo {
