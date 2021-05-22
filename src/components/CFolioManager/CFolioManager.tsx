@@ -114,18 +114,17 @@ class CFolioManager extends React.Component<PROPS, STATE> {
         });
       }
     });
-    this.setState({ sliderImagesTop: newImages });
     this.cards = cards;
     this.cfolioItemCards = assets.cfolioItems;
+    this.setState({ sliderImagesTop: newImages });
 
-    this._createSliderImages();
+    this._createSliderImages(newImages);
   }
 
-  _createSliderImages() {
+  _createSliderImages(topImages: IMAGE[]) {
     const sliderImagesMiddle: SUBIMAGE[] = [];
-    if (this.sliderIndex[0] < this.state.sliderImagesTop.length) {
-      const cfolioItems =
-        this.state.sliderImagesTop[this.sliderIndex[0]].sft.cfolioItems;
+    if (this.sliderIndex[0] < topImages.length) {
+      const cfolioItems = topImages[this.sliderIndex[0]].sft.cfolioItems;
       cfolioItems.forEach((cfi) => {
         let cfiCard: CFOLIO_ITEM | undefined;
         this.cfolioItemCards.find(
@@ -148,7 +147,7 @@ class CFolioManager extends React.Component<PROPS, STATE> {
   setSliderIndex(pos: number, index: number) {
     if (this.sliderIndex[pos] !== index) {
       this.sliderIndex[pos] = index;
-      if (pos === 0) this._createSliderImages();
+      if (pos === 0) this._createSliderImages(this.state.sliderImagesTop);
     }
   }
 
