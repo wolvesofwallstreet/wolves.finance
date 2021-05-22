@@ -45,6 +45,7 @@ type CFI_RENDER = {
 type STATE = {
   cfiRender: CFI_RENDER[];
   currentImage: number;
+  tabOption: number;
 };
 
 interface IMAGE extends IMAGE_SLIDER_SLIDE {
@@ -72,6 +73,7 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
     this.state = {
       cfiRender: [],
       currentImage: index,
+      tabOption: 0,
     };
     this.onSFTState = this.onSFTState.bind(this);
     this._updateImages = this._updateImages.bind(this);
@@ -79,6 +81,7 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
 
   setCurrentImage(val: number) {
     this.setState({ currentImage: val });
+    this.setState({ tabOption: 0 });
   }
 
   componentDidMount() {
@@ -195,7 +198,7 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
 
   render(): JSX.Element {
     const { t } = this.props;
-    const { cfiRender } = this.state;
+    const { cfiRender, tabOption } = this.state;
 
     const handleImageChange = (change: number) => {
       if (cfiRender.length > 1) {
@@ -211,14 +214,38 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
       }
     };
 
+    const renderSpan = (id: number, caption: string) => {
+      return id === tabOption ? (
+        <div>
+          <span className="border_thin_b">{caption}</span>
+        </div>
+      ) : (
+        <div>
+          <span
+            className="c-pointer"
+            onClick={() => this.setState({ tabOption: id })}
+          >
+            {caption}
+          </span>
+        </div>
+      );
+    };
+
     const renderItem =
       this.state.currentImage < cfiRender.length &&
       cfiRender[this.state.currentImage];
+    const renderCFolioItem = renderItem && renderItem.cfolioItem;
     const cfolioItemCard =
       this.cfolioItems &&
       renderItem &&
       this.cfolioItems.cards[renderItem.index];
     const scroll = cfiRender.length > 1;
+
+    const spanText = renderCFolioItem
+      ? 'STAKE MORE'
+      : this.slideIndex === 0
+      ? 'BUY "STAKE INVESTMENT NFT" INTO WALLET'
+      : 'BUY "STAKE INVESTMENT NFT" INTO CFOLIO';
 
     return (
       <>
@@ -320,9 +347,8 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
                   className={'tk-grotesk-lightbold font-16 line-break-enable'}
                 >
                   <p>
-                    {renderItem &&
-                      renderItem.cfolioItem &&
-                      `TOKEN ID: ${renderItem.cfolioItem.id
+                    {renderCFolioItem &&
+                      `TOKEN ID: ${renderCFolioItem.id
                         .mask(128)
                         .toHexString()}`}
                   </p>
@@ -338,8 +364,8 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
                     id="page4sInvest-control-nav"
                     className="tk-vincente-lightbold font-22"
                   >
-                    <span>STAKE MORE</span>
-                    <span>UNSTAKE</span>
+                    {renderSpan(0, spanText)}
+                    {renderCFolioItem && renderSpan(1, 'UNSTAKE')}
                   </div>
                   <div className="p_relative">
                     <input
