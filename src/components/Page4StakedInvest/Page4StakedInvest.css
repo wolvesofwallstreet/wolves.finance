@@ -88,8 +88,18 @@
 }
 
 #page4sInvest-control-nav {
-  border-bottom: 1px solid var(--wolves-orange);
   margin-bottom: 12px;
   display: flex;
-  justify-content: space-around;
+}
+
+#page4sInvest-control-nav div {
+  flex-grow: 1;
+}
+
+#page4sInvest-control-nav span {
+  width: 90%;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
 }
