@@ -7,8 +7,9 @@
  */
 
 .page4sInvest-slider-1 {
-  margin: 0 14vw;
-  min-height: 160px;
+  /* margin: 0 14vw;
+  min-height: 160px; */
+  transform: translateX(23px);
 }
 
 .triange-margin-fixation {
@@ -29,7 +30,8 @@
 .page4sInvest-container {
   display: flex;
   flex-direction: row;
-  padding: 15px 4vw;
+  justify-content: center;
+  padding: 15px 8vw;
 }
 
 .page4sInvest-container .left {
@@ -41,9 +43,9 @@
 }
 
 .page4sInvest-container .right {
-  flex-basis: 50%;
+  flex-basis: 48%;
   align-self: flex-start;
-  margin-left: 16px;
+  /* margin-left: 16px; */
 }
 
 @media only screen and (max-width: 800px) {
@@ -73,23 +75,86 @@
 }
 
 .page4sInvest-btn-stack {
+  flex: 1 1 100%;
   background-color: var(--wolves-orange);
   border: 0.6px solid var(--wolves-white);
   text-align: center;
   color: var(--wolves-blue-dk);
-  padding: 13px 19px;
+  outline: none;
+  width: 100%;
+  font-weight: bold;
+  padding: 10px 19px;
   font-size: 12px;
   outline: none;
-  flex: 1 1 100%;
 }
 
 #page4sInvest-control {
   padding: 8px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  min-height: 200px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 #page4sInvest-control-nav {
   border-bottom: 1px solid var(--wolves-orange);
+  /* border-bottom: 1px solid var(--wolves-orange); */
   margin-bottom: 12px;
   display: flex;
   justify-content: space-around;
+  text-align: center;
+  /* justify-content: space-around; */
 }
+
+#page4sInvest-control-nav > span {
+  flex: 1;
+}
+
+#page4sInvest-control-nav > span {
+  transition: border-bottom 0.1s ease-in;
+}
+
+#page4sInvest-control-nav > span.active {
+  border-bottom: 1px solid var(--wolves-orange-light) !important;
+}
+
+.nav-tabs {
+  border: none;
+}
+
+/* Inactive tab */
+.page4sInvest_cotainer_tabs {
+  display: flex !important;
+  padding: 4px;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.page4sInvest_cotainer_tabs .nav-item {
+  flex: 1;
+  color: white;
+  border: none;
+  /* padding: 2px 5px; */
+}
+
+.page4sInvest_cotainer_tabs .nav-item .nav-link {
+  background-color: transparent;
+  color: var(--wolves-white);
+  padding: 5px 8px;
+}
+
+.page4sInvest_cotainer_tabs .nav-item .nav-link.active {
+  border-bottom: 1px solid var(--wolves-orange-light);
+}
+
+/* 
+.page4sInvest_cotainer_tabs .nav-item.active {
+  background-color: transparent;
+  color: var(--wolves-white);
+  border-bottom: 1px solid var(--wolves-orange-light);
+}
+
+.page4sInvest_cotainer_tabs a.nav-item:hover {
+  color: var(--wolves-orange);
+} */

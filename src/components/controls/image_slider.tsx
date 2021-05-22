@@ -100,23 +100,41 @@ const ImageSlider = ({
     <div className="image_slide_container" ref={containerRef}>
       <div className="image_slide_track" style={{ left: left + 'px' }}>
         {slides.map((elem, index) => {
+          // console.log('image_slider.tsx:: elem', elem);
           return (
             <React.Fragment key={'si_' + index}>
-              <div
-                className={
-                  // 'image_slide' + (index === currentIndex ? ' active' : '')
-                  'image_slide' + (index === displayIndex ? ' active' : '')
-                }
-                style={{
-                  width: slideWidth + 'px',
-                  // ['--url' as string]: `url(${elem.url}`,
-                }}
-                onClick={() => go(index)}
-              >
-                {elem.cfolioItems && elem.cfolioItems.length > 0 && (
-                  <div className={'slide_count'}>{elem.cfolioItems.length}</div>
-                )}
-                <img width="100%" height="100%" src={elem.url} alt="" />
+              <div className="d-flex flex-column justify-content-center text-center p-0 m-0 p_relative">
+                <div
+                  className={
+                    // 'image_slide' + (index === currentIndex ? ' active' : '')
+                    'image_slide' + (index === displayIndex ? ' active' : '')
+                  }
+                  style={{
+                    width: slideWidth + 'px',
+                    // ['--url' as string]: `url(${elem.url}`,
+                  }}
+                  onClick={() => go(index)}
+                >
+                  {elem.cfolioItems && elem.cfolioItems.length > 0 && (
+                    <div className={'slide_count'}>
+                      {elem.cfolioItems.length}
+                    </div>
+                  )}
+
+                  <div className="slide_tooltip_wrap">
+                    <div className="slide_tooltip_content">
+                      <p>NAME OF NFT / TOKEN ID </p>
+                      <p>NAME OF NFT / TOKEN ID</p>
+                      <p>NAME OF NFT / TOKEN ID</p>
+                    </div>
+                  </div>
+
+                  <img width="100%" height="100%" src={elem.url} alt="" />
+                </div>
+
+                <span className="p-0 m-0 font-10 image_slider_tid">
+                  TOKEN ID 23 / 55% PROWESS
+                </span>
               </div>
             </React.Fragment>
           );

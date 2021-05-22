@@ -8,9 +8,11 @@
 
 import './Page4StakedInvest.css';
 
+import StackInput from 'components/theme/stackInput/StackInput';
+import Tab from 'components/theme/TabsContainer/Tab';
 import React from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
-import { RouteComponentProps } from 'react-router-dom';
+import { Link, RouteComponentProps } from 'react-router-dom';
 
 import WalletLogo from '../../assets/openwallet.png';
 import {
@@ -29,6 +31,8 @@ import {
   IMAGE_SLIDER_SLIDE,
   ImageSlider,
 } from '../controls/image_slider';
+// import StackInput from '../theme/stackInput';
+import TabsContainer from '../theme/TabsContainer';
 import { CARDS, CFOLIO_ITEMS } from '../types/cards';
 
 type PROPS = {
@@ -45,6 +49,7 @@ type CFI_RENDER = {
 type STATE = {
   cfiRender: CFI_RENDER[];
   currentImage: number;
+  [key: string]: number | string | unknown;
 };
 
 interface IMAGE extends IMAGE_SLIDER_SLIDE {
@@ -54,7 +59,6 @@ interface IMAGE extends IMAGE_SLIDER_SLIDE {
 }
 
 // Page 4 Stake Invest
-
 class Page4StakedInvest extends React.Component<PROPS, STATE> {
   receiverImages: IMAGE[] = [];
   cards?: CARDS;
@@ -193,10 +197,13 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
     this.sliderInterface = iface;
   }
 
+  handleClick(tab: unknown) {
+    this.setState({ activeTab: tab });
+  }
+
   render(): JSX.Element {
     const { t } = this.props;
     const { cfiRender } = this.state;
-
     const handleImageChange = (change: number) => {
       if (cfiRender.length > 1) {
         if (this.state.currentImage + change < 0) {
@@ -219,6 +226,11 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
       renderItem &&
       this.cfolioItems.cards[renderItem.index];
     const scroll = cfiRender.length > 1;
+
+    const cardHasTokenId =
+      renderItem && renderItem.cfolioItem && renderItem.cfolioItem.id
+        ? true
+        : false;
 
     return (
       <>
@@ -244,10 +256,13 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
                 'd-flex justify-content-center bg-transparent-orange mb-3 '
               }
             >
-              <div className={'p_relative'}>
+              <div className={'p_relative page4sInvest-slider-1'}>
                 <button
                   onClick={() => this.sliderInterface?.prev()}
                   className={'slide__arrow slide__arrow--left slide__arrows'}
+                  style={{
+                    ['--left' as string]: '-25px',
+                  }}
                 >
                   {'<'}
                 </button>
@@ -255,19 +270,17 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
                   <ImageSlider
                     sliderId="0"
                     initCallback={this.sliderInit.bind(this)}
-                    onSlideChanged={(index) => {
-                      if (index !== this.slideIndex) {
-                        this.slideIndex = index;
-                        this._updateCFolioItems();
-                      }
-                    }}
-                    slideWidth={135}
+                    onSlideChanged={(index) => (this.slideIndex = index)}
+                    slideWidth={150}
                     slides={this.receiverImages}
                   />
                 </div>
                 <button
                   onClick={() => this.sliderInterface?.next()}
                   className={'slide__arrow slide__arrow--right slide__arrows'}
+                  style={{
+                    ['--right' as string]: '10px',
+                  }}
                 >
                   {'>'}
                 </button>
@@ -279,18 +292,25 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
               className="tk-vincente-lightbold font-20 single-line"
             >
               <span
-                className={`tk-vincente-lightbold font-24 single-line ${
+                className={`link _btn _btn_effect tk-vincente-lightbold font-24 single-line ${
                   scroll ? 'c-pointer' : 'disabled-link'
                 }`}
                 onClick={() => handleImageChange(-1)}
               >
                 &lt;{t('page.previousCard')}
               </span>
+
+              <Link
+                to={'/cfolio-sfts?type=lpInvestment'}
+                className={`link _btn _btn_effect tk-vincente-lightbold font-24 single-line c-pointer `}
+              >
+                BACK TO INVESTMENT SFTS
+              </Link>
+
               <span
-                className={`tk-vincente-lightbold font-24 single-line ${
+                className={`link _btn _btn_effect tk-vincente-lightbold font-24 single-line ${
                   scroll ? 'c-pointer' : 'disabled-link'
                 } `}
-                onClick={() => handleImageChange(1)}
               >
                 {t('page.nextCard')}&gt;
               </span>
@@ -330,41 +350,63 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
                   <p>{this.cfolioItems?.description}</p>
                 </div>
 
-                <div
-                  id="page4sInvest-control"
-                  className="bg-blue-transparent-light"
-                >
-                  <div
-                    id="page4sInvest-control-nav"
-                    className="tk-vincente-lightbold font-22"
-                  >
-                    <span>STAKE MORE</span>
-                    <span>UNSTAKE</span>
-                  </div>
-                  <div className="p_relative">
-                    <input
-                      type="text"
-                      className="wolve_input text-white font-14"
-                      style={{ paddingRight: '125px' }}
-                    />
-                    {/*<div className="wolve_input_max">MAX</div>*/}
-                    <div className={'wolve_input_label font-14'}>
-                      WOWS/ETH LP
-                    </div>
-                  </div>
+                <div id="page4sInvest-control">
+                  {cardHasTokenId && (
+                    <TabsContainer>
+                      <Tab iconClassName="" linkClassName="STAKE_MORE">
+                        <StackInput />
+                        <div className="d-flex justify-content-end mt-1 font-13">
+                          BUY V.2 ETH/WOWS LP TOKENS HERE
+                        </div>
+                        <button
+                          className={
+                            'wolve_btn page4sInvest-text-input mt-3 m-0 page4sInvest-btn-stack font-10'
+                          }
+                          onClick={() => this.handleBuy()}
+                        >
+                          BUY STAKED ETH/WOWS NFT
+                        </button>
+                      </Tab>
 
-                  <div className="d-flex justify-content-end mt-1 font-13">
-                    BUY V.2 ETH/WOWS LP TOKENS HERE
-                  </div>
+                      <Tab iconClassName="" linkClassName="UNSTAKE">
+                        <StackInput />
+                        <div className="d-flex justify-content-end mt-1 font-13">
+                          UNSTAKED V.2 ETH/WOWS LP TOKENS HERE
+                        </div>
 
-                  <button
-                    className={
-                      'wolve_btn page4sInvest-text-input mt-3 m-0 page4sInvest-btn-stack font-10'
-                    }
-                    onClick={() => this.handleBuy()}
-                  >
-                    BUY STAKED ETH/WOWS NFT
-                  </button>
+                        <button
+                          className={
+                            'wolve_btn page4sInvest-text-input mt-3 m-0 page4sInvest-btn-stack font-10'
+                          }
+                          onClick={() => this.handleBuy()}
+                        >
+                          UNSTAKED ETH/WOWS NFT
+                        </button>
+                      </Tab>
+                    </TabsContainer>
+                  )}
+
+                  {!cardHasTokenId && (
+                    <TabsContainer>
+                      <Tab
+                        iconClassName=""
+                        linkClassName="BUY INVESTMENT NFT AND STAKE"
+                      >
+                        <StackInput />
+                        <div className="d-flex justify-content-end mt-1 font-13">
+                          BUY V.2 ETH/WOWS LP TOKENS HERE
+                        </div>
+                        <button
+                          className={
+                            'wolve_btn page4sInvest-text-input mt-3 m-0 page4sInvest-btn-stack font-10'
+                          }
+                          onClick={() => this.handleBuy()}
+                        >
+                          BUY STAKED ETH/WOWS NFT
+                        </button>
+                      </Tab>
+                    </TabsContainer>
+                  )}
                 </div>
               </div>
             </div>

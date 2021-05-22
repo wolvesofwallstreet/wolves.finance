@@ -16,6 +16,7 @@
 html,
 body {
   /*overflow: overlay;*/
+  overflow-x: hidden;
 }
 
 .no-margin {
@@ -46,6 +47,12 @@ hr.wolves {
 span a:hover {
   text-decoration: none;
   color: var(--wolves-orange) !important;
+}
+
+.link {
+  text-decoration: none !important;
+  color: var(--wolves-white);
+  user-select: none;
 }
 
 .disabled-link {

@@ -1,3 +1,11 @@
+/*
+ * Copyright (C) 2020 wolves.finance developers
+ * This file is part of wolves.finance - https://github.com/peak3d/wolves.finance
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * See the file LICENSES/README.md for more information.
+ */
+
 .wolve_input {
   padding: 9px 15px;
   outline: none;
@@ -23,4 +31,9 @@
   right: 16px;
   top: 50%;
   transform: translateY(-45%);
+}
+
+.wolve_input.invalid {
+  border: 1px solid orangered;
+  color: #840505 !important;
 }
