@@ -106,6 +106,17 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   bool private _tradingRestricted;
 
   //////////////////////////////////////////////////////////////////////////////
+  // Events
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * @dev Emitted when the state of restriction has updated
+   *
+   * @param tradingRestricted True if trading has been restricted, false otherwise
+   */
+  event RestrictionUpdated(bool tradingRestricted);
+
+  //////////////////////////////////////////////////////////////////////////////
   // OpenSea compatibility
   //////////////////////////////////////////////////////////////////////////////
 
@@ -558,6 +569,9 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   function restrictTrading(bool restrict) external onlyAdmins {
     // Update state
     _tradingRestricted = restrict;
+
+    // Dispatch event
+    emit RestrictionUpdated(restrict);
   }
 
   //////////////////////////////////////////////////////////////////////////////
