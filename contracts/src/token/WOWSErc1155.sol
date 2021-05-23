@@ -199,10 +199,10 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
     returns (uint256)
   {
     // Validate state
-    require(_customCardCount + 0x100000000 > _customCardCount, 'math overflow');
+    require(_customCardCount + (1 << 32) > _customCardCount, 'math overflow');
 
     // Encode token ID
-    return _customCardCount + 0x100000000;
+    return _customCardCount + (1 << 32);
   }
 
   /**
