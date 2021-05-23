@@ -67,6 +67,11 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     _;
   }
 
+  modifier notNull(address adr) {
+    require(adr != address(0), 'Null address');
+    _;
+  }
+
   //////////////////////////////////////////////////////////////////////////////
   // State
   //////////////////////////////////////////////////////////////////////////////
@@ -160,7 +165,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   ) {
     // Initialize {AccessControl}
     address marketingWallet =
-      addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
+      _getAddressRegistryAddress(addressRegistry, AddressBook.MARKETING_WALLET);
     _setupRole(DEFAULT_ADMIN_ROLE, marketingWallet);
 
     // Immutable, visible for all contexts
@@ -168,7 +173,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
 
     // Immutable, visible for all contexts
     _sftHolder = IWOWSERC1155(
-      addressRegistry.getRegistryEntry(AddressBook.SFT_HOLDER)
+      _getAddressRegistryAddress(addressRegistry, AddressBook.SFT_HOLDER)
     );
 
     // Immutable, visible for all contexts
@@ -192,20 +197,25 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
 
     // Initialize {AccessControl}
     address marketingWallet =
-      _addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
+      _getAddressRegistryAddress(
+        _addressRegistry,
+        AddressBook.MARKETING_WALLET
+      );
     _setupRole(DEFAULT_ADMIN_ROLE, marketingWallet);
 
     // Initialize {ERC1155Metadata}
     _setBaseMetadataURI(tokenUriPrefix);
     _setContractMetadataURI(contractUri);
 
-    _feeRecipient = _addressRegistry.getRegistryEntry(
+    _feeRecipient = _getAddressRegistryAddress(
+      _addressRegistry,
       AddressBook.REWARD_HANDLER
     );
     _fee = 1000; // 10%
 
     // Rarible: Need a real wallet for setting up storefront
-    address deployer = _addressRegistry.getRegistryEntry(AddressBook.DEPLOYER);
+    address deployer =
+      _getAddressRegistryAddress(_addressRegistry, AddressBook.DEPLOYER);
 
     // This event initializes Rarible storefront
     emit CreateERC1155_v1(deployer, name, symbol);
@@ -249,11 +259,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     uint256 tokenId,
     uint256 amount,
     bytes calldata data
-  ) public override {
-    // Validate parameters
-    require(from != address(0), "Can't transfer from zero address");
-    require(to != address(0), "Can't transfer to zero address");
-
+  ) public override notNull(from) notNull(to) {
     // Call parent
     super.safeTransferFrom(from, to, tokenId, amount, data);
 
@@ -274,10 +280,8 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     uint256[] calldata tokenIds,
     uint256[] calldata amounts,
     bytes calldata data
-  ) public override {
+  ) public override notNull(from) notNull(to) {
     // Validate parameters
-    require(from != address(0), "Can't transfer from zero address");
-    require(to != address(0), "Can't transfer to zero address");
     require(tokenIds.length == amounts.length, "Lengths don't match");
 
     // Call parent
@@ -420,10 +424,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     address account,
     uint256 tokenId,
     uint256 amount
-  ) public override {
-    // Validate parameters
-    require(account != address(0), 'Invalid zero address');
-
+  ) public override notNull(account) {
     // Call ancestor
     super.burn(account, tokenId, amount);
 
@@ -440,9 +441,8 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     address account,
     uint256[] calldata tokenIds,
     uint256[] calldata amounts
-  ) public virtual override {
+  ) public virtual override notNull(account) {
     // Validate parameters
-    require(account != address(0), 'Invalid zero address');
     require(tokenIds.length == amounts.length, "Lengths don't match");
 
     // Call ancestor
@@ -609,6 +609,10 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     return bps;
   }
 
+  function logURI(uint256 tokenId) external {
+    emit URI(uri(tokenId), tokenId);
+  }
+
   //////////////////////////////////////////////////////////////////////////////
   // Internal details
   //////////////////////////////////////////////////////////////////////////////
@@ -646,10 +650,9 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
           require(cFolioHandler != address(0), 'Invalid CFH address');
           uniqueCFolioHandlers[numUniqueCFolioHandlers++] = cFolioHandler;
         }
-
         cFolioHandlers[i] = cFolioHandler;
       }
-      _relinkOwner(from, to, tokenId);
+      _relinkOwner(from, to, tokenId, uint256(-1));
     }
 
     // On Burn we need to transfer SFT ownership back
@@ -658,8 +661,6 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
       uint256[] memory amounts = new uint256[](length);
       for (uint256 i = 0; i < length; ++i) {
         uint256 tokenId = tokenIds[i];
-        require(_tokenInfos[tokenId].minted, 'TF: Not minted');
-        _tokenInfos[tokenId].minted = false;
         sftTokenIds[i] = tokenId.toSftTokenId();
         amounts[i] = 1;
       }
@@ -674,19 +675,45 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     } else if (numBaseSft > 0) {
       // Prevent transfer from SFT into cfolio
       require(
-        _sftHolder.addressToTokenId(to) == uint256(-1),
+        _addressToTokenId(to) == uint256(-1),
         'TF: SFT -> CFolio not allowed'
       );
     }
 
     // Handle CFolioItem transfers
-    for (uint256 i = 0; i < numUniqueCFolioHandlers; ++i) {
-      ICFolioItemCallback(uniqueCFolioHandlers[i]).onCFolioItemsTransferedFrom(
-        from,
-        to,
-        tokenIds,
-        cFolioHandlers
-      );
+    if (numUniqueCFolioHandlers > 0) {
+      for (uint256 i = 0; i < numUniqueCFolioHandlers; ++i) {
+        ICFolioItemCallback(uniqueCFolioHandlers[i])
+          .onCFolioItemsTransferedFrom(from, to, tokenIds, cFolioHandlers);
+      }
+
+      // Underlying value of cFolioItems can be changed from concept
+      // if the cfolioItem is inside an cfolio SFT (unlocked).
+      // We need to re-evaluate the hash of each cfolioItem which
+      // transfers out of such an cFolio SFT into non-cfolio SFT
+      if (
+        from != address(0) &&
+        to != address(0) &&
+        _addressToTokenId(from).isBaseCard() &&
+        _addressToTokenId(to) == uint256(-1)
+      ) {
+        IWOWSSftMinter minter =
+          IWOWSSftMinter(
+            _getAddressRegistryAddress(_addressRegistry, AddressBook.SFT_MINTER)
+          );
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+          uint256 tokenId = tokenIds[i];
+          if (tokenId.isCFolioCard()) {
+            uint256 tokenIdNew =
+              minter.tradeFloorTokenId(tokenId.toSftTokenId());
+            if (tokenIdNew != tokenId) {
+              _burn(to, tokenId, 1);
+              _mintAndEmit(to, tokenIdNew);
+              _relinkOwner(to, address(0), tokenId, tokenIdNew);
+            }
+          }
+        }
+      }
     }
   }
 
@@ -715,9 +742,10 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
       require(sftRecipient != address(0), 'TF: invalid recipient');
     } else sftRecipient = from;
 
-    // Get SftMinter for tokenId conversation
     IWOWSSftMinter minter =
-      IWOWSSftMinter(_addressRegistry.getRegistryEntry(AddressBook.SFT_MINTER));
+      IWOWSSftMinter(
+        _getAddressRegistryAddress(_addressRegistry, AddressBook.SFT_MINTER)
+      );
 
     // Update state
     uint256[] memory mintedTokenIds = new uint256[](tokenIds.length);
@@ -726,19 +754,9 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
 
       uint256 mintedTokenId = minter.tradeFloorTokenId(tokenIds[i]);
       mintedTokenIds[i] = mintedTokenId;
-      require(!_tokenInfos[mintedTokenId].minted, 'Token already minted');
-
-      _tokenInfos[mintedTokenId].minted = true;
 
       // OpenSea only listens to TransferSingle event on mint
-      _mint(sftRecipient, mintedTokenId, 1, '');
-
-      // Even though the tokenId has not changed we fire URI to let clients
-      // know that metadata has to be refreshed
-      emit URI(uri(mintedTokenId), mintedTokenId);
-
-      // Rarible needs to be informed about fees
-      emit SecondarySaleFees(mintedTokenId, getFeeRecipients(0), getFeeBps(0));
+      _mintAndEmit(sftRecipient, mintedTokenId);
     }
     _onTransfer(address(0), sftRecipient, mintedTokenIds);
   }
@@ -746,12 +764,15 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   /**
    * @dev Ownership change -> update linked list owner -> tokenId
    *
-   * linkKeys are 1 based where tokenIds are 0-based.
+   * If tokenIdNew is != uint256(-1) this function executes an
+   * ownership transfer of "from" from tokenId to tokenIdNew
+   * In this case "to" must be set to 0.
    */
   function _relinkOwner(
     address from,
     address to,
-    uint256 tokenId
+    uint256 tokenId,
+    uint256 tokenIdNew
   ) internal {
     // Load state
     TokenInfo storage tokenInfo = _tokenInfos[tokenId];
@@ -772,20 +793,31 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
         key = _tokenInfos[key.index].listKey;
       require(key.index == tokenId, 'Key mismatch');
 
-      // Unlink prev -> tokenId
-      key.index = tokenInfo.listKey.index;
-
+      if (tokenIdNew == uint256(-1)) {
+        // Unlink prev -> tokenId
+        key.index = tokenInfo.listKey.index;
+        // Decrement count
+        fromList.count--;
+      } else {
+        // replace tokenId -> tokenIdNew
+        key.index = tokenIdNew;
+        TokenInfo storage tokenInfoNew = _tokenInfos[tokenIdNew];
+        require(!tokenInfoNew.minted, 'Must not be minted');
+        tokenInfoNew.listKey.index = tokenInfo.listKey.index;
+        tokenInfoNew.minted = true;
+      }
       // Unlink tokenId -> next
       tokenInfo.listKey.index = 0;
-
-      // Decrement count
-      fromList.count--;
+      require(tokenInfo.minted, 'Must be minted');
+      tokenInfo.minted = false;
     }
 
     // Update state
     if (to != address(0)) {
       Owned storage toList = _owned[to];
       tokenInfo.listKey.index = toList.listKey.index;
+      require(!tokenInfo.minted, 'Must not be minted');
+      tokenInfo.minted = true;
       toList.listKey.index = tokenId;
       toList.count++;
     }
@@ -821,8 +853,40 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     uint256 tokenId;
     return
       test == address(0) ||
-      (tokenId = _sftHolder.addressToTokenId(test)) == uint256(-1) ||
+      (tokenId = _addressToTokenId(test)) == uint256(-1) ||
       (tokenId.isBaseCard() &&
         IERC1155(address(_sftHolder)).balanceOf(address(this), tokenId) == 0);
+  }
+
+  /**
+   * @dev Save contract size by wrappng external call into an internal
+   */
+  function _getAddressRegistryAddress(IAddressRegistry reg, bytes32 data)
+    private
+    view
+    returns (address)
+  {
+    return reg.getRegistryEntry(data);
+  }
+
+  /**
+   * @dev Save contract size by wrappng external call into an internal
+   */
+  function _addressToTokenId(address tokenAddress)
+    private
+    view
+    returns (uint256)
+  {
+    return _sftHolder.addressToTokenId(tokenAddress);
+  }
+
+  /**
+   * @dev internal mint + event emiting
+   */
+  function _mintAndEmit(address recipient, uint256 tokenId) private {
+    _mint(recipient, tokenId, 1, '');
+
+    // Rarible needs to be informed about fees
+    emit SecondarySaleFees(tokenId, getFeeRecipients(0), getFeeBps(0));
   }
 }
