@@ -42,6 +42,9 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
   // 0.3 back to reward pool (remaining fee remains in contract)
   // uint32 private constant FEE_TO_REWARDPOOL = 3 * 1e5;
 
+  // Duration of one hour, in seconds
+  uint32 private constant ONE_HOUR = 3600;
+
   //////////////////////////////////////////////////////////////////////////////
   // State
   //////////////////////////////////////////////////////////////////////////////
@@ -174,7 +177,7 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
           ethRoute,
           address(this),
           // solhint-disable-next-line not-rely-on-time
-          block.timestamp + 3600
+          block.timestamp + ONE_HOUR
         );
 
       // Update state
@@ -198,7 +201,7 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
           route,
           address(this),
           // solhint-disable-next-line not-rely-on-time
-          block.timestamp + 3600
+          block.timestamp + ONE_HOUR
         );
 
       // Update state
