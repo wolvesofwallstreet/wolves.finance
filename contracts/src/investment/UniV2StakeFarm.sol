@@ -45,9 +45,6 @@ contract UniV2StakeFarm is
 
   mapping(address => uint256) public userRewardPerTokenPaid;
   mapping(address => uint256) public rewards;
-  // TODO: Remove next 2 lines after dapp launch (special reward condition)
-  mapping(address => uint256) private firstStakeTime;
-  uint256 private constant ETH_LIMIT = 2e17;
 
   uint256 private _totalSupply;
   mapping(address => uint256) private _balances;
@@ -184,13 +181,6 @@ contract UniV2StakeFarm is
       amount
     );
 
-    // TODO: Remove after launch
-    if (
-      firstStakeTime[_msgSender()] == 0 &&
-      _ethAmount(_balances[_msgSender()]) >= ETH_LIMIT
-      // solhint-disable-next-line not-rely-on-time
-    ) firstStakeTime[_msgSender()] = block.timestamp;
-
     emit Staked(_msgSender(), amount);
   }
 
@@ -208,13 +198,6 @@ contract UniV2StakeFarm is
     _totalSupply = _totalSupply.sub(amount);
     _balances[_msgSender()] = _balances[_msgSender()].sub(amount);
     IERC20(address(stakingToken)).safeTransfer(_msgSender(), amount);
-
-    // TODO: Remove after launch
-    if (
-      firstStakeTime[_msgSender()] > 0 &&
-      (_balances[_msgSender()] == 0 ||
-        _ethAmount(_balances[_msgSender()]) < ETH_LIMIT)
-    ) firstStakeTime[_msgSender()] = 0;
 
     emit Unstaked(_msgSender(), amount);
   }
