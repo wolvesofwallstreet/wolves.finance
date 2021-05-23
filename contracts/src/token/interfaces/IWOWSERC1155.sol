@@ -10,8 +10,6 @@ pragma solidity >=0.7.0 <0.8.0;
 
 /**
  * @notice Cryptofolio interface
- *
- * TODO: Describe cryptofolios
  */
 interface IWOWSERC1155 {
   //////////////////////////////////////////////////////////////////////////////

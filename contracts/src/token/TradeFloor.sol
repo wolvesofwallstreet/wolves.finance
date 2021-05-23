@@ -540,7 +540,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   /**
    * @dev Withdraw tokenAddress ERC20token to destination
    *
-   * TODO: Provide the possibility to swap into WOWS
+   * A future improvement would be to swap the token into WOWS.
    *
    * @param tokenAddress the address of the token to transfer. Cannot be
    * rewardToken.
