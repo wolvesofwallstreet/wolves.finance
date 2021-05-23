@@ -17,7 +17,7 @@ interface IFarm {
   function controller() external view returns (IController);
 
   /**
-   * @dev Return a unique farm name
+   * @dev Return a unique, case-sensitive farm name
    */
   function farmName() external view returns (string memory);
 
