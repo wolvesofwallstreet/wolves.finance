@@ -41,7 +41,7 @@ contract WOWSSftMinter is Context, Ownable {
   }
   mapping(uint256 => CFolioItemSft) public cfolioItemSfts; // C-folio type to c-folio data
 
-  uint256 public nextCFolioItemNft = 0x10000000000000000;
+  uint256 public nextCFolioItemNft = (1 << 64);
 
   // The ERC1155 contract we are minting from
   IWOWSERC1155 private immutable _sftContract;

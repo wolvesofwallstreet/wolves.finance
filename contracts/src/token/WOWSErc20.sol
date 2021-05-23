@@ -45,7 +45,7 @@ contract WowsToken is IERC20WowsMintable, ERC20Capped, AccessControl {
   /**
    * @dev 60.000 tokens maximal supply
    */
-  uint256 private constant MAX_SUPPLY = 60000 * 1e18;
+  uint256 private constant MAX_SUPPLY = 60_000 * 1e18;
 
   /**
    * @dev Role to allow minting of new tokens
