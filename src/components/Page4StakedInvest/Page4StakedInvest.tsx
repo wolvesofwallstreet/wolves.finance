@@ -177,6 +177,7 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
       }
     }
     this.setState({ cfiRender });
+    if (this.state.tabOption !== 0) this.setState({ tabOption: 0 });
   }
 
   handleBuy(): void {
