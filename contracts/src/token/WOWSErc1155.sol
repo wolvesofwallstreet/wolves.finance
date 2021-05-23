@@ -15,11 +15,6 @@ import './interfaces/IWOWSERC1155.sol';
 import './WOWSMinterPauser.sol';
 import '../utils/TokenIds.sol';
 
-/**
- * TODO's:
- *
- *   - Implement transfer and burn helpers for cryptofolio items
- */
 contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
   using TokenIds for uint256;
 
