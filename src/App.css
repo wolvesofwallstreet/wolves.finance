@@ -194,3 +194,9 @@ span a:hover {
 }
 
 /* --- ARROWS END*/
+
+.link {
+  text-decoration: none !important;
+  color: var(--wolves-white);
+  user-select: none;
+}
