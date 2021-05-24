@@ -379,7 +379,7 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
                 <div
                   className={'tk-grotesk-lightbold font-16 line-break-enable'}
                 >
-                  <p className="font-20">
+                  <p className="font-18">
                     {renderCFolioItem ? (
                       <>
                         TOKEN ID: {renderCFolioItem.id.mask(128).toHexString()}
