@@ -15,6 +15,7 @@ import './components/theme/form/input/wolve_input.css';
 import React from 'react';
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
 
+import CFolioInvest from './components/CFolioInvest';
 import CFolioItemSfts from './components/CFolioItemSfts';
 import CFolioManager from './components/CFolioManager/CFolioManager';
 import Footer from './components/footer';
@@ -22,7 +23,6 @@ import Header from './components/header';
 import Page1 from './components/page1';
 import Page3 from './components/page3';
 import Page4 from './components/page4';
-import Page4StakedInvest from './components/Page4StakedInvest';
 import Page5 from './components/page5';
 import Page6 from './components/page6';
 //import Page7BoisBoardrooms from './components/page7';
@@ -58,7 +58,8 @@ class App extends React.Component {
               <Route path="/status" component={PageStatus} />
 
               <Route path="/cfolio-sfts" component={CFolioItemSfts} />
-              <Route path="/staked-invest" component={Page4StakedInvest} />
+              <Route path="/staked-invest" component={CFolioInvest} />
+
               <Route path="/page5-mypack" component={Page5} />
               <Route path="/page6" component={Page6} />
               {/*<Route path="/bois_boardrooms" component={Page7BoisBoardrooms} />*/}

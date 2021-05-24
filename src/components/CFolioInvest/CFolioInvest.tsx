@@ -6,7 +6,7 @@
  * See the file LICENSES/README.md for more information.
  */
 
-import './Page4StakedInvest.css';
+import './CFolioInvest.css';
 
 import React from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
@@ -57,9 +57,9 @@ interface IMAGE extends IMAGE_SLIDER_SLIDE {
   index: number;
 }
 
-// Page 4 Stake Invest
+// CFolio Investment
 
-class Page4StakedInvest extends React.Component<PROPS, STATE> {
+class CFolioInvest extends React.Component<PROPS, STATE> {
   receiverImages: IMAGE[] = [];
   cards?: CARDS;
   cfolioItems?: CFOLIO_ITEMS;
@@ -276,8 +276,8 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
     const spanText = renderCFolioItem
       ? 'STAKE MORE'
       : this.slideIndex === 0
-      ? 'BUY "STAKE INVESTMENT NFT" INTO WALLET'
-      : 'BUY "STAKE INVESTMENT NFT" INTO CFOLIO';
+      ? 'ADD "STAKE INVESTMENT NFT" INTO MY WALLET'
+      : 'ADD "STAKE INVESTMENT NFT" INTO MY CFOLIO';
 
     return (
       <>
@@ -334,7 +334,7 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
             </div>
 
             <div
-              id="page4sInvest-nav"
+              id="cfolioInvest-nav"
               className="tk-vincente-lightbold font-20 single-line"
             >
               <span
@@ -356,7 +356,7 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
             </div>
 
             {/* Content */}
-            <div className={'page4sInvest-container center-container my-3'}>
+            <div className={'cfolioInvest-container center-container my-3'}>
               <div className="left d-flex flex-column align-items-center justify-content-even mb-3">
                 {cfolioItemCard && (
                   <img
@@ -404,11 +404,11 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
                 </div>
 
                 <div
-                  id="page4sInvest-control"
+                  id="cfolioInvest-control"
                   className="bg-blue-transparent-light"
                 >
                   <div
-                    id="page4sInvest-control-nav"
+                    id="cfolioInvest-control-nav"
                     className="tk-vincente-lightbold font-22"
                   >
                     {renderSpan(0, spanText)}
@@ -440,7 +440,7 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
 
                   <button
                     className={
-                      'wolve_btn page4sInvest-text-input mt-3 m-0 page4sInvest-btn-stack font-10'
+                      'wolve_btn cfolioInvest-text-input mt-3 m-0 cfolioInvest-btn-stack font-10'
                     }
                     onClick={() => this.handleBuy()}
                   >
@@ -456,4 +456,4 @@ class Page4StakedInvest extends React.Component<PROPS, STATE> {
   }
 }
 
-export default withTranslation()(Page4StakedInvest);
+export default withTranslation()(CFolioInvest);

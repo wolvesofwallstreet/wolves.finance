@@ -6,7 +6,7 @@
  * See LICENSE.txt for more information.
  */
 
-.page4sInvest-slider-1 {
+.cfolioInvest-slider-1 {
   margin: 0 14vw;
   min-height: 160px;
 }
@@ -16,23 +16,23 @@
   margin-bottom: -20px !important;
 }
 
-#page4sInvest-nav {
+#cfolioInvest-nav {
   display: flex;
   justify-content: space-between;
   padding: 0px 4vw;
 }
 
-#page4sInvest-nav .c-pointer:hover {
+#cfolioInvest-nav .c-pointer:hover {
   color: var(--wolves-orange);
 }
 
-.page4sInvest-container {
+.cfolioInvest-container {
   display: flex;
   flex-direction: row;
   padding: 15px 4vw;
 }
 
-.page4sInvest-container .left {
+.cfolioInvest-container .left {
   flex-basis: 50%;
   align-self: flex-start;
   max-width: 500px;
@@ -40,26 +40,26 @@
   margin-right: auto;
 }
 
-.page4sInvest-container .right {
+.cfolioInvest-container .right {
   flex-basis: 50%;
   align-self: flex-start;
   margin-left: 16px;
 }
 
 @media only screen and (max-width: 800px) {
-  .page4sInvest-container {
+  .cfolioInvest-container {
     flex-direction: column;
   }
 }
 
-.page4sInvest-card-container {
+.cfolioInvest-card-container {
   display: flex;
   flex-direction: row;
   justify-content: center;
   flex-wrap: wrap;
 }
 
-.page4sInvest-text-input {
+.cfolioInvest-text-input {
   /* flex: 1; */
   /* flex-basis: 80%; */
   background-color: var(--wolves-orange-transparent);
@@ -72,7 +72,7 @@
   outline: none;
 }
 
-.page4sInvest-btn-stack {
+.cfolioInvest-btn-stack {
   background-color: var(--wolves-orange);
   border: 0.6px solid var(--wolves-white);
   text-align: center;
@@ -83,20 +83,20 @@
   flex: 1 1 100%;
 }
 
-#page4sInvest-control {
+#cfolioInvest-control {
   padding: 8px;
 }
 
-#page4sInvest-control-nav {
+#cfolioInvest-control-nav {
   margin-bottom: 12px;
   display: flex;
 }
 
-#page4sInvest-control-nav div {
+#cfolioInvest-control-nav div {
   flex-grow: 1;
 }
 
-#page4sInvest-control-nav span {
+#cfolioInvest-control-nav span {
   width: 90%;
   display: block;
   margin-left: auto;
