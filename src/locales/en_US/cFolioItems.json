@@ -7,7 +7,7 @@
     "constraints": "wolves",
     "cards": [
       {
-        "id": "0",
+        "id": "0x00",
         "chainRef": 0,
         "price": 0.5,
         "minted": 0,
@@ -18,7 +18,7 @@
         "url": "https://4travelers.de/wolves_assets/cfolio/images/00-{res}.jpg"
       },
       {
-        "id": "1",
+        "id": "0x01",
         "chainRef": 1,
         "price": 0.5,
         "minted": 0,
@@ -29,7 +29,7 @@
         "url": "https://4travelers.de/wolves_assets/cfolio/images/01-{res}.jpg"
       },
       {
-        "id": "2",
+        "id": "0x02",
         "chainRef": 2,
         "price": 0.5,
         "minted": 0,
@@ -40,7 +40,7 @@
         "url": "https://4travelers.de/wolves_assets/cfolio/images/02-{res}.jpg"
       },
       {
-        "id": "3",
+        "id": "0x03",
         "chainRef": 3,
         "price": 0.5,
         "minted": 0,
@@ -49,50 +49,6 @@
         "description": "Wall Street Hustler - He’s worked his way up from the actual street. Learning the hustle on the street has given him the perfect grounding for working the trade floor. Forget rough diamond this trader is a blood diamond, and isnt afraid to step on toes and ears to make the deals he needs.",
         "type": "image",
         "url": "https://4travelers.de/wolves_assets/cfolio/images/03-{res}.jpg"
-      },
-      {
-        "id": "4",
-        "chainRef": 4,
-        "price": 0.5,
-        "minted": 0,
-        "maxMintable": 0,
-        "name": "WOLVES WOWS/ETH NFT 4",
-        "description": "Wall Street Hustler - He’s worked his way up from the actual street. Learning the hustle on the street has given him the perfect grounding for working the trade floor. Forget rough diamond this trader is a blood diamond, and isnt afraid to step on toes and ears to make the deals he needs.",
-        "type": "image",
-        "url": "https://4travelers.de/wolves_assets/cfolio/images/04-{res}.jpg"
-      },
-      {
-        "id": "5",
-        "chainRef": 5,
-        "price": 0.5,
-        "minted": 0,
-        "maxMintable": 0,
-        "name": "WOLVES WOWS/ETH NFT 5",
-        "description": "Wall Street Hustler - He’s worked his way up from the actual street. Learning the hustle on the street has given him the perfect grounding for working the trade floor. Forget rough diamond this trader is a blood diamond, and isnt afraid to step on toes and ears to make the deals he needs.",
-        "type": "image",
-        "url": "https://4travelers.de/wolves_assets/cfolio/images/05-{res}.jpg"
-      },
-      {
-        "id": "6",
-        "chainRef": 6,
-        "price": 0.5,
-        "minted": 0,
-        "maxMintable": 0,
-        "name": "WOLVES WOWS/ETH NFT 6",
-        "description": "Wall Street Hustler - He’s worked his way up from the actual street. Learning the hustle on the street has given him the perfect grounding for working the trade floor. Forget rough diamond this trader is a blood diamond, and isnt afraid to step on toes and ears to make the deals he needs.",
-        "type": "image",
-        "url": "https://4travelers.de/wolves_assets/cfolio/images/06-{res}.jpg"
-      },
-      {
-        "id": "7",
-        "chainRef": 7,
-        "price": 0.5,
-        "minted": 0,
-        "maxMintable": 0,
-        "name": "WOLVES WOWS/ETH NFT 7",
-        "description": "Wall Street Hustler - He’s worked his way up from the actual street. Learning the hustle on the street has given him the perfect grounding for working the trade floor. Forget rough diamond this trader is a blood diamond, and isnt afraid to step on toes and ears to make the deals he needs.",
-        "type": "image",
-        "url": "https://4travelers.de/wolves_assets/cfolio/images/07-{res}.jpg"
       }
     ]
   },
@@ -102,6 +58,51 @@
     "shortDescription": "YEARN NFTs FOR YOUR LENDING FOR DAI / USDT / USDC / TUSD",
     "description": "This is a staker card and allows to invest stable coin on the tradefloor and also Raid. You can sell this character licence at any point wither on our platform or on opensea",
     "constraints": "bois",
-    "cards": []
+    "cards": [
+      {
+        "id": "0x10",
+        "chainRef": 16,
+        "price": 0.5,
+        "minted": 0,
+        "maxMintable": 0,
+        "name": "BOIS YEARN CRV POOL",
+        "description": "Wall Street Hustler - He’s worked his way up from the actual street. Learning the hustle on the street has given him the perfect grounding for working the trade floor. Forget rough diamond this trader is a blood diamond, and isnt afraid to step on toes and ears to make the deals he needs.",
+        "type": "image",
+        "url": "https://4travelers.de/wolves_assets/cfolio/images/10-{res}.jpg"
+      },
+      {
+        "id": "0x11",
+        "chainRef": 17,
+        "price": 0.5,
+        "minted": 0,
+        "maxMintable": 0,
+        "name": "BOIS YEARN CRV POOL",
+        "description": "Wall Street Hustler - He’s worked his way up from the actual street. Learning the hustle on the street has given him the perfect grounding for working the trade floor. Forget rough diamond this trader is a blood diamond, and isnt afraid to step on toes and ears to make the deals he needs.",
+        "type": "image",
+        "url": "https://4travelers.de/wolves_assets/cfolio/images/11-{res}.jpg"
+      },
+      {
+        "id": "0x12",
+        "chainRef": 18,
+        "price": 0.5,
+        "minted": 0,
+        "maxMintable": 0,
+        "name": "BOIS YEARN CRV POOL",
+        "description": "Wall Street Hustler - He’s worked his way up from the actual street. Learning the hustle on the street has given him the perfect grounding for working the trade floor. Forget rough diamond this trader is a blood diamond, and isnt afraid to step on toes and ears to make the deals he needs.",
+        "type": "image",
+        "url": "https://4travelers.de/wolves_assets/cfolio/images/12-{res}.jpg"
+      },
+      {
+        "id": "0x13",
+        "chainRef": 19,
+        "price": 0.5,
+        "minted": 0,
+        "maxMintable": 0,
+        "name": "BOIS YEARN CRV POOL",
+        "description": "Wall Street Hustler - He’s worked his way up from the actual street. Learning the hustle on the street has given him the perfect grounding for working the trade floor. Forget rough diamond this trader is a blood diamond, and isnt afraid to step on toes and ears to make the deals he needs.",
+        "type": "image",
+        "url": "https://4travelers.de/wolves_assets/cfolio/images/13-{res}.jpg"
+      }
+    ]
   }
 ]
