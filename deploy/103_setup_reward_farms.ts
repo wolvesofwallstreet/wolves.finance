@@ -200,7 +200,16 @@ const func = async function (hardhat_re) {
 
   if ((await SFT_MINTER_INSTANCE.getCFolioSpec([0])).maxMintable[0].isZero()) {
     // We initialize 8 different LP cards
-    const CFI_TYPES = ['0', '1', '2', '3', '4', '5', '6', '7'];
+    const CFI_TYPES = [
+      '0x00',
+      '0x01',
+      '0x02',
+      '0x03',
+      '0x10',
+      '0x11',
+      '0x12',
+      '0x13',
+    ];
     const CFI_HANDLERS = new Array(8).fill(
       generatedAddresses.cfolioItemHandlerLPProxy
     );
