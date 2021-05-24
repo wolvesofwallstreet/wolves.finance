@@ -43,6 +43,7 @@ type PROPS = {
 type STATE = {
   sliderImagesTop: IMAGE[];
   sliderImagesMiddle: SUBIMAGE[];
+  sliderImagesBottom: IMAGE[];
 };
 
 class CFolioManager extends React.Component<PROPS, STATE> {
@@ -56,6 +57,7 @@ class CFolioManager extends React.Component<PROPS, STATE> {
     this.state = {
       sliderImagesTop: [],
       sliderImagesMiddle: [],
+      sliderImagesBottom: [],
     };
 
     this.onSFTState = this.onSFTState.bind(this);
@@ -79,55 +81,72 @@ class CFolioManager extends React.Component<PROPS, STATE> {
 
   _updateImages() {
     const assets = StoreClasses.store.getAssets();
-    const cards = assets.cards;
+    this.cards = assets.cards;
     const tokenIds = assets.userSFT;
 
-    // Create top images
-    const newImages: IMAGE[] = [];
-    tokenIds.forEach((sft, tokenIdIdx) => {
-      if (sft.isStockCard && !sft.locked && sft.cfolioItems.length > 0) {
-        const tokenId = sft.id.toNumber();
-        const level = cards.cards.findIndex(
-          (l) => l.chainRef === tokenId >> 24
-        );
-        const index = cards.cards[level].cards.findIndex(
-          (card) => card.chainRef === ((tokenId >> 16) & 0xff)
-        );
-        const url =
-          cards.cards[level].cards[index].url
-            .replace('{res}', '300')
-            .replace('.mp4', '.mp4.jpg') || '';
-        newImages.push({
-          url,
-          cfolioItems: sft.cfolioItems,
-          sft,
-          level,
-          index,
-        });
-      } else if (sft.isWallet) {
-        newImages.push({
-          url: WalletLogo,
-          cfolioItems: sft.cfolioItems,
-          sft,
-          level: -1,
-          index: -1,
-        });
-      }
-    });
-    this.cards = cards;
+    const pred = (sft: SFT) => sft.cfolioItems.length > 0;
+    const newImages = this._getSftImages(tokenIds, pred);
+
     this.cfolioItemCards = assets.cfolioItems;
     this.setState({ sliderImagesTop: newImages });
 
     this._createSliderImages(newImages);
   }
 
+  _getSftImages(
+    tokenIds: SFT[],
+    pred: (s: SFT) => boolean,
+    pred2?: (l: number, i: number) => boolean
+  ): IMAGE[] {
+    const result: IMAGE[] = [];
+    tokenIds.forEach((sft, tokenIdIdx) => {
+      if (pred(sft)) {
+        if (sft.isStockCard && !sft.locked) {
+          const tokenId = sft.id.toNumber();
+          const level =
+            this.cards?.cards.findIndex((l) => l.chainRef === tokenId >> 24) ??
+            -1;
+          const index =
+            this.cards?.cards[level].cards.findIndex(
+              (card) => card.chainRef === ((tokenId >> 16) & 0xff)
+            ) ?? -1;
+          if (!pred2 || pred2(level, index)) {
+            const url =
+              this.cards?.cards[level].cards[index].url
+                .replace('{res}', '300')
+                .replace('.mp4', '.mp4.jpg') || '';
+            result.push({
+              url,
+              cfolioItems: sft.cfolioItems,
+              sft,
+              level,
+              index,
+            });
+          }
+        } else if (sft.isWallet) {
+          result.push({
+            url: WalletLogo,
+            cfolioItems: sft.cfolioItems,
+            sft,
+            level: -1,
+            index: -1,
+          });
+        }
+      }
+    });
+    return result;
+  }
+
   _createSliderImages(topImages: IMAGE[]) {
     const sliderImagesMiddle: SUBIMAGE[] = [];
+    const sliderImagesBottom: IMAGE[] = [];
+    const constraints: { [x: string]: boolean } = {};
+
     if (this.sliderIndex[0] < topImages.length) {
       const cfolioItems = topImages[this.sliderIndex[0]].sft.cfolioItems;
       cfolioItems.forEach((cfi) => {
         let cfiCard: CFOLIO_ITEM | undefined;
-        this.cfolioItemCards.find(
+        const cat = this.cfolioItemCards.find(
           (category) =>
             (cfiCard = category.cards.find(
               (card) => card.chainRef === cfi.type
@@ -138,10 +157,31 @@ class CFolioManager extends React.Component<PROPS, STATE> {
             url: cfiCard?.url.replace('{res}', '300'),
             cfolioItem: cfiCard,
           });
+          if (cat?.constraints) {
+            constraints[cat.constraints] = true;
+          } else {
+            constraints['wolves'] = true;
+            constraints['bois'] = true;
+          }
         }
       });
+
+      // Create bottom images, only contraint matching
+      // and never insert current selected top element
+      const pred = (sft: SFT) =>
+        sft.id !== topImages[this.sliderIndex[0]].sft.id;
+      const pred2 = (l: number, i: number) =>
+        constraints[this.cards?.cards[l].type || ''];
+      sliderImagesBottom.push(
+        ...this._getSftImages(
+          StoreClasses.store.getAssets().userSFT,
+          pred,
+          pred2
+        )
+      );
     }
     this.setState({ sliderImagesMiddle });
+    this.setState({ sliderImagesBottom });
   }
 
   setSliderIndex(pos: number, index: number) {
@@ -171,13 +211,13 @@ class CFolioManager extends React.Component<PROPS, STATE> {
 
           <div
             className={
-              'd-flex flex-column bg-blue-transparent wolves-orange-border font-16 py-4 my-2 mt-3'
+              'd-flex flex-column bg-blue-transparent wolves-orange-border font-16 my-2 pt-2'
             }
           >
             {/* Card slider-1 */}
             <div
               className={
-                'w-90-36px py-3 p_relative center-container center_triangle_down'
+                'w-90-36px pb-3 p_relative center-container center_triangle_down border_thin_b'
               }
             >
               <ImageSlider
@@ -190,7 +230,7 @@ class CFolioManager extends React.Component<PROPS, STATE> {
             </div>
 
             {/* Card slider-2 */}
-            <div className={'w-90-36px center-container pt-4'}>
+            <div className={'w-90-36px center-container pt-2'}>
               <ImageSlider
                 sliderId="1"
                 initCallback={this.sliderInit.bind(this)}
@@ -219,8 +259,18 @@ class CFolioManager extends React.Component<PROPS, STATE> {
             <div className={'cfm-h-line'} />
 
             {/* Card slider-3 */}
-            <div className={'w-100 mt-2 center-container'}>
-              <div className={'slider-wrap-bar before_none after_none'}></div>
+            <div
+              className={
+                'w-90-36px pb-3 p_relative center_triangle_down center-container'
+              }
+            >
+              <ImageSlider
+                sliderId="2"
+                initCallback={this.sliderInit.bind(this)}
+                slideWidth={135}
+                onSlideChanged={(index) => this.setSliderIndex(2, index)}
+                slides={this.state.sliderImagesBottom}
+              />
             </div>
           </div>
         </div>
