@@ -28,7 +28,7 @@
   position: relative;
   min-height: 130px;
   height: 100%;
-  transform: scale(0.8);
+  transform: scale(0.75);
   border: 1px solid var(--wolves-white);
 
   --url: url(../../assets/loading_animated_small.gif);
@@ -36,13 +36,15 @@
   background-size: cover;
   cursor: pointer;
   opacity: 0.7;
+  margin-bottom: 10px;
 }
 
 .image_slide.active {
   /*padding: 0;*/
   border-width: 2px;
-  transform: scale(1);
+  transform: scale(0.94);
   opacity: 1;
+  cursor: default;
 }
 
 /* Arrow*/
@@ -109,4 +111,62 @@
   font-size: 13px;
   top: 7px;
   right: 6%;
+}
+
+.slide_tooltip_wrapper {
+  display: none;
+  width: 123%;
+  min-height: 90px;
+  position: absolute;
+  z-index: 11;
+  background-color: rgba(252, 183, 148, 0.808);
+  border: 1px solid white;
+  padding: 10px;
+  text-align: center;
+  top: 52%;
+  transform: translateY(-50%) translateX(-10%);
+}
+
+.image_slide .slide_count:hover + .slide_tooltip_wrapper {
+  display: block;
+}
+
+.slide_tooltip_content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.slide_tooltip_content p {
+  transform: scale(0.85);
+  padding: 0;
+  margin: 0;
+  margin-top: 5px;
+
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  white-space: nowrap;
+  line-height: 100%;
+}
+
+.image_slider_tid {
+  display: inline-block;
+  position: absolute;
+  bottom: -7%;
+  transition: all 0.2s ease-in-out;
+  text-align: center;
+  white-space: nowrap;
+  width: 100%;
+  zoom: 0.8;
+  transform: scale(0.9) translateY(-30px);
+}
+
+.active + .image_slider_tid {
+  bottom: -16%;
+}
+
+/* Utility class's */
+.min-height-190 {
+  min-height: 195px;
 }
