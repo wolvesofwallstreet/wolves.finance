@@ -159,11 +159,11 @@ class Store {
   tokenContract: ethers.Contract | null = null;
   stakeContract: ethers.Contract | null = null;
   lPContract: ethers.Contract | null = null;
-  tradeFloorContract: ethers.Contract | null = null;
 
   sftHolderContractRO: ethers.Contract | null = null;
   sftMintContractRO: ethers.Contract | null = null;
   stakeContractRO: ethers.Contract | null = null;
+  tradeFloorContractRO: ethers.Contract | null = null;
   uniDaiWethPairContractRO: ethers.Contract | null = null;
 
   cFolioItemHandlerLpAddress = '';
@@ -398,7 +398,6 @@ class Store {
       this.ethersProvider.removeAllListeners();
       this.lPContract = null;
       this.tokenContract = null;
-      this.tradeFloorContract = null;
       this.stakeContract = null;
       this.ethersProvider = null;
       this.cFolioItemHandlerLpAddress = '';
@@ -412,8 +411,11 @@ class Store {
 
   close = async () => {
     this.stakeContractRO = null;
+    this.sftHolderContractRO?.removeAllListeners();
     this.sftHolderContractRO = null;
     this.sftMintContractRO = null;
+    this.tradeFloorContractRO?.removeAllListeners();
+    this.tradeFloorContractRO = null;
     await this.disconnect(false);
     if (this.eventProvider) {
       this.eventProvider?.removeAllListeners();
@@ -431,29 +433,40 @@ class Store {
     return this.eventProvider !== null;
   };
 
+  _addDQ = (payload: Payload) => {
+    if (!this.dispatchQueue.find((elem) => elem === payload))
+      this.dispatchQueue.push(payload);
+  };
+
   _setupEvents(): boolean {
-    const addDQ = (payload: Payload) => {
-      if (!this.dispatchQueue.find((elem) => elem === payload))
-        this.dispatchQueue.push(payload);
-    };
     this.eventProvider?.removeAllListeners();
     this.sftHolderContractRO?.removeAllListeners();
+    this.tradeFloorContractRO?.removeAllListeners();
+
+    const handleTransfer = (from: string, to: string) => {
+      this._addDQ({ type: SFT_STATE } as Payload);
+      if (!this.pauseSFTUser && (from === this.address || to === this.address))
+        this._addDQ({ type: SFT_USER } as Payload);
+    };
+
     // Our Block ticker
     this.eventProvider?.on('block', (blockNumber) => {
       emitter.emit(NEW_BLOCK, { blockNumber: blockNumber });
       this.dispatchQueue.forEach((payload) => dispatcher.dispatch(payload));
       this.dispatchQueue = [];
     });
-    this.sftHolderContractRO?.on('TransferSingle', (operator, from, to) => {
-      addDQ({ type: SFT_STATE } as Payload);
-      if (!this.pauseSFTUser && (from === this.address || to === this.address))
-        addDQ({ type: SFT_USER } as Payload);
-    });
-    this.sftHolderContractRO?.on('TransferBatch', (operator, from, to) => {
-      addDQ({ type: SFT_STATE } as Payload);
-      if (!this.pauseSFTUser && (from === this.address || to === this.address))
-        addDQ({ type: SFT_USER } as Payload);
-    });
+    this.sftHolderContractRO?.on('TransferSingle', (operator, from, to) =>
+      handleTransfer(from, to)
+    );
+    this.sftHolderContractRO?.on('TransferBatch', (operator, from, to) =>
+      handleTransfer(from, to)
+    );
+    this.tradeFloorContractRO?.on('TransferSingle', (operator, from, to) =>
+      handleTransfer(from, to)
+    );
+    this.tradeFloorContractRO?.on('TransferBatch', (operator, from, to) =>
+      handleTransfer(from, to)
+    );
     return true;
   }
 
@@ -542,6 +555,12 @@ class Store {
         SFTHolderAbi,
         provider
       );
+      if (chainAddresses.tradeFloorProxy !== '')
+        this.tradeFloorContractRO = new ethers.Contract(
+          chainAddresses.tradeFloorProxy,
+          TradeFloorAbi,
+          provider
+        );
       this.sftMintContractRO = new ethers.Contract(
         chainAddresses.sftMinter,
         SFTMinterAbi,
@@ -582,12 +601,6 @@ class Store {
         signer
       );
       this.cFolioItemHandlerLpAddress = chainAddresses.cfolioItemHandlerLPProxy;
-      if (chainAddresses.tradeFloorProxy !== '')
-        this.tradeFloorContract = new ethers.Contract(
-          chainAddresses.tradeFloorProxy,
-          TradeFloorAbi,
-          signer
-        );
       return true;
     }
     return false;
@@ -1058,7 +1071,7 @@ class Store {
 
     if (
       !this.sftHolderContractRO ||
-      !this.tradeFloorContract ||
+      !this.tradeFloorContractRO ||
       !this.ethersProvider
     ) {
       emitter.emit(SFT_LOCK, {
@@ -1079,7 +1092,7 @@ class Store {
       const tx: ethers.ContractTransaction | undefined =
         await sftHolderContract.safeTransferFrom(
           this.address,
-          this.tradeFloorContract.address,
+          this.tradeFloorContractRO.address,
           id,
           1,
           []
@@ -1115,7 +1128,7 @@ class Store {
       return;
     }
 
-    if (!this.tradeFloorContract) {
+    if (!this.tradeFloorContractRO || !this.tokenContract) {
       emitter.emit(SFT_UNLOCK, {
         status: 'error',
         errorMessage: 'Invalid contract state',
@@ -1124,9 +1137,13 @@ class Store {
     }
 
     try {
+      const tradeFloorContract = this.tradeFloorContractRO.connect(
+        this.tokenContract.signer
+      );
+
       this.pauseSFTUser = true;
       const tx: ethers.ContractTransaction | undefined =
-        await this.tradeFloorContract.burn(this.address, id, 1);
+        await tradeFloorContract.burn(this.address, id, 1);
       emitter.emit(SFT_UNLOCK, {
         status: 'tx',
         tx: tx?.hash,
@@ -1248,6 +1265,11 @@ class Store {
         status: 'success',
         tx: tx?.hash,
       } as StatusResult);
+
+      // There is no transfer with our address emitted,
+      // in case of valid SFT: Request an tokenId update
+      if (!sftTokenId.eq(BIGNUMBER_MAX))
+        this._addDQ({ type: SFT_USER } as Payload);
     } catch (e) {
       console.log(e);
       emitter.emit(CFOLIO_ITEM_BUY, {
