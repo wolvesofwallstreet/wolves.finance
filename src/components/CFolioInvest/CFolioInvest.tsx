@@ -13,18 +13,12 @@ import { TFunction, withTranslation } from 'react-i18next';
 import { Link, RouteComponentProps } from 'react-router-dom';
 
 import WalletLogo from '../../assets/openwallet.png';
-import {
-  ASSETS_LOADED,
-  CFOLIO_ITEM_BUY,
-  SFT_STATE,
-  STAKE_LP_AVAILABLE,
-} from '../../stores/constants';
+import { ASSETS_LOADED, SFT_STATE } from '../../stores/constants';
 import {
   SFT,
   SFTCHILD,
   SFTStateresult,
   StoreClasses,
-  TokenContractResult,
 } from '../../stores/store';
 import {
   IMAGE_SLIDER_INTERFACE,
@@ -32,6 +26,7 @@ import {
   ImageSlider,
 } from '../controls/image_slider';
 import { CARDS, CFOLIO_ITEMS } from '../types/cards';
+import StakeLP from './StakeLP/StakeLP';
 
 type PROPS = {
   t: TFunction;
@@ -47,8 +42,6 @@ type CFI_RENDER = {
 type STATE = {
   cfiRender: CFI_RENDER[];
   currentImage: number;
-  tabOption: number;
-  investAmount: number; // Available token in wallet
 };
 
 interface IMAGE extends IMAGE_SLIDER_SLIDE {
@@ -73,12 +66,9 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
     this.state = {
       cfiRender: [],
       currentImage: 0,
-      tabOption: 0,
-      investAmount: 0,
     };
     this.onSFTState = this.onSFTState.bind(this);
     this._updateImages = this._updateImages.bind(this);
-    this.onLpAvailable = this.onLpAvailable.bind(this);
 
     const { location } = this.props;
     const query = new URLSearchParams(location.search);
@@ -87,33 +77,21 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
 
   setCurrentImage(val: number) {
     this.setState({ currentImage: val });
-    this.setState({ tabOption: 0 });
   }
 
   componentDidMount() {
     StoreClasses.emitter.on(ASSETS_LOADED, this._updateImages);
     StoreClasses.emitter.on(SFT_STATE, this.onSFTState);
-    StoreClasses.emitter.on(STAKE_LP_AVAILABLE, this.onLpAvailable);
     this._updateImages();
   }
 
   componentWillUnmount() {
-    StoreClasses.emitter.off(STAKE_LP_AVAILABLE, this.onLpAvailable);
     StoreClasses.emitter.off(SFT_STATE, this.onSFTState);
     StoreClasses.emitter.off(ASSETS_LOADED, this._updateImages);
   }
 
   onSFTState(result: SFTStateresult) {
     if (result.status === 'user') this._updateImages();
-  }
-
-  onLpAvailable(params: TokenContractResult): void {
-    const investAmount =
-      params.error === undefined && params.tokenAmount !== undefined
-        ? params.tokenAmount
-        : 0;
-    if (investAmount !== this.state.investAmount)
-      this.setState({ investAmount });
   }
 
   _updateImages() {
@@ -152,15 +130,6 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
         });
       }
     });
-
-    if (newImages.length === 0 && this.state.investAmount > 0) {
-      this.setState({ investAmount: 0 });
-    } else if (this.receiverImages.length === 0 && newImages.length > 0) {
-      StoreClasses.dispatcher.dispatch({
-        type: STAKE_LP_AVAILABLE,
-        content: {},
-      });
-    }
 
     this.receiverImages = newImages;
 
@@ -208,20 +177,6 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
       }
     }
     this.setState({ cfiRender });
-    if (this.state.tabOption !== 0) this.setState({ tabOption: 0 });
-  }
-
-  handleBuy(): void {
-    const payload = {
-      type: CFOLIO_ITEM_BUY,
-      content: {
-        wowsAmount: 0.5,
-        investAmount: [0],
-        sftTokenId: this.receiverImages[this.slideIndex].sft.id,
-        cfolioType: 0,
-      },
-    };
-    StoreClasses.dispatcher.dispatch(payload);
   }
 
   sliderInit(id: string | undefined, iface: IMAGE_SLIDER_INTERFACE) {
@@ -230,7 +185,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
 
   render(): JSX.Element {
     const { t } = this.props;
-    const { cfiRender, investAmount, tabOption } = this.state;
+    const { cfiRender } = this.state;
 
     const handleImageChange = (change: number) => {
       if (cfiRender.length > 1) {
@@ -246,23 +201,6 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
       }
     };
 
-    const renderSpan = (id: number, caption: string) => {
-      return id === tabOption ? (
-        <div>
-          <span className="border_thin_b">{caption}</span>
-        </div>
-      ) : (
-        <div>
-          <span
-            className="c-pointer"
-            onClick={() => this.setState({ tabOption: id })}
-          >
-            {caption}
-          </span>
-        </div>
-      );
-    };
-
     const renderItem =
       this.state.currentImage < cfiRender.length &&
       cfiRender[this.state.currentImage];
@@ -272,12 +210,6 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
       renderItem &&
       this.cfolioItems.cards[renderItem.index];
     const scroll = cfiRender.length > 1;
-
-    const spanText = renderCFolioItem
-      ? 'STAKE MORE'
-      : this.slideIndex === 0
-      ? 'ADD "STAKE INVESTMENT NFT" INTO MY WALLET'
-      : 'ADD "STAKE INVESTMENT NFT" INTO MY CFOLIO';
 
     return (
       <>
@@ -398,7 +330,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
                       <>
                         TOKEN ID: {renderCFolioItem.id.mask(128).toHexString()}
                         <br />
-                        STAKED: {renderCFolioItem.assets[0].toFixed(4)}
+                        INVESTMENT: {renderCFolioItem.assets[0].toFixed(4)}
                         {' ' + this.investCurrency}
                       </>
                     ) : (
@@ -421,45 +353,15 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
                   id="cfolioInvest-control"
                   className="bg-blue-transparent-light"
                 >
-                  <div
-                    id="cfolioInvest-control-nav"
-                    className="tk-vincente-lightbold font-22"
-                  >
-                    {renderSpan(0, spanText)}
-                    {renderCFolioItem && renderSpan(1, 'UNSTAKE')}
-                  </div>
-                  <span className="mt-1 font-13">
-                    AVAILABLE IN{tabOption === 0 ? ' MY WALLET: ' : ' MY NFT: '}
-                    {tabOption === 0
-                      ? investAmount.toFixed(4)
-                      : renderCFolioItem &&
-                        renderCFolioItem.assets[0].toFixed(4)}{' '}
-                    {this.investCurrency}
-                  </span>
-                  <div className="p_relative">
-                    <input
-                      type="text"
-                      className="wolve_input text-white font-14"
-                      style={{ paddingRight: '125px' }}
-                    />
-                    {/*<div className="wolve_input_max">MAX</div>*/}
-                    <div className={'wolve_input_label font-14'}>
-                      {this.investCurrency}
-                    </div>
-                  </div>
-
-                  <div className="d-flex justify-content-end mt-1 font-13">
-                    BUY V.2 ETH/WOWS LP TOKENS HERE
-                  </div>
-
-                  <button
-                    className={
-                      'wolve_btn cfolioInvest-text-input mt-3 m-0 cfolioInvest-btn-stack font-10'
+                  <StakeLP
+                    investCurrency={this.investCurrency}
+                    cfolioItem={renderCFolioItem || undefined}
+                    sft={
+                      this.slideIndex < this.receiverImages.length
+                        ? this.receiverImages[this.slideIndex].sft
+                        : undefined
                     }
-                    onClick={() => this.handleBuy()}
-                  >
-                    BUY STAKED ETH/WOWS NFT
-                  </button>
+                  />
                 </div>
               </div>
             </div>
