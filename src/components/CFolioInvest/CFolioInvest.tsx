@@ -31,6 +31,7 @@ import {
   IMAGE_SLIDER_SLIDE,
   ImageSlider,
 } from '../controls/image_slider';
+import AssetInput from '../theme/assetInput';
 import { CARDS, CFOLIO_ITEMS } from '../types/cards';
 
 type PROPS = {
@@ -436,30 +437,13 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
                         renderCFolioItem.assets[0].toFixed(4)}{' '}
                     {this.investCurrency}
                   </span>
-                  <div className="p_relative">
-                    <input
-                      type="text"
-                      className="wolve_input text-white font-14"
-                      style={{ paddingRight: '125px' }}
-                    />
-                    {/*<div className="wolve_input_max">MAX</div>*/}
-                    <div className={'wolve_input_label font-14'}>
-                      {this.investCurrency}
-                    </div>
-                  </div>
 
-                  <div className="d-flex justify-content-end mt-1 font-13">
-                    BUY V.2 ETH/WOWS LP TOKENS HERE
-                  </div>
-
-                  <button
-                    className={
-                      'wolve_btn cfolioInvest-text-input mt-3 m-0 cfolioInvest-btn-stack font-10'
-                    }
-                    onClick={() => this.handleBuy()}
-                  >
-                    BUY STAKED ETH/WOWS NFT
-                  </button>
+                  <AssetInput
+                    buttonLabel={'BUY STAKED ETH/WOWS NFT'}
+                    description={'BUY V.2 ETH/WOWS LP TOKENS HERE'}
+                    onSubmitHanlde={() => this.handleBuy()}
+                    investCurrency={this.investCurrency}
+                  />
                 </div>
               </div>
             </div>
