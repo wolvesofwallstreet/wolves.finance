@@ -43,6 +43,14 @@ hr.wolves {
   align-self: stretch;
 }
 
+span a {
+  color: white;
+}
+
+span.left {
+  text-align: end;
+}
+
 span a:hover {
   text-decoration: none;
   color: var(--wolves-orange) !important;
