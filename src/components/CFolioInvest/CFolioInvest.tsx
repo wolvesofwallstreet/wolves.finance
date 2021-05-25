@@ -10,7 +10,7 @@ import './CFolioInvest.css';
 
 import React from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
-import { RouteComponentProps } from 'react-router-dom';
+import { Link, RouteComponentProps } from 'react-router-dom';
 
 import WalletLogo from '../../assets/openwallet.png';
 import {
@@ -303,10 +303,13 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
                 'd-flex justify-content-center bg-transparent-orange mb-3 '
               }
             >
-              <div className={'p_relative'}>
+              <div className={'p_relative cfolioInvest-slider-1'}>
                 <button
                   onClick={() => this.sliderInterface?.prev()}
                   className={'slide__arrow slide__arrow--left slide__arrows'}
+                  style={{
+                    ['--left' as string]: '-25px',
+                  }}
                 >
                   {'<'}
                 </button>
@@ -320,13 +323,16 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
                         this._updateCFolioItems();
                       }
                     }}
-                    slideWidth={135}
+                    slideWidth={150}
                     slides={this.receiverImages}
                   />
                 </div>
                 <button
                   onClick={() => this.sliderInterface?.next()}
                   className={'slide__arrow slide__arrow--right slide__arrows'}
+                  style={{
+                    ['--right' as string]: '10px',
+                  }}
                 >
                   {'>'}
                 </button>
@@ -338,15 +344,23 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
               className="tk-vincente-lightbold font-20 single-line"
             >
               <span
-                className={`tk-vincente-lightbold font-24 single-line ${
+                className={`link _btn _btn_effect tk-vincente-lightbold font-24 single-line ${
                   scroll ? 'c-pointer' : 'disabled-link'
                 }`}
                 onClick={() => handleImageChange(-1)}
               >
                 &lt;{t('page.previousCard')}
               </span>
+
+              <Link
+                to={'/cfolio-sfts?type=lpInvestment'}
+                className={`link _btn _btn_effect tk-vincente-lightbold font-24 single-line c-pointer `}
+              >
+                BACK TO INVESTMENT SFTS
+              </Link>
+
               <span
-                className={`tk-vincente-lightbold font-24 single-line ${
+                className={`link _btn _btn_effect tk-vincente-lightbold font-24 single-line ${
                   scroll ? 'c-pointer' : 'disabled-link'
                 } `}
                 onClick={() => handleImageChange(1)}
