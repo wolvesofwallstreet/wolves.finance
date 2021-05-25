@@ -145,7 +145,7 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
           },
           {
             id: 'STAKED INVEST',
-            to: '/staked-invest',
+            to: '/cfolio-invest?type=lpInvestment',
           },
         ],
       },
@@ -169,7 +169,7 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
           },
           {
             id: 'YEARN INVEST',
-            to: '/yearn-invest',
+            to: '/cfolio-invest?type=yearnInvestment',
           },
         ],
       },

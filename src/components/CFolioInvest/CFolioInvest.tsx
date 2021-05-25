@@ -27,6 +27,7 @@ import {
 } from '../controls/image_slider';
 import { CARDS, CFOLIO_ITEMS } from '../types/cards';
 import StakeLP from './StakeLP/StakeLP';
+import YearnQuad from './YearnQuad/YearnQuad';
 
 type PROPS = {
   t: TFunction;
@@ -60,6 +61,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
   slideIndex = 0;
   initialCFolio = -1;
   investCurrency = 'WOWS/ETH LP';
+  displayType = '';
 
   constructor(props: PROPS) {
     super(props);
@@ -73,10 +75,22 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
     const { location } = this.props;
     const query = new URLSearchParams(location.search);
     this.initialCFolio = parseInt(query.get('item') || '-1');
+    this.displayType = query.get('type') || 'lpInvestment';
   }
 
   setCurrentImage(val: number) {
     this.setState({ currentImage: val });
+  }
+
+  componentDidUpdate() {
+    const { location } = this.props;
+    const query = new URLSearchParams(location.search);
+    const newDisplayType = query.get('type') || 'lpInvestment';
+    if (newDisplayType !== this.displayType) {
+      this.displayType = newDisplayType;
+      this.sliderInterface?.go(0);
+      this._updateImages();
+    }
   }
 
   componentDidMount() {
@@ -100,8 +114,15 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
     const tokenIds = assets.userSFT;
 
     const newImages: IMAGE[] = [];
+    const allowedLevel =
+      this.displayType === 'lpInvestment' ? 0xff000000f0 : 0xff0000000f;
+
     tokenIds.forEach((sft, tokenIdIdx) => {
-      if (sft.isStockCard && !sft.locked && sft.id.toNumber() >> 24 >= 4) {
+      if (
+        sft.isStockCard &&
+        !sft.locked &&
+        (allowedLevel & (1 << (sft.id.toNumber() >> 24))) !== 0
+      ) {
         const tokenId = sft.id.toNumber();
         const level = cards.cards.findIndex(
           (l) => l.chainRef === tokenId >> 24
@@ -144,7 +165,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
 
     if (cfolioItems.length > 0) {
       this.cfolioItems = cfolioItems.filter(
-        (elem) => elem.type === 'lpInvestment'
+        (elem) => elem.type === this.displayType
       )[0];
 
       if (this.cfolioItems) {
@@ -210,6 +231,15 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
       renderItem &&
       this.cfolioItems.cards[renderItem.index];
     const scroll = cfiRender.length > 1;
+
+    const controlAttr = {
+      investCurrency: this.investCurrency,
+      cfolioItem: renderCFolioItem || undefined,
+      sft:
+        this.slideIndex < this.receiverImages.length
+          ? this.receiverImages[this.slideIndex].sft
+          : undefined,
+    };
 
     return (
       <>
@@ -353,15 +383,11 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
                   id="cfolioInvest-control"
                   className="bg-blue-transparent-light"
                 >
-                  <StakeLP
-                    investCurrency={this.investCurrency}
-                    cfolioItem={renderCFolioItem || undefined}
-                    sft={
-                      this.slideIndex < this.receiverImages.length
-                        ? this.receiverImages[this.slideIndex].sft
-                        : undefined
-                    }
-                  />
+                  {this.displayType === 'lpInvestment' ? (
+                    <StakeLP {...controlAttr} />
+                  ) : (
+                    <YearnQuad {...controlAttr} />
+                  )}
                 </div>
               </div>
             </div>

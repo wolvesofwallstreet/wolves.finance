@@ -26,7 +26,6 @@ import Page4 from './components/page4';
 import Page5 from './components/page5';
 import Page6 from './components/page6';
 //import Page7BoisBoardrooms from './components/page7';
-import Page9BoisBoardrooms from './components/Page9BoisBoardrooms';
 import Page11 from './components/page11';
 import Page13 from './components/page13';
 import Page14 from './components/page14';
@@ -58,12 +57,11 @@ class App extends React.Component {
               <Route path="/status" component={PageStatus} />
 
               <Route path="/cfolio-sfts" component={CFolioItemSfts} />
-              <Route path="/staked-invest" component={CFolioInvest} />
+              <Route path="/cfolio-invest" component={CFolioInvest} />
 
               <Route path="/page5-mypack" component={Page5} />
               <Route path="/page6" component={Page6} />
               {/*<Route path="/bois_boardrooms" component={Page7BoisBoardrooms} />*/}
-              <Route path="/yearn-invest" component={Page9BoisBoardrooms} />
               <Route path="/page11" component={Page11} />
               <Route path="/c_folio_manager" component={CFolioManager} />
               <Route path="/page13" component={Page13} />
