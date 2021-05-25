@@ -29,7 +29,7 @@ type PROPS = {
 function StakeLP({ cfolioItem, investCurrency, sft, t }: PROPS): JSX.Element {
   const [tabOption, setTabOption] = useState(0);
   const [investAmount, setInvestAmount] = useState(0);
-  const [hasSft, setHasSft] = useState(sft !== undefined);
+  const [hasSft, setHasSft] = useState(false);
 
   if ((sft === undefined) === hasSft) {
     if (hasSft) setInvestAmount(0);
