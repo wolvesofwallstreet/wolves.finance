@@ -1,0 +1,37 @@
+/*
+ * Copyright (C) 2020-2021 The Wolfpack
+ * This file is part of wolves.finance - https://github.com/wolvesofwallstreet/wolves.finance
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * See the file LICENSES/README.md for more information.
+ */
+
+/* REMOVE after AssetInput is available*/
+.stake-lp-text-input {
+  /* flex: 1; */
+  /* flex-basis: 80%; */
+  background-color: var(--wolves-orange-transparent);
+  padding: 10px 20px;
+  border: 0.3px solid rgba(255, 255, 255, 05);
+  color: var(--wolves-white);
+  margin-top: 10px;
+  font-weight: bold;
+  font-size: 12px;
+  outline: none;
+}
+
+/* Should be a general class IMO */
+.stake-lp-btn-stack {
+  flex: 1 1 100%;
+  background-color: var(--wolves-orange);
+  border: 0.6px solid var(--wolves-white);
+  text-align: center;
+  color: var(--wolves-blue-dk);
+  outline: none;
+  width: 100%;
+  font-weight: bold;
+  padding: 10px 19px;
+  font-size: 12px;
+  outline: none;
+  flex: 1 1 100%;
+}
