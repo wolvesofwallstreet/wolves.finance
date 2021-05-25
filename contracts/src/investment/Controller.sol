@@ -123,12 +123,9 @@ contract Controller is IController, Context, Ownable {
   /**
    * @dev See {IController-onDeposit}
    */
-  function onDeposit(uint256 amount)
-    external
-    view
-    override
-    returns (uint256 fee)
-  {
+  function onDeposit(
+    uint256 /* amount*/
+  ) external view override returns (uint256 fee) {
     // Load state
     Farm storage farm = farms[_msgSender()];
 
@@ -137,26 +134,17 @@ contract Controller is IController, Context, Ownable {
     require(farm.farmEndedAtBlock == 0, 'Farm closed');
     require(!farm.paused, 'Farm paused');
 
-    // Unused
-    amount;
-
     return 0;
   }
 
   /**
    * @dev See {IController-onDeposit}
    */
-  function onWithdraw(uint256 amount)
-    external
-    view
-    override
-    returns (uint256 fee)
-  {
+  function onWithdraw(
+    uint256 /* amount*/
+  ) external view override returns (uint256 fee) {
     // Validate state
     require(!farms[_msgSender()].paused, 'Farm paused');
-
-    // Unused
-    amount;
 
     return 0;
   }
