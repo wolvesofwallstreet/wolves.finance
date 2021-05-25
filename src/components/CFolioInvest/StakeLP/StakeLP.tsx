@@ -121,9 +121,18 @@ function StakeLP({ cfolioItem, investCurrency, sft, t }: PROPS): JSX.Element {
         <div className={'wolve_input_label font-14'}>{investCurrency}</div>
       </div>
 
-      <div className="d-flex justify-content-end mt-1 font-13">
-        BUY V.2 ETH/WOWS LP TOKENS HERE
-      </div>
+      <span className="d-block left mt-1 font-13">
+        <a
+          target="_blank"
+          rel="noreferrer"
+          href={
+            'https://app.uniswap.org/#/add/v2/ETH/' +
+            StoreClasses.store._getTokenContractAddress()
+          }
+        >
+          GET UNIV2 WOWS/ETH LP TOKENS HERE
+        </a>
+      </span>
 
       <button
         className={

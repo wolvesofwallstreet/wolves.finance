@@ -35,7 +35,7 @@
   padding: 15px 8vw;
 }
 
-.cfolioInvest-container .left {
+.cfolioInvest-container > .left {
   flex-basis: 50%;
   align-self: flex-start;
   max-width: 500px;
@@ -43,7 +43,7 @@
   margin-right: auto;
 }
 
-.cfolioInvest-container .right {
+.cfolioInvest-container > .right {
   flex-basis: 48%;
   align-self: flex-start;
   margin-left: 16px;
@@ -82,4 +82,8 @@
   margin-left: auto;
   margin-right: auto;
   text-align: center;
+}
+
+#cfolioInvest-control-nav .c-pointer:hover {
+  color: var(--wolves-orange);
 }
