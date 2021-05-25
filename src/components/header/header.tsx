@@ -86,6 +86,8 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
   }
 
   renderDropDown(title: string, dropdownItems: DropDownItem[]): ReactNode {
+    const { pathname, search } = this.props.location;
+
     return (
       <span className="nav-item dropdown mx-0 my-0" key={Math.random() + title}>
         <span
@@ -96,13 +98,21 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
           {title}
         </span>
         <ul className="dropdown-menu bg-blue-transparent-dark translateY_-10">
-          {dropdownItems.map((item, index) => (
-            <li key={Math.random() + index}>
-              <Link className="dropdown-item" to={item.to}>
-                {item.id}
-              </Link>
-            </li>
-          ))}
+          {dropdownItems.map((item, index) => {
+            const isActiveNav = pathname + search === item.to;
+            return (
+              <li key={'navLink' + index}>
+                {isActiveNav && (
+                  <span className="dropdown-item active"> {item.id} </span>
+                )}
+                {!isActiveNav && (
+                  <Link className="dropdown-item" to={item.to}>
+                    {item.id}
+                  </Link>
+                )}
+              </li>
+            );
+          })}
         </ul>
       </span>
     );
