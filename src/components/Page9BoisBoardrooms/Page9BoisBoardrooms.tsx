@@ -209,10 +209,13 @@ class Page9BoisBoardrooms extends React.Component<PROPS, STATE> {
               'd-flex justify-content-center bg-transparent-orange mb-3 '
             }
           >
-            <div className={'p_relative'}>
+            <div className={'p_relative '}>
               <button
                 onClick={() => this.sliderInterface?.prev()}
                 className={'slide__arrow slide__arrow--left slide__arrows'}
+                style={{
+                  ['--left' as string]: '-25px',
+                }}
               >
                 {'<'}
               </button>
@@ -236,6 +239,9 @@ class Page9BoisBoardrooms extends React.Component<PROPS, STATE> {
               <button
                 onClick={() => this.sliderInterface?.next()}
                 className={'slide__arrow slide__arrow--right slide__arrows'}
+                style={{
+                  ['--right' as string]: '-25px',
+                }}
               >
                 {'>'}
               </button>
