@@ -89,6 +89,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
     if (newDisplayType !== this.displayType) {
       this.displayType = newDisplayType;
       this.sliderInterface?.go(0);
+      this.setState({ currentImage: 0 });
       this._updateImages();
     }
   }

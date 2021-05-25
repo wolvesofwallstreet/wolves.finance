@@ -68,15 +68,7 @@ class CFolioItemSfts extends Component<PROPS, STATE> {
 
     const filter = query.get('type') || '';
     if (filter !== this.state.currentType) {
-      this.target = '';
-      switch (filter) {
-        case 'lpInvestment':
-          this.target = 'staked-invest';
-          break;
-        case 'yearnInvestment':
-          this.target = 'yearn-invest';
-          break;
-      }
+      this.target = 'cfolio-invest?type=' + filter;
       this.setState({ currentType: filter });
     }
   }
@@ -92,7 +84,7 @@ class CFolioItemSfts extends Component<PROPS, STATE> {
       items.cards.map((card, index) => {
         return (
           <div className="cfisft-card" key={this.state.currentType + index}>
-            <Link to={`${this.target}?item=${index}`}>
+            <Link to={`${this.target}&item=${index}`}>
               <img
                 className="card-media"
                 src={card.url.replace('{res}', '500')}
