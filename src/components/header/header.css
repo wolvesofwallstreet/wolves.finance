@@ -21,6 +21,7 @@
   line-height: 1.2em;
   color: white;
   margin: 0 10px;
+  white-space: nowrap;
 }
 
 .navbar-collapse a:hover {
@@ -144,3 +145,9 @@
     width: auto;
   }
 } */
+
+.dropdown-item.active {
+  color: var(--wolves-orange);
+  background-color: transparent;
+  cursor: auto;
+}
