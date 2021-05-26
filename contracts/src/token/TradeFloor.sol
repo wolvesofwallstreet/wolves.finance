@@ -407,7 +407,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     // Validate state
     require(_tokenInfos[tokenId].minted, 'Not minted');
 
-    // test if cfolioItemHandler provides the URI
+    // Test if cfolioItemHandler provides the URI
     if (tokenId.isCFolioCard()) {
       address cfolio = _sftHolder.tokenIdToAddress(tokenId.toSftTokenId());
       require(cfolio != address(0), 'Invalid');
@@ -416,6 +416,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
       string memory result = ICFolioItemCallback(handler).uri(tokenId);
       if (bytes(result).length > 0) return result;
     }
+
     // Load state
     return _uri(tokenId, 0);
   }
