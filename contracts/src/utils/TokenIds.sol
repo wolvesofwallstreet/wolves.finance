@@ -10,20 +10,19 @@ pragma solidity >=0.7.0 <0.8.0;
 
 library TokenIds {
   // 128 bit underlying hash
-  uint256 public constant HASH_MASK = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+  uint256 public constant HASH_MASK = (1 << 128) - 1;
 
   function isBaseCard(uint256 tokenId) internal pure returns (bool) {
-    return (tokenId & HASH_MASK) < 0x10000000000000000;
+    return (tokenId & HASH_MASK) < (1 << 64);
   }
 
   function isStockCard(uint256 tokenId) internal pure returns (bool) {
-    return (tokenId & HASH_MASK) < 0x100000000;
+    return (tokenId & HASH_MASK) < (1 << 32);
   }
 
   function isCFolioCard(uint256 tokenId) internal pure returns (bool) {
     return
-      (tokenId & HASH_MASK) >= 0x10000000000000000 &&
-      (tokenId & HASH_MASK) < 0x100000000000000000000000000000000;
+      (tokenId & HASH_MASK) >= (1 << 64) && (tokenId & HASH_MASK) < (1 << 128);
   }
 
   function toSftTokenId(uint256 tokenId) internal pure returns (uint256) {
