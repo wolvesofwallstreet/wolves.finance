@@ -144,9 +144,9 @@ class Stake extends Component<STAKEPROPS, STAKESTATE> {
           <h1>{t('stake.welcome')}</h1>
 
           <div className="stake-control">
-            <img className="stake-logo stake-opaque" src={logo} alt="logo" />
+            <img className="stake-logo opaque" src={logo} alt="logo" />
             <span className="stake-line" />
-            <div className="stake-input-container stake-opaque">
+            <div className="stake-input-container opaque">
               <input
                 type="text"
                 autoComplete="off"
