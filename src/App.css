@@ -118,6 +118,11 @@ span a:hover {
   width: 90vw;
   max-width: calc(100% - 36px);
 }
+
+.opaque {
+  opacity: 1;
+}
+
 .responsive-img {
   width: 100%;
 }

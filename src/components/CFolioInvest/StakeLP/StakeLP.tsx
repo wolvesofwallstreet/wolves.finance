@@ -18,6 +18,7 @@ import {
   StoreClasses,
   TokenContractResult,
 } from '../../../stores/store';
+import AssetInput from '../../controls/asset_input';
 
 type PROPS = {
   t: TFunction;
@@ -95,6 +96,9 @@ function StakeLP({ cfolioItem, investCurrency, sft, t }: PROPS): JSX.Element {
     StoreClasses.dispatcher.dispatch(payload);
   };
 
+  const curMaxAmount =
+    tabOption === 0 ? investAmount : (cfolioItem && cfolioItem.assets[0]) ?? 0;
+
   return (
     <>
       <div
@@ -106,21 +110,9 @@ function StakeLP({ cfolioItem, investCurrency, sft, t }: PROPS): JSX.Element {
       </div>
       <span className="mt-1 font-13">
         AVAILABLE IN{tabOption === 0 ? ' MY WALLET: ' : ' MY NFT: '}
-        {tabOption === 0
-          ? investAmount.toFixed(4)
-          : cfolioItem && cfolioItem.assets[0].toFixed(4)}{' '}
-        {investCurrency}
+        {curMaxAmount.toFixed(4)} {investCurrency}
       </span>
-      <div className="p_relative">
-        <input
-          type="text"
-          className="wolve_input text-white font-14"
-          style={{ paddingRight: '125px' }}
-        />
-        {/*<div className="wolve_input_max">MAX</div>*/}
-        <div className={'wolve_input_label font-14'}>{investCurrency}</div>
-      </div>
-
+      <AssetInput currency={investCurrency} maxAmount={curMaxAmount} />
       <span className="d-block left mt-1 font-13">
         <a
           target="_blank"
