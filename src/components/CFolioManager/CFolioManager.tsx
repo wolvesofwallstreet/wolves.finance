@@ -217,27 +217,67 @@ class CFolioManager extends React.Component<PROPS, STATE> {
             {/* Card slider-1 */}
             <div
               className={
-                'w-90-36px pb-3 p_relative center-container center_triangle_down border_thin_b'
+                'w-90-36px pb-3 p_relative center-container center_triangle_down rotate-180'
               }
             >
-              <ImageSlider
-                sliderId="0"
-                initCallback={this.sliderInit.bind(this)}
-                slideWidth={135}
-                onSlideChanged={(index) => this.setSliderIndex(0, index)}
-                slides={this.state.sliderImagesTop}
-              />
+              <div className="d-flex">
+                <button
+                  onClick={() => this.sliderInterfaces[0]?.prev()}
+                  className={'slide__arrow slide__arrow--left'}
+                  style={{
+                    ['--left' as string]: '-22px',
+                  }}
+                >
+                  {'<'}
+                </button>
+                <ImageSlider
+                  sliderId="0"
+                  initCallback={this.sliderInit.bind(this)}
+                  slideWidth={135}
+                  onSlideChanged={(index) => this.setSliderIndex(0, index)}
+                  slides={this.state.sliderImagesTop}
+                />
+                <button
+                  onClick={() => this.sliderInterfaces[0]?.next()}
+                  className={'slide__arrow slide__arrow--right slide__arrows'}
+                  style={{
+                    ['--right' as string]: '-22px',
+                  }}
+                >
+                  {'>'}
+                </button>
+              </div>
             </div>
 
             {/* Card slider-2 */}
             <div className={'w-90-36px center-container pt-2'}>
-              <ImageSlider
-                sliderId="1"
-                initCallback={this.sliderInit.bind(this)}
-                slideWidth={135}
-                onSlideChanged={(index) => this.setSliderIndex(1, index)}
-                slides={this.state.sliderImagesMiddle}
-              />
+              <div className="d-flex p_relative">
+                <button
+                  onClick={() => this.sliderInterfaces[1]?.prev()}
+                  className={'slide__arrow slide__arrow--left'}
+                  style={{
+                    ['--left' as string]: '-22px',
+                  }}
+                >
+                  {'<'}
+                </button>
+                <ImageSlider
+                  sliderId="1"
+                  initCallback={this.sliderInit.bind(this)}
+                  slideWidth={135}
+                  onSlideChanged={(index) => this.setSliderIndex(1, index)}
+                  slides={this.state.sliderImagesMiddle}
+                />
+                <button
+                  onClick={() => this.sliderInterfaces[1]?.next()}
+                  className={'slide__arrow slide__arrow--right slide__arrows'}
+                  style={{
+                    ['--right' as string]: '-22px',
+                  }}
+                >
+                  {'>'}
+                </button>
+              </div>
             </div>
 
             {/* H-line */}
@@ -264,13 +304,33 @@ class CFolioManager extends React.Component<PROPS, STATE> {
                 'w-90-36px pb-3 p_relative center_triangle_down center-container'
               }
             >
-              <ImageSlider
-                sliderId="2"
-                initCallback={this.sliderInit.bind(this)}
-                slideWidth={135}
-                onSlideChanged={(index) => this.setSliderIndex(2, index)}
-                slides={this.state.sliderImagesBottom}
-              />
+              <div className="d-flex p_relative">
+                <button
+                  onClick={() => this.sliderInterfaces[2].prev()}
+                  className={'slide__arrow slide__arrow--left'}
+                  style={{
+                    ['--left' as string]: '-22px',
+                  }}
+                >
+                  {'<'}
+                </button>
+                <ImageSlider
+                  sliderId="2"
+                  initCallback={this.sliderInit.bind(this)}
+                  slideWidth={135}
+                  onSlideChanged={(index) => this.setSliderIndex(2, index)}
+                  slides={this.state.sliderImagesBottom}
+                />
+                <button
+                  onClick={() => this.sliderInterfaces[2]?.next()}
+                  className={'slide__arrow slide__arrow--right slide__arrows'}
+                  style={{
+                    ['--right' as string]: '-22px',
+                  }}
+                >
+                  {'>'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

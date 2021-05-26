@@ -8,6 +8,7 @@
 
 .image_slide_container {
   width: 100%;
+  min-height: 160px;
   text-align: left;
   overflow: hidden;
 }
@@ -169,4 +170,36 @@
 /* Utility class's */
 .min-height-190 {
   min-height: 195px;
+}
+
+.center_triangle_up::before {
+  content: ' ';
+  position: absolute;
+  top: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  background-color: transparent;
+  border-color: transparent;
+  border-width: 10px 20px 0 20px;
+  border-top-color: var(--wolves-orange-light);
+  transform: translateX(-20px);
+}
+
+.center_triangle_down::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  background-color: transparent;
+  border-color: transparent;
+  border-width: 0 20px 10px 20px;
+  border-bottom-color: var(--wolves-orange-light);
+  transform: translateX(-20px);
+}
+
+.center_triangle_down.rotate-180::after {
+  transform: translateX(-20px) rotate(180deg);
 }
