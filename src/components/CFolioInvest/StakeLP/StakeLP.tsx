@@ -22,15 +22,23 @@ import AssetInput from '../../controls/asset_input';
 
 type PROPS = {
   t: TFunction;
+  nftPrice: number;
   investCurrency: string;
   cfolioItem?: SFTCHILD;
   sft?: SFT;
 };
 
-function StakeLP({ cfolioItem, investCurrency, sft, t }: PROPS): JSX.Element {
+function StakeLP({
+  cfolioItem,
+  investCurrency,
+  nftPrice,
+  sft,
+  t,
+}: PROPS): JSX.Element {
   const [tabOption, setTabOption] = useState(0);
   const [investAmount, setInvestAmount] = useState(0);
   const [hasSft, setHasSft] = useState(false);
+  const [inputVal, setInputVal] = useState(0);
 
   if ((sft === undefined) === hasSft) {
     if (hasSft) setInvestAmount(0);
@@ -99,6 +107,19 @@ function StakeLP({ cfolioItem, investCurrency, sft, t }: PROPS): JSX.Element {
   const curMaxAmount =
     tabOption === 0 ? investAmount : (cfolioItem && cfolioItem.assets[0]) ?? 0;
 
+  const buttonText = sft
+    ? isNaN(inputVal)
+      ? 'AMOUNT IS INVALID!'
+      : tabOption === 1
+      ? `UNSTAKE ${inputVal.toFixed(2)} ${investCurrency}`
+      : cfolioItem
+      ? `STAKE ${inputVal.toFixed(2)} ${investCurrency}`
+      : `BUY NFT (${nftPrice} WOWS)` +
+        (inputVal > 0
+          ? ` & STAKE ${inputVal.toFixed(2)} ${investCurrency}`
+          : '')
+    : 'INITIALIZING ACCOUNT!';
+
   return (
     <>
       <div
@@ -112,7 +133,12 @@ function StakeLP({ cfolioItem, investCurrency, sft, t }: PROPS): JSX.Element {
         AVAILABLE IN{tabOption === 0 ? ' MY WALLET: ' : ' MY NFT: '}
         {curMaxAmount.toFixed(4)} {investCurrency}
       </span>
-      <AssetInput currency={investCurrency} maxAmount={curMaxAmount} />
+      <AssetInput
+        currency={investCurrency}
+        minAmount={cfolioItem ? 0.0000000001 : 0}
+        maxAmount={curMaxAmount}
+        cb={(n) => setInputVal(n)}
+      />
       <span className="d-block left mt-1 font-13">
         <a
           target="_blank"
@@ -131,8 +157,9 @@ function StakeLP({ cfolioItem, investCurrency, sft, t }: PROPS): JSX.Element {
           'wolve_btn stake-lp-text-input stake-lp-btn-stack mt-3 m-0 font-10'
         }
         onClick={handleBuy}
+        disabled={buttonText.endsWith('!')}
       >
-        BUY STAKED ETH/WOWS NFT
+        {buttonText}
       </button>
     </>
   );
