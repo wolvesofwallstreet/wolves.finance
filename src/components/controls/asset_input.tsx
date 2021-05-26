@@ -8,38 +8,59 @@
 
 import './asset_input.css';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 type PROPS = {
   currency: string;
+  minAmount: number;
   maxAmount: number;
+  cb?: (n: number) => void;
 };
 
-function AssetInput({ currency, maxAmount }: PROPS): JSX.Element {
-  const [maxVisible, setMaxVisible] = useState(true);
-  const [inputValid, setInputValid] = useState(false);
+function AssetInput({
+  cb,
+  currency,
+  maxAmount,
+  minAmount,
+}: PROPS): JSX.Element {
+  const [hasFocus, setHasFocus] = useState(false);
+  const [amountChanged, setAmountChanged] = useState(false);
   const inputRef: React.RefObject<HTMLInputElement> = useRef(null);
 
   const handleOnChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     event.target.value = event.target.value
       .replace(/[^0-9,.]/gi, '')
       .replace(',', '.');
-    const newState = parseFloat(event.target.value) > 0;
-    if (newState !== inputValid) setInputValid(newState);
+    verifyAndCb();
   };
 
   const setMax = () => {
     if (inputRef.current) inputRef.current.value = maxAmount.toString();
-    if (maxVisible) setMaxVisible(false);
-    // Validate Input
-    const newState = maxAmount > 0;
-    if (newState !== inputValid) setInputValid(newState);
+    setAmountChanged(true);
   };
 
+  const verifyAndCb = useCallback(() => {
+    if (cb && inputRef.current) {
+      const num = parseFloat(inputRef.current.value);
+      cb(num < minAmount || num > maxAmount ? NaN : num);
+    }
+  }, [cb, minAmount, maxAmount]);
+
   useEffect(() => {
-    if (inputRef.current && inputRef.current.value !== '')
-      inputRef.current.value = maxAmount.toString();
+    if (inputRef.current) inputRef.current.value = '';
+    setAmountChanged(true);
   }, [maxAmount]);
+
+  useEffect(() => {
+    if (amountChanged) {
+      setAmountChanged(false);
+      verifyAndCb();
+    }
+  }, [amountChanged, verifyAndCb]);
+
+  const maxVisible = inputRef.current
+    ? !hasFocus && inputRef.current.value === ''
+    : true;
 
   return (
     <div className="asset-input-container opaque">
@@ -47,8 +68,8 @@ function AssetInput({ currency, maxAmount }: PROPS): JSX.Element {
         type="text"
         autoComplete="off"
         className="asset-input"
-        onFocus={() => setMaxVisible(false)}
-        onBlur={() => setMaxVisible(inputRef.current?.value === '')}
+        onFocus={() => setHasFocus(true)}
+        onBlur={() => setHasFocus(false)}
         onChange={handleOnChange}
         ref={inputRef}
       />

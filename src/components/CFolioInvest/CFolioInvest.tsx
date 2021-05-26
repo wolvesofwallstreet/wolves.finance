@@ -234,6 +234,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
     const scroll = cfiRender.length > 1;
 
     const controlAttr = {
+      nftPrice: cfolioItemCard ? cfolioItemCard.price : 0,
       investCurrency: this.investCurrency,
       cfolioItem: renderCFolioItem || undefined,
       sft:
