@@ -7,6 +7,7 @@
  */
 import './image_slider.css';
 
+import { ethers } from 'ethers';
 import React, { RefObject, useEffect, useRef } from 'react';
 
 import { SFTCHILD } from '../../stores/store';
@@ -14,6 +15,7 @@ import { SFTCHILD } from '../../stores/store';
 export interface IMAGE_SLIDER_SLIDE {
   url: string;
   cfolioItems?: SFTCHILD[];
+  tokenId?: ethers.BigNumber;
 }
 
 export type IMAGE_SLIDER_INTERFACE = {
@@ -28,6 +30,7 @@ type PROPS = {
   onSlideChanged?: (index: number) => void;
   slideWidth: number;
   slides: IMAGE_SLIDER_SLIDE[];
+  checkbox?: boolean;
 };
 
 const ImageSlider = ({
@@ -36,6 +39,7 @@ const ImageSlider = ({
   onSlideChanged,
   slideWidth,
   slides,
+  checkbox,
 }: PROPS): JSX.Element => {
   const containerRef: RefObject<HTMLDivElement> = useRef(null);
   const [currentIndex, setCurrentIndex] = React.useState(0);
@@ -105,8 +109,12 @@ const ImageSlider = ({
               <div className="d-flex flex-column justify-content-center text-center p-0 m-0 p_relative">
                 <div
                   className={
-                    // 'image_slide' + (index === currentIndex ? ' active' : '')
-                    'image_slide' + (index === displayIndex ? ' active' : '')
+                    'image_slide' +
+                    (checkbox
+                      ? ' checkbox'
+                      : index === displayIndex
+                      ? ' active'
+                      : '')
                   }
                   style={{
                     width: slideWidth + 'px',
@@ -131,9 +139,8 @@ const ImageSlider = ({
                   <img width="100%" height="100%" src={elem.url} alt="" />
                 </div>
 
-                <span className="p-0 m-0 font-10 image_slider_tid">
-                  TOKEN ID ?? / ??% PROWESS
-                  {/* TOKEN ID ?? */}
+                <span className="p-0 m-0 font-12 image_slider_tid">
+                  {elem.tokenId && elem.tokenId.mask(128).toHexString()}
                 </span>
               </div>
             </React.Fragment>

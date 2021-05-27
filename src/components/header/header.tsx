@@ -79,7 +79,7 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
       ? address.substring(0, 6) +
           '...' +
           address.substring(address.length - 4, address.length) +
-          '(' +
+          ' (' +
           networkName +
           ')'
       : 'CONNECT WALLET';
@@ -124,11 +124,11 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
     const type = query.get('type');
     const levelId = query.get('levelId') || 0;
     const result = [
-      {
+      /*{
         id: t('header.home'),
         to: '/',
         disabled: location.pathname === '/',
-      },
+      },*/
       {
         id: 'WOLF TRADE FLOOR',
         to: '/wolf_trade_floor-1',
@@ -196,7 +196,7 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
     const shortAddress = this._shortAddress();
     const navItems = this._getNavItems();
     return (
-      <Navbar bg="wolf" variant="dark" expand="lg">
+      <Navbar bg="wolf" variant="dark" expand="md">
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Brand className="navbar-brand mr-auto" as={Link} to="/">
           <Image src={logo} width="300" className="logo" />

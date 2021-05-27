@@ -138,6 +138,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
             .replace('.mp4', '.mp4.jpg') || '';
         newImages.push({
           url,
+          tokenId: sft.id,
           cfolioItems: sft.cfolioItems,
           sft,
           level,

@@ -48,6 +48,12 @@
   cursor: default;
 }
 
+.image_slide.checkbox {
+  transform: scale(0.94);
+  opacity: 1;
+  cursor: default;
+}
+
 /* Arrow*/
 .slide__arrow {
   position: absolute;
@@ -101,7 +107,7 @@
 .slide_count {
   width: 27px;
   height: 27px;
-  line-height: 30px;
+  line-height: 27px;
   text-align: center;
   border-radius: 50%;
   background-color: #ffb89f;
@@ -164,6 +170,10 @@
 }
 
 .active + .image_slider_tid {
+  bottom: -14%;
+}
+
+.checkbox + .image_slider_tid {
   bottom: -14%;
 }
 

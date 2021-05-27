@@ -115,6 +115,7 @@ class CFolioManager extends React.Component<PROPS, STATE> {
             result.push({
               url,
               cfolioItems: sft.cfolioItems,
+              tokenId: sft.id,
               sft,
               level,
               index,
@@ -153,6 +154,7 @@ class CFolioManager extends React.Component<PROPS, STATE> {
           sliderImagesMiddle.push({
             url: cfiCard?.url.replace('{res}', '300'),
             cfolioItem: cfiCard,
+            tokenId: cfi.id,
           });
           if (cat?.constraints) {
             constraints[cat.constraints] = true;
@@ -230,7 +232,7 @@ class CFolioManager extends React.Component<PROPS, STATE> {
                 <ImageSlider
                   sliderId="0"
                   initCallback={this.sliderInit.bind(this)}
-                  slideWidth={135}
+                  slideWidth={150}
                   onSlideChanged={(index) => this.setSliderIndex(0, index)}
                   slides={this.state.sliderImagesTop}
                 />
@@ -264,6 +266,7 @@ class CFolioManager extends React.Component<PROPS, STATE> {
                   slideWidth={135}
                   onSlideChanged={(index) => this.setSliderIndex(1, index)}
                   slides={this.state.sliderImagesMiddle}
+                  checkbox={true}
                 />
                 <button
                   onClick={() => this.sliderInterfaces[1]?.next()}
@@ -314,7 +317,7 @@ class CFolioManager extends React.Component<PROPS, STATE> {
                 <ImageSlider
                   sliderId="2"
                   initCallback={this.sliderInit.bind(this)}
-                  slideWidth={135}
+                  slideWidth={150}
                   onSlideChanged={(index) => this.setSliderIndex(2, index)}
                   slides={this.state.sliderImagesBottom}
                 />
