@@ -21,6 +21,7 @@
   vertical-align: bottom;
   background-color: var(--wolves-orange-transparent);
   border: 1px solid hsla(0, 0%, 100%, 0.25);
+  outline: none;
 }
 
 .asset-input-currency {
