@@ -34,8 +34,6 @@ jobs:
             node-version: 14
           - os: ubuntu-20.04
             node-version: 16
-          - os: starship-i9-18.04
-            node-version: 14
 
     # Steps represent a sequence of tasks that will be executed as part of the
     # job
