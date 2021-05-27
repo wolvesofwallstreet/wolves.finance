@@ -15,13 +15,18 @@
 
 .wolve_btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 7px 2rem rgba(204, 138, 109, 0.22);
 }
 
 .wolve_btn:active {
-  /* outline: none; */
+  outline: none;
   transform: translateY(0px);
-  box-shadow: 0 7px 2rem rgba(204, 138, 109, 0.35);
+}
+
+.wolve_btn:disabled,
+.wolve_btn:disabled:hover {
+  background-color: rgb(170, 118, 96);
+  transform: none;
+  cursor: not-allowed;
 }
 
 ._btn,
