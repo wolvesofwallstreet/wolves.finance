@@ -185,6 +185,7 @@ class Store {
   address = '';
   tokenContractAddress = Store.nullAddress;
   pauseSFTUser = false;
+  eventBlockNumber = 0;
 
   dispatchQueue: Payload[] = [];
 
@@ -450,9 +451,17 @@ class Store {
     return this.eventProvider !== null;
   };
 
-  _addDQ = (payload: Payload) => {
-    if (!this.dispatchQueue.find((elem) => elem === payload))
-      this.dispatchQueue.push(payload);
+  _addDQ = async (block: number, payload: Payload) => {
+    if (block > this.eventBlockNumber) {
+      if (
+        !this.dispatchQueue.find(
+          (elem) => JSON.stringify(elem) === JSON.stringify(payload)
+        )
+      )
+        this.dispatchQueue.push(payload);
+    } else {
+      dispatcher.dispatch(payload);
+    }
   };
 
   _setupEvents(): boolean {
@@ -462,14 +471,19 @@ class Store {
 
     const handleTransfer = (from: string, to: string) => {
       const filter = ['cards'];
-      if (!this.pauseSFTUser && (from === this.address || to === this.address))
+      if (
+        !this.pauseSFTUser &&
+        (from === this.address || to === this.address)
+      ) {
         filter.push('tokens');
-      this._addDQ({ type: ASSETS_STATE, content: { filter } } as Payload);
+      }
+      this._addDQ(0, { type: ASSETS_STATE, content: { filter } } as Payload);
     };
 
     // Our Block ticker
     this.eventProvider?.on('block', (blockNumber) => {
-      emitter.emit(NEW_BLOCK, { blockNumber: blockNumber });
+      emitter.emit(NEW_BLOCK, { blockNumber });
+      this.eventBlockNumber = blockNumber;
       this.dispatchQueue.forEach((payload) => dispatcher.dispatch(payload));
       this.dispatchQueue = [];
     });
@@ -487,7 +501,7 @@ class Store {
     );
     this.lpContractRO?.on('Transfer', (from, to) => {
       if (from === this.address || to === this.address) {
-        this._addDQ({ type: STAKE_LP_AVAILABLE } as Payload);
+        dispatcher.dispatch({ type: STAKE_LP_AVAILABLE } as Payload);
       }
     });
     return true;
@@ -1310,7 +1324,7 @@ class Store {
       // There is no transfer with our address emitted,
       // in case of valid SFT: Request an tokenId update
       if (!sftTokenId.eq(BIGNUMBER_MAX))
-        this._addDQ({
+        this._addDQ(tx?.blockNumber ?? 0, {
           type: ASSETS_STATE,
           content: { filter: ['tokens'] },
         } as Payload);

@@ -20,6 +20,7 @@ import {
 import {
   SFT,
   SFTCHILD,
+  StatusResult,
   StoreClasses,
   TokenContractResult,
 } from '../../../stores/store';
@@ -46,6 +47,7 @@ function StakeLP({
   const [investAmount, setInvestAmount] = useState(0);
   const [hasSft, setHasSft] = useState(false);
   const [inputVal, setInputVal] = useState(0);
+  const [txRunning, setTXRunning] = useState(false);
 
   if ((sft === undefined) === hasSft) {
     if (hasSft) setInvestAmount(0);
@@ -66,10 +68,19 @@ function StakeLP({
           : 0;
       setInvestAmount(newInvestAmount);
     };
+    const resetTx = (result: StatusResult) => {
+      if (['success', 'error'].includes(result.status)) setTXRunning(false);
+    };
 
     StoreClasses.emitter.on(STAKE_LP_AVAILABLE, onLpAvailable);
+    StoreClasses.emitter.on(CFOLIO_ITEM_BUY, resetTx);
+    StoreClasses.emitter.on(CFOLIO_ITEM_DEPOSIT_LP, resetTx);
+    StoreClasses.emitter.on(CFOLIO_ITEM_WITHDRAW_LP, resetTx);
     //Cleanup
     return () => {
+      StoreClasses.emitter.off(CFOLIO_ITEM_WITHDRAW_LP, resetTx);
+      StoreClasses.emitter.off(CFOLIO_ITEM_DEPOSIT_LP, resetTx);
+      StoreClasses.emitter.off(CFOLIO_ITEM_BUY, resetTx);
       StoreClasses.emitter.off(STAKE_LP_AVAILABLE, onLpAvailable);
     };
   }, []);
@@ -114,12 +125,15 @@ function StakeLP({
       },
     };
     StoreClasses.dispatcher.dispatch(payload);
+    setTXRunning(true);
   };
 
   const curMaxAmount =
     tabOption === 0 ? investAmount : (cfolioItem && cfolioItem.assets[0]) ?? 0;
 
-  const buttonText = sft
+  const buttonText = txRunning
+    ? 'TRANSACTION PENDING ...'
+    : sft
     ? isNaN(inputVal)
       ? 'INPUT AMOUNT IS INVALID!'
       : tabOption === 1
@@ -167,7 +181,7 @@ function StakeLP({
       <button
         className={'wolves-btn white-border mt-2'}
         onClick={handleBuy}
-        disabled={buttonText.endsWith('!')}
+        disabled={txRunning || buttonText.endsWith('!')}
       >
         {buttonText}
       </button>
