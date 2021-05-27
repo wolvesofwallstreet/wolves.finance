@@ -23,6 +23,7 @@
 # Dependencies:
 #
 #   * git
+#   * patch
 #
 
 # Enable strict mode

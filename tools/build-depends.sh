@@ -66,6 +66,7 @@ source "${DEPENDS_DIR}/chain/canonical-weth/package.sh"
 source "${DEPENDS_DIR}/chain/uniswap-lib/package.sh"
 source "${DEPENDS_DIR}/chain/uniswap-v2-core/package.sh"
 source "${DEPENDS_DIR}/chain/uniswap-v2-periphery/package.sh"
+source "${DEPENDS_DIR}/chain/yearn-protocol/package.sh"
 
 #
 # Checkout dependencies
@@ -75,6 +76,7 @@ checkout_canonical_weth
 checkout_uniswap_lib
 checkout_uniswap_v2_core
 checkout_uniswap_v2_periphery
+checkout_yearn
 
 #
 # Build dependencies
@@ -84,6 +86,7 @@ build_canonical_weth
 build_uniswap_lib
 build_uniswap_v2_core
 build_uniswap_v2_periphery
+build_yearn
 
 #
 # Install dependencies
@@ -93,3 +96,4 @@ install_canonical_weth
 install_uniswap_lib
 install_uniswap_v2_core
 install_uniswap_v2_periphery
+install_yearn
