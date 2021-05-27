@@ -7,7 +7,7 @@
  */
 
 // Events (used in dispatcher and emitter)
-export const ASSETS_LOADED = 'ASSETS_LOADED';
+export const ASSETS_STATE = 'ASSETS_STATE';
 
 export const ADDRESS_COPIED = 'ADDRESS_COPIED';
 export const CONNECTION_CHANGED = 'CONNECTION_CHANGED';
@@ -23,8 +23,8 @@ export const STAKE_LP_AVAILABLE = 'STAKE_LP_AVAILABLE'; // Available LP token
 
 export const SFT_BUY = 'SFT_BUY'; // Buy (mint) an SFT with given level / class
 export const SFT_LOCK = 'SFT_LOCK'; // Transfer SFT to TradingFloor contract
-export const SFT_STATE = 'SFT_STATE'; // SFT cap and minted asset state changed
 export const SFT_UNLOCK = 'SFT_UNLOCK'; // Burn NFT, transfer SFT back
-export const SFT_USER = 'SFT_USER'; // List of SFT owned by address
 
 export const CFOLIO_ITEM_BUY = 'CFOLIO_ITEM_BUY'; // Buy (mint) cfolioItem
+export const CFOLIO_ITEM_DEPOSIT_LP = 'CFOLIO_ITEM_DEPOSIT_LP'; // Add LP token into existing CFI
+export const CFOLIO_ITEM_WITHDRAW_LP = 'CFOLIO_ITEM_WITHDRAW_LP'; // Remove LP token from existing CFI

@@ -11,8 +11,8 @@ import { Component } from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { Link, RouteComponentProps } from 'react-router-dom';
 
-import { ASSETS_LOADED, SFT_STATE } from '../../stores/constants';
-import { SFTStateresult, StoreClasses } from '../../stores/store';
+import { ASSETS_STATE } from '../../stores/constants';
+import { AssetStateresult, StoreClasses } from '../../stores/store';
 import { INITIAL_CFOLIO_ITEMS } from '../types/cards';
 
 type PROPS = {
@@ -35,13 +35,11 @@ class CFolioItemSfts extends Component<PROPS, STATE> {
     super(props);
     this.state = INITIAL_STATE;
 
-    this.onAssetsLoaded = this.onAssetsLoaded.bind(this);
-    this.onSftState = this.onSftState.bind(this);
+    this.onAssetsState = this.onAssetsState.bind(this);
   }
 
   componentDidMount() {
-    StoreClasses.emitter.on(ASSETS_LOADED, this.onAssetsLoaded);
-    StoreClasses.emitter.on(SFT_STATE, this.onSftState);
+    StoreClasses.emitter.on(ASSETS_STATE, this.onAssetsState);
     this._updateContent();
   }
 
@@ -50,16 +48,12 @@ class CFolioItemSfts extends Component<PROPS, STATE> {
   }
 
   componentWillUnmount() {
-    StoreClasses.emitter.off(SFT_STATE, this.onSftState);
-    StoreClasses.emitter.off(ASSETS_LOADED, this.onAssetsLoaded);
+    StoreClasses.emitter.off(ASSETS_STATE, this.onAssetsState);
   }
 
-  onSftState(status: SFTStateresult) {
-    if (status.status === 'caps') this.onAssetsLoaded();
-  }
-
-  onAssetsLoaded() {
-    this.setState({ currentType: this.state.currentType });
+  onAssetsState(status: AssetStateresult) {
+    if (['loaded', 'cards'].includes(status.status))
+      this.setState({ currentType: this.state.currentType });
   }
 
   _updateContent() {

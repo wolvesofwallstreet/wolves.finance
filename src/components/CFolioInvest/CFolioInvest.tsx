@@ -13,11 +13,11 @@ import { TFunction, withTranslation } from 'react-i18next';
 import { Link, RouteComponentProps } from 'react-router-dom';
 
 import WalletLogo from '../../assets/openwallet.png';
-import { ASSETS_LOADED, SFT_STATE } from '../../stores/constants';
+import { ASSETS_STATE } from '../../stores/constants';
 import {
+  AssetStateresult,
   SFT,
   SFTCHILD,
-  SFTStateresult,
   StoreClasses,
 } from '../../stores/store';
 import {
@@ -69,8 +69,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
       cfiRender: [],
       currentImage: 0,
     };
-    this.onSFTState = this.onSFTState.bind(this);
-    this._updateImages = this._updateImages.bind(this);
+    this._onAssetsState = this._onAssetsState.bind(this);
 
     const { location } = this.props;
     const query = new URLSearchParams(location.search);
@@ -95,18 +94,20 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
   }
 
   componentDidMount() {
-    StoreClasses.emitter.on(ASSETS_LOADED, this._updateImages);
-    StoreClasses.emitter.on(SFT_STATE, this.onSFTState);
+    StoreClasses.emitter.on(ASSETS_STATE, this._onAssetsState);
     this._updateImages();
   }
 
   componentWillUnmount() {
-    StoreClasses.emitter.off(SFT_STATE, this.onSFTState);
-    StoreClasses.emitter.off(ASSETS_LOADED, this._updateImages);
+    StoreClasses.emitter.off(ASSETS_STATE, this._onAssetsState);
   }
 
-  onSFTState(result: SFTStateresult) {
-    if (result.status === 'user') this._updateImages();
+  _onAssetsState(result: AssetStateresult) {
+    if (['loaded', 'cards', 'tokens'].includes(result.status)) {
+      this._updateImages();
+    } else if (result.status === 'cfolio_inplace') {
+      this.setState({ currentImage: this.state.currentImage });
+    }
   }
 
   _updateImages() {
@@ -235,6 +236,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
 
     const controlAttr = {
       nftPrice: cfolioItemCard ? cfolioItemCard.price : 0,
+      nftType: cfolioItemCard ? cfolioItemCard.chainRef : 0,
       investCurrency: this.investCurrency,
       cfolioItem: renderCFolioItem || undefined,
       sft:
@@ -383,7 +385,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
 
                 <div
                   id="cfolioInvest-control"
-                  className="bg-blue-transparent-light"
+                  className="bg-blue-transparent-light tk-grotesk-lightbold"
                 >
                   {this.displayType === 'lpInvestment' ? (
                     <StakeLP {...controlAttr} />

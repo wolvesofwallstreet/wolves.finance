@@ -13,15 +13,11 @@ import { TFunction, withTranslation } from 'react-i18next';
 import { Link, RouteComponentProps } from 'react-router-dom';
 
 import Logo from '../../assets/logo.png';
+import { ASSETS_STATE, CONNECTION_CHANGED } from '../../stores/constants';
 import {
-  ASSETS_LOADED,
-  CONNECTION_CHANGED,
-  SFT_STATE,
-} from '../../stores/constants';
-import {
+  AssetStateresult,
   ConnectResult,
   SFT,
-  SFTStateresult,
   StoreClasses,
 } from '../../stores/store';
 import { CARDS } from '../types/cards';
@@ -67,16 +63,14 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
     super(props);
     this.state = INITIAL_PAGE3_STATE;
     this.onConnectionChanged = this.onConnectionChanged.bind(this);
-    this.onAssetsLoaded = this.onAssetsLoaded.bind(this);
-    this.onSFTState = this.onSFTState.bind(this);
+    this.onAssetsState = this.onAssetsState.bind(this);
   }
 
   componentDidMount(): void {
     this._checkContent();
     this.setState({ isWalletConnected: StoreClasses.store.isConnected() });
     StoreClasses.emitter.on(CONNECTION_CHANGED, this.onConnectionChanged);
-    StoreClasses.emitter.on(ASSETS_LOADED, this.onAssetsLoaded);
-    StoreClasses.emitter.on(SFT_STATE, this.onSFTState);
+    StoreClasses.emitter.on(ASSETS_STATE, this.onAssetsState);
   }
 
   componentDidUpdate(): void {
@@ -88,8 +82,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
   }
 
   componentWillUnmount(): void {
-    StoreClasses.emitter.off(ASSETS_LOADED, this.onAssetsLoaded);
-    StoreClasses.emitter.off(SFT_STATE, this.onSFTState);
+    StoreClasses.emitter.off(ASSETS_STATE, this.onAssetsState);
     StoreClasses.emitter.off(CONNECTION_CHANGED, this.onConnectionChanged);
   }
 
@@ -99,13 +92,9 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
     }
   }
 
-  onSFTState(status: SFTStateresult): void {
+  onAssetsState(status: AssetStateresult): void {
     this.setState({ contentLoaded: false });
-  }
-
-  onAssetsLoaded(type: string): void {
-    this.setState({ contentLoaded: false });
-    this._checkContent();
+    if (status.status === 'loaded') this._checkContent();
   }
 
   _checkContent(): void {

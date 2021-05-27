@@ -14,17 +14,16 @@ import { RouteComponentProps } from 'react-router-dom';
 
 import Logo from '../../assets/logo.png';
 import {
-  ASSETS_LOADED,
+  ASSETS_STATE,
   CONNECTION_CHANGED,
   SFT_BUY,
   SFT_LOCK,
-  SFT_STATE,
   SFT_UNLOCK,
 } from '../../stores/constants';
 import {
+  AssetStateresult,
   ConnectResult,
   SFT,
-  SFTStateresult,
   StatusResult,
   StoreClasses,
 } from '../../stores/store';
@@ -67,8 +66,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       tokenIds: StoreClasses.store.getAssets().userSFT,
     };
     this.onConnectionChanged = this.onConnectionChanged.bind(this);
-    this.onAssetsLoaded = this.onAssetsLoaded.bind(this);
-    this.onSFTState = this.onSFTState.bind(this);
+    this.onAssetsState = this.onAssetsState.bind(this);
     this.onSFTTransaction = this.onSFTTransaction.bind(this);
   }
 
@@ -76,8 +74,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     this._updateContent();
     this.setState({ isWalletConnected: StoreClasses.store.isConnected() });
     StoreClasses.emitter.on(CONNECTION_CHANGED, this.onConnectionChanged);
-    StoreClasses.emitter.on(ASSETS_LOADED, this.onAssetsLoaded);
-    StoreClasses.emitter.on(SFT_STATE, this.onSFTState);
+    StoreClasses.emitter.on(ASSETS_STATE, this.onAssetsState);
     StoreClasses.emitter.on(SFT_BUY, this.onSFTTransaction);
     StoreClasses.emitter.on(SFT_LOCK, this.onSFTTransaction);
     StoreClasses.emitter.on(SFT_UNLOCK, this.onSFTTransaction);
@@ -95,8 +92,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     StoreClasses.emitter.off(SFT_UNLOCK, this.onSFTTransaction);
     StoreClasses.emitter.off(SFT_LOCK, this.onSFTTransaction);
     StoreClasses.emitter.off(SFT_BUY, this.onSFTTransaction);
-    StoreClasses.emitter.off(SFT_STATE, this.onSFTState);
-    StoreClasses.emitter.off(ASSETS_LOADED, this.onAssetsLoaded);
+    StoreClasses.emitter.off(ASSETS_STATE, this.onAssetsState);
     StoreClasses.emitter.off(CONNECTION_CHANGED, this.onConnectionChanged);
   }
 
@@ -107,14 +103,13 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     }
   }
 
-  onAssetsLoaded(type: string): void {
+  onAssetsState(status: AssetStateresult): void {
     this.needUpdate = true;
-    this.setState({ cards: StoreClasses.store.getAssets().cards });
-  }
-
-  onSFTState(status: SFTStateresult): void {
-    this.needUpdate = true;
-    this.setState({ tokenIds: StoreClasses.store.getAssets().userSFT });
+    if (status.status === 'loaded' || status.status === 'cards') {
+      this.setState({ cards: StoreClasses.store.getAssets().cards });
+    } else if (status.status === 'tokens') {
+      this.setState({ tokenIds: StoreClasses.store.getAssets().userSFT });
+    }
   }
 
   onSFTTransaction(status: StatusResult): void {

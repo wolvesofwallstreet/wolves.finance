@@ -11,7 +11,12 @@ import './StakeLP.css';
 import { useEffect, useState } from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 
-import { CFOLIO_ITEM_BUY, STAKE_LP_AVAILABLE } from '../../../stores/constants';
+import {
+  CFOLIO_ITEM_BUY,
+  CFOLIO_ITEM_DEPOSIT_LP,
+  CFOLIO_ITEM_WITHDRAW_LP,
+  STAKE_LP_AVAILABLE,
+} from '../../../stores/constants';
 import {
   SFT,
   SFTCHILD,
@@ -23,6 +28,7 @@ import AssetInput from '../../controls/asset_input';
 type PROPS = {
   t: TFunction;
   nftPrice: number;
+  nftType: number;
   investCurrency: string;
   cfolioItem?: SFTCHILD;
   sft?: SFT;
@@ -32,6 +38,7 @@ function StakeLP({
   cfolioItem,
   investCurrency,
   nftPrice,
+  nftType,
   sft,
   t,
 }: PROPS): JSX.Element {
@@ -93,12 +100,17 @@ function StakeLP({
 
   const handleBuy = () => {
     const payload = {
-      type: CFOLIO_ITEM_BUY,
+      type: cfolioItem
+        ? tabOption === 1
+          ? CFOLIO_ITEM_WITHDRAW_LP
+          : CFOLIO_ITEM_DEPOSIT_LP
+        : CFOLIO_ITEM_BUY,
       content: {
-        wowsAmount: 0.5,
-        investAmount: [0],
+        wowsAmount: nftPrice,
+        investAmount: [inputVal],
         sftTokenId: sft?.id,
-        cfolioType: 0,
+        cfolioTokenId: cfolioItem?.id,
+        cfolioType: nftType,
       },
     };
     StoreClasses.dispatcher.dispatch(payload);
@@ -109,7 +121,7 @@ function StakeLP({
 
   const buttonText = sft
     ? isNaN(inputVal)
-      ? 'AMOUNT IS INVALID!'
+      ? 'INPUT AMOUNT IS INVALID!'
       : tabOption === 1
       ? `UNSTAKE ${inputVal.toFixed(2)} ${investCurrency}`
       : cfolioItem
@@ -118,7 +130,7 @@ function StakeLP({
         (inputVal > 0
           ? ` & STAKE ${inputVal.toFixed(2)} ${investCurrency}`
           : '')
-    : 'INITIALIZING ACCOUNT!';
+    : 'ACCOUNT NOT INITIALIZED!';
 
   return (
     <>
@@ -129,7 +141,7 @@ function StakeLP({
         {renderSpan(0, spanText)}
         {cfolioItem && renderSpan(1, 'UNSTAKE')}
       </div>
-      <span className="mt-1 font-13">
+      <span className="mt-1 font-14">
         AVAILABLE IN{tabOption === 0 ? ' MY WALLET: ' : ' MY NFT: '}
         {curMaxAmount.toFixed(4)} {investCurrency}
       </span>
@@ -139,7 +151,7 @@ function StakeLP({
         maxAmount={curMaxAmount}
         cb={(n) => setInputVal(n)}
       />
-      <span className="d-block left mt-1 font-13">
+      <span className="d-block left mt-1 font-14">
         <a
           target="_blank"
           rel="noreferrer"
@@ -153,9 +165,7 @@ function StakeLP({
       </span>
 
       <button
-        className={
-          'wolve_btn stake-lp-text-input stake-lp-btn-stack mt-3 m-0 font-10'
-        }
+        className={'wolves-btn white-border mt-2'}
         onClick={handleBuy}
         disabled={buttonText.endsWith('!')}
       >

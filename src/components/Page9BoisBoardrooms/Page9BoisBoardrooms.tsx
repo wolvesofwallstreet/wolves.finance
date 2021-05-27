@@ -13,8 +13,7 @@ import { TFunction, withTranslation } from 'react-i18next';
 import { RouteComponentProps } from 'react-router-dom';
 
 import Logo from '../../assets/logo.png';
-import { ASSETS_LOADED, SFT_STATE } from '../../stores/constants';
-import { SFTStateresult, StoreClasses } from '../../stores/store';
+import { StoreClasses } from '../../stores/store';
 import {
   IMAGE_SLIDER_INTERFACE,
   IMAGE_SLIDER_SLIDE,
@@ -87,8 +86,6 @@ class Page9BoisBoardrooms extends React.Component<PROPS, STATE> {
       show: false,
     };
     this.toggleModal = this.toggleModal.bind(this);
-    this.onSFTState = this.onSFTState.bind(this);
-    this._updateImages = this._updateImages.bind(this);
   }
 
   setCurrentImage(val: number) {
@@ -100,18 +97,7 @@ class Page9BoisBoardrooms extends React.Component<PROPS, STATE> {
   }
 
   componentDidMount() {
-    StoreClasses.emitter.on(ASSETS_LOADED, this._updateImages);
-    StoreClasses.emitter.on(SFT_STATE, this.onSFTState);
     this._updateImages();
-  }
-
-  componentWillUnmount() {
-    StoreClasses.emitter.off(SFT_STATE, this.onSFTState);
-    StoreClasses.emitter.off(ASSETS_LOADED, this._updateImages);
-  }
-
-  onSFTState(result: SFTStateresult) {
-    if (result.status === 'user') this._updateImages();
   }
 
   _updateImages() {

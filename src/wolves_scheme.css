@@ -1,14 +1,25 @@
 .wolves-btn {
+  transition: all 0.1s ease-in-out;
   border: black 1px solid;
   background-color: var(--wolves-orange);
+  color: var(--wolves-blue-dk);
+  font-weight: 500;
   height: 32px;
   width: 100%;
+}
+
+.wolves-btn.white-border {
+  border: white 1px solid;
 }
 
 .wolves-btn:disabled {
   color: var(--wolves-orange);
   background-color: var(--wolves-blue-dk);
   opacity: 0.5;
+}
+
+.wolves-btn:hover:enabled {
+  transform: translate(-1px, -1px);
 }
 
 .wolves-container {

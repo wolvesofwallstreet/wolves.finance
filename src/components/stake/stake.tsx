@@ -200,7 +200,7 @@ class Stake extends Component<STAKEPROPS, STAKESTATE> {
                   target="_blank"
                   rel="noreferrer"
                   href={
-                    'https://app.uniswap.org/#/add/ETH/' +
+                    'https://app.uniswap.org/#/add/v2/ETH/' +
                     StoreClasses.store._getTokenContractAddress()
                   }
                 >

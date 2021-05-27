@@ -12,6 +12,7 @@
     "uniV2Factory": "",
     "uniV2Router": "",
     "cfolioItemHandlerLPProxy": "",
+    "cfolioFarmLP": "",
     "openSeaProxyRegistry": "0xa5409ec958c83c3f309868babaca7c86dcb077c1"
   },
   "3": {
@@ -26,6 +27,7 @@
     "uniV2Factory": "",
     "uniV2Router": "",
     "cfolioItemHandlerLPProxy": "",
+    "cfolioFarmLP": "",
     "openSeaProxyRegistry": ""
   },
   "4": {
@@ -64,6 +66,7 @@
     "uniV2Factory": "",
     "uniV2Router": "",
     "cfolioItemHandlerLPProxy": "",
+    "cfolioFarmLP": "",
     "openSeaProxyRegistry": ""
   },
   "1337": {
@@ -78,6 +81,7 @@
     "uniV2Factory": "",
     "uniV2Router": "",
     "cfolioItemHandlerLPProxy": "",
+    "cfolioFarmLP": "",
     "openSeaProxyRegistry": ""
   },
   "4003": {
@@ -92,6 +96,7 @@
     "uniV2Factory": "",
     "uniV2Router": "",
     "cfolioItemHandlerLPProxy": "",
+    "cfolioFarmLP": "",
     "openSeaProxyRegistry": ""
   }
 }

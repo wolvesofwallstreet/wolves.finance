@@ -15,8 +15,8 @@ import { TFunction, withTranslation } from 'react-i18next';
 import { RouteComponentProps } from 'react-router-dom';
 
 import WalletLogo from '../../assets/openwallet.png';
-import { ASSETS_LOADED, SFT_STATE } from '../../stores/constants';
-import { SFT, SFTStateresult, StoreClasses } from '../../stores/store';
+import { ASSETS_STATE } from '../../stores/constants';
+import { AssetStateresult, SFT, StoreClasses } from '../../stores/store';
 import {
   IMAGE_SLIDER_INTERFACE,
   IMAGE_SLIDER_SLIDE,
@@ -60,23 +60,20 @@ class CFolioManager extends React.Component<PROPS, STATE> {
       sliderImagesBottom: [],
     };
 
-    this.onSFTState = this.onSFTState.bind(this);
-    this._updateImages = this._updateImages.bind(this);
+    this.onAssetsState = this.onAssetsState.bind(this);
   }
 
   componentDidMount() {
-    StoreClasses.emitter.on(ASSETS_LOADED, this._updateImages);
-    StoreClasses.emitter.on(SFT_STATE, this.onSFTState);
+    StoreClasses.emitter.on(ASSETS_STATE, this.onAssetsState);
     this._updateImages();
   }
 
   componentWillUnmount() {
-    StoreClasses.emitter.off(SFT_STATE, this.onSFTState);
-    StoreClasses.emitter.off(ASSETS_LOADED, this._updateImages);
+    StoreClasses.emitter.off(ASSETS_STATE, this.onAssetsState);
   }
 
-  onSFTState(result: SFTStateresult) {
-    if (result.status === 'user') this._updateImages();
+  onAssetsState(status: AssetStateresult) {
+    if (['loaded', 'tokens'].includes(status.status)) this._updateImages();
   }
 
   _updateImages() {
