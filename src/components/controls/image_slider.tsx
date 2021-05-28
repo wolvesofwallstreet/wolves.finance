@@ -47,6 +47,7 @@ const ImageSlider = ({
   const [displayIndex, setDisplayIndex] = useState(-1);
   const [left, setLeft] = useState(0);
   const [width, setWidth] = useState(0);
+  const [useTransition, enableTransition] = useState(false);
 
   const prev = () => {
     if (currentIndex === 0) {
@@ -76,26 +77,30 @@ const ImageSlider = ({
   initCallback(sliderId, { prev, next, go });
 
   useEffect(() => {
-    if (slides.length && currentIndex >= slides.length) {
-      setCurrentIndex(0);
-    } else {
-      setLeft((width - slideWidth) / 2 - currentIndex * slideWidth);
-    }
-  }, [currentIndex, slideWidth, width, slides.length, checkbox]);
-
-  useEffect(() => {
-    if (!checkbox && displayIndex !== currentIndex) {
+    setLeft((width - slideWidth) / 2 - currentIndex * slideWidth);
+    if (!checkbox && currentIndex !== displayIndex) {
       setDisplayIndex(-1);
       setTimeout(() => setDisplayIndex(currentIndex), 250);
     }
     if (onSlideChanged) {
       onSlideChanged(currentIndex, checked);
     }
-  }, [currentIndex, displayIndex, onSlideChanged, checkbox, checked]);
+  }, [
+    currentIndex,
+    displayIndex,
+    slideWidth,
+    width,
+    checkbox,
+    checked,
+    onSlideChanged,
+  ]);
 
   useEffect(() => {
+    enableTransition(false);
+    setDisplayIndex(-1);
     setCurrentIndex(0);
     setChecked([]);
+    setTimeout(() => enableTransition(true), 500);
   }, [slides]);
 
   useEffect(() => {
@@ -116,7 +121,10 @@ const ImageSlider = ({
 
   return (
     <div className="image_slide_container" ref={containerRef}>
-      <div className="image_slide_track" style={{ left: left + 'px' }}>
+      <div
+        className={`image_slide_track ${useTransition && 'trans'}`}
+        style={{ left: left + 'px' }}
+      >
         {slides.map((elem, index) => {
           return (
             <Fragment key={'si_' + index}>

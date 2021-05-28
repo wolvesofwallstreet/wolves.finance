@@ -207,6 +207,13 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
     this.sliderInterface = iface;
   }
 
+  sliderCB(index: number) {
+    if (index !== this.slideIndex) {
+      this.slideIndex = index;
+      this._updateCFolioItems();
+    }
+  }
+
   render(): JSX.Element {
     const { t } = this.props;
     const { cfiRender } = this.state;
@@ -284,12 +291,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
                   <ImageSlider
                     sliderId="0"
                     initCallback={this.sliderInit.bind(this)}
-                    onSlideChanged={(index) => {
-                      if (index !== this.slideIndex) {
-                        this.slideIndex = index;
-                        this._updateCFolioItems();
-                      }
-                    }}
+                    onSlideChanged={this.sliderCB.bind(this)}
                     slideWidth={150}
                     slides={this.receiverImages}
                   />

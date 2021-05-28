@@ -16,6 +16,9 @@
 .image_slide_track {
   position: relative;
   display: inline-flex;
+}
+
+.image_slide_track.trans {
   transition: all 0.2s ease-in-out;
 }
 
