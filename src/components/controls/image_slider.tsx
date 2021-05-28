@@ -8,7 +8,7 @@
 import './image_slider.css';
 
 import { ethers } from 'ethers';
-import React, { RefObject, useEffect, useRef } from 'react';
+import { Fragment, RefObject, useEffect, useRef, useState } from 'react';
 
 import { SFTCHILD } from '../../stores/store';
 
@@ -27,7 +27,7 @@ export type IMAGE_SLIDER_INTERFACE = {
 type PROPS = {
   sliderId?: string;
   initCallback: (id: string | undefined, iface: IMAGE_SLIDER_INTERFACE) => void;
-  onSlideChanged?: (index: number) => void;
+  onSlideChanged?: (index: number, checked: number[]) => void;
   slideWidth: number;
   slides: IMAGE_SLIDER_SLIDE[];
   checkbox?: boolean;
@@ -42,10 +42,11 @@ const ImageSlider = ({
   checkbox,
 }: PROPS): JSX.Element => {
   const containerRef: RefObject<HTMLDivElement> = useRef(null);
-  const [currentIndex, setCurrentIndex] = React.useState(0);
-  const [displayIndex, setDisplayIndex] = React.useState(0);
-  const [left, setLeft] = React.useState(0);
-  const [width, setWidth] = React.useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [checked, setChecked] = useState([] as number[]);
+  const [displayIndex, setDisplayIndex] = useState(-1);
+  const [left, setLeft] = useState(0);
+  const [width, setWidth] = useState(0);
 
   const prev = () => {
     if (currentIndex === 0) {
@@ -64,6 +65,14 @@ const ImageSlider = ({
   const go = (index: number) =>
     index >= 0 && index < slides.length && setCurrentIndex(index);
 
+  const select = (index: number) => {
+    if (index >= 0 && index < slides.length) {
+      const newChecked = checked.filter((e) => e !== index);
+      if (newChecked.length === checked.length) newChecked.push(index);
+      setChecked(newChecked);
+    }
+  };
+
   initCallback(sliderId, { prev, next, go });
 
   useEffect(() => {
@@ -72,17 +81,22 @@ const ImageSlider = ({
     } else {
       setLeft((width - slideWidth) / 2 - currentIndex * slideWidth);
     }
-  }, [currentIndex, slideWidth, width, slides.length]);
+  }, [currentIndex, slideWidth, width, slides.length, checkbox]);
 
   useEffect(() => {
-    if (onSlideChanged) {
-      if (displayIndex !== currentIndex) {
-        setDisplayIndex(-1);
-        setTimeout(() => setDisplayIndex(currentIndex), 250);
-      }
-      onSlideChanged(currentIndex);
+    if (!checkbox && displayIndex !== currentIndex) {
+      setDisplayIndex(-1);
+      setTimeout(() => setDisplayIndex(currentIndex), 250);
     }
-  }, [currentIndex, displayIndex, onSlideChanged]);
+    if (onSlideChanged) {
+      onSlideChanged(currentIndex, checked);
+    }
+  }, [currentIndex, displayIndex, onSlideChanged, checkbox, checked]);
+
+  useEffect(() => {
+    setCurrentIndex(0);
+    setChecked([]);
+  }, [slides]);
 
   useEffect(() => {
     if (containerRef.current) setWidth(containerRef.current.clientWidth);
@@ -105,14 +119,12 @@ const ImageSlider = ({
       <div className="image_slide_track" style={{ left: left + 'px' }}>
         {slides.map((elem, index) => {
           return (
-            <React.Fragment key={'si_' + index}>
+            <Fragment key={'si_' + index}>
               <div className="d-flex flex-column justify-content-center text-center p-0 m-0 p_relative">
                 <div
                   className={
                     'image_slide' +
-                    (checkbox
-                      ? ' checkbox'
-                      : index === displayIndex
+                    (index === displayIndex || checked.indexOf(index) >= 0
                       ? ' active'
                       : '')
                   }
@@ -120,7 +132,7 @@ const ImageSlider = ({
                     width: slideWidth + 'px',
                     // ['--url' as string]: `url(${elem.url}`,
                   }}
-                  onClick={() => go(index)}
+                  onClick={() => (checkbox ? select(index) : go(index))}
                 >
                   {elem.cfolioItems && elem.cfolioItems.length > 0 && (
                     <div className={'slide_count'}>
@@ -143,7 +155,7 @@ const ImageSlider = ({
                   {elem.tokenId && elem.tokenId.mask(128).toHexString()}
                 </span>
               </div>
-            </React.Fragment>
+            </Fragment>
           );
         })}
       </div>

@@ -44,6 +44,7 @@ type STATE = {
   sliderImagesTop: IMAGE[];
   sliderImagesMiddle: SUBIMAGE[];
   sliderImagesBottom: IMAGE[];
+  checkedMiddle: number[];
 };
 
 class CFolioManager extends React.Component<PROPS, STATE> {
@@ -58,6 +59,7 @@ class CFolioManager extends React.Component<PROPS, STATE> {
       sliderImagesTop: [],
       sliderImagesMiddle: [],
       sliderImagesBottom: [],
+      checkedMiddle: [],
     };
 
     this.onAssetsState = this.onAssetsState.bind(this);
@@ -183,11 +185,13 @@ class CFolioManager extends React.Component<PROPS, STATE> {
     this.setState({ sliderImagesBottom });
   }
 
-  setSliderIndex(pos: number, index: number) {
+  setSliderIndex(pos: number, index: number, checked?: number[]) {
     if (this.sliderIndex[pos] !== index) {
       this.sliderIndex[pos] = index;
       if (pos === 0) this._createSliderImages(this.state.sliderImagesTop);
     }
+    if (checked && checked !== this.state.checkedMiddle)
+      this.setState({ checkedMiddle: checked });
   }
 
   sliderInit(id: string | undefined, iface: IMAGE_SLIDER_INTERFACE) {
@@ -264,7 +268,9 @@ class CFolioManager extends React.Component<PROPS, STATE> {
                   sliderId="1"
                   initCallback={this.sliderInit.bind(this)}
                   slideWidth={135}
-                  onSlideChanged={(index) => this.setSliderIndex(1, index)}
+                  onSlideChanged={(index, checked) =>
+                    this.setSliderIndex(1, index, checked)
+                  }
                   slides={this.state.sliderImagesMiddle}
                   checkbox={true}
                 />
@@ -290,7 +296,7 @@ class CFolioManager extends React.Component<PROPS, STATE> {
               }
             >
               <button className={'wolve_btn w-100 cfm-btn-stack'}>
-                MULTI TRANSFER
+                MULTI TRANSFER ({this.state.checkedMiddle.length} SELECTED)
               </button>
               <div className={'arrow_down mt-1'} />
             </div>

@@ -41,14 +41,7 @@
 }
 
 .image_slide.active {
-  /*padding: 0;*/
   border-width: 2px;
-  transform: scale(0.94);
-  opacity: 1;
-  cursor: default;
-}
-
-.image_slide.checkbox {
   transform: scale(0.94);
   opacity: 1;
   cursor: default;
@@ -170,10 +163,6 @@
 }
 
 .active + .image_slider_tid {
-  bottom: -14%;
-}
-
-.checkbox + .image_slider_tid {
   bottom: -14%;
 }
 
