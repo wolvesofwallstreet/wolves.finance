@@ -14,7 +14,7 @@ import React from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { RouteComponentProps } from 'react-router-dom';
 
-import WalletLogo from '../../assets/openwallet.png';
+import WalletLogo from '../../assets/openwallet_low.png';
 import { ASSETS_STATE } from '../../stores/constants';
 import { AssetStateresult, SFT, StoreClasses } from '../../stores/store';
 import {

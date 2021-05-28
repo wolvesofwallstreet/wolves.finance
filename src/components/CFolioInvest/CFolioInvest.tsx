@@ -12,7 +12,7 @@ import React from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { Link, RouteComponentProps } from 'react-router-dom';
 
-import WalletLogo from '../../assets/openwallet.png';
+import WalletLogo from '../../assets/openwallet_low.png';
 import { ASSETS_STATE } from '../../stores/constants';
 import {
   AssetStateresult,
@@ -257,7 +257,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
             {/* Title & heading */}
             <div>
               <h2 className="mt-4 tk-vincente-lightbold font-28 single-line">
-                {'WOLF TRADE FLOOR - CHOOSE YOUR C-FOLIO TO STAKE WITH'}
+                {this.cfolioItems?.shortDescription}
               </h2>
               <h3 className="tk-grotesk-lightbold font-14">
                 {'PICK YOUR HIGHEST LEVEL WORK TO STAKE '}
@@ -351,9 +351,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
               <div className={'right t-left'}>
                 <h1 className={'tk-vincente h-1'}>
                   {' '}
-                  {cfolioItemCard
-                    ? cfolioItemCard.name
-                    : 'WOLVES WOWS/ETH NFT'}{' '}
+                  {cfolioItemCard ? cfolioItemCard.name : 'NFT'}{' '}
                   {renderCFolioItem ? ' - MY NFT' : ' - NEW NFT'}
                 </h1>
 

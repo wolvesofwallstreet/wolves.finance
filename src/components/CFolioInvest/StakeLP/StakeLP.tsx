@@ -132,19 +132,23 @@ function StakeLP({
     tabOption === 0 ? investAmount : (cfolioItem && cfolioItem.assets[0]) ?? 0;
 
   const buttonText = txRunning
-    ? 'TRANSACTION PENDING ...'
+    ? { l: 'TRANSACTION PENDING ...', e: false }
     : sft
     ? isNaN(inputVal)
-      ? 'INPUT AMOUNT IS INVALID!'
+      ? { l: 'INPUT AMOUNT MUST BE SET', e: false }
       : tabOption === 1
-      ? `UNSTAKE ${inputVal.toFixed(2)} ${investCurrency}`
+      ? { l: `UNSTAKE ${inputVal.toFixed(2)} ${investCurrency}`, e: true }
       : cfolioItem
-      ? `STAKE ${inputVal.toFixed(2)} ${investCurrency}`
-      : `BUY NFT (${nftPrice} WOWS)` +
-        (inputVal > 0
-          ? ` & STAKE ${inputVal.toFixed(2)} ${investCurrency}`
-          : '')
-    : 'ACCOUNT NOT INITIALIZED!';
+      ? { l: `STAKE ${inputVal.toFixed(2)} ${investCurrency}`, e: true }
+      : {
+          l:
+            `BUY NFT (${nftPrice} WOWS)` +
+            (inputVal > 0
+              ? ` & STAKE ${inputVal.toFixed(2)} ${investCurrency}`
+              : ''),
+          e: true,
+        }
+    : { l: 'ACCOUNT NOT INITIALIZED', e: false };
 
   return (
     <>
@@ -181,9 +185,9 @@ function StakeLP({
       <button
         className={'wolves-btn white-border mt-2'}
         onClick={handleBuy}
-        disabled={txRunning || buttonText.endsWith('!')}
+        disabled={!buttonText.e}
       >
-        {buttonText}
+        {buttonText.l}
       </button>
     </>
   );

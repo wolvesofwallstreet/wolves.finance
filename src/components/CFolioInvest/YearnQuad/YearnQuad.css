@@ -5,3 +5,30 @@
  * SPDX-License-Identifier: Apache-2.0
  * See the file LICENSES/README.md for more information.
  */
+
+.yq-bar-chart {
+  position: relative;
+  margin: 10px auto 30px;
+  font-size: 12px;
+  padding: 0;
+}
+
+.yq-bar-chart:after {
+  content: ' ';
+  display: block;
+  border-top: 1px solid var(--wolves-white);
+  position: relative;
+}
+
+.yq-bar-chart > .tick {
+  border-left: 2px solid var(--wolves-white);
+  height: 5px;
+  position: absolute;
+  --percentage: 0;
+  left: var(--percentage);
+}
+
+.yq-bar-chart > .tick:last-child {
+  left: calc(var(--percentage) - 6%);
+  border-left: 0;
+}
