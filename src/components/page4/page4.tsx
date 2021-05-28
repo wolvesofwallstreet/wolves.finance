@@ -320,16 +320,15 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       <div
         id="top"
         className={
-          'wolves-container bg-' + (currentLevel ? currentLevel.type : 'wolves')
+          'wolves-container wolves-header tk-grotesk-lightbold bg-' +
+          (currentLevel ? currentLevel.type : 'wolves')
         }
       >
         <img src={Logo} alt="WOWS" width="50px" height="50px" />
         <h2 className="tk-vincente-lightbold no-margin">
           {t('page4.welcome-' + type)}
         </h2>
-        <h3 className="tk-grotesk-lightbold no-margin">
-          {t('page4.header-' + type)}
-        </h3>
+        <h4 className="no-margin">{t('page4.header-' + type)}</h4>
         {currentIndex >= 0 && (
           <div className="back-level-container">
             <span
@@ -401,20 +400,20 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                 ))}
             </div>
           </div>
-          <div id="page4-content-text">
+          <div id="page4-content-text" className="gro">
             {currentCard && (
               <>
                 <div>
                   <h1 className="tk-vincente-lightbold h-1 single-line">
                     {currentCard.name}
                   </h1>
-                  <h2 className="tk-vincente-lightbold font-24">
+                  <h3 className="tk-vincente-lightbold">
                     <span>
                       {t('page.motto')}:{currentCard.motto}
                     </span>
-                  </h2>
+                  </h3>
                   {currentRender?.id !== undefined && (
-                    <h2 className="tk-vincente-lightbold font-24">
+                    <h3 className="tk-vincente-lightbold">
                       <span>
                         {` ${t('page4.tokenId')}: 0x${currentRender?.id.id
                           .mask(128)
@@ -423,7 +422,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                           .toUpperCase()
                           .padStart(8, '0')}`}
                       </span>
-                    </h2>
+                    </h3>
                   )}
                   <span className="font-16">{currentCard.description}</span>
                   <ul className="tk-vincente-lightbold font-24 rarity-box">

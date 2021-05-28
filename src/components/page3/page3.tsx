@@ -211,7 +211,10 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
     let tokenIdx = 0;
 
     return (
-      <div ref={this.mainRef} className={'wolves-container bg-' + type}>
+      <div
+        ref={this.mainRef}
+        className={'wolves-container wolves-header bg-' + type}
+      >
         {!this.state.isWalletConnected && display === 'my' ? (
           <span className="font-32 tk-vincente-lightbold wallet-warning">
             Wallet is not connected.
@@ -229,12 +232,12 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
             <h2 className="tk-vincente-lightbold no-margin">
               {t('page3.welcome-' + type)}
             </h2>
-            <h3 className="tk-grotesk-lightbold">
+            <h4 className="tk-grotesk-lightbold">
               {t('page3.newCrypto-' + type).replace(
                 '{Q}',
                 (levelId + 1).toString()
               )}
-            </h3>
+            </h4>
             <span className="line-container">
               <span id="left" className="dot" />
               <span className="line" />
@@ -287,7 +290,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
               </span>
             </div>
             {contentLoaded && (
-              <h3 className="tk-grotesk-lightbold">{this.levelDescription}</h3>
+              <h4 className="tk-grotesk-lightbold">{this.levelDescription}</h4>
             )}
             {contentLoaded && (
               <div id="page3-content-container">

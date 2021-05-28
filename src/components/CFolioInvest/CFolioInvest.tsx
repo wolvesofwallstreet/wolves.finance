@@ -339,7 +339,11 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
             </div>
 
             {/* Content */}
-            <div className={'cfolioInvest-container center-container my-3'}>
+            <div
+              className={
+                'cfolioInvest-container wolves-header center-container my-3'
+              }
+            >
               <div className="left d-flex flex-column align-items-center justify-content-even mb-3">
                 {cfolioItemCard && (
                   <img
@@ -351,7 +355,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
               </div>
 
               <div className={'right t-left'}>
-                <h1 className={'tk-vincente h-1'}>
+                <h1 className={'tk-vincente'}>
                   {' '}
                   {cfolioItemCard ? cfolioItemCard.name : 'NFT'}{' '}
                   {renderCFolioItem ? ' - MY NFT' : ' - NEW NFT'}
@@ -360,7 +364,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
                 <div
                   className={'tk-grotesk-lightbold font-16 line-break-enable'}
                 >
-                  <p className="font-18">
+                  <h3 className="tk-vincente">
                     {renderCFolioItem ? (
                       <>
                         TOKEN ID: {renderCFolioItem.id.mask(128).toHexString()}
@@ -379,7 +383,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
                         </>
                       )
                     )}
-                  </p>
+                  </h3>
                   <p>{cfolioItemCard && cfolioItemCard.description}</p>
                   <p>{this.cfolioItems?.description}</p>
                 </div>

@@ -44,12 +44,17 @@
   background-image: url(./assets/background_bois.jpg);
 }
 
-.wolves-container h2 {
+.wolves-header h2 {
   font-size: 30px;
   font-weight: 500;
 }
 
-.wolves-container h3 {
+.wolves-header h3 {
+  font-size: 24px;
+  font-weight: 500;
+}
+
+.wolves-header h4 {
   font-size: 14px;
 }
 
