@@ -1,5 +1,5 @@
 {
-  "levelNames": ["PRODIGY", "PHENOM", "ELITE", "ALPHA"],
+  "levelNames": ["PRODIGY", "PHENOM", "ELITE", "ALPHA", "WALLET"],
   "levels": [
     {
       "levelId": 0,

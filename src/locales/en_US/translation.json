@@ -56,8 +56,8 @@
     "newCrypto-wolves": "NEW LEVEL{Q} WOLF CRYPTOFOLIOS FOR HOLDING STAKING & RAIDING",
     "welcome-bois": "WELCOME TO THE BOIS",
     "newCrypto-bois": "NEW LEVEL{Q} BOIS CRYPTOFOLIOS FOR STABLE COIN LENDING",
-    "welcome-myPack": "WELCOME TO YOUR PACK",
-    "newCrypto-myPack": "YOUR PACK FOR BOIS, WOLVES, UPGRADES AND LP NFTs"
+    "welcome-myPack": "WELCOME TO MY PACK",
+    "newCrypto-myPack": "BOIS, WOLVES AND CFOLIO ITEMS IN MY WALLET"
   },
   "page4": {
     "welcome-wolves": "$t(page3.welcome-wolves)",

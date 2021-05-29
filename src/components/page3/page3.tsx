@@ -18,6 +18,7 @@ import {
   AssetStateresult,
   ConnectResult,
   SFT,
+  SFTCHILD,
   StoreClasses,
 } from '../../stores/store';
 import { CARDS } from '../types/cards';
@@ -53,6 +54,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
   };
   levelDescription = '';
   tokenIds: SFT[] = [];
+  walletTokenIds: SFTCHILD[] = [];
   levelFilter = 0;
   nextLevel = -1;
   prevLevel = -1;
@@ -132,29 +134,37 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
           const idx = this.content.cards.findIndex(
             (level) => level.levelId === newLevelId && level.type === newType
           );
-          this.levelDescription = this.content.cards[idx].header.replace(
-            '{Q}',
-            this.content.cards[idx].quantity.toString()
-          );
-          this.tokenIds = this.content.cards[idx].cards.map((card) => {
-            return {
-              id: ethers.BigNumber.from(
-                (this.content.cards[idx].chainRef << 24) | (card.chainRef << 16)
-              ),
-              isBaseCard: true,
-              isStockCard: true,
-              isWallet: false,
-              locked: false,
-              rewardRate: 0,
-              mintTimestamp: 0,
-              cfolioItems: [],
-            };
-          });
+          if (idx >= 0) {
+            this.levelDescription = this.content.cards[idx].header.replace(
+              '{Q}',
+              this.content.cards[idx].quantity.toString()
+            );
+            this.tokenIds = this.content.cards[idx].cards.map((card) => {
+              return {
+                id: ethers.BigNumber.from(
+                  (this.content.cards[idx].chainRef << 24) |
+                    (card.chainRef << 16)
+                ),
+                isBaseCard: true,
+                isStockCard: true,
+                isWallet: false,
+                locked: false,
+                rewardRate: 0,
+                mintTimestamp: 0,
+                cfolioItems: [],
+              };
+            });
+          }
+          this.walletTokenIds = [];
         } else {
+          // get our base tokenIds
           this.tokenIds = StoreClasses.store
             .getAssets()
             .userSFT.filter((n) => n.isStockCard);
-
+          // get cfolioItems from wallet
+          this.walletTokenIds =
+            StoreClasses.store.getAssets().userSFT.find((n) => n.isWallet)
+              ?.cfolioItems ?? [];
           // collect tokenId bitmask
           let tokenIdBits = 0;
           this.tokenIds.forEach(
@@ -166,9 +176,12 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
             }
           });
           this.levelDescription =
-            this.levelFilter === 0
+            (this.levelFilter & (1 << newLevelId)) === 0
               ? ''
               : `RARITY: 1/${this.content.cards[newLevelId].quantity} - ${this.content.cards[newLevelId].profitReward}% PROFIT SHARE`;
+          if (this.walletTokenIds.length > 0) {
+            this.levelFilter |= 1 << 4;
+          }
         }
 
         if (this.levelFilter && (this.levelFilter & (1 << newLevelId)) === 0) {
@@ -205,7 +218,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
     const { display, t } = this.props;
     const { contentLoaded, levelId, type } = this.state;
     const levelPosition = levelId;
-    const hasMoreLevels = (this.levelFilter & (1 << (levelId + 1))) !== 0;
+    const hasMoreLevels = this.nextLevel >= 0;
 
     const startPosition = 0;
     let tokenIdx = 0;
@@ -249,7 +262,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
                 {levelPosition <= startPosition ? (
                   <Link to="/">{t('page.home')}</Link>
                 ) : (
-                  <Link to={'?type=' + type + '&levelId=' + (levelId - 1)}>
+                  <Link to={'?type=' + type + '&levelId=' + this.prevLevel}>
                     {t('page.previous')}
                   </Link>
                 )}
@@ -280,7 +293,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
               </span>
               <span className="tk-vincente-lightbold font-24 single-line wolves-color-orange">
                 {hasMoreLevels ? (
-                  <Link to={'?type=' + type + '&levelId=' + (levelId + 1)}>
+                  <Link to={'?type=' + type + '&levelId=' + this.nextLevel}>
                     {t('page.nextLevel')}
                   </Link>
                 ) : (

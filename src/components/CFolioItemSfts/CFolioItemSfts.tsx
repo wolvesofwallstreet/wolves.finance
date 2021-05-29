@@ -104,13 +104,13 @@ class CFolioItemSfts extends Component<PROPS, STATE> {
 
     return (
       <>
-        <div id="top" className={'wolves-container bg-wolves'}>
+        <div id="top" className={'wolves-container wolves-header bg-wolves'}>
           {/* Hero heading */}
           <div className="mb-3">
             <h2 className="tk-vincente-lightbold m-0">{items.title}</h2>
-            <h3 className="tk-grotesk-lightbold m-0">
+            <h4 className="tk-grotesk-lightbold m-0">
               {items.shortDescription}
-            </h3>
+            </h4>
           </div>
 
           {/* Line */}

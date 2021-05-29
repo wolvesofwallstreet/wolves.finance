@@ -60,7 +60,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
   sliderInterface?: IMAGE_SLIDER_INTERFACE;
   slideIndex = 0;
   initialCFolio = -1;
-  investCurrency = 'WOWS/ETH LP';
+  investCurrency = '';
   displayType = '';
 
   constructor(props: PROPS) {
@@ -75,6 +75,8 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
     const query = new URLSearchParams(location.search);
     this.initialCFolio = parseInt(query.get('item') || '-1');
     this.displayType = query.get('type') || 'lpInvestment';
+    this.investCurrency =
+      this.displayType === 'lpInvestment' ? 'WOWS/ETH LP' : 'DAI';
   }
 
   setCurrentImage(val: number) {
