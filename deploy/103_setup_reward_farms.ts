@@ -27,6 +27,7 @@ const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 // Deployed aliases
 const CFOLIO_FARM_LP_CONTRACT = 'CFolioFarmLP';
+const CFOLIO_FARM_SC_CONTRACT = 'CFolioFarmSC';
 
 // Contract ABI paths
 const CFOLIO_FARM_ABI = `${__dirname}/../src/abi/contracts/src/investment/CFolioFarm.sol/CFolioFarm.json`;
