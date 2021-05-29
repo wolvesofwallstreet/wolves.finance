@@ -19,12 +19,15 @@ const CFOLIO_FARM_CONTRACT = 'CFolioFarm';
 const ADDRESS_REGISTRY_CONTRACT = 'AddressRegistry';
 const CFOLIO_ITEM_HANDLER_LP_CONTRACT = 'CFolioItemHandlerLP';
 const CFOLIO_ITEM_HANDLER_LP_PROXY_CONTRACT = 'CFolioItemHandlerLPProxy';
+const CFOLIO_ITEM_HANDLER_SC_CONTRACT = 'CFolioItemHandlerSC';
+const CFOLIO_ITEM_HANDLER_SC_PROXY_CONTRACT = 'CFolioItemHandlerSCProxy';
 const SFT_EVALUATOR_CONTRACT = 'SFTEvaluator';
 const SFT_EVALUATOR_PROXY_CONTRACT = 'SFTEvaluatorProxy';
 const UPGRADE_PROXY_CONTRACT = 'UpgradeProxy';
 
 // Deployed aliases
 const CFOLIO_FARM_LP_CONTRACT = 'CFolioFarmLP';
+const CFOLIO_FARM_SC_CONTRACT = 'CFolioFarmSC';
 
 // Path to address files
 const CONFIG_ADDRESSES = `${__dirname}/../src/config/addresses.json`;
@@ -32,7 +35,7 @@ const GENERATED_ADDRESSES = `${__dirname}/../src/config/generated-addresses.json
 const IGNORE_ADDRESSES = process.env.IGNORE_ADDRESSES !== undefined;
 
 // Addressbook constants
-//const BOIS_REWARDS_KEY = ethers.utils.formatBytes32String('BOIS_REWARDS');
+const BOIS_REWARDS_KEY = ethers.utils.formatBytes32String('BOIS_REWARDS');
 const WOLVES_REWARDS_KEY = ethers.utils.formatBytes32String('WOLVES_REWARDS');
 
 const ADDRESS_BOOK_SFT_EVALUATOR_PROXY_KEY = ethers.utils.formatBytes32String(
@@ -280,6 +283,110 @@ const func = async function (hardhat_re) {
 
     generatedAddresses.cfolioItemHandlerLPProxy =
       cfolioItemHandlerLPProxyReceipt.address;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // Deploy CFolioFarm.sol (for SC)
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  if (configAddresses.cfolioFarmSC) {
+    log_step(`Using CFolioFarmSC: ${configAddresses.cfolioFarmSC}`);
+    generatedAddresses.cfolioFarmSC = configAddresses.cfolioFarmSC;
+  } else {
+    log_step('Deploying CFolioFarmSC');
+
+    const CFOLIO_FARM_SC_NAME = 'CFolio Farm SC';
+
+    const cfolioFarmSCReceipt = await deploy(CFOLIO_FARM_SC_CONTRACT, {
+      contract: CFOLIO_FARM_CONTRACT,
+      from: deployer,
+      args: [deployer, CFOLIO_FARM_SC_NAME, CONTROLLER_ADDRESS],
+      log: true,
+      deterministicDeployment: true,
+    });
+
+    generatedAddresses.cfolioFarmSC = cfolioFarmSCReceipt.address;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // Register addresses for CFolioFarmSC
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  log_step('Setting CFolioFarmSC address in address registry');
+
+  await setRegistryKey(
+    deployer,
+    execute,
+    ADDRESS_REGISTRY_INSTANCE,
+    BOIS_REWARDS_KEY,
+    generatedAddresses.cfolioFarmSC
+  );
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // Deploy CFolioItemHandlerSC
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  if (configAddresses.cfolioItemHandlerSC) {
+    log_step(
+      `Using CFolioItemHandlerSC contract: ${configAddresses.cfolioItemHandlerSC}`
+    );
+    generatedAddresses.cfolioItemHandlerSC =
+      configAddresses.cfolioItemHandlerSC;
+  } else {
+    log_step('Deploying CFolioItemHandlerSC contract');
+
+    const cfolioItemHandlerSCContractReceipt = await deploy(
+      CFOLIO_ITEM_HANDLER_SC_CONTRACT,
+      {
+        from: deployer,
+        args: [ADDRESS_REGISTRY_ADDRESS],
+        log: true,
+        deterministicDeployment: true,
+      }
+    );
+
+    generatedAddresses.cfolioItemHandlerSC =
+      cfolioItemHandlerSCContractReceipt.address;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // Deploy CFolioItemHandlerSCProxy
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  if (configAddresses.cfolioItemHandlerSCProxy) {
+    log_step(
+      `Using CFolioItemHandlerSC proxy: ${configAddresses.cfolioItemHandlerSCProxy}`
+    );
+    generatedAddresses.cfolioItemHandlerSCProxy =
+      configAddresses.cfolioItemHandlerSCProxy;
+  } else {
+    log_step('Deploying CFolioItemHandlerSC proxy');
+
+    const cfolioItemHandlerSCProxyReceipt = await deploy(
+      CFOLIO_ITEM_HANDLER_SC_PROXY_CONTRACT,
+      {
+        contract: UPGRADE_PROXY_CONTRACT,
+        from: deployer,
+        args: [
+          ADDRESS_REGISTRY_ADDRESS,
+          generatedAddresses.cfolioItemHandlerSC,
+          [],
+        ],
+        log: true,
+        deterministicDeployment: true,
+      }
+    );
+
+    generatedAddresses.cfolioItemHandlerSCProxy =
+      cfolioItemHandlerSCProxyReceipt.address;
   }
 
   //////////////////////////////////////////////////////////////////////////////

@@ -19,6 +19,8 @@ const SFT_MINTER_CONTRACT = 'WOWSSftMinter';
 const SFT_MINTER_UPDATE_CONTRACT = 'WOWSSftMinterUpdate';
 const CFOLIO_ITEM_HANDLER_LP_CONTRACT = 'CFolioItemHandlerLP';
 const CFOLIO_ITEM_HANDLER_LP_PROXY_CONTRACT = 'CFolioItemHandlerLPProxy';
+const CFOLIO_ITEM_HANDLER_SC_CONTRACT = 'CFolioItemHandlerSC';
+const CFOLIO_ITEM_HANDLER_SC_PROXY_CONTRACT = 'CFolioItemHandlerSCProxy';
 const CONTROLLER_CONTRACT = 'Controller';
 const SFT_EVALUATOR_PROXY_CONTRACT = 'SFTEvaluatorProxy';
 const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
@@ -83,6 +85,11 @@ const func = async function (hardhat_re) {
     CFOLIO_ITEM_HANDLER_LP_CONTRACT,
     generatedAddresses.cfolioItemHandlerLPProxy
   );
+  // CFOLIO_ITEM_HANDLER_SC on CFOLIO_ITEM_HANDLER_SC_PROXY address
+  const CFOLIO_ITEM_HANDLER_SC_INSTANCE = await hardhat_re.ethers.getContractAt(
+    CFOLIO_ITEM_HANDLER_SC_CONTRACT,
+    generatedAddresses.cfolioItemHandlerSCProxy
+  );
 
   // Load ABIs
   const cfolioFarmAbi = JSON.parse(fs.readFileSync(CFOLIO_FARM_ABI).toString());
@@ -90,6 +97,11 @@ const func = async function (hardhat_re) {
   // Contract instances
   const CFOLIO_FARM_LP_INSTANCE = new hardhat_re.ethers.Contract(
     generatedAddresses.cfolioFarmLP,
+    cfolioFarmAbi,
+    SFT_HOLDER_INSTANCE.signer.provider.getSigner(marketingWallet)
+  );
+  const CFOLIO_FARM_SC_INSTANCE = new hardhat_re.ethers.Contract(
+    generatedAddresses.cfolioFarmSC,
     cfolioFarmAbi,
     SFT_HOLDER_INSTANCE.signer.provider.getSigner(marketingWallet)
   );
@@ -152,7 +164,28 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 6.) Controller.sol::registerFarm()
+  // 6.) CFolioFarm.sol::transferOwnership(CFolioItemHandlerSC)
+  //
+
+  if (
+    (await CFOLIO_FARM_SC_INSTANCE.owner()).toLowerCase() !==
+    generatedAddresses.cfolioItemHandlerSCProxy.toLowerCase()
+  ) {
+    await catchUnknownSigner(
+      execute(
+        CFOLIO_FARM_SC_CONTRACT,
+        {
+          from: deployer,
+          log: true,
+        },
+        'transferOwnership',
+        generatedAddresses.cfolioItemHandlerSCProxy
+      )
+    );
+  }
+
+  //
+  // 7.) Controller.sol::registerFarm()
   //
   //   Parameters:
   //     * farmAddress         The CFolioFarmLP address
@@ -162,12 +195,12 @@ const func = async function (hardhat_re) {
   //     * rewardFee           2 * 1e4 (0.02 == 2%)
   //
 
-  const FARM_ADDRESS = generatedAddresses.cfolioFarmLP;
-
   if (
     (await CFOLIO_FARM_LP_INSTANCE.controller()) ===
       CONTROLLER_INSTANCE.address &&
-    (await CONTROLLER_INSTANCE.farms(FARM_ADDRESS)).farmStartedAtBlock.isZero()
+    (
+      await CONTROLLER_INSTANCE.farms(generatedAddresses.cfolioFarmLP)
+    ).farmStartedAtBlock.isZero()
   ) {
     const REWARD_CAP = hardhat_re.ethers.BigNumber.from(
       '15000000000000000000000'
@@ -185,7 +218,7 @@ const func = async function (hardhat_re) {
           log: true,
         },
         'registerFarm',
-        FARM_ADDRESS,
+        generatedAddresses.cfolioFarmLP,
         REWARD_CAP,
         REWARD_PER_DURATION,
         REWARD_PROVIDED,
@@ -195,7 +228,50 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 7.) Call WOWSSftMinter.sol::setCFolioSpec(types, handlers, maxMint, prices)
+  // 8.) Controller.sol::registerFarm()
+  //
+  //   Parameters:
+  //     * farmAddress         The CFolioFarmSC address
+  //     * rewardCap           15,000 * 1e18 Wei
+  //     * rewardsPerDuration  (5000 * 2 / 52) * 1e18 Wei - we have 2 week duration!
+  //     * rewardProvided      0 Wei
+  //     * rewardFee           2 * 1e4 (0.02 == 2%)
+  //
+
+  if (
+    (await CFOLIO_FARM_SC_INSTANCE.controller()) ===
+      CONTROLLER_INSTANCE.address &&
+    (
+      await CONTROLLER_INSTANCE.farms(generatedAddresses.cfolioFarmSC)
+    ).farmStartedAtBlock.isZero()
+  ) {
+    const REWARD_CAP = hardhat_re.ethers.BigNumber.from(
+      '15000000000000000000000'
+    );
+    const REWARD_PER_DURATION = hardhat_re.ethers.BigNumber.from(
+      '192307692300000000000'
+    );
+    const REWARD_PROVIDED = 0;
+    const REWARD_FEE = 2 * 1e4;
+    await catchUnknownSigner(
+      execute(
+        CONTROLLER_CONTRACT,
+        {
+          from: marketingWallet,
+          log: true,
+        },
+        'registerFarm',
+        generatedAddresses.cfolioFarmSC,
+        REWARD_CAP,
+        REWARD_PER_DURATION,
+        REWARD_PROVIDED,
+        REWARD_FEE
+      )
+    );
+  }
+
+  //
+  // 9.) Call WOWSSftMinter.sol::setCFolioSpec(types, handlers, maxMint, prices)
   //
 
   if ((await SFT_MINTER_INSTANCE.getCFolioSpec([0])).maxMintable[0].isZero()) {
@@ -210,9 +286,9 @@ const func = async function (hardhat_re) {
       '0x12',
       '0x13',
     ];
-    const CFI_HANDLERS = new Array(8).fill(
-      generatedAddresses.cfolioItemHandlerLPProxy
-    );
+    const CFI_HANDLERS = new Array(8)
+      .fill(generatedAddresses.cfolioItemHandlerLPProxy, 0, 4)
+      .fill(generatedAddresses.cfolioItemHandlerSCProxy, 4, 8);
     const CFI_MAXMINT = new Array(8).fill('100');
     const CFI_PRICES = new Array(8).fill('500000000000000000');
     await catchUnknownSigner(
@@ -250,7 +326,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 8.) Call WowsSFTMinter.sol::setSFTEvaluator(sftEvaluatorProxy)
+  // 10.) Call WowsSFTMinter.sol::setSFTEvaluator(sftEvaluatorProxy)
   //
 
   if (
@@ -271,7 +347,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 9.) Check if we have to upgrade the sftEvaluator implementation
+  // 11.) Check if we have to upgrade the sftEvaluator implementation
   //
   if (
     (await getProxyImplementation(
@@ -293,7 +369,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 10.) Set the SFTMinter in CFIHLPP contract if required
+  // 12.) Set the SFTMinter in CFIHLPP contract if required
   //
   if (
     (await CFOLIO_ITEM_HANDLER_LP_INSTANCE.sftMinter()) !==
@@ -314,7 +390,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 11.) Check if we have to upgrade the cfolioItemHandlerLP implementation
+  // 13.) Check if we have to upgrade the cfolioItemHandlerLP implementation
   //
   if (
     (await getProxyImplementation(
@@ -331,6 +407,49 @@ const func = async function (hardhat_re) {
         },
         'upgradeTo',
         generatedAddresses.cfolioItemHandlerLP
+      )
+    );
+  }
+
+  //
+  // 14.) Set the SFTMinter in CFIHSCP contract if required
+  //
+  if (
+    (await CFOLIO_ITEM_HANDLER_SC_INSTANCE.sftMinter()) !==
+    generatedAddresses.sftMinter
+  ) {
+    await catchUnknownSigner(
+      execute(
+        CFOLIO_ITEM_HANDLER_SC_CONTRACT,
+        {
+          from: marketingWallet,
+          to: generatedAddresses.cfolioItemHandlerSCProxy,
+          log: true,
+        },
+        'setMinter',
+        generatedAddresses.sftMinter
+      )
+    );
+  }
+
+  //
+  // 13.) Check if we have to upgrade the cfolioItemHandlerSC implementation
+  //
+  if (
+    (await getProxyImplementation(
+      hardhat_re,
+      generatedAddresses.cfolioItemHandlerSCProxy
+    )) !== generatedAddresses.cfolioItemHandlerSC
+  ) {
+    await catchUnknownSigner(
+      execute(
+        CFOLIO_ITEM_HANDLER_SC_PROXY_CONTRACT,
+        {
+          from: marketingWallet,
+          log: true,
+        },
+        'upgradeTo',
+        generatedAddresses.cfolioItemHandlerSC
       )
     );
   }

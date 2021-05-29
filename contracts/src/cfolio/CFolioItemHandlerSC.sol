@@ -26,7 +26,7 @@ import '../utils/interfaces/IAddressRegistry.sol';
 import '../utils/TokenIds.sol';
 
 /**
- * @dev CFolioItemHandlerLP manages CFolioItems, minted in the SFT contract.
+ * @dev CFolioItemHandlerSC manages CFolioItems, minted in the SFT contract.
  *
  * Minting CFolioItem SFTs is implemented in the WOWSSFTMinter contract, which
  * mints the SFT in the WowsERC1155 contract and calls setupCFolio in here.
@@ -36,10 +36,10 @@ import '../utils/TokenIds.sol';
  *
  * CFolioItem SFTs only earn rewards if they are inside the cfolio of a base
  * NFT. We get called from main TradeFloor every time an CFolioItem gets
- * transfered and calculate the new rewardable LP amount based on the reward %
+ * transfered and calculate the new rewardable ?? amount based on the reward %
  * of the base NFT.
  */
-contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
+contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
   using SafeMath for uint256;
   using TokenIds for uint256;
 
@@ -47,19 +47,16 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
   // State
   //////////////////////////////////////////////////////////////////////////////
 
-  // Route to SFT Minter. Only setup from SFT Minter allowed.
-  address public sftMinter;
-
   //////////////////////////////////////////////////////////////////////////////
   // Routing
   //////////////////////////////////////////////////////////////////////////////
 
+  // Route to SFT Minter. Only setup from SFT Minter allowed.
+  address public sftMinter;
+
   // The TradeFloor contract which provides c-folio NFTs. This TradeFloor
   // contract calls the IMinterCallback interface functions.
   address public immutable tradeFloor;
-
-  // The token staked here (WOWS/WETH UniV2 Pair)
-  IERC20 public immutable stakingToken;
 
   // SFT evaluator
   ISFTEvaluator public immutable sftEvaluator;
@@ -115,14 +112,9 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
       addressRegistry.getRegistryEntry(AddressBook.SFT_EVALUATOR_PROXY)
     );
 
-    // The ERC-20 token we stake
-    stakingToken = IERC20(
-      addressRegistry.getRegistryEntry(AddressBook.UNISWAP_V2_PAIR)
-    );
-
     // WOWS reward farm
     cfolioFarm = ICFolioFarm(
-      addressRegistry.getRegistryEntry(AddressBook.WOLVES_REWARDS)
+      addressRegistry.getRegistryEntry(AddressBook.BOIS_REWARDS)
     );
   }
 
@@ -147,7 +139,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
       (sftTokenId = sftHolder.addressToTokenId(to)) != uint256(-1)
     ) {
       (, uint8 level) = sftHolder.getTokenData(sftTokenId);
-      require((LEVEL2WOLF & (uint256(1) << level)) > 0, 'CFIH: Wolves only');
+      require((LEVEL2BOIS & (uint256(1) << level)) > 0, 'CFIH: Bois only');
       _updateRewards(to, sftEvaluator.rewardRate(sftTokenId));
     }
 
@@ -188,7 +180,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
    * needed for this.
    */
   function setupCFolio(
-    address payer,
+    address, /* payer*/
     uint256 sftTokenId,
     uint256[] calldata amounts
   ) external override {
@@ -199,19 +191,14 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
     address cFolio = sftHolder.tokenIdToAddress(sftTokenId);
     require(cFolio != address(0), 'Invalid sftTokenId');
 
+    require(amounts.length == 0, 'CFIH: not impl');
+
     // Verify that this function is called the first time
     try IWOWSCryptofolio(cFolio)._tradefloors(0) returns (address) {
       revert('CFIH: TradeFloor not empty');
     } catch {}
 
-    if (amounts.length > 0 && amounts[0] > 0) {
-      // Transfer LP token to this contract
-      stakingToken.transferFrom(payer, address(this), amounts[0]);
-
-      // Record assets in Farm contract. They don't earn rewards.
-      // addAsset must only be called from Investment CFolios
-      cfolioFarm.addAssets(cFolio, amounts[0]);
-    }
+    // TODO: Investment????
 
     // Transfer a dummy NFT token to cFolio so we get informed if the cFolio
     // gets burned
@@ -237,21 +224,10 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
     uint256 baseTokenId,
     uint256 tokenId,
     uint256[] calldata amounts
-  ) external override {
+  ) external view override {
     // Validate parameters
-    require(amounts.length == 1 && amounts[0] > 0, 'CFIH: invalid amount');
-    (address baseCFolio, address itemCFolio) =
-      _verifyAssetAccess(baseTokenId, tokenId);
-
-    // Transfer LP token to this contract
-    stakingToken.transferFrom(_msgSender(), address(this), amounts[0]);
-
-    // Record assets in the Farm contract. They don't earn rewards.
-    // addAssets must only be called from Investment CFolios
-    cfolioFarm.addAssets(itemCFolio, amounts[0]);
-
-    if (baseTokenId != uint256(-1))
-      _updateRewards(baseCFolio, sftEvaluator.rewardRate(baseTokenId));
+    require(amounts.length == 0, 'CFIH: Not impl');
+    _verifyAssetAccess(baseTokenId, tokenId);
   }
 
   /**
@@ -267,20 +243,9 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
     uint256 baseTokenId,
     uint256 tokenId,
     uint256[] calldata amounts
-  ) external override {
-    require(amounts.length == 1 && amounts[0] > 0, 'CFIH: invalid amount');
-    (address baseCFolio, address itemCFolio) =
-      _verifyAssetAccess(baseTokenId, tokenId);
-
-    // Record assets in Farm contract. They don't earn rewards.
-    // addAsset must only be called from Investment CFolios
-    cfolioFarm.removeAssets(itemCFolio, amounts[0]);
-
-    // Transfer LP token from this contract
-    stakingToken.transfer(_msgSender(), amounts[0]);
-
-    if (baseTokenId != uint256(-1))
-      _updateRewards(baseCFolio, sftEvaluator.rewardRate(baseTokenId));
+  ) external view override {
+    require(amounts.length == 0, 'CFIH: Not impl');
+    _verifyAssetAccess(baseTokenId, tokenId);
   }
 
   /**
@@ -389,15 +354,9 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
   /**
    * @dev Upgrade contract
    */
-  function upgradeContract(CFolioItemHandlerLP newContract) external {
+  function upgradeContract(CFolioItemHandlerSC newContract) external {
     // Validate access
     require(_msgSender() == admin, 'Admin only');
-
-    // Update state
-    stakingToken.transfer(
-      address(newContract),
-      stakingToken.balanceOf(address(this))
-    );
     selfdestruct(payable(address(newContract)));
   }
 
