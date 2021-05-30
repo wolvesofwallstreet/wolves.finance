@@ -70,13 +70,11 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
       currentImage: 0,
     };
     this._onAssetsState = this._onAssetsState.bind(this);
+    this.sliderCB = this.sliderCB.bind(this);
 
     const { location } = this.props;
     const query = new URLSearchParams(location.search);
     this.initialCFolio = parseInt(query.get('item') || '-1');
-    this.displayType = query.get('type') || 'lpInvestment';
-    this.investCurrency =
-      this.displayType === 'lpInvestment' ? 'WOWS/ETH LP' : 'DAI';
   }
 
   setCurrentImage(val: number) {
@@ -89,6 +87,8 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
     const newDisplayType = query.get('type') || 'lpInvestment';
     if (newDisplayType !== this.displayType) {
       this.displayType = newDisplayType;
+      this.investCurrency =
+        this.displayType === 'lpInvestment' ? 'WOWS/ETH LP' : 'DAI';
       this.sliderInterface?.go(0);
       this.setState({ currentImage: 0 });
       this._updateImages();
@@ -209,7 +209,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
     this.sliderInterface = iface;
   }
 
-  sliderCB(index: number) {
+  sliderCB(_: string | undefined, index: number) {
     if (index !== this.slideIndex) {
       this.slideIndex = index;
       this._updateCFolioItems();
@@ -293,7 +293,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
                   <ImageSlider
                     sliderId="0"
                     initCallback={this.sliderInit.bind(this)}
-                    onSlideChanged={this.sliderCB.bind(this)}
+                    onSlideChanged={this.sliderCB}
                     slideWidth={150}
                     slides={this.receiverImages}
                   />

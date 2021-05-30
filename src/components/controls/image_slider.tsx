@@ -16,6 +16,7 @@ export interface IMAGE_SLIDER_SLIDE {
   url: string;
   cfolioItems?: SFTCHILD[];
   tokenId?: ethers.BigNumber;
+  locked?: boolean;
 }
 
 export type IMAGE_SLIDER_INTERFACE = {
@@ -27,7 +28,11 @@ export type IMAGE_SLIDER_INTERFACE = {
 type PROPS = {
   sliderId?: string;
   initCallback: (id: string | undefined, iface: IMAGE_SLIDER_INTERFACE) => void;
-  onSlideChanged?: (index: number, checked: number[]) => void;
+  onSlideChanged?: (
+    slideId: string | undefined,
+    index: number,
+    checked: number[]
+  ) => void;
   slideWidth: number;
   slides: IMAGE_SLIDER_SLIDE[];
   checkbox?: boolean;
@@ -83,7 +88,7 @@ const ImageSlider = ({
       setTimeout(() => setDisplayIndex(currentIndex), 250);
     }
     if (onSlideChanged) {
-      onSlideChanged(currentIndex, checked);
+      onSlideChanged(sliderId, currentIndex, checked);
     }
   }, [
     currentIndex,
@@ -93,13 +98,14 @@ const ImageSlider = ({
     checkbox,
     checked,
     onSlideChanged,
+    sliderId,
   ]);
 
   useEffect(() => {
     enableTransition(false);
+    setChecked([]);
     setDisplayIndex(-1);
     setCurrentIndex(0);
-    setChecked([]);
     setTimeout(() => enableTransition(true), 500);
   }, [slides]);
 
@@ -132,9 +138,11 @@ const ImageSlider = ({
                 <div
                   className={
                     'image_slide' +
-                    (index === displayIndex || checked.indexOf(index) >= 0
-                      ? ' active'
-                      : '')
+                    (checked.indexOf(index) >= 0
+                      ? ' active c-pointer'
+                      : index === displayIndex
+                      ? ' active c-default'
+                      : ' c-pointer')
                   }
                   style={{
                     width: slideWidth + 'px',
@@ -144,9 +152,10 @@ const ImageSlider = ({
                 >
                   {elem.cfolioItems && elem.cfolioItems.length > 0 && (
                     <div className={'slide_count'}>
-                      {elem.cfolioItems.length}
+                      {elem.cfolioItems && elem.cfolioItems.length}
                     </div>
                   )}
+                  {elem.locked && <div className={'slide_locked'} />}
 
                   <div className="slide_tooltip_wrapper">
                     <div className="slide_tooltip_content">

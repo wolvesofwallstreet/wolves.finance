@@ -28,3 +28,4 @@ export const SFT_UNLOCK = 'SFT_UNLOCK'; // Burn NFT, transfer SFT back
 export const CFOLIO_ITEM_BUY = 'CFOLIO_ITEM_BUY'; // Buy (mint) cfolioItem
 export const CFOLIO_ITEM_DEPOSIT_LP = 'CFOLIO_ITEM_DEPOSIT_LP'; // Add LP token into existing CFI
 export const CFOLIO_ITEM_WITHDRAW_LP = 'CFOLIO_ITEM_WITHDRAW_LP'; // Remove LP token from existing CFI
+export const CFOLIO_ITEM_LOCK_TRANSFER = 'CFOLIO_ITEM_LOCK_TRANSFER'; // LockTransfer / transfer CFI's

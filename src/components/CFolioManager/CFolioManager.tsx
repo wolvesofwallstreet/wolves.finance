@@ -15,8 +15,18 @@ import { TFunction, withTranslation } from 'react-i18next';
 import { RouteComponentProps } from 'react-router-dom';
 
 import WalletLogo from '../../assets/openwallet_low.png';
-import { ASSETS_STATE } from '../../stores/constants';
-import { AssetStateresult, SFT, StoreClasses } from '../../stores/store';
+import {
+  ASSETS_STATE,
+  CFOLIO_ITEM_LOCK_TRANSFER,
+} from '../../stores/constants';
+import {
+  AssetStateresult,
+  BIGNUMBER_MAX,
+  PayloadContentCFolioItemLT,
+  SFT,
+  StatusResult,
+  StoreClasses,
+} from '../../stores/store';
 import {
   IMAGE_SLIDER_INTERFACE,
   IMAGE_SLIDER_SLIDE,
@@ -41,6 +51,7 @@ type PROPS = {
 };
 
 type STATE = {
+  txPending: boolean;
   sliderImagesTop: IMAGE[];
   sliderImagesMiddle: SUBIMAGE[];
   sliderImagesBottom: IMAGE[];
@@ -56,6 +67,7 @@ class CFolioManager extends React.Component<PROPS, STATE> {
   constructor(props: PROPS) {
     super(props);
     this.state = {
+      txPending: false,
       sliderImagesTop: [],
       sliderImagesMiddle: [],
       sliderImagesBottom: [],
@@ -63,19 +75,28 @@ class CFolioManager extends React.Component<PROPS, STATE> {
     };
 
     this.onAssetsState = this.onAssetsState.bind(this);
+    this.onTransfer = this.onTransfer.bind(this);
+    this.setSliderIndex = this.setSliderIndex.bind(this);
   }
 
   componentDidMount() {
     StoreClasses.emitter.on(ASSETS_STATE, this.onAssetsState);
+    StoreClasses.emitter.on(CFOLIO_ITEM_LOCK_TRANSFER, this.onTransfer);
     this._updateImages();
   }
 
   componentWillUnmount() {
+    StoreClasses.emitter.off(CFOLIO_ITEM_LOCK_TRANSFER, this.onTransfer);
     StoreClasses.emitter.off(ASSETS_STATE, this.onAssetsState);
   }
 
   onAssetsState(status: AssetStateresult) {
     if (['loaded', 'tokens'].includes(status.status)) this._updateImages();
+  }
+
+  onTransfer(status: StatusResult) {
+    if (['error', 'success'].includes(status.status))
+      this.setState({ txPending: false });
   }
 
   _updateImages() {
@@ -155,6 +176,7 @@ class CFolioManager extends React.Component<PROPS, STATE> {
         if (cfiCard) {
           sliderImagesMiddle.push({
             url: cfiCard?.url.replace('{res}', '300'),
+            locked: cfi.locked,
             cfolioItem: cfiCard,
             tokenId: cfi.id,
           });
@@ -181,16 +203,18 @@ class CFolioManager extends React.Component<PROPS, STATE> {
         )
       );
     }
+    this.setState({ checkedMiddle: [] });
     this.setState({ sliderImagesMiddle });
     this.setState({ sliderImagesBottom });
   }
 
-  setSliderIndex(pos: number, index: number, checked?: number[]) {
+  setSliderIndex(id: string | undefined, index: number, checked?: number[]) {
+    const pos = parseInt(id ?? '0');
     if (this.sliderIndex[pos] !== index) {
       this.sliderIndex[pos] = index;
       if (pos === 0) this._createSliderImages(this.state.sliderImagesTop);
     }
-    if (checked && checked !== this.state.checkedMiddle)
+    if (pos === 1 && checked && checked !== this.state.checkedMiddle)
       this.setState({ checkedMiddle: checked });
   }
 
@@ -198,7 +222,53 @@ class CFolioManager extends React.Component<PROPS, STATE> {
     this.sliderInterfaces[id || 'default'] = iface;
   }
 
+  handleBuy() {
+    const request: PayloadContentCFolioItemLT = {
+      src: this.state.sliderImagesTop[this.sliderIndex[0]].sft.id,
+      dst: this.state.sliderImagesBottom[this.sliderIndex[2]].sft.id,
+      lockCFIs: [],
+      transferCFIs: [],
+    };
+    this.state.checkedMiddle.forEach((n) => {
+      if (this.state.sliderImagesMiddle[n].locked)
+        request.transferCFIs.push(
+          this.state.sliderImagesMiddle[n].tokenId ?? BIGNUMBER_MAX
+        );
+      else
+        request.lockCFIs.push(
+          this.state.sliderImagesMiddle[n].tokenId ?? BIGNUMBER_MAX
+        );
+    });
+    this.setState({ txPending: true });
+    StoreClasses.dispatcher.dispatch({
+      type: CFOLIO_ITEM_LOCK_TRANSFER,
+      content: request,
+    });
+  }
+
   render() {
+    let unLockedCount = 0;
+    this.state.checkedMiddle.forEach(
+      (n) => (unLockedCount += this.state.sliderImagesMiddle[n].locked ? 0 : 1)
+    );
+    const buttonState = this.state.txPending
+      ? { l: 'TRANSACTION PENDING', e: false }
+      : this.state.sliderImagesTop.length > 0
+      ? this.state.checkedMiddle.length > 0
+        ? unLockedCount > 0
+          ? {
+              l: `LOCK (${unLockedCount}) AND TRANSFER (${this.state.checkedMiddle.length}) CFOLIO ITEM`,
+              e: true,
+            }
+          : {
+              l: `TRANSFER (${this.state.checkedMiddle.length}) CFOLIO ITEM`,
+              e: true,
+            }
+        : { l: 'NOTHING SELECTED', e: false }
+      : { l: 'ACCOUNT NOT INITIALIZED', e: false };
+    if (buttonState.e && this.state.checkedMiddle.length > 1)
+      buttonState.l += 'S';
+
     return (
       <>
         <div className={'cfm-container bg-wolves'}>
@@ -237,7 +307,7 @@ class CFolioManager extends React.Component<PROPS, STATE> {
                   sliderId="0"
                   initCallback={this.sliderInit.bind(this)}
                   slideWidth={150}
-                  onSlideChanged={(index) => this.setSliderIndex(0, index)}
+                  onSlideChanged={this.setSliderIndex}
                   slides={this.state.sliderImagesTop}
                 />
                 <button
@@ -268,9 +338,7 @@ class CFolioManager extends React.Component<PROPS, STATE> {
                   sliderId="1"
                   initCallback={this.sliderInit.bind(this)}
                   slideWidth={135}
-                  onSlideChanged={(index, checked) =>
-                    this.setSliderIndex(1, index, checked)
-                  }
+                  onSlideChanged={this.setSliderIndex}
                   slides={this.state.sliderImagesMiddle}
                   checkbox={true}
                 />
@@ -295,8 +363,12 @@ class CFolioManager extends React.Component<PROPS, STATE> {
                 'center-container d-flex flex-column justify-content-center align-items-center'
               }
             >
-              <button className={'wolve_btn w-100 cfm-btn-stack'}>
-                MULTI TRANSFER ({this.state.checkedMiddle.length} SELECTED)
+              <button
+                disabled={!buttonState.e}
+                className={'wolves-btn white-border w280px font-14'}
+                onClick={this.handleBuy.bind(this)}
+              >
+                {buttonState.l}
               </button>
               <div className={'arrow_down mt-1'} />
             </div>
@@ -324,7 +396,7 @@ class CFolioManager extends React.Component<PROPS, STATE> {
                   sliderId="2"
                   initCallback={this.sliderInit.bind(this)}
                   slideWidth={150}
-                  onSlideChanged={(index) => this.setSliderIndex(2, index)}
+                  onSlideChanged={this.setSliderIndex}
                   slides={this.state.sliderImagesBottom}
                 />
                 <button

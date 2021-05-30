@@ -36,6 +36,7 @@ import {
   ASSETS_STATE,
   CFOLIO_ITEM_BUY,
   CFOLIO_ITEM_DEPOSIT_LP,
+  CFOLIO_ITEM_LOCK_TRANSFER,
   CFOLIO_ITEM_WITHDRAW_LP,
   CONNECTION_CHANGED,
   ERC20_TOKEN_CONTRACT,
@@ -67,6 +68,13 @@ type PayloadContentCFolioItem = {
   sftTokenId: ethers.BigNumber;
   cfolioTokenId?: ethers.BigNumber;
   cfolioType: number;
+};
+
+export type PayloadContentCFolioItemLT = {
+  src: ethers.BigNumber;
+  dst: ethers.BigNumber;
+  lockCFIs: ethers.BigNumber[];
+  transferCFIs: ethers.BigNumber[];
 };
 
 type Payload = {
@@ -259,6 +267,11 @@ class Store {
         case CFOLIO_ITEM_WITHDRAW_LP:
           this._doCFolioItemWithdrawLP(
             _payload.content as PayloadContentCFolioItem
+          );
+          break;
+        case CFOLIO_ITEM_LOCK_TRANSFER:
+          this._doCFolioItemLockAndTransfer(
+            _payload.content as PayloadContentCFolioItemLT
           );
           break;
         case ERC20_TOKEN_CONTRACT:
@@ -835,9 +848,12 @@ class Store {
 
           let numCFolios = readUint256(result2, readIndex++).toNumber();
           while (numCFolios > 0) {
+            const childId = readUint256(result2, readIndex++);
             const child: SFTCHILD = {
-              id: readUint256(result2, readIndex++),
-              locked: destinationId !== 0,
+              id: childId,
+              locked:
+                destinationId !== 0 ||
+                mergeList.findIndex((n) => n.eq(childId)) >= numUnlocked,
               type: readUint256(result2, readIndex++).toNumber(),
               assets: [],
             };
@@ -1470,6 +1486,98 @@ class Store {
     } catch (e) {
       console.log(e);
       emitter.emit(CFOLIO_ITEM_WITHDRAW_LP, {
+        status: 'error',
+        errorMessage: e.error ? e.error.message : e.message,
+      } as StatusResult);
+    }
+  };
+
+  _doCFolioItemLockAndTransfer = async (
+    payloadContent: PayloadContentCFolioItemLT
+  ) => {
+    const { src, dst, lockCFIs, transferCFIs } = payloadContent;
+
+    try {
+      if (
+        !this.sftHolderContractRO ||
+        !this.tradeFloorContractRO ||
+        !this.ethersSigner
+      ) {
+        throw new Error('Contract not initialized');
+      }
+      if (src === dst) {
+        throw new Error('Ooups! src === dest');
+      }
+
+      // get destination address
+      let dstAddress = this.address;
+      if (dst !== BIGNUMBER_MAX) {
+        dstAddress = this.sftHolderContractRO.tokenIdToAddress(dst);
+        if (dstAddress === Store.nullAddress) {
+          throw new Error('Cannot get cfolio address');
+        }
+      }
+
+      if (lockCFIs.length > 0) {
+        if (src !== BIGNUMBER_MAX) {
+          throw new Error('Lock only from Wallet');
+        }
+        const sftHolderContract = this.sftHolderContractRO.connect(
+          this.ethersSigner
+        );
+        const tx = await sftHolderContract.safeBatchTransferFrom(
+          this.address,
+          this.tradeFloorContractRO.address,
+          lockCFIs,
+          new Array(lockCFIs.length).fill(1),
+          dstAddress
+        );
+        emitter.emit(CFOLIO_ITEM_LOCK_TRANSFER, {
+          status: 'tx',
+          tx: tx?.hash,
+        } as StatusResult);
+
+        await tx?.wait();
+        if (transferCFIs.length === 0) {
+          emitter.emit(CFOLIO_ITEM_LOCK_TRANSFER, {
+            status: 'success',
+            tx: tx?.hash,
+          } as StatusResult);
+        }
+      }
+      if (transferCFIs.length > 0) {
+        // CFI's has to be in TF contract!
+        let srcAddress = this.address;
+        if (src !== BIGNUMBER_MAX) {
+          srcAddress = this.sftHolderContractRO.tokenIdToAddress(src);
+          if (srcAddress === Store.nullAddress) {
+            throw new Error('Cannot get cfolio address');
+          }
+        }
+        const tradeFloorContract = this.tradeFloorContractRO.connect(
+          this.ethersSigner
+        );
+        const tx = await tradeFloorContract.safeBatchTransferFrom(
+          srcAddress,
+          dstAddress,
+          transferCFIs,
+          new Array(transferCFIs.length).fill(1),
+          []
+        );
+        emitter.emit(CFOLIO_ITEM_LOCK_TRANSFER, {
+          status: 'tx',
+          tx: tx?.hash,
+        } as StatusResult);
+
+        await tx?.wait();
+        emitter.emit(CFOLIO_ITEM_LOCK_TRANSFER, {
+          status: 'success',
+          tx: tx?.hash,
+        } as StatusResult);
+      }
+    } catch (e) {
+      console.log(e);
+      emitter.emit(CFOLIO_ITEM_LOCK_TRANSFER, {
         status: 'error',
         errorMessage: e.error ? e.error.message : e.message,
       } as StatusResult);

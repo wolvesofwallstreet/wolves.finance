@@ -29,15 +29,6 @@
   margin-bottom: 10px;
 }
 
-.cfm-btn-stack {
-  padding: 5px 60px;
-  margin-top: 10px;
-
-  color: var(--wolves-blue-dk);
-  font-weight: bold;
-  font-size: 12px;
-
-  text-align: center;
-  border: 0.6px solid var(--wolves-white);
-  background-color: var(--wolves-orange);
+.wolves-btn.w280px {
+  min-width: 280px;
 }
