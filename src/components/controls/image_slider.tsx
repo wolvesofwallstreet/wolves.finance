@@ -39,6 +39,7 @@ type PROPS = {
   ) => void;
   slideWidth: number;
   slides: IMAGE_SLIDER_SLIDE[];
+  startSlideId?: number;
   checkbox?: boolean;
 };
 
@@ -48,6 +49,7 @@ const ImageSlider = ({
   onSlideChanged,
   slideWidth,
   slides,
+  startSlideId,
   checkbox,
 }: PROPS): JSX.Element => {
   const containerRef: RefObject<HTMLDivElement> = useRef(null);
@@ -103,9 +105,9 @@ const ImageSlider = ({
     enableTransition(false);
     setChecked([]);
     setDisplayIndex(-1);
-    setCurrentIndex(0);
+    setCurrentIndex(startSlideId || 0);
     setTimeout(() => enableTransition(true), 500);
-  }, [slides]);
+  }, [slides, startSlideId]);
 
   useEffect(() => {
     if (containerRef.current) setWidth(containerRef.current.clientWidth);

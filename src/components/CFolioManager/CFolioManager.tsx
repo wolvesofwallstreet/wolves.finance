@@ -112,6 +112,7 @@ class CFolioManager extends React.Component<PROPS, STATE> {
 
     this.cfolioItemCards = assets.cfolioItems;
     this.setState({ sliderImagesTop: newImages });
+    this.setState({ checkedMiddle: [] });
 
     this._createSliderImages(newImages);
   }
@@ -249,8 +250,13 @@ class CFolioManager extends React.Component<PROPS, STATE> {
         );
       }
     }
-    this.setState({ checkedMiddle: [] });
-    this.setState({ sliderImagesMiddle });
+    if (
+      JSON.stringify(sliderImagesMiddle) !==
+      JSON.stringify(this.state.sliderImagesMiddle)
+    ) {
+      this.setState({ checkedMiddle: [] });
+      this.setState({ sliderImagesMiddle });
+    }
   }
 
   setSliderIndex(id: string | undefined, index: number, checked?: number[]) {
