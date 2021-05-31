@@ -172,10 +172,15 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
     const result: IMAGE_SLIDER_CFOLIO[] = [];
     sft.cfolioItems.forEach((cfi) => {
       let found: CFOLIO_ITEM | undefined;
-      cfolioItems.find(
+      const cat = cfolioItems.find(
         (l) => (found = l.cards.find((i) => i.chainRef === cfi.type))
       );
-      result.push({ name: found ? found.name : 'UNKNOWN', tokenId: cfi.id });
+      result.push({
+        name: found ? found.name : 'UNKNOWN',
+        tokenId: cfi.id,
+        disabled:
+          (sft.isWallet && cfi.locked) || !cat || cat.type !== this.displayType,
+      });
     });
     return result;
   }
@@ -196,12 +201,17 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
           this.slideIndex >= 0 &&
           this.slideIndex < this.receiverImages.length
         ) {
+          const isWallet = this.receiverImages[this.slideIndex].sft.isWallet;
           this.receiverImages[this.slideIndex].sft.cfolioItems.forEach(
             (cfolioItem) => {
               const index = this.cfolioItems?.cards.findIndex(
                 (card) => card.chainRef === cfolioItem.type
               );
-              if (index !== undefined && index >= 0)
+              if (
+                index !== undefined &&
+                index >= 0 &&
+                (!isWallet || !cfolioItem.locked)
+              )
                 cfiRender.push({ cfolioItem, index });
             }
           );

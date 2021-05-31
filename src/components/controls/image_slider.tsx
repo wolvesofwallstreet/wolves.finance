@@ -13,6 +13,7 @@ import { Fragment, RefObject, useEffect, useRef, useState } from 'react';
 export interface IMAGE_SLIDER_CFOLIO {
   name: string;
   tokenId: ethers.BigNumber;
+  disabled: boolean;
 }
 
 export interface IMAGE_SLIDER_SLIDE {
@@ -85,24 +86,18 @@ const ImageSlider = ({
   initCallback(sliderId, { prev, next, go });
 
   useEffect(() => {
+    if (onSlideChanged) {
+      onSlideChanged(sliderId, currentIndex, checked);
+    }
+  }, [currentIndex, onSlideChanged, checked, sliderId]);
+
+  useEffect(() => {
     setLeft((width - slideWidth) / 2 - currentIndex * slideWidth);
     if (!checkbox && currentIndex !== displayIndex) {
       setDisplayIndex(-1);
       setTimeout(() => setDisplayIndex(currentIndex), 250);
     }
-    if (onSlideChanged) {
-      onSlideChanged(sliderId, currentIndex, checked);
-    }
-  }, [
-    currentIndex,
-    displayIndex,
-    slideWidth,
-    width,
-    checkbox,
-    checked,
-    onSlideChanged,
-    sliderId,
-  ]);
+  }, [currentIndex, displayIndex, slideWidth, width, checkbox]);
 
   useEffect(() => {
     enableTransition(false);
@@ -161,7 +156,12 @@ const ImageSlider = ({
                       <div className="slide_tooltip_wrapper">
                         <div className="slide_tooltip_content">
                           {elem.cfolioItems.map((cfi) => (
-                            <p key={cfi.tokenId.toHexString()}>{cfi.name}</p>
+                            <p
+                              key={cfi.tokenId.toHexString()}
+                              className={cfi.disabled ? 'disabled' : ''}
+                            >
+                              {cfi.name}
+                            </p>
                           ))}
                         </div>
                       </div>

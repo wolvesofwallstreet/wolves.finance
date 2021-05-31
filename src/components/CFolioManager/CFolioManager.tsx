@@ -169,7 +169,11 @@ class CFolioManager extends React.Component<PROPS, STATE> {
       cfolioItems.find(
         (l) => (found = l.cards.find((i) => i.chainRef === cfi.type))
       );
-      result.push({ name: found ? found.name : 'UNKNOWN', tokenId: cfi.id });
+      result.push({
+        name: found ? found.name : 'UNKNOWN',
+        tokenId: cfi.id,
+        disabled: false,
+      });
     });
     return result;
   }
@@ -251,17 +255,16 @@ class CFolioManager extends React.Component<PROPS, STATE> {
 
   setSliderIndex(id: string | undefined, index: number, checked?: number[]) {
     const pos = parseInt(id ?? '0');
-    if (this.sliderIndex[pos] !== index) {
-      this.sliderIndex[pos] = index;
-      if (pos === 0) this._createSliderImages(this.state.sliderImagesTop);
-      else if (pos === 2)
-        this._filterSliderImagesMiddle(
-          this.state.sliderImagesTop,
-          this.state.sliderImagesBottom
-        );
-    }
-    if (pos === 1 && checked && checked !== this.state.checkedMiddle)
+    this.sliderIndex[pos] = index;
+    if (pos === 0) this._createSliderImages(this.state.sliderImagesTop);
+    else if (pos === 1 && checked && checked !== this.state.checkedMiddle)
       this.setState({ checkedMiddle: checked });
+    else if (pos === 2) {
+      this._filterSliderImagesMiddle(
+        this.state.sliderImagesTop,
+        this.state.sliderImagesBottom
+      );
+    }
   }
 
   sliderInit(id: string | undefined, iface: IMAGE_SLIDER_INTERFACE) {

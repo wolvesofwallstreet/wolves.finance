@@ -158,6 +158,10 @@
   line-height: 100%;
 }
 
+.slide_tooltip_content p.disabled {
+  color: gray;
+}
+
 .image_slider_tid {
   display: inline-block;
   position: absolute;
