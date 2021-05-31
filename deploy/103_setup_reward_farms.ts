@@ -120,7 +120,7 @@ const func = async function (hardhat_re) {
   log_step('Marketing wallet calls for reward farms');
 
   //
-  // 4.) TradeFloor::grantRole(MINTER_ROLE, TradeClientFloorLP)
+  // 4.) TradeFloor::grantRole(TRADEFLOOR_ROLE, CFIHLP)
   //
 
   if (
@@ -165,7 +165,31 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 6.) CFolioFarm.sol::transferOwnership(CFolioItemHandlerSC)
+  // 6.) TradeFloor::grantRole(TRADEFLOOR_ROLE, CFIHSC)
+  //
+
+  if (
+    !(await SFT_HOLDER_INSTANCE.hasRole(
+      await SFT_HOLDER_INSTANCE.TRADEFLOOR_ROLE(),
+      generatedAddresses.cfolioItemHandlerSCProxy
+    ))
+  ) {
+    await catchUnknownSigner(
+      execute(
+        SFT_HOLDER_CONTRACT,
+        {
+          from: marketingWallet,
+          log: true,
+        },
+        'grantRole',
+        await SFT_HOLDER_INSTANCE.TRADEFLOOR_ROLE(),
+        generatedAddresses.cfolioItemHandlerSCProxy
+      )
+    );
+  }
+
+  //
+  // 7.) CFolioFarm.sol::transferOwnership(CFolioItemHandlerSC)
   //
 
   if (
@@ -186,7 +210,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 7.) Controller.sol::registerFarm()
+  // 8.) Controller.sol::registerFarm()
   //
   //   Parameters:
   //     * farmAddress         The CFolioFarmLP address
@@ -229,7 +253,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 8.) Controller.sol::registerFarm()
+  // 9.) Controller.sol::registerFarm()
   //
   //   Parameters:
   //     * farmAddress         The CFolioFarmSC address
@@ -272,11 +296,13 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 9.) Call WOWSSftMinter.sol::setCFolioSpec(types, handlers, maxMint, prices)
+  // 10.) Call WOWSSftMinter.sol::setCFolioSpec(types, handlers, maxMint, prices)
   //
 
-  if ((await SFT_MINTER_INSTANCE.getCFolioSpec([0])).maxMintable[0].isZero() ||
-      (await SFT_MINTER_INSTANCE.getCFolioSpec([4])).maxMintable[0].isZero()) {
+  if (
+    (await SFT_MINTER_INSTANCE.getCFolioSpec([0])).maxMintable[0].isZero() ||
+    (await SFT_MINTER_INSTANCE.getCFolioSpec([16])).maxMintable[0].isZero()
+  ) {
     // We initialize 8 different LP cards
     const CFI_TYPES = [
       '0x00',
@@ -328,7 +354,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 10.) Call WowsSFTMinter.sol::setSFTEvaluator(sftEvaluatorProxy)
+  // 11.) Call WowsSFTMinter.sol::setSFTEvaluator(sftEvaluatorProxy)
   //
 
   if (
@@ -435,7 +461,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 13.) Check if we have to upgrade the cfolioItemHandlerSC implementation
+  // 15.) Check if we have to upgrade the cfolioItemHandlerSC implementation
   //
   if (
     (await getProxyImplementation(
