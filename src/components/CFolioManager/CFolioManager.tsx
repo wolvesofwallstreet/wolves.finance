@@ -42,6 +42,7 @@ interface IMAGE extends IMAGE_SLIDER_SLIDE {
 }
 
 interface SUBIMAGE extends IMAGE_SLIDER_SLIDE {
+  constraints?: 'wolves' | 'bois';
   cfolioItem: CFOLIO_ITEM;
 }
 
@@ -64,6 +65,7 @@ class CFolioManager extends React.Component<PROPS, STATE> {
   cfolioItemCards: CFOLIO_ITEMS[] = [];
   sliderInterfaces: { [id: string]: IMAGE_SLIDER_INTERFACE } = {};
   sliderIndex = [0, 0, 0];
+  sliderImagesMiddleAll: SUBIMAGE[] = [];
 
   constructor(props: PROPS) {
     super(props);
@@ -173,8 +175,8 @@ class CFolioManager extends React.Component<PROPS, STATE> {
   }
 
   _createSliderImages(topImages: IMAGE[]) {
-    const sliderImagesMiddle: SUBIMAGE[] = [];
-    const sliderImagesBottom: IMAGE[] = [];
+    this.sliderImagesMiddleAll = [];
+    const bottomImages: IMAGE[] = [];
     const constraints: { [x: string]: boolean } = {};
 
     if (this.sliderIndex[0] < topImages.length) {
@@ -188,9 +190,10 @@ class CFolioManager extends React.Component<PROPS, STATE> {
             ))
         );
         if (cfiCard) {
-          sliderImagesMiddle.push({
+          this.sliderImagesMiddleAll.push({
             url: cfiCard?.url.replace('{res}', '300'),
             locked: cfi.locked,
+            constraints: cat?.constraints,
             cfolioItem: cfiCard,
             tokenId: cfi.id,
             cfolioItems: [],
@@ -210,7 +213,7 @@ class CFolioManager extends React.Component<PROPS, STATE> {
         sft.id !== topImages[this.sliderIndex[0]].sft.id;
       const pred2 = (l: number, i: number) =>
         constraints[this.cards?.cards[l].type || ''];
-      sliderImagesBottom.push(
+      bottomImages.push(
         ...this._getSftImages(
           StoreClasses.store.getAssets().userSFT,
           pred,
@@ -218,9 +221,32 @@ class CFolioManager extends React.Component<PROPS, STATE> {
         )
       );
     }
+    this.setState({ sliderImagesBottom: bottomImages });
+    this._filterSliderImagesMiddle(topImages, bottomImages);
+  }
+
+  _filterSliderImagesMiddle(topImages: IMAGE[], bottomImages: IMAGE[]) {
+    let sliderImagesMiddle: SUBIMAGE[] = [];
+    if (
+      this.cards &&
+      this.sliderIndex[2] < bottomImages.length &&
+      this.sliderIndex[0] < topImages.length
+    ) {
+      if (
+        bottomImages[this.sliderIndex[2]].sft.isWallet ||
+        !topImages[this.sliderIndex[0]].sft.isWallet
+      ) {
+        sliderImagesMiddle = this.sliderImagesMiddleAll;
+      } else {
+        const filter =
+          this.cards.cards[bottomImages[this.sliderIndex[2]].level].type;
+        sliderImagesMiddle = this.sliderImagesMiddleAll.filter(
+          (elem) => !elem.constraints || elem.constraints === filter
+        );
+      }
+    }
     this.setState({ checkedMiddle: [] });
     this.setState({ sliderImagesMiddle });
-    this.setState({ sliderImagesBottom });
   }
 
   setSliderIndex(id: string | undefined, index: number, checked?: number[]) {
@@ -228,6 +254,11 @@ class CFolioManager extends React.Component<PROPS, STATE> {
     if (this.sliderIndex[pos] !== index) {
       this.sliderIndex[pos] = index;
       if (pos === 0) this._createSliderImages(this.state.sliderImagesTop);
+      else if (pos === 2)
+        this._filterSliderImagesMiddle(
+          this.state.sliderImagesTop,
+          this.state.sliderImagesBottom
+        );
     }
     if (pos === 1 && checked && checked !== this.state.checkedMiddle)
       this.setState({ checkedMiddle: checked });

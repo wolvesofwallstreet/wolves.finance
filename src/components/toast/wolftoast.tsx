@@ -22,6 +22,7 @@ import {
   ADDRESS_COPIED,
   CFOLIO_ITEM_BUY,
   CFOLIO_ITEM_DEPOSIT_LP,
+  CFOLIO_ITEM_LOCK_TRANSFER,
   CFOLIO_ITEM_WITHDRAW_LP,
   CONNECTION_CHANGED,
   SFT_BUY,
@@ -73,9 +74,11 @@ class WolfToast extends Component<TOASTPROPS, TOASTSTATE> {
     StoreClasses.emitter.on(CFOLIO_ITEM_BUY, this.onTransaction);
     StoreClasses.emitter.on(CFOLIO_ITEM_DEPOSIT_LP, this.onTransaction);
     StoreClasses.emitter.on(CFOLIO_ITEM_WITHDRAW_LP, this.onTransaction);
+    StoreClasses.emitter.on(CFOLIO_ITEM_LOCK_TRANSFER, this.onTransaction);
   }
 
   componentWillUnmount(): void {
+    StoreClasses.emitter.off(CFOLIO_ITEM_LOCK_TRANSFER, this.onTransaction);
     StoreClasses.emitter.off(CFOLIO_ITEM_WITHDRAW_LP, this.onTransaction);
     StoreClasses.emitter.off(CFOLIO_ITEM_DEPOSIT_LP, this.onTransaction);
     StoreClasses.emitter.off(CFOLIO_ITEM_BUY, this.onTransaction);

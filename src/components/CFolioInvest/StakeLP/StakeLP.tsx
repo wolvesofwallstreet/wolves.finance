@@ -178,7 +178,7 @@ function StakeLP({
             StoreClasses.store._getTokenContractAddress()
           }
         >
-          GET UNIV2 WOWS/ETH LP TOKENS HERE
+          <u>GET UNIV2 WOWS/ETH LP TOKENS HERE</u>
         </a>
       </span>
 

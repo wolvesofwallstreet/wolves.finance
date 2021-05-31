@@ -1414,10 +1414,6 @@ class Store {
           this._setCFolioAmount(receipt, sftTokenId, cfolioTokenId);
         }
       );
-      /*this.assets.userSFT[0].cfolioItems[0].assets[0] = 0.2;
-      emitter.emit(ASSETS_STATE, {
-        status: 'cfolio_inplace',
-      } as AssetStateresult);*/
     } catch (e) {
       console.log(e);
       emitter.emit(CFOLIO_ITEM_DEPOSIT_LP, {
@@ -1480,10 +1476,6 @@ class Store {
           this._setCFolioAmount(receipt, sftTokenId, cfolioTokenId);
         }
       );
-      /*this.assets.userSFT[0].cfolioItems[0].assets[0] = 0;
-      emitter.emit(ASSETS_STATE, {
-        status: 'cfolio_inplace',
-      } as AssetStateresult);*/
     } catch (e) {
       console.log(e);
       emitter.emit(CFOLIO_ITEM_WITHDRAW_LP, {
@@ -1519,6 +1511,7 @@ class Store {
         }
       }
 
+      let txBlockNumber = 0;
       if (lockCFIs.length > 0) {
         if (src !== BIGNUMBER_MAX) {
           throw new Error('Lock only from Wallet');
@@ -1540,6 +1533,7 @@ class Store {
 
         await tx?.wait();
         if (transferCFIs.length === 0) {
+          txBlockNumber = tx?.blockNumber ?? 0;
           emitter.emit(CFOLIO_ITEM_LOCK_TRANSFER, {
             status: 'success',
             tx: tx?.hash,
@@ -1571,10 +1565,18 @@ class Store {
         } as StatusResult);
 
         await tx?.wait();
+        txBlockNumber = tx?.blockNumber ?? 0;
         emitter.emit(CFOLIO_ITEM_LOCK_TRANSFER, {
           status: 'success',
           tx: tx?.hash,
         } as StatusResult);
+      }
+      // If we transfer from SFT to SFT, events are not catched
+      if (!src.eq(BIGNUMBER_MAX) && !dst.eq(BIGNUMBER_MAX)) {
+        this._addDQ(txBlockNumber, {
+          type: ASSETS_STATE,
+          content: { filter: ['tokens'] },
+        } as Payload);
       }
     } catch (e) {
       console.log(e);
