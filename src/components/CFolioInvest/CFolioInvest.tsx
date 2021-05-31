@@ -312,30 +312,29 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
                 'd-flex justify-content-center bg-transparent-orange mb-3 '
               }
             >
-              <div className={'p_relative cfolioInvest-slider-1'}>
+              <div className="vw-90-safe py-3  border_thin_t border_thin_b p_relative center_triangle_up center_triangle_down min-height-190">
                 <button
                   onClick={() => this.sliderInterface?.prev()}
                   className={'slide__arrow slide__arrow--left slide__arrows'}
                   style={{
-                    ['--left' as string]: '-25px',
+                    ['--left' as string]: '-30px',
                   }}
                 >
                   {'<'}
                 </button>
-                <div className="vw-90-36px py-3  border_thin_t border_thin_b p_relative center_triangle_up center_triangle_down min-height-190">
-                  <ImageSlider
-                    sliderId="0"
-                    initCallback={this.sliderInit.bind(this)}
-                    onSlideChanged={this.sliderCB}
-                    slideWidth={150}
-                    slides={this.receiverImages}
-                  />
-                </div>
+
+                <ImageSlider
+                  sliderId="0"
+                  initCallback={this.sliderInit.bind(this)}
+                  onSlideChanged={this.sliderCB}
+                  slideWidth={150}
+                  slides={this.receiverImages}
+                />
                 <button
                   onClick={() => this.sliderInterface?.next()}
                   className={'slide__arrow slide__arrow--right slide__arrows'}
                   style={{
-                    ['--right' as string]: '10px',
+                    ['--right' as string]: '-30px',
                   }}
                 >
                   {'>'}

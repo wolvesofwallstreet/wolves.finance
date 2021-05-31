@@ -345,7 +345,7 @@ class CFolioManager extends React.Component<PROPS, STATE> {
             {/* Card slider-1 */}
             <div
               className={
-                'w-90-36px pb-3 p_relative center-container center_triangle_down rotate-180'
+                'w-90-safe pb-3 p_relative center-container center_triangle_down rotate-180'
               }
             >
               <div className="d-flex">
@@ -353,7 +353,7 @@ class CFolioManager extends React.Component<PROPS, STATE> {
                   onClick={() => this.sliderInterfaces[0]?.prev()}
                   className={'slide__arrow slide__arrow--left'}
                   style={{
-                    ['--left' as string]: '-22px',
+                    ['--left' as string]: '-30px',
                   }}
                 >
                   {'<'}
@@ -369,7 +369,7 @@ class CFolioManager extends React.Component<PROPS, STATE> {
                   onClick={() => this.sliderInterfaces[0]?.next()}
                   className={'slide__arrow slide__arrow--right slide__arrows'}
                   style={{
-                    ['--right' as string]: '-22px',
+                    ['--right' as string]: '-30px',
                   }}
                 >
                   {'>'}
@@ -378,13 +378,13 @@ class CFolioManager extends React.Component<PROPS, STATE> {
             </div>
 
             {/* Card slider-2 */}
-            <div className={'w-90-36px center-container pt-2'}>
+            <div className={'w-90-safe center-container pt-2'}>
               <div className="d-flex p_relative">
                 <button
                   onClick={() => this.sliderInterfaces[1]?.prev()}
                   className={'slide__arrow slide__arrow--left'}
                   style={{
-                    ['--left' as string]: '-22px',
+                    ['--left' as string]: '-30px',
                   }}
                 >
                   {'<'}
@@ -401,7 +401,7 @@ class CFolioManager extends React.Component<PROPS, STATE> {
                   onClick={() => this.sliderInterfaces[1]?.next()}
                   className={'slide__arrow slide__arrow--right slide__arrows'}
                   style={{
-                    ['--right' as string]: '-22px',
+                    ['--right' as string]: '-30px',
                   }}
                 >
                   {'>'}
@@ -434,7 +434,7 @@ class CFolioManager extends React.Component<PROPS, STATE> {
             {/* Card slider-3 */}
             <div
               className={
-                'w-90-36px pb-3 p_relative center_triangle_down center-container'
+                'w-90-safe pb-3 p_relative center_triangle_down center-container'
               }
             >
               <div className="d-flex p_relative">
@@ -442,7 +442,7 @@ class CFolioManager extends React.Component<PROPS, STATE> {
                   onClick={() => this.sliderInterfaces[2].prev()}
                   className={'slide__arrow slide__arrow--left'}
                   style={{
-                    ['--left' as string]: '-22px',
+                    ['--left' as string]: '-30px',
                   }}
                 >
                   {'<'}
@@ -458,7 +458,7 @@ class CFolioManager extends React.Component<PROPS, STATE> {
                   onClick={() => this.sliderInterfaces[2]?.next()}
                   className={'slide__arrow slide__arrow--right slide__arrows'}
                   style={{
-                    ['--right' as string]: '-22px',
+                    ['--right' as string]: '-30px',
                   }}
                 >
                   {'>'}

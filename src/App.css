@@ -109,14 +109,14 @@ span a:hover {
   width: 80vw;
 }
 
-.w-90-36px {
+.w-90-safe {
   width: 90%;
-  max-width: calc(100% - 36px);
+  max-width: calc(100% - 50px);
 }
 
-.vw-90-36px {
+.vw-90-safe {
   width: 90vw;
-  max-width: calc(100% - 36px);
+  max-width: calc(100% - 50px);
 }
 
 .opaque {
