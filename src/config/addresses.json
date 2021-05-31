@@ -52,6 +52,9 @@
     "cfolioFarmLP": "0xB6ebCBC186E222b30917444cfb39045CD4B3CBDE",
     "cfolioItemHandlerLP": "0xb21177Faeb4d70a12D84dd0fE47907C564342cdA",
     "cfolioItemHandlerLPProxy": "0x71A92f51BfbE75A25A2647b13C468D06741d20aB",
+    "cfolioFarmSC": "0x898b4dA6D801365e1e690651c22D3510287a826D",
+    "cfolioItemHandlerSC": "0xfB32aA7D9957C44E6AE349D09FEc7C9cb821a92D",
+    "cfolioItemHandlerSCProxy": "0x55eEcE32b4d4aF6D53DAB2143e2506e68D8428Ac",
     "openSeaProxyRegistry": "0xf57b2c51ded3a29e6891aba85459d600256cf317"
   },
   "97": {

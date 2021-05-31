@@ -275,7 +275,8 @@ const func = async function (hardhat_re) {
   // 9.) Call WOWSSftMinter.sol::setCFolioSpec(types, handlers, maxMint, prices)
   //
 
-  if ((await SFT_MINTER_INSTANCE.getCFolioSpec([0])).maxMintable[0].isZero()) {
+  if ((await SFT_MINTER_INSTANCE.getCFolioSpec([0])).maxMintable[0].isZero() ||
+      (await SFT_MINTER_INSTANCE.getCFolioSpec([4])).maxMintable[0].isZero()) {
     // We initialize 8 different LP cards
     const CFI_TYPES = [
       '0x00',
