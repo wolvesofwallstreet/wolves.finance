@@ -10,11 +10,14 @@ import './image_slider.css';
 import { ethers } from 'ethers';
 import { Fragment, RefObject, useEffect, useRef, useState } from 'react';
 
-import { SFTCHILD } from '../../stores/store';
+export interface IMAGE_SLIDER_CFOLIO {
+  name: string;
+  tokenId: ethers.BigNumber;
+}
 
 export interface IMAGE_SLIDER_SLIDE {
   url: string;
-  cfolioItems?: SFTCHILD[];
+  cfolioItems: IMAGE_SLIDER_CFOLIO[];
   tokenId?: ethers.BigNumber;
   locked?: boolean;
 }
@@ -150,20 +153,21 @@ const ImageSlider = ({
                   }}
                   onClick={() => (checkbox ? select(index) : go(index))}
                 >
-                  {elem.cfolioItems && elem.cfolioItems.length > 0 && (
-                    <div className={'slide_count'}>
-                      {elem.cfolioItems && elem.cfolioItems.length}
-                    </div>
+                  {elem.cfolioItems.length > 0 && (
+                    <>
+                      <div className={'slide_count'}>
+                        {elem.cfolioItems.length}
+                      </div>
+                      <div className="slide_tooltip_wrapper">
+                        <div className="slide_tooltip_content">
+                          {elem.cfolioItems.map((cfi) => (
+                            <p key={cfi.tokenId.toHexString()}>{cfi.name}</p>
+                          ))}
+                        </div>
+                      </div>
+                    </>
                   )}
                   {elem.locked && <div className={'slide_locked'} />}
-
-                  <div className="slide_tooltip_wrapper">
-                    <div className="slide_tooltip_content">
-                      <p>NAME OF NFT / TOKEN ID </p>
-                      <p>NAME OF NFT / TOKEN ID</p>
-                      <p>NAME OF NFT / TOKEN ID</p>
-                    </div>
-                  </div>
 
                   <img width="100%" height="100%" src={elem.url} alt="" />
                 </div>

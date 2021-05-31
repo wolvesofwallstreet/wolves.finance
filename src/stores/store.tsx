@@ -1307,7 +1307,8 @@ class Store {
           this.cfihLpContract.address
         );
         if (allowance.lt(investWeiAmount)) {
-          const tx = await this.lpContractRO.approve(
+          const lpContract = this.lpContractRO.connect(this.ethersSigner);
+          const tx = await lpContract.approve(
             this.cfihLpContract.address,
             investWeiAmount
           );
@@ -1324,7 +1325,7 @@ class Store {
           this.address,
           cfolioType,
           sftTokenId,
-          [investWeiAmount]
+          cfolioType < 0x10 ? [investWeiAmount] : []
         );
       emitter.emit(CFOLIO_ITEM_BUY, {
         status: 'tx',

@@ -28,6 +28,7 @@ import {
   StoreClasses,
 } from '../../stores/store';
 import {
+  IMAGE_SLIDER_CFOLIO,
   IMAGE_SLIDER_INTERFACE,
   IMAGE_SLIDER_SLIDE,
   ImageSlider,
@@ -137,7 +138,7 @@ class CFolioManager extends React.Component<PROPS, STATE> {
                 .replace('.mp4', '.mp4.jpg') || '';
             result.push({
               url,
-              cfolioItems: sft.cfolioItems,
+              cfolioItems: this._cfolioItemsForSlider(sft),
               tokenId: sft.id,
               sft,
               level,
@@ -147,13 +148,26 @@ class CFolioManager extends React.Component<PROPS, STATE> {
         } else if (sft.isWallet) {
           result.push({
             url: WalletLogo,
-            cfolioItems: sft.cfolioItems,
+            cfolioItems: this._cfolioItemsForSlider(sft),
             sft,
             level: -1,
             index: -1,
           });
         }
       }
+    });
+    return result;
+  }
+
+  _cfolioItemsForSlider(sft: SFT): IMAGE_SLIDER_CFOLIO[] {
+    const cfolioItems = StoreClasses.store.getAssets().cfolioItems;
+    const result: IMAGE_SLIDER_CFOLIO[] = [];
+    sft.cfolioItems.forEach((cfi) => {
+      let found: CFOLIO_ITEM | undefined;
+      cfolioItems.find(
+        (l) => (found = l.cards.find((i) => i.chainRef === cfi.type))
+      );
+      result.push({ name: found ? found.name : 'UNKNOWN', tokenId: cfi.id });
     });
     return result;
   }
@@ -179,6 +193,7 @@ class CFolioManager extends React.Component<PROPS, STATE> {
             locked: cfi.locked,
             cfolioItem: cfiCard,
             tokenId: cfi.id,
+            cfolioItems: [],
           });
           if (cat?.constraints) {
             constraints[cat.constraints] = true;

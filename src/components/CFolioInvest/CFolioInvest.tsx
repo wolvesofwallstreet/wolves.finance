@@ -21,11 +21,12 @@ import {
   StoreClasses,
 } from '../../stores/store';
 import {
+  IMAGE_SLIDER_CFOLIO,
   IMAGE_SLIDER_INTERFACE,
   IMAGE_SLIDER_SLIDE,
   ImageSlider,
 } from '../controls/image_slider';
-import { CARDS, CFOLIO_ITEMS } from '../types/cards';
+import { CARDS, CFOLIO_ITEM, CFOLIO_ITEMS } from '../types/cards';
 import StakeLP from './StakeLP/StakeLP';
 import YearnQuad from './YearnQuad/YearnQuad';
 
@@ -75,6 +76,9 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
     const { location } = this.props;
     const query = new URLSearchParams(location.search);
     this.initialCFolio = parseInt(query.get('item') || '-1');
+    this.displayType = query.get('type') || 'lpInvestment';
+    this.investCurrency =
+      this.displayType === 'lpInvestment' ? 'WOWS/ETH LP' : 'DAI';
   }
 
   setCurrentImage(val: number) {
@@ -141,7 +145,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
         newImages.push({
           url,
           tokenId: sft.id,
-          cfolioItems: sft.cfolioItems,
+          cfolioItems: this._cfolioItemsForSlider(sft),
           sft,
           level,
           index,
@@ -149,7 +153,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
       } else if (sft.isWallet) {
         newImages.push({
           url: WalletLogo,
-          cfolioItems: sft.cfolioItems,
+          cfolioItems: this._cfolioItemsForSlider(sft),
           sft,
           level: -1,
           index: -1,
@@ -161,6 +165,19 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
 
     this.cards = cards;
     this._updateCFolioItems();
+  }
+
+  _cfolioItemsForSlider(sft: SFT): IMAGE_SLIDER_CFOLIO[] {
+    const cfolioItems = StoreClasses.store.getAssets().cfolioItems;
+    const result: IMAGE_SLIDER_CFOLIO[] = [];
+    sft.cfolioItems.forEach((cfi) => {
+      let found: CFOLIO_ITEM | undefined;
+      cfolioItems.find(
+        (l) => (found = l.cards.find((i) => i.chainRef === cfi.type))
+      );
+      result.push({ name: found ? found.name : 'UNKNOWN', tokenId: cfi.id });
+    });
+    return result;
   }
 
   _updateCFolioItems() {
@@ -197,9 +214,15 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
           })
         );
       }
+
       if (this.initialCFolio >= 0 && this.receiverImages.length > 0) {
         this.setState({ currentImage: this.initialCFolio + existingCards });
         this.initialCFolio = -1;
+      } else if (
+        this.receiverImages.length &&
+        this.state.currentImage >= cfiRender.length
+      ) {
+        this.setState({ currentImage: 0 });
       }
     }
     this.setState({ cfiRender });
