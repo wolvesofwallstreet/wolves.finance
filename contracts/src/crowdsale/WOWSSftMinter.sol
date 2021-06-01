@@ -450,7 +450,8 @@ contract WOWSSftMinter is Context, Ownable {
     // Run through all cfolioItems and add let their single CFolioItemHandler
     // append hashable data
     for (uint256 i = 0; i < tokenIdsLength; ++i) {
-      address cfolio = _sftContract.tokenIdToAddress(tokenIds[i].toSftTokenId());
+      address cfolio =
+        _sftContract.tokenIdToAddress(tokenIds[i].toSftTokenId());
       require(cfolio != address(0), 'WSM: item token invalid');
 
       address handler = IWOWSCryptofolio(cfolio)._tradefloors(0);

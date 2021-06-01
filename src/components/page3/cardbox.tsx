@@ -7,56 +7,101 @@
  */
 import './cardbox.css';
 
-import { ethers } from 'ethers';
 import { TFunction } from 'i18next';
 import { Link } from 'react-router-dom';
 
-import { CARD } from '../types/cards';
+import { BIGNUMBER_MAX, SFT, SFTCHILD, StoreClasses } from '../../stores/store';
 
 type CARDBOX_PROPS = {
-  content: CARD;
-  levelId: number;
-  quantity: number;
-  price: number;
+  sft?: SFT;
+  cfolio?: SFTCHILD;
   t: TFunction;
-  type: string;
-  tokenId?: ethers.BigNumber;
 };
 
 export function CardBox(props: CARDBOX_PROPS): JSX.Element {
-  const { content, levelId, price, quantity, t, tokenId, type } = props;
+  const { cfolio, sft, t } = props;
+  const assets = StoreClasses.store.getAssets();
+
+  let name,
+    motto,
+    levelId,
+    type,
+    tokenId,
+    cardId,
+    cardType,
+    url,
+    quantity,
+    price,
+    minted,
+    prowess,
+    locked;
+  if (sft) {
+    const level = assets.cards.cards[sft.levelId];
+    const card = level.cards[sft.cardId];
+    name = card.name;
+    motto = card.motto;
+    levelId = level.levelId;
+    tokenId = sft.tokenId !== BIGNUMBER_MAX ? sft.tokenId : undefined;
+    type = tokenId ? 'myPack' : level.type;
+    cardId = sft.cardId;
+    cardType = card.type;
+    url = card.url;
+    quantity = level.quantity;
+    minted = card.minted;
+    price = level.price;
+    prowess = sft.rewardRate;
+    locked = sft.locked;
+  } else if (cfolio) {
+    const level = assets.cfolioItems[cfolio.levelId];
+    const card = level.cards[cfolio.cardId];
+    name = card.name;
+    motto = card.motto;
+    levelId = 4;
+    type = 'myPack';
+    tokenId = cfolio.tokenId;
+    cardId = cfolio.cardId;
+    cardType = 'image';
+    url = card.url;
+    quantity = card.maxMintable;
+    minted = card.minted;
+    price = card.price;
+    prowess = 0;
+    locked = cfolio.locked;
+  } else return <></>;
 
   return (
     <div className="card-container">
-      <span className="tk-vincente-lightbold font-32">{content.name}</span>
+      <span className="tk-vincente-lightbold font-32">{name}</span>
       <Link
+        className="p_relative"
         to={
           '/detail?type=' +
-          (tokenId !== undefined ? 'myPack' : type) +
+          type +
           '&levelId=' +
           levelId +
           '&cardId=' +
-          content.id +
+          cardId +
           (tokenId !== undefined ? '&tokenId=' + tokenId : '')
         }
       >
-        {content.type === 'movie' ? (
+        {cardType === 'movie' ? (
           <video
             disableRemotePlayback={true}
             className="card-visual"
             autoPlay={true}
             loop={true}
-            src={content.url.replace('{res}', '300')}
-            poster={content.url.replace('{res}', '300') + '.jpg'}
+            src={url?.replace('{res}', '300')}
+            poster={url?.replace('{res}', '300') + '.jpg'}
             playsInline
           />
         ) : (
           <img
             className="card-visual"
-            src={content.url.replace('{res}', '300')}
-            alt={content.name}
+            src={url?.replace('{res}', '300')}
+            alt={name}
           />
         )}
+        {locked && <div className={'locked'} />}
       </Link>
       <div className="wrapper">
         <span id="triangle-up" />
@@ -66,15 +111,30 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
           </span>
         )}
         <span className="tk-grotesk-lightbold font-14 ellipsis">
-          {t('page.motto')}: {content.motto}
+          {t('page.motto')}: {motto}
         </span>
         <hr className="wolves" />
-        <span className="tk-grotesk-lightbold font-14 ellipsis">
-          {t('page.available')}: {quantity - content.minted}/{quantity}
-        </span>
-        <span className="tk-grotesk-lightbold font-14 ellipsis line-h">
-          {t('page.price')}: {price} WOWS{' '}
-        </span>
+        {tokenId === undefined ? (
+          <>
+            <span className="tk-grotesk-lightbold font-14 ellipsis">
+              {t('page.available')}: {quantity - minted}/{quantity}
+            </span>
+            <span className="tk-grotesk-lightbold font-14 ellipsis line-h">
+              {t('page.price')}: {price} WOWS{' '}
+            </span>
+          </>
+        ) : sft ? (
+          <>
+            <span className="tk-grotesk-lightbold font-14 ellipsis">
+              {t('page.prowess')}: {prowess / 10000}%
+            </span>
+            <span className="tk-grotesk-lightbold font-14 ellipsis">
+              {t('page.earned')}: [TODO] WOWS
+            </span>
+          </>
+        ) : (
+          <></>
+        )}
       </div>
     </div>
   );

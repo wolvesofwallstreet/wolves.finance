@@ -228,7 +228,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
           current.id === undefined
             ? (cardLevel.chainRef << 8) |
                 cardLevel.cards[current.index].chainRef
-            : current.id
+            : current.id.tokenId
         ),
       };
       this.setState({ txPending: true });

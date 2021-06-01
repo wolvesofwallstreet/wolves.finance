@@ -40,6 +40,7 @@ export type CFOLIO_ITEM = {
   minted: number;
   maxMintable: number;
   name: string;
+  motto: string;
   description: string;
   type: string;
   url: string;

@@ -311,13 +311,8 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
                     level.levelId === levelId &&
                     (display === 'my' || type === level.type) && (
                       <CardBox
+                        sft={id}
                         key={'card_' + id.tokenId.mask(32).toString()}
-                        type={level.type}
-                        levelId={levelId}
-                        content={level.cards[id.cardId]}
-                        quantity={level.quantity}
-                        price={level.price}
-                        tokenId={display === 'my' ? id.tokenId : undefined}
                         t={t}
                       />
                     )

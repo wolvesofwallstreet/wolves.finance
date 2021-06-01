@@ -32,6 +32,17 @@
   background-size: 300px 300px;
 }
 
+.card-container .locked {
+  width: 64px;
+  height: 64px;
+  background-image: url(../../assets/padlock_filter.png);
+  background-size: cover;
+  z-index: 10;
+  position: absolute;
+  top: 4px;
+  left: 4px;
+}
+
 #triangle-up {
   width: 0;
   height: 0;

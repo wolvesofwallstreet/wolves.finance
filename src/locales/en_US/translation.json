@@ -38,7 +38,9 @@
     "shop": "SHOP",
     "nextCard": "NEXT CARD",
     "previousCard": "PREVIOUS CARD",
-    "nextLevel": "NEXT LEVEL"
+    "nextLevel": "NEXT LEVEL",
+    "prowess": "PROWESS",
+    "earned": "EARNED"
   },
   "page1": {
     "head1": "CHOOSE YOUR CRYPTOFOLIO - TRADER\u00a0WOLVES\u00a0OR\u00a0BUSINESS\u00a0BOIS",
