@@ -792,7 +792,6 @@ class Store {
         await this.sftMintContractRO.getTokenIds(this.address);
 
       const mergeList = filterSpecialCards(result[0]);
-      const numUnlocked = mergeList.length;
       mergeList.push(...filterSpecialCards(result[1]));
 
       const newUserSFT: SFT[] = mergeList
@@ -811,10 +810,10 @@ class Store {
             tokenId: bn,
             levelId: levelIndex,
             cardId: cardIndex,
-            isBaseCard: bn.lte(Store.BASE_CARD_MAX),
-            isStockCard: bn.lte(Store.STOCK_CARD_MAX),
+            isBaseCard: bn.mask(128).lte(Store.BASE_CARD_MAX),
+            isStockCard: bn.mask(128).lte(Store.STOCK_CARD_MAX),
             isWallet: false,
-            locked: index >= numUnlocked,
+            locked: result[1].find((b) => b.eq(bn)) !== undefined,
             rewardRate: 0,
             mintTimestamp: 0,
             cfolioItems: [],
@@ -875,7 +874,7 @@ class Store {
               cardId: -1,
               locked:
                 destinationId !== 0 ||
-                mergeList.findIndex((n) => n.eq(childId)) >= numUnlocked,
+                result[1].find((b) => b.eq(childId)) !== undefined,
               type: readUint256(result2, readIndex++).toNumber(),
               assets: [],
             };
