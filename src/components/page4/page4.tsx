@@ -153,20 +153,6 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     this.needUpdate = false;
 
     if (type === 'myPack' && this.state.tokenIds) {
-      // create a lookup for chain
-      const lookup: { [chain: number]: { l: number; i: number } } = {};
-      this.state.cards.cards.forEach((level, index1) => {
-        if (type === 'myPack' || level.type === type) {
-          level.cards.forEach(
-            (card, index2) =>
-              (lookup[(level.chainRef << 8) | card.chainRef] = {
-                l: index1,
-                i: index2,
-              })
-          );
-        }
-      });
-
       const curTokenId = query.get('tokenId')
         ? ethers.BigNumber.from(query.get('tokenId'))
         : undefined;
@@ -174,12 +160,13 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       // loop through tokenIds and create renderlist
       this.state.tokenIds.forEach((tokenId) => {
         if (tokenId.isStockCard) {
-          const l = lookup[(tokenId.id.mask(128).toNumber() >> 16) & 0xffff];
-          if (l !== undefined) {
-            if (curTokenId && tokenId.id.eq(curTokenId))
-              currentIndex = this.renderList.length;
-            this.renderList.push({ id: tokenId, level: l.l, index: l.i });
-          }
+          if (curTokenId && tokenId.tokenId.eq(curTokenId))
+            currentIndex = this.renderList.length;
+          this.renderList.push({
+            id: tokenId,
+            level: tokenId.levelId,
+            index: tokenId.cardId,
+          });
         }
       });
     } else if (type !== 'myPack') {
@@ -208,7 +195,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       if (type === 'myPack' && query.get('tokenId')) {
         const curTokenId = ethers.BigNumber.from(query.get('tokenId'));
         currentIndex = this.renderList.findIndex((elem) =>
-          elem.id?.id.eq(curTokenId)
+          elem.id?.tokenId.eq(curTokenId)
         );
       } else if (type !== 'myPack' && query.get('cardId')) {
         const curCardId = query.get('cardId');
@@ -293,10 +280,10 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       if (type === 'myPack') {
         prevUrl = `?type=myPack&tokenId=${this.renderList[
           prevIndex
-        ].id?.id.toHexString()}&scroll=false`;
+        ].id?.tokenId.toHexString()}&scroll=false`;
         nextUrl = `?type=myPack&tokenId=${this.renderList[
           nextIndex
-        ].id?.id.toHexString()}&scroll=false`;
+        ].id?.tokenId.toHexString()}&scroll=false`;
       } else {
         prevUrl = `?type=${type}&cardId=${
           cards?.cards[this.renderList[prevIndex].level].cards[
@@ -415,7 +402,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                   {currentRender?.id !== undefined && (
                     <h3 className="tk-vincente-lightbold">
                       <span>
-                        {` ${t('page4.tokenId')}: 0x${currentRender?.id.id
+                        {` ${t('page4.tokenId')}: 0x${currentRender?.id.tokenId
                           .mask(128)
                           .toHexString()
                           .replace('0x', '')

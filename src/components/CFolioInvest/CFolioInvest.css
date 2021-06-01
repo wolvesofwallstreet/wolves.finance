@@ -34,6 +34,10 @@
   justify-content: center;
 }
 
+.cfolioInvest-container img.card-visual {
+  border: grey 1px solid;
+}
+
 .cfolioInvest-container > .left {
   flex-basis: 50%;
   align-self: flex-start;

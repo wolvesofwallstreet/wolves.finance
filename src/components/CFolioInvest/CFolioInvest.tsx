@@ -26,7 +26,7 @@ import {
   IMAGE_SLIDER_SLIDE,
   ImageSlider,
 } from '../controls/image_slider';
-import { CARDS, CFOLIO_ITEM, CFOLIO_ITEMS } from '../types/cards';
+import { CARDS, CFOLIO_ITEMS } from '../types/cards';
 import StakeLP from './StakeLP/StakeLP';
 import YearnQuad from './YearnQuad/YearnQuad';
 
@@ -48,8 +48,6 @@ type STATE = {
 
 interface IMAGE extends IMAGE_SLIDER_SLIDE {
   sft: SFT;
-  level: number;
-  index: number;
 }
 
 // CFolio Investment
@@ -129,34 +127,23 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
       if (
         sft.isStockCard &&
         !sft.locked &&
-        (allowedLevel & (1 << (sft.id.toNumber() >> 24))) !== 0
+        (allowedLevel & (1 << cards.cards[sft.levelId].chainRef)) !== 0
       ) {
-        const tokenId = sft.id.toNumber();
-        const level = cards.cards.findIndex(
-          (l) => l.chainRef === tokenId >> 24
-        );
-        const index = cards.cards[level].cards.findIndex(
-          (card) => card.chainRef === ((tokenId >> 16) & 0xff)
-        );
         const url =
-          cards.cards[level].cards[index].url
+          cards.cards[sft.levelId].cards[sft.cardId].url
             .replace('{res}', '300')
             .replace('.mp4', '.mp4.jpg') || '';
         newImages.push({
           url,
-          tokenId: sft.id,
+          tokenId: sft.tokenId,
           cfolioItems: this._cfolioItemsForSlider(sft),
           sft,
-          level,
-          index,
         });
       } else if (sft.isWallet) {
         newImages.push({
           url: WalletLogo,
           cfolioItems: this._cfolioItemsForSlider(sft),
           sft,
-          level: -1,
-          index: -1,
         });
       }
     });
@@ -171,15 +158,12 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
     const cfolioItems = StoreClasses.store.getAssets().cfolioItems;
     const result: IMAGE_SLIDER_CFOLIO[] = [];
     sft.cfolioItems.forEach((cfi) => {
-      let found: CFOLIO_ITEM | undefined;
-      const cat = cfolioItems.find(
-        (l) => (found = l.cards.find((i) => i.chainRef === cfi.type))
-      );
       result.push({
-        name: found ? found.name : 'UNKNOWN',
-        tokenId: cfi.id,
+        name: cfolioItems[cfi.levelId].cards[cfi.cardId].name,
+        tokenId: cfi.tokenId,
         disabled:
-          (sft.isWallet && cfi.locked) || !cat || cat.type !== this.displayType,
+          (sft.isWallet && cfi.locked) ||
+          cfolioItems[cfi.levelId].type !== this.displayType,
       });
     });
     return result;
@@ -204,15 +188,11 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
           const isWallet = this.receiverImages[this.slideIndex].sft.isWallet;
           this.receiverImages[this.slideIndex].sft.cfolioItems.forEach(
             (cfolioItem) => {
-              const index = this.cfolioItems?.cards.findIndex(
-                (card) => card.chainRef === cfolioItem.type
-              );
               if (
-                index !== undefined &&
-                index >= 0 &&
+                cfolioItems[cfolioItem.levelId].type === this.displayType &&
                 (!isWallet || !cfolioItem.locked)
               )
-                cfiRender.push({ cfolioItem, index });
+                cfiRender.push({ cfolioItem, index: cfolioItem.cardId });
             }
           );
         }
@@ -381,6 +361,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
               <div className="left d-flex flex-column align-items-center justify-content-even mb-3">
                 {cfolioItemCard && (
                   <img
+                    className="card-visual"
                     src={cfolioItemCard.url.replace('{res}', '500')}
                     alt=""
                     style={{ width: '100%' }}
@@ -401,7 +382,8 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
                   <h3 className="tk-vincente">
                     {renderCFolioItem ? (
                       <>
-                        TOKEN ID: {renderCFolioItem.id.mask(128).toHexString()}
+                        TOKEN ID:{' '}
+                        {renderCFolioItem.tokenId.mask(128).toHexString()}
                         <br />
                         INVESTMENT: {renderCFolioItem.assets[0].toFixed(4)}
                         {' ' + this.investCurrency}

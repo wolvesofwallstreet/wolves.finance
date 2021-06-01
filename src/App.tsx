@@ -23,13 +23,6 @@ import Header from './components/header';
 import Page1 from './components/page1';
 import Page3 from './components/page3';
 import Page4 from './components/page4';
-import Page5 from './components/page5';
-import Page6 from './components/page6';
-//import Page7BoisBoardrooms from './components/page7';
-import Page11 from './components/page11';
-import Page13 from './components/page13';
-import Page14 from './components/page14';
-import Page15 from './components/page15';
 import { PageStatus } from './components/pageStatus';
 import Stake from './components/stake';
 import WolfToast from './components/toast/wolftoast';
@@ -59,14 +52,7 @@ class App extends React.Component {
               <Route path="/cfolio-sfts" component={CFolioItemSfts} />
               <Route path="/cfolio-invest" component={CFolioInvest} />
 
-              <Route path="/page5-mypack" component={Page5} />
-              <Route path="/page6" component={Page6} />
-              {/*<Route path="/bois_boardrooms" component={Page7BoisBoardrooms} />*/}
-              <Route path="/page11" component={Page11} />
               <Route path="/c_folio_manager" component={CFolioManager} />
-              <Route path="/page13" component={Page13} />
-              <Route path="/page14" component={Page14} />
-              <Route path="/page15" component={Page15} />
               <Route component={Page1} />
             </Switch>
             <Footer />

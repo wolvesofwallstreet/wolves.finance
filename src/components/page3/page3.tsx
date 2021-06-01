@@ -139,21 +139,25 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
               '{Q}',
               this.content.cards[idx].quantity.toString()
             );
-            this.tokenIds = this.content.cards[idx].cards.map((card) => {
-              return {
-                id: ethers.BigNumber.from(
-                  (this.content.cards[idx].chainRef << 24) |
-                    (card.chainRef << 16)
-                ),
-                isBaseCard: true,
-                isStockCard: true,
-                isWallet: false,
-                locked: false,
-                rewardRate: 0,
-                mintTimestamp: 0,
-                cfolioItems: [],
-              };
-            });
+            this.tokenIds = this.content.cards[idx].cards.map(
+              (card, cardId) => {
+                return {
+                  tokenId: ethers.BigNumber.from(
+                    (this.content.cards[idx].chainRef << 24) |
+                      (card.chainRef << 16)
+                  ),
+                  levelId: idx,
+                  cardId,
+                  isBaseCard: true,
+                  isStockCard: true,
+                  isWallet: false,
+                  locked: false,
+                  rewardRate: 0,
+                  mintTimestamp: 0,
+                  cfolioItems: [],
+                };
+              }
+            );
           }
           this.walletTokenIds = [];
         } else {
@@ -166,15 +170,10 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
             StoreClasses.store.getAssets().userSFT.find((n) => n.isWallet)
               ?.cfolioItems ?? [];
           // collect tokenId bitmask
-          let tokenIdBits = 0;
           this.tokenIds.forEach(
-            (n) => (tokenIdBits |= 1 << (n.id.mask(32).toNumber() >> 24))
+            (n) =>
+              (this.levelFilter |= 1 << this.content.cards[n.levelId].levelId)
           );
-          this.content.cards.forEach((level) => {
-            if (tokenIdBits & (1 << level.chainRef)) {
-              this.levelFilter |= 1 << level.levelId;
-            }
-          });
           this.levelDescription =
             (this.levelFilter & (1 << newLevelId)) === 0
               ? ''
@@ -221,7 +220,6 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
     const hasMoreLevels = this.nextLevel >= 0;
 
     const startPosition = 0;
-    let tokenIdx = 0;
 
     return (
       <div
@@ -307,44 +305,24 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
             )}
             {contentLoaded && (
               <div id="page3-content-container">
-                {this.content.cards
-                  .filter(
-                    (level) =>
-                      level.levelId === levelId &&
-                      (display === 'my' || type === level.type)
-                  )
-                  .map((level) =>
-                    level.cards.map((card, index) => {
-                      const collection: JSX.Element[] = [];
-                      const tokenId = (level.chainRef << 8) | card.chainRef;
-                      while (
-                        tokenIdx < this.tokenIds.length &&
-                        this.tokenIds[tokenIdx].id.mask(32).toNumber() >> 16 <=
-                          tokenId
-                      ) {
-                        this.tokenIds[tokenIdx].id.mask(32).toNumber() >> 16 ===
-                          tokenId &&
-                          collection.push(
-                            <CardBox
-                              key={'card_' + tokenIdx}
-                              type={level.type}
-                              levelId={levelId}
-                              content={card}
-                              quantity={level.quantity}
-                              price={level.price}
-                              tokenId={
-                                display === 'my'
-                                  ? this.tokenIds[tokenIdx].id
-                                  : undefined
-                              }
-                              t={t}
-                            />
-                          );
-                        ++tokenIdx;
-                      }
-                      return collection;
-                    })
-                  )}
+                {this.tokenIds.map((id) => {
+                  const level = this.content.cards[id.levelId];
+                  return (
+                    level.levelId === levelId &&
+                    (display === 'my' || type === level.type) && (
+                      <CardBox
+                        key={'card_' + id.tokenId.mask(32).toString()}
+                        type={level.type}
+                        levelId={levelId}
+                        content={level.cards[id.cardId]}
+                        quantity={level.quantity}
+                        price={level.price}
+                        tokenId={display === 'my' ? id.tokenId : undefined}
+                        t={t}
+                      />
+                    )
+                  );
+                })}
               </div>
             )}
           </>

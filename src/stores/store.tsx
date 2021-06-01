@@ -133,14 +133,18 @@ export type StakeResult = {
 };
 
 export type SFTCHILD = {
-  id: ethers.BigNumber;
+  tokenId: ethers.BigNumber;
+  levelId: number;
+  cardId: number;
   locked: boolean;
   type: number;
   assets: number[];
 };
 
 export type SFT = {
-  id: ethers.BigNumber;
+  tokenId: ethers.BigNumber;
+  levelId: number;
+  cardId: number;
   isBaseCard: boolean;
   isStockCard: boolean;
   isWallet: boolean;
@@ -794,8 +798,19 @@ class Store {
       const newUserSFT: SFT[] = mergeList
         .filter((n) => n.mask(128).lte(Store.BASE_CARD_MAX))
         .map((bn, index) => {
+          const cr = bn.mask(32).toNumber() >> 16;
+          let cardIndex = 0;
+          const levelIndex = this.assets.cards.cards.findIndex(
+            (l) =>
+              l.chainRef << 8 === (cr & 0xff00) &&
+              (cardIndex = l.cards.findIndex(
+                (c) => c.chainRef === (cr & 0xff)
+              )) >= 0
+          );
           return {
-            id: bn,
+            tokenId: bn,
+            levelId: levelIndex,
+            cardId: cardIndex,
             isBaseCard: bn.lte(Store.BASE_CARD_MAX),
             isStockCard: bn.lte(Store.STOCK_CARD_MAX),
             isWallet: false,
@@ -806,15 +821,17 @@ class Store {
           };
         })
         .sort((a, b) =>
-          a.id.mask(128).gt(b.id.mask(128))
+          a.tokenId.mask(128).gt(b.tokenId.mask(128))
             ? 1
-            : a.id.mask(128).lt(b.id.mask(128))
+            : a.tokenId.mask(128).lt(b.tokenId.mask(128))
             ? -1
             : 0
         );
       // Create a dummy UserTokenId UINT256Max for the users wallet
       newUserSFT.unshift({
-        id: BIGNUMBER_MAX,
+        tokenId: BIGNUMBER_MAX,
+        levelId: -1,
+        cardId: -1,
         isBaseCard: false,
         isStockCard: false,
         isWallet: true,
@@ -835,7 +852,10 @@ class Store {
         //get destination tokenId
         let destinationId: number;
         if (tokenId.mask(128).gt(Store.BASE_CARD_MAX)) destinationId = 0;
-        else destinationId = newUserSFT.findIndex((sft) => sft.id.eq(tokenId));
+        else
+          destinationId = newUserSFT.findIndex((sft) =>
+            sft.tokenId.eq(tokenId)
+          );
         if (destinationId >= 0) {
           newUserSFT[destinationId].rewardRate = readUint256(
             result2,
@@ -850,13 +870,21 @@ class Store {
           while (numCFolios > 0) {
             const childId = readUint256(result2, readIndex++);
             const child: SFTCHILD = {
-              id: childId,
+              tokenId: childId,
+              levelId: -1,
+              cardId: -1,
               locked:
                 destinationId !== 0 ||
                 mergeList.findIndex((n) => n.eq(childId)) >= numUnlocked,
               type: readUint256(result2, readIndex++).toNumber(),
               assets: [],
             };
+            child.levelId = this.assets.cfolioItems.findIndex(
+              (l) =>
+                (child.cardId = l.cards.findIndex(
+                  (c) => c.chainRef === child.type
+                )) >= 0
+            );
             let numAssets = readUint256(result2, readIndex++).toNumber();
             while (numAssets > 0) {
               child.assets.push(
@@ -889,9 +917,9 @@ class Store {
         if (['AssetAdded', 'AssetRemoved'].includes(parsed.name)) {
           this.assets.userSFT.find(
             (isft) =>
-              isft.id === sft &&
+              isft.tokenId === sft &&
               isft.cfolioItems.find((item) => {
-                if (item.id === cfolio) {
+                if (item.tokenId === cfolio) {
                   item.assets[0] = this.fromWei(parsed.args[2]);
                   emitter.emit(ASSETS_STATE, {
                     status: 'cfolio_inplace',
@@ -1613,7 +1641,9 @@ class Store {
 
   _resolveSFTUser(tokenId: ethers.BigNumber, locked: boolean) {
     if (this.pauseSFTUser) {
-      const elem = this.assets.userSFT.find((entry) => entry.id.eq(tokenId));
+      const elem = this.assets.userSFT.find((entry) =>
+        entry.tokenId.eq(tokenId)
+      );
       if (elem) elem.locked = locked;
       this.pauseSFTUser = false;
       emitter.emit(ASSETS_STATE, { status: 'tokens' } as AssetStateresult);

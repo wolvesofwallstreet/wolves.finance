@@ -47,8 +47,8 @@ function YearnQuad({
       content: {
         wowsAmount: nftPrice,
         investAmount: [inputVal],
-        sftTokenId: sft?.id,
-        cfolioTokenId: cfolioItem?.id,
+        sftTokenId: sft?.tokenId,
+        cfolioTokenId: cfolioItem?.tokenId,
         cfolioType: nftType,
       },
     };

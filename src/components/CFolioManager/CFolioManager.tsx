@@ -37,8 +37,6 @@ import { CARDS, CFOLIO_ITEM, CFOLIO_ITEMS } from '../types/cards';
 
 interface IMAGE extends IMAGE_SLIDER_SLIDE {
   sft: SFT;
-  level: number;
-  index: number;
 }
 
 interface SUBIMAGE extends IMAGE_SLIDER_SLIDE {
@@ -126,26 +124,16 @@ class CFolioManager extends React.Component<PROPS, STATE> {
     tokenIds.forEach((sft, tokenIdIdx) => {
       if (pred(sft)) {
         if (sft.isStockCard && !sft.locked) {
-          const tokenId = sft.id.toNumber();
-          const level =
-            this.cards?.cards.findIndex((l) => l.chainRef === tokenId >> 24) ??
-            -1;
-          const index =
-            this.cards?.cards[level].cards.findIndex(
-              (card) => card.chainRef === ((tokenId >> 16) & 0xff)
-            ) ?? -1;
-          if (!pred2 || pred2(level, index)) {
+          if (!pred2 || pred2(sft.levelId, sft.cardId)) {
             const url =
-              this.cards?.cards[level].cards[index].url
+              this.cards?.cards[sft.levelId].cards[sft.cardId].url
                 .replace('{res}', '300')
                 .replace('.mp4', '.mp4.jpg') || '';
             result.push({
               url,
               cfolioItems: this._cfolioItemsForSlider(sft),
-              tokenId: sft.id,
+              tokenId: sft.tokenId,
               sft,
-              level,
-              index,
             });
           }
         } else if (sft.isWallet) {
@@ -153,8 +141,6 @@ class CFolioManager extends React.Component<PROPS, STATE> {
             url: WalletLogo,
             cfolioItems: this._cfolioItemsForSlider(sft),
             sft,
-            level: -1,
-            index: -1,
           });
         }
       }
@@ -166,13 +152,9 @@ class CFolioManager extends React.Component<PROPS, STATE> {
     const cfolioItems = StoreClasses.store.getAssets().cfolioItems;
     const result: IMAGE_SLIDER_CFOLIO[] = [];
     sft.cfolioItems.forEach((cfi) => {
-      let found: CFOLIO_ITEM | undefined;
-      cfolioItems.find(
-        (l) => (found = l.cards.find((i) => i.chainRef === cfi.type))
-      );
       result.push({
-        name: found ? found.name : 'UNKNOWN',
-        tokenId: cfi.id,
+        name: cfolioItems[cfi.levelId].cards[cfi.cardId].name,
+        tokenId: cfi.tokenId,
         disabled: false,
       });
     });
@@ -200,7 +182,7 @@ class CFolioManager extends React.Component<PROPS, STATE> {
             locked: cfi.locked,
             constraints: cat?.constraints,
             cfolioItem: cfiCard,
-            tokenId: cfi.id,
+            tokenId: cfi.tokenId,
             cfolioItems: [],
           });
           if (cat?.constraints) {
@@ -215,7 +197,7 @@ class CFolioManager extends React.Component<PROPS, STATE> {
       // Create bottom images, only contraint matching
       // and never insert current selected top element
       const pred = (sft: SFT) =>
-        sft.id !== topImages[this.sliderIndex[0]].sft.id;
+        sft.tokenId !== topImages[this.sliderIndex[0]].sft.tokenId;
       const pred2 = (l: number, i: number) =>
         constraints[this.cards?.cards[l].type || ''];
       bottomImages.push(
@@ -244,7 +226,7 @@ class CFolioManager extends React.Component<PROPS, STATE> {
         sliderImagesMiddle = this.sliderImagesMiddleAll;
       } else {
         const filter =
-          this.cards.cards[bottomImages[this.sliderIndex[2]].level].type;
+          this.cards.cards[bottomImages[this.sliderIndex[2]].sft.levelId].type;
         sliderImagesMiddle = this.sliderImagesMiddleAll.filter(
           (elem) => !elem.constraints || elem.constraints === filter
         );
@@ -279,8 +261,8 @@ class CFolioManager extends React.Component<PROPS, STATE> {
 
   handleBuy() {
     const request: PayloadContentCFolioItemLT = {
-      src: this.state.sliderImagesTop[this.sliderIndex[0]].sft.id,
-      dst: this.state.sliderImagesBottom[this.sliderIndex[2]].sft.id,
+      src: this.state.sliderImagesTop[this.sliderIndex[0]].sft.tokenId,
+      dst: this.state.sliderImagesBottom[this.sliderIndex[2]].sft.tokenId,
       lockCFIs: [],
       transferCFIs: [],
     };
