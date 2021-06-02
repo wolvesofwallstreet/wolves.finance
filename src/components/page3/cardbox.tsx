@@ -74,7 +74,7 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
     if (sft && sft.cfolioItems.length > 0) {
       const topOffset =
         sft.cfolioItems.length > 1
-          ? Math.min((314 - 80) / (sft.cfolioItems.length - 1), 84)
+          ? Math.min((314 - 82) / (sft.cfolioItems.length - 1), 86)
           : 0;
       return (
         <div id="cfi-image">

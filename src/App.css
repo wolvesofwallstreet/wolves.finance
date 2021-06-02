@@ -80,6 +80,10 @@ span a:hover {
   background-color: var(--wolves-orange-transparent) !important;
 }
 
+.bg-orange {
+  background-color: var(--wolves-orange);
+}
+
 .t-left {
   text-align: left;
 }

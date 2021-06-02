@@ -13,10 +13,8 @@
 }
 
 .info-progress {
-  position: absolute;
   display: block;
   height: 2px;
-  bottom: 2px;
   background-color: whitesmoke;
   animation: progressBar 30s linear;
   animation-fill-mode: both;
@@ -27,6 +25,11 @@
   -moz-animation: progressBar 30s linear;
   -moz-animation-fill-mode: both;
   -moz-animation-iteration-count: infinite;
+}
+
+.info-progress.absolute {
+  position: absolute;
+  bottom: 2px;
 }
 
 @keyframes progressBar {

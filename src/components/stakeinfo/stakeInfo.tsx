@@ -175,7 +175,7 @@ class StakeInfo extends Component<STAKEINFOPROPS, STAKEINFOSTATE> {
           {stakeSupplyUser > 0 ? (
             <span
               onAnimationIteration={this.onProgressIteration}
-              className="info-progress"
+              className="info-progress absolute"
             />
           ) : (
             ''

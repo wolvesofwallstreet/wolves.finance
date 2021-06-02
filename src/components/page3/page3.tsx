@@ -80,10 +80,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
     this.setState({ isWalletConnected: StoreClasses.store.isConnected() });
     StoreClasses.emitter.on(CONNECTION_CHANGED, this.onConnectionChanged);
     StoreClasses.emitter.on(ASSETS_STATE, this.onAssetsState);
-    StoreClasses.dispatcher.dispatch({
-      type: SFT_REWARD,
-      content: {},
-    } as Payload);
+    this._updateRewards();
   }
 
   componentDidUpdate(): void {
@@ -110,10 +107,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
       this.setState({ contentChanged: true });
       if (status.status === 'tokens') {
         this.setState({ levelId: -1 });
-        StoreClasses.dispatcher.dispatch({
-          type: SFT_REWARD,
-          content: {},
-        } as Payload);
+        this._updateRewards();
       }
     }
   }
@@ -233,6 +227,13 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
     if (query.get('scroll') === 'false') this.scrollOnUpdate = false;
   }
 
+  _updateRewards() {
+    StoreClasses.dispatcher.dispatch({
+      type: SFT_REWARD,
+      content: {},
+    } as Payload);
+  }
+
   render(): JSX.Element {
     const { display, t } = this.props;
     const { contentLoaded, levelId, type } = this.state;
@@ -242,108 +243,122 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
     const startPosition = 0;
 
     return (
-      <div
-        ref={this.mainRef}
-        className={'wolves-container wolves-header bg-' + type}
-      >
-        {!this.state.isWalletConnected && display === 'my' ? (
-          <span className="font-32 tk-vincente-lightbold wallet-warning">
-            Wallet is not connected.
-            <br /> Please connect your wallet.
-          </span>
-        ) : (
-          <>
-            <img
-              src={Logo}
-              alt="WOWS"
-              width="50px"
-              height="50px"
-              className={`${type === 'bois' ? 'rotate' : ''}`}
+      <>
+        {type === 'myPack' && (
+          <span className="bg-orange">
+            <span
+              className="info-progress"
+              onAnimationIteration={this._updateRewards.bind(this)}
             />
-            <h2 className="tk-vincente-lightbold no-margin">
-              {t('page3.welcome-' + type)}
-            </h2>
-            <h4 className="tk-grotesk-lightbold">
-              {t('page3.newCrypto-' + type).replace(
-                '{Q}',
-                (levelId + 1).toString()
-              )}
-            </h4>
-            <span className="line-container">
-              <span id="left" className="dot" />
-              <span className="line" />
-              <span id="right" className="dot" />
-            </span>
-            <div id="page3-section-header">
-              <span className="tk-vincente-lightbold font-24 single-line wolves-color-orange fixed-pos">
-                &lt;
-                {levelPosition <= startPosition ? (
-                  <Link to="/">{t('page.home')}</Link>
-                ) : (
-                  <Link to={'?type=' + type + '&levelId=' + this.prevLevel}>
-                    {t('page.previous')}
-                  </Link>
-                )}
-              </span>
-              <span className="page3-section-container tk-vincente-lightbold">
-                {contentLoaded &&
-                  this.content.levelNames.map((name: string, index: number) => {
-                    if ((1 << index) & this.levelFilter) {
-                      return levelId === index ? (
-                        <span
-                          key={`sec_` + index}
-                          className="page3-section page3-section-selected"
-                        >
-                          {name}
-                          <div id="triangle-down" />
-                        </span>
-                      ) : (
-                        <Link
-                          key={'sec_' + index}
-                          className="page3-section"
-                          to={'?type=' + type + '&levelId=' + index}
-                        >
-                          {name}
-                        </Link>
-                      );
-                    } else return null;
-                  })}
-              </span>
-              <span className="tk-vincente-lightbold font-24 single-line wolves-color-orange">
-                {hasMoreLevels ? (
-                  <Link to={'?type=' + type + '&levelId=' + this.nextLevel}>
-                    {t('page.nextLevel')}
-                  </Link>
-                ) : (
-                  t('page.nextLevel')
-                )}
-                &gt;
-              </span>
-            </div>
-            {contentLoaded && (
-              <h4 className="tk-grotesk-lightbold">{this.levelDescription}</h4>
-            )}
-            {contentLoaded && (
-              <div id="page3-content-container">
-                {this.tokenIds.map((id, index) => {
-                  const level = this.content.cards[id.levelId];
-                  return (
-                    level.levelId === levelId &&
-                    (display === 'my' || type === level.type) && (
-                      <CardBox
-                        sft={id}
-                        earned={id.rewardEarned}
-                        key={'card_' + index}
-                        t={t}
-                      />
-                    )
-                  );
-                })}
-              </div>
-            )}
-          </>
+          </span>
         )}
-      </div>
+        <div
+          ref={this.mainRef}
+          className={'wolves-container wolves-header bg-' + type}
+        >
+          {!this.state.isWalletConnected && display === 'my' ? (
+            <span className="font-32 tk-vincente-lightbold wallet-warning">
+              Wallet is not connected.
+              <br /> Please connect your wallet.
+            </span>
+          ) : (
+            <>
+              <img
+                src={Logo}
+                alt="WOWS"
+                width="50px"
+                height="50px"
+                className={`${type === 'bois' ? 'rotate' : ''}`}
+              />
+              <h2 className="tk-vincente-lightbold no-margin">
+                {t('page3.welcome-' + type)}
+              </h2>
+              <h4 className="tk-grotesk-lightbold">
+                {t('page3.newCrypto-' + type).replace(
+                  '{Q}',
+                  (levelId + 1).toString()
+                )}
+              </h4>
+              <span className="line-container">
+                <span id="left" className="dot" />
+                <span className="line" />
+                <span id="right" className="dot" />
+              </span>
+              <div id="page3-section-header">
+                <span className="tk-vincente-lightbold font-24 single-line wolves-color-orange fixed-pos">
+                  &lt;
+                  {levelPosition <= startPosition ? (
+                    <Link to="/">{t('page.home')}</Link>
+                  ) : (
+                    <Link to={'?type=' + type + '&levelId=' + this.prevLevel}>
+                      {t('page.previous')}
+                    </Link>
+                  )}
+                </span>
+                <span className="page3-section-container tk-vincente-lightbold">
+                  {contentLoaded &&
+                    this.content.levelNames.map(
+                      (name: string, index: number) => {
+                        if ((1 << index) & this.levelFilter) {
+                          return levelId === index ? (
+                            <span
+                              key={`sec_` + index}
+                              className="page3-section page3-section-selected"
+                            >
+                              {name}
+                              <div id="triangle-down" />
+                            </span>
+                          ) : (
+                            <Link
+                              key={'sec_' + index}
+                              className="page3-section"
+                              to={'?type=' + type + '&levelId=' + index}
+                            >
+                              {name}
+                            </Link>
+                          );
+                        } else return null;
+                      }
+                    )}
+                </span>
+                <span className="tk-vincente-lightbold font-24 single-line wolves-color-orange">
+                  {hasMoreLevels ? (
+                    <Link to={'?type=' + type + '&levelId=' + this.nextLevel}>
+                      {t('page.nextLevel')}
+                    </Link>
+                  ) : (
+                    t('page.nextLevel')
+                  )}
+                  &gt;
+                </span>
+              </div>
+              {contentLoaded && (
+                <h4 className="tk-grotesk-lightbold">
+                  {this.levelDescription}
+                </h4>
+              )}
+              {contentLoaded && (
+                <div id="page3-content-container">
+                  {this.tokenIds.map((id, index) => {
+                    const level = this.content.cards[id.levelId];
+                    return (
+                      level.levelId === levelId &&
+                      (display === 'my' || type === level.type) && (
+                        <CardBox
+                          sft={id}
+                          earned={id.rewardEarned}
+                          key={'card_' + index}
+                          t={t}
+                        />
+                      )
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </>
     );
   }
 }
