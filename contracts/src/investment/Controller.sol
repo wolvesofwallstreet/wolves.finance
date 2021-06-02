@@ -355,6 +355,14 @@ contract Controller is IController, Context, Ownable {
     }
   }
 
+  function setFarmRewardDuration(address farmAddress, uint256 newDuration)
+    external
+    onlyOwner
+  {
+    require(IFarm(farmAddress).controller() == this, 'Invalid farm (C)');
+    IFarm(farmAddress).setRewardsDuration(newDuration);
+  }
+
   //////////////////////////////////////////////////////////////////////////////
   // Utility functions
   //////////////////////////////////////////////////////////////////////////////
