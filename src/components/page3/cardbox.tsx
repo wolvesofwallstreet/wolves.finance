@@ -44,7 +44,7 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
     levelId = level.levelId;
     tokenId = sft.tokenId !== BIGNUMBER_MAX ? sft.tokenId : undefined;
     type = tokenId ? 'myPack' : level.type;
-    cardId = sft.cardId;
+    cardId = card.id;
     cardType = card.type;
     url = card.url;
     quantity = level.quantity;
