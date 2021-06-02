@@ -91,6 +91,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
       this.displayType = newDisplayType;
       this.investCurrency =
         this.displayType === 'lpInvestment' ? 'WOWS/ETH LP' : 'DAI';
+      this.slideIndex = 0;
       this.sliderInterface?.go(0);
       this.setState({ currentImage: 0 });
       this._updateImages();
@@ -149,7 +150,6 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
     });
 
     this.receiverImages = newImages;
-
     this.cards = cards;
     this._updateCFolioItems();
   }
@@ -309,6 +309,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
                   onSlideChanged={this.sliderCB}
                   slideWidth={150}
                   slides={this.receiverImages}
+                  startSlideId={this.slideIndex}
                 />
                 <button
                   onClick={() => this.sliderInterface?.next()}

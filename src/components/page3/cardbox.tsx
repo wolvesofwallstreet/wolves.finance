@@ -74,7 +74,7 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
     if (sft && sft.cfolioItems.length > 0) {
       const topOffset =
         sft.cfolioItems.length > 1
-          ? Math.min((326 - 80) / (sft.cfolioItems.length - 1), 84)
+          ? Math.min((314 - 80) / (sft.cfolioItems.length - 1), 84)
           : 0;
       return (
         <div id="cfi-image">
@@ -82,6 +82,7 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
             const cfi = assets.cfolioItems[sftc.levelId].cards[sftc.cardId];
             return (
               <img
+                key={'cfi' + index}
                 id="cfi-image"
                 style={{ top: 6 + index * topOffset + 'px' }}
                 height="80px"

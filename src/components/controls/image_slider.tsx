@@ -103,10 +103,15 @@ const ImageSlider = ({
 
   useEffect(() => {
     enableTransition(false);
-    setChecked([]);
-    setDisplayIndex(-1);
-    setCurrentIndex(startSlideId || 0);
     setTimeout(() => enableTransition(true), 500);
+  }, [slides]);
+
+  useEffect(() => {
+    if (startSlideId === undefined) {
+      setChecked([]);
+      setDisplayIndex(-1);
+      setCurrentIndex(0);
+    } else setCurrentIndex(startSlideId);
   }, [slides, startSlideId]);
 
   useEffect(() => {

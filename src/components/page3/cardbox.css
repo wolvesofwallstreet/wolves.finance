@@ -47,6 +47,7 @@
   position: absolute;
   top: 0px;
   right: 4px;
+  box-shadow: 0px 0px 8px silver;
 }
 
 #triangle-up {
