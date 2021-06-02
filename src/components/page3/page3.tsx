@@ -7,7 +7,6 @@
  */
 import './page3.css';
 
-import { ethers } from 'ethers';
 import React, { Component } from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { Link, RouteComponentProps } from 'react-router-dom';
@@ -20,6 +19,7 @@ import {
 } from '../../stores/constants';
 import {
   AssetStateresult,
+  BIGNUMBER_MAX,
   ConnectResult,
   Payload,
   SFT,
@@ -163,10 +163,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
             this.tokenIds = this.content.cards[idx].cards.map(
               (card, cardId) => {
                 return {
-                  tokenId: ethers.BigNumber.from(
-                    (this.content.cards[idx].chainRef << 24) |
-                      (card.chainRef << 16)
-                  ),
+                  tokenId: BIGNUMBER_MAX,
                   levelId: idx,
                   cardId,
                   isBaseCard: true,
@@ -328,7 +325,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
             )}
             {contentLoaded && (
               <div id="page3-content-container">
-                {this.tokenIds.map((id) => {
+                {this.tokenIds.map((id, index) => {
                   const level = this.content.cards[id.levelId];
                   return (
                     level.levelId === levelId &&
@@ -336,7 +333,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
                       <CardBox
                         sft={id}
                         earned={id.rewardEarned}
-                        key={'card_' + id.tokenId.mask(32).toString()}
+                        key={'card_' + index}
                         t={t}
                       />
                     )
