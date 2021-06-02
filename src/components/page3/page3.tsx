@@ -244,7 +244,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
 
     return (
       <>
-        {type === 'myPack' && (
+        {type === 'myPack' && levelId !== 4 && (
           <span className="bg-orange">
             <span
               className="info-progress"
@@ -339,20 +339,30 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
               )}
               {contentLoaded && (
                 <div id="page3-content-container">
-                  {this.tokenIds.map((id, index) => {
-                    const level = this.content.cards[id.levelId];
-                    return (
-                      level.levelId === levelId &&
-                      (display === 'my' || type === level.type) && (
-                        <CardBox
-                          sft={id}
-                          earned={id.rewardEarned}
-                          key={'card_' + index}
-                          t={t}
-                        />
-                      )
-                    );
-                  })}
+                  {levelId !== 4 &&
+                    this.tokenIds.map((id, index) => {
+                      const level = this.content.cards[id.levelId];
+                      return (
+                        level.levelId === levelId &&
+                        (display === 'my' || type === level.type) && (
+                          <CardBox
+                            sft={id}
+                            earned={id.rewardEarned}
+                            key={'card_' + index}
+                            t={t}
+                          />
+                        )
+                      );
+                    })}
+                  {levelId === 4 &&
+                    this.walletTokenIds.map((sftc, index) => (
+                      <CardBox
+                        cfolio={sftc}
+                        earned={0}
+                        key={'cfolio_' + index}
+                        t={t}
+                      />
+                    ))}
                 </div>
               )}
             </>

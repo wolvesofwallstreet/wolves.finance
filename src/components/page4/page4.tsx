@@ -315,7 +315,10 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         <h2 className="tk-vincente-lightbold no-margin">
           {t('page4.welcome-' + type)}
         </h2>
-        <h4 className="no-margin">{t('page4.header-' + type)}</h4>
+        <h4
+          className="tk-grotesk-lightbold"
+          dangerouslySetInnerHTML={{ __html: t('page4.header-' + type) }}
+        />
         {currentIndex >= 0 && (
           <div className="back-level-container">
             <span
