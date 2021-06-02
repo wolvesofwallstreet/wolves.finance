@@ -24,6 +24,7 @@ export const STAKE_LP_AVAILABLE = 'STAKE_LP_AVAILABLE'; // Available LP token
 export const SFT_BUY = 'SFT_BUY'; // Buy (mint) an SFT with given level / class
 export const SFT_LOCK = 'SFT_LOCK'; // Transfer SFT to TradingFloor contract
 export const SFT_UNLOCK = 'SFT_UNLOCK'; // Burn NFT, transfer SFT back
+export const SFT_REWARD = 'SFT_REWARD'; // REQUEST REWARD INFO
 
 export const CFOLIO_ITEM_BUY = 'CFOLIO_ITEM_BUY'; // Buy (mint) cfolioItem
 export const CFOLIO_ITEM_DEPOSIT_LP = 'CFOLIO_ITEM_DEPOSIT_LP'; // Add LP token into existing CFI

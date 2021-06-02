@@ -15,11 +15,12 @@ import { BIGNUMBER_MAX, SFT, SFTCHILD, StoreClasses } from '../../stores/store';
 type CARDBOX_PROPS = {
   sft?: SFT;
   cfolio?: SFTCHILD;
+  earned: number;
   t: TFunction;
 };
 
 export function CardBox(props: CARDBOX_PROPS): JSX.Element {
-  const { cfolio, sft, t } = props;
+  const { cfolio, earned, sft, t } = props;
   const assets = StoreClasses.store.getAssets();
 
   let name,
@@ -133,7 +134,7 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
               {t('page.prowess')}: {prowess / 10000}%
             </span>
             <span className="tk-grotesk-lightbold font-14 ellipsis">
-              {t('page.earned')}: [TODO] WOWS
+              {t('page.earned')}: {earned.toFixed(6)} WOWS
             </span>
           </>
         ) : (

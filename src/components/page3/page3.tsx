@@ -13,10 +13,15 @@ import { TFunction, withTranslation } from 'react-i18next';
 import { Link, RouteComponentProps } from 'react-router-dom';
 
 import Logo from '../../assets/logo.png';
-import { ASSETS_STATE, CONNECTION_CHANGED } from '../../stores/constants';
+import {
+  ASSETS_STATE,
+  CONNECTION_CHANGED,
+  SFT_REWARD,
+} from '../../stores/constants';
 import {
   AssetStateresult,
   ConnectResult,
+  Payload,
   SFT,
   SFTCHILD,
   StoreClasses,
@@ -35,6 +40,7 @@ type QueryType = 'wolves' | 'bois' | 'myPack';
 
 type PAGE3_STATE = {
   contentLoaded: boolean;
+  contentChanged: boolean;
   type: QueryType;
   levelId: number;
   isWalletConnected: boolean;
@@ -42,6 +48,7 @@ type PAGE3_STATE = {
 
 const INITIAL_PAGE3_STATE: PAGE3_STATE = {
   contentLoaded: false,
+  contentChanged: false,
   type: 'wolves',
   levelId: -1,
   isWalletConnected: false,
@@ -73,6 +80,10 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
     this.setState({ isWalletConnected: StoreClasses.store.isConnected() });
     StoreClasses.emitter.on(CONNECTION_CHANGED, this.onConnectionChanged);
     StoreClasses.emitter.on(ASSETS_STATE, this.onAssetsState);
+    StoreClasses.dispatcher.dispatch({
+      type: SFT_REWARD,
+      content: {},
+    } as Payload);
   }
 
   componentDidUpdate(): void {
@@ -95,8 +106,16 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
   }
 
   onAssetsState(status: AssetStateresult): void {
-    this.setState({ contentLoaded: false });
-    if (status.status === 'loaded') this._checkContent();
+    if (!['error', 'cfolio_amount'].includes(status.status)) {
+      this.setState({ contentChanged: true });
+      if (status.status === 'tokens') {
+        this.setState({ levelId: -1 });
+        StoreClasses.dispatcher.dispatch({
+          type: SFT_REWARD,
+          content: {},
+        } as Payload);
+      }
+    }
   }
 
   _checkContent(): void {
@@ -116,6 +135,8 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
     if (!contentLoaded) {
       this.content = StoreClasses.store.getAssets().cards;
     }
+    if (this.state.contentChanged) this.setState({ contentChanged: false });
+
     if (this.content.levelNames.length > 0) {
       if (!contentLoaded) {
         this.setState({ contentLoaded: true, levelId: -1 });
@@ -153,6 +174,8 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
                   isWallet: false,
                   locked: false,
                   rewardRate: 0,
+                  rewardShare: 0,
+                  rewardEarned: 0,
                   mintTimestamp: 0,
                   cfolioItems: [],
                 };
@@ -312,6 +335,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
                     (display === 'my' || type === level.type) && (
                       <CardBox
                         sft={id}
+                        earned={id.rewardEarned}
                         key={'card_' + id.tokenId.mask(32).toString()}
                         t={t}
                       />

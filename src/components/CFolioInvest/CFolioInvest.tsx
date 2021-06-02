@@ -109,7 +109,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
   _onAssetsState(result: AssetStateresult) {
     if (['loaded', 'cards', 'tokens'].includes(result.status)) {
       this._updateImages();
-    } else if (result.status === 'cfolio_inplace') {
+    } else if (result.status === 'cfolio_amount') {
       this.setState({ currentImage: this.state.currentImage });
     }
   }

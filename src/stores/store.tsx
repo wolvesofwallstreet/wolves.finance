@@ -43,6 +43,7 @@ import {
   NEW_BLOCK,
   SFT_BUY,
   SFT_LOCK,
+  SFT_REWARD,
   SFT_UNLOCK,
   STAKE_ADD,
   STAKE_CLAIM,
@@ -77,7 +78,7 @@ export type PayloadContentCFolioItemLT = {
   transferCFIs: ethers.BigNumber[];
 };
 
-type Payload = {
+export type Payload = {
   type: string;
   content: PayloadContent;
 };
@@ -96,7 +97,7 @@ interface IIndexable {
 }
 
 export type AssetStateresult = {
-  status: 'error' | 'loaded' | 'cards' | 'tokens' | 'cfolio_inplace';
+  status: 'error' | 'loaded' | 'cards' | 'tokens' | 'cfolio_amount' | 'rewards';
 };
 
 export type TokenContractResult = {
@@ -150,6 +151,8 @@ export type SFT = {
   isWallet: boolean;
   locked: boolean;
   rewardRate: number;
+  rewardShare: number;
+  rewardEarned: number;
   mintTimestamp: number;
   cfolioItems: SFTCHILD[];
 };
@@ -160,11 +163,24 @@ export const BIGNUMBER_MAX = ethers.BigNumber.from(
 
 type cbf = async.AsyncResultCallback<unknown, Error>;
 
+export const REWARD_POOL_LP = 0;
+export const REWARD_POOL_SC = 1;
+
+type REWARD_INFO = {
+  total: number;
+  rewardDuration: number;
+  rewardPerDuration: number;
+};
+
 type ASSETS = {
   userSFT: SFT[];
   cards: CARDS;
   cfolioItems: CFOLIO_ITEMS[];
+  rewardInfo: REWARD_INFO[];
 };
+
+const readUint256 = (s: string, i: number) =>
+  ethers.BigNumber.from('0x' + s.substr(i * 64 + 2, 64));
 
 class Store {
   web3Modal: Web3Modal;
@@ -205,6 +221,11 @@ class Store {
     userSFT: [],
     cards: { levelNames: [], cards: [], myPackLevelDescriptions: [] },
     cfolioItems: [],
+    rewardInfo: new Array(2).fill({
+      total: 0,
+      rewardDuration: 0,
+      rewardPerDuration: 0,
+    }),
   } as ASSETS;
 
   constructor() {
@@ -303,6 +324,9 @@ class Store {
           break;
         case SFT_LOCK:
           this._doSftLock(_payload.content);
+          break;
+        case SFT_REWARD:
+          this._getSftRewards(_payload.content);
           break;
         case ASSETS_STATE:
           if (_payload.content.filter?.includes('cards'))
@@ -784,9 +808,6 @@ class Store {
             n.mask(128).toNumber() >> 16 !== 0x0503)
       );
 
-    const readUint256 = (s: string, i: number) =>
-      ethers.BigNumber.from('0x' + s.substr(i * 64 + 2, 64));
-
     try {
       const result: [ethers.BigNumber[], ethers.BigNumber[]] =
         await this.sftMintContractRO.getTokenIds(this.address);
@@ -815,6 +836,8 @@ class Store {
             isWallet: false,
             locked: result[1].find((b) => b.eq(bn)) !== undefined,
             rewardRate: 0,
+            rewardShare: 0,
+            rewardEarned: 0,
             mintTimestamp: 0,
             cfolioItems: [],
           };
@@ -836,6 +859,8 @@ class Store {
         isWallet: true,
         locked: false,
         rewardRate: 0,
+        rewardShare: 0,
+        rewardEarned: 0,
         mintTimestamp: 0,
         cfolioItems: [],
       });
@@ -904,6 +929,37 @@ class Store {
     }
   };
 
+  _getSftRewards = async (plc: PayloadContent) => {
+    try {
+      if (!this.cfihLpContract) return;
+
+      const wolves = this.assets.userSFT.filter(
+        (sft) =>
+          sft.isBaseCard &&
+          this.assets.cards.cards[sft.levelId].type === 'wolves'
+      );
+
+      if (wolves.length === 0) return;
+
+      // Returns totalsupply, rewardDur, rewardsPerDur, [share, earned]
+      const result = await this.cfihLpContract.getRewardInfo(
+        wolves.map((sft) => sft.tokenId)
+      );
+      let readIndex = 0;
+      const ri = this.assets.rewardInfo[0];
+      ri.total = this.fromWei(readUint256(result, readIndex++));
+      ri.rewardDuration = readUint256(result, readIndex++).toNumber();
+      ri.rewardPerDuration = this.fromWei(readUint256(result, readIndex++));
+      wolves.forEach((sft) => {
+        sft.rewardShare = this.fromWei(readUint256(result, readIndex++));
+        sft.rewardEarned = this.fromWei(readUint256(result, readIndex++));
+      });
+      emitter.emit(ASSETS_STATE, { status: 'rewards' } as AssetStateresult);
+    } catch (e) {
+      console.log(e.message);
+    }
+  };
+
   _setCFolioAmount(
     receipt: ethers.providers.TransactionReceipt,
     sft: ethers.BigNumber,
@@ -921,7 +977,7 @@ class Store {
                 if (item.tokenId === cfolio) {
                   item.assets[0] = this.fromWei(parsed.args[2]);
                   emitter.emit(ASSETS_STATE, {
-                    status: 'cfolio_inplace',
+                    status: 'cfolio_amount',
                   } as AssetStateresult);
                   return true;
                 }
