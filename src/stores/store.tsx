@@ -1403,7 +1403,7 @@ class Store {
         }
       }
 
-      const tx: ethers.ContractTransaction | undefined =
+      const tx: ethers.ContractTransaction =
         await sftMintContract?.mintCFolioItemSFT(
           this.address,
           cfolioType,
@@ -1412,22 +1412,27 @@ class Store {
         );
       emitter.emit(CFOLIO_ITEM_BUY, {
         status: 'tx',
-        tx: tx?.hash,
+        tx: tx.hash,
       } as StatusResult);
 
-      await tx?.wait();
-      emitter.emit(CFOLIO_ITEM_BUY, {
-        status: 'success',
-        tx: tx?.hash,
-      } as StatusResult);
+      //await tx?.wait();
+      this.ethersProvider?.once(
+        tx.hash,
+        (receipt: ethers.providers.TransactionReceipt) => {
+          emitter.emit(CFOLIO_ITEM_BUY, {
+            status: 'success',
+            tx: tx?.hash,
+          } as StatusResult);
 
-      // There is no transfer with our address emitted,
-      // in case of valid SFT: Request an tokenId update
-      if (!sftTokenId.eq(BIGNUMBER_MAX))
-        this._addDQ(tx?.blockNumber ?? 0, {
-          type: ASSETS_STATE,
-          content: { filter: ['tokens'] },
-        } as Payload);
+          // There is no transfer with our address emitted,
+          // in case of valid SFT: Request an tokenId update
+          if (!sftTokenId.eq(BIGNUMBER_MAX))
+            this._addDQ(tx?.blockNumber ?? 0, {
+              type: ASSETS_STATE,
+              content: { filter: ['tokens'] },
+            } as Payload);
+        }
+      );
     } catch (e) {
       console.log(e);
       emitter.emit(CFOLIO_ITEM_BUY, {

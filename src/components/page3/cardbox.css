@@ -43,6 +43,12 @@
   left: 4px;
 }
 
+#cfi-image {
+  position: absolute;
+  top: 0px;
+  right: 4px;
+}
+
 #triangle-up {
   width: 0;
   height: 0;

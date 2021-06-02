@@ -70,6 +70,31 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
     locked = cfolio.locked;
   } else return <></>;
 
+  const renderCFolioItems = () => {
+    if (sft && sft.cfolioItems.length > 0) {
+      const topOffset =
+        sft.cfolioItems.length > 1
+          ? Math.min((326 - 80) / (sft.cfolioItems.length - 1), 84)
+          : 0;
+      return (
+        <div id="cfi-image">
+          {sft.cfolioItems.map((sftc, index) => {
+            const cfi = assets.cfolioItems[sftc.levelId].cards[sftc.cardId];
+            return (
+              <img
+                id="cfi-image"
+                style={{ top: 6 + index * topOffset + 'px' }}
+                height="80px"
+                alt={cfi.name}
+                src={cfi.url.replace('{res}', '300')}
+              />
+            );
+          })}
+        </div>
+      );
+    }
+  };
+
   return (
     <div className="card-container">
       <span className="tk-vincente-lightbold font-32">{name}</span>
@@ -103,6 +128,7 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
           />
         )}
         {locked && <div className={'locked'} />}
+        {renderCFolioItems()}
       </Link>
       <div className="wrapper">
         <span id="triangle-up" />
