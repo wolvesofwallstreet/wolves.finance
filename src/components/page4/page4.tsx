@@ -8,7 +8,7 @@
 import './page4.css';
 
 import { BigNumber, ethers } from 'ethers';
-import { Component } from 'react';
+import React, { Component } from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { RouteComponentProps } from 'react-router-dom';
 
@@ -71,6 +71,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
   }[] = [];
   scrollOnUpdate = true;
   needUpdate = true;
+  imageContainerRef: React.RefObject<HTMLDivElement> = React.createRef();
 
   constructor(props: PAGE4_PROPS) {
     super(props);
@@ -348,9 +349,10 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         ? `my?type=myPack&levelId=${levelId}`
         : `/shop?type=${type}&levelId=${levelId}`;
 
-    let price, quantity, autoUpgrade, profitReward;
+    let price, quantity, autoUpgrade, profitReward, locked;
     if (currentRender?.cfi && currentCard) {
       quantity = (currentCard as CFOLIO_ITEM).maxMintable;
+      locked = currentRender.cfi.locked;
     } else if (currentRender && currentLevel) {
       quantity = (currentLevel as CARD_LEVEL).quantity;
       autoUpgrade = (currentLevel as CARD_LEVEL).autoUpgrade;
@@ -359,7 +361,43 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         ? currentRender.sft.rewardRate / 10000
         : (currentLevel as CARD_LEVEL).profitReward;
       if (!currentRender?.sft) price = (currentLevel as CARD_LEVEL).price;
+      locked = currentRender.sft?.locked ?? false;
     }
+
+    const renderCFolioItems = () => {
+      if (
+        currentRender?.sft &&
+        currentRender.sft.cfolioItems.length > 0 &&
+        this.imageContainerRef.current &&
+        cfolios
+      ) {
+        const topOffset =
+          currentRender.sft.cfolioItems.length > 1
+            ? Math.min(
+                (this.imageContainerRef.current.clientHeight - 82) /
+                  (currentRender.sft.cfolioItems.length - 1),
+                86
+              )
+            : 0;
+        return (
+          <div id="cfi-image">
+            {currentRender.sft.cfolioItems.map((sftc, index) => {
+              const cfi = cfolios[sftc.levelId].cards[sftc.cardId];
+              return (
+                <img
+                  key={'cfi' + index}
+                  id="cfi-image"
+                  style={{ top: 6 + index * topOffset + 'px' }}
+                  height="80px"
+                  alt={cfi.name}
+                  src={cfi.url.replace('{res}', '300')}
+                />
+              );
+            })}
+          </div>
+        );
+      }
+    };
 
     return (
       <div
@@ -427,7 +465,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         </div>
         <div id="page4-content-container">
           <div id="page4-content-image">
-            <div id="page4-content-image-inner">
+            <div id="page4-content-image-inner" ref={this.imageContainerRef}>
               {currentCard &&
                 (currentCard.type === 'movie' ? (
                   <video
@@ -446,6 +484,8 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                     alt={currentCard.name}
                   />
                 ))}
+              {locked && <div className={'locked'} />}
+              {renderCFolioItems()}
             </div>
           </div>
           <div id="page4-content-text" className="gro">
@@ -472,7 +512,12 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                       </span>
                     </h3>
                   )}
-                  <span className="font-16">{currentCard.description}</span>
+                  <p className="font-16">{currentCard.description}</p>
+                  {currentRender?.sft && (
+                    <p className="font-14">
+                      {t(locked ? 'page4.lockedSft' : 'page4.unlockedSft')}
+                    </p>
+                  )}
                   <ul className="tk-vincente-lightbold font-24 rarity-box">
                     <li>
                       <h3 className="no-margin">RARITY: 1/{quantity}</h3>
