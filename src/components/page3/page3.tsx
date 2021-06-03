@@ -191,7 +191,12 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
           this.levelDescription =
             (this.levelFilter & (1 << newLevelId)) === 0
               ? ''
-              : `RARITY: 1/${this.content.cards[newLevelId].quantity} - ${this.content.cards[newLevelId].profitReward}% PROFIT SHARE`;
+              : (this.levelDescription = this.content.cards[
+                  newLevelId
+                ].header.replace(
+                  '{Q}',
+                  this.content.cards[newLevelId].quantity.toString()
+                ));
           if (this.walletTokenIds.length > 0) {
             this.levelFilter |= 1 << 4;
           }
@@ -236,7 +241,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
 
   render(): JSX.Element {
     const { display, t } = this.props;
-    const { contentLoaded, levelId, type } = this.state;
+    const { contentLoaded, isWalletConnected, levelId, type } = this.state;
     const levelPosition = levelId;
     const hasMoreLevels = this.nextLevel >= 0;
 
@@ -244,7 +249,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
 
     return (
       <>
-        {type === 'myPack' && levelId !== 4 && (
+        {type === 'myPack' && levelId !== 4 && isWalletConnected && (
           <span className="bg-orange">
             <span
               className="info-progress"
@@ -256,7 +261,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
           ref={this.mainRef}
           className={'wolves-container wolves-header bg-' + type}
         >
-          {!this.state.isWalletConnected && display === 'my' ? (
+          {!isWalletConnected && display === 'my' ? (
             <span className="font-32 tk-vincente-lightbold wallet-warning">
               Wallet is not connected.
               <br /> Please connect your wallet.

@@ -24,10 +24,17 @@ import {
   AssetStateresult,
   ConnectResult,
   SFT,
+  SFTCHILD,
   StatusResult,
   StoreClasses,
 } from '../../stores/store';
-import { CARDS } from '../types/cards';
+import {
+  CARD,
+  CARD_LEVEL,
+  CARDS,
+  CFOLIO_ITEM,
+  CFOLIO_ITEMS,
+} from '../types/cards';
 
 type PAGE4_PROPS = {
   t: TFunction;
@@ -40,6 +47,7 @@ type QueryType = 'wolves' | 'bois' | 'myPack';
 type PAGE4_STATE = {
   type: QueryType;
   cards?: CARDS;
+  cfolios?: CFOLIO_ITEMS[];
   tokenIds?: SFT[];
   isWalletConnected: boolean;
   txPending: boolean;
@@ -54,7 +62,13 @@ const INITIAL_PAGE4_STATE: PAGE4_STATE = {
 };
 
 class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
-  renderList: { id?: SFT; level: number; index: number }[] = [];
+  renderList: {
+    sft?: SFT;
+    cfi?: SFTCHILD;
+    tokenId?: ethers.BigNumber;
+    level: number;
+    index: number;
+  }[] = [];
   scrollOnUpdate = true;
   needUpdate = true;
 
@@ -63,6 +77,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     this.state = {
       ...INITIAL_PAGE4_STATE,
       cards: StoreClasses.store.getAssets().cards,
+      cfolios: StoreClasses.store.getAssets().cfolioItems,
       tokenIds: StoreClasses.store.getAssets().userSFT,
     };
     this.onConnectionChanged = this.onConnectionChanged.bind(this);
@@ -107,6 +122,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     this.needUpdate = true;
     if (status.status === 'loaded' || status.status === 'cards') {
       this.setState({ cards: StoreClasses.store.getAssets().cards });
+      this.setState({ cfolios: StoreClasses.store.getAssets().cfolioItems });
     } else if (status.status === 'tokens') {
       this.setState({ tokenIds: StoreClasses.store.getAssets().userSFT });
     }
@@ -118,7 +134,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
   }
 
   _updateContent() {
-    const { type } = this.state;
+    const { tokenIds, type } = this.state;
     const { history, location } = this.props;
     const query = new URLSearchParams(location.search);
 
@@ -152,23 +168,42 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
 
     this.needUpdate = false;
 
-    if (type === 'myPack' && this.state.tokenIds) {
+    if (type === 'myPack' && tokenIds) {
       const curTokenId = query.get('tokenId')
         ? ethers.BigNumber.from(query.get('tokenId'))
         : undefined;
-
-      // loop through tokenIds and create renderlist
-      this.state.tokenIds.forEach((tokenId) => {
-        if (tokenId.isStockCard) {
-          if (curTokenId && tokenId.tokenId.eq(curTokenId))
+      // Display Wallet's CFolioItems if tokenId is CFI
+      if (
+        curTokenId &&
+        tokenIds.length &&
+        tokenIds[0].cfolioItems.find((cfi) => cfi.tokenId.eq(curTokenId))
+      ) {
+        // loop through tokenIds and create renderlist
+        tokenIds[0].cfolioItems.forEach((cfi) => {
+          if (curTokenId && cfi.tokenId.eq(curTokenId))
             currentIndex = this.renderList.length;
           this.renderList.push({
-            id: tokenId,
-            level: tokenId.levelId,
-            index: tokenId.cardId,
+            cfi,
+            tokenId: cfi.tokenId,
+            level: cfi.levelId,
+            index: cfi.cardId,
           });
-        }
-      });
+        });
+      } else {
+        // loop through tokenIds and create renderlist
+        tokenIds.forEach((sft) => {
+          if (sft.isStockCard) {
+            if (curTokenId && sft.tokenId.eq(curTokenId))
+              currentIndex = this.renderList.length;
+            this.renderList.push({
+              sft,
+              tokenId: sft.tokenId,
+              level: sft.levelId,
+              index: sft.cardId,
+            });
+          }
+        });
+      }
     } else if (type !== 'myPack') {
       const curCardId = query.get('cardId') || '';
       this.state.cards.cards.forEach((level, index1) => {
@@ -195,7 +230,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       if (type === 'myPack' && query.get('tokenId')) {
         const curTokenId = ethers.BigNumber.from(query.get('tokenId'));
         currentIndex = this.renderList.findIndex((elem) =>
-          elem.id?.tokenId.eq(curTokenId)
+          elem.tokenId?.eq(curTokenId)
         );
       } else if (type !== 'myPack' && query.get('cardId')) {
         const curCardId = query.get('cardId');
@@ -214,9 +249,9 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       const current = this.renderList[this.state.currentIndex];
       const payload = {
         type:
-          current.id === undefined
+          current.tokenId === undefined
             ? SFT_BUY
-            : current.id.locked
+            : current.sft?.locked ?? current.cfi?.locked
             ? SFT_UNLOCK
             : SFT_LOCK,
         content: {},
@@ -225,10 +260,10 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       payload.content = {
         amount: cardLevel.price,
         id: BigNumber.from(
-          current.id === undefined
+          current.tokenId === undefined
             ? (cardLevel.chainRef << 8) |
                 cardLevel.cards[current.index].chainRef
-            : current.id.tokenId
+            : current.tokenId
         ),
       };
       this.setState({ txPending: true });
@@ -238,13 +273,19 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
 
   render(): JSX.Element {
     const { history, t } = this.props;
-    const { cards, currentIndex, isWalletConnected, txPending, type } =
+    const { cards, cfolios, currentIndex, isWalletConnected, txPending, type } =
       this.state;
 
     const currentRender =
       currentIndex >= 0 ? this.renderList[currentIndex] : undefined;
+
     const currentLevel =
-      cards && currentRender ? cards.cards[currentRender.level] : undefined;
+      cards && cfolios && currentRender
+        ? currentRender.cfi
+          ? cfolios[currentRender.level]
+          : cards.cards[currentRender.level]
+        : undefined;
+
     const currentCard =
       currentLevel && currentRender
         ? currentLevel.cards[currentRender.index]
@@ -254,8 +295,12 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       !currentCard ||
       !currentRender ||
       !currentLevel ||
-      (currentRender.id === undefined &&
-        currentCard.minted >= currentLevel.quantity);
+      (type === 'myPack' &&
+        (currentCard as CARD).minted >= (currentLevel as CARD_LEVEL).quantity);
+
+    const levelId = currentRender?.cfi
+      ? 4
+      : (currentLevel as CARD_LEVEL)?.levelId ?? 0;
 
     const getButtonText = (s: string): string =>
       !isWalletConnected
@@ -264,9 +309,9 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         ? t('page4.noQuantity').toString()
         : txPending
         ? t('page4.txPending')
-        : currentRender?.id === undefined
+        : currentRender?.tokenId === undefined
         ? t('page4.buy', { name: s }).toString()
-        : currentRender?.id.locked
+        : currentRender?.sft?.locked ?? currentRender?.cfi?.locked
         ? t('page4.unlock', { name: s }).toString()
         : t('page4.lock', { name: s }).toString();
 
@@ -280,10 +325,10 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       if (type === 'myPack') {
         prevUrl = `?type=myPack&tokenId=${this.renderList[
           prevIndex
-        ].id?.tokenId.toHexString()}&scroll=false`;
+        ].tokenId?.toHexString()}&scroll=false`;
         nextUrl = `?type=myPack&tokenId=${this.renderList[
           nextIndex
-        ].id?.tokenId.toHexString()}&scroll=false`;
+        ].tokenId?.toHexString()}&scroll=false`;
       } else {
         prevUrl = `?type=${type}&cardId=${
           cards?.cards[this.renderList[prevIndex].level].cards[
@@ -300,8 +345,21 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
 
     const backUrl =
       type === 'myPack'
-        ? `my?type=myPack&levelId=${currentLevel?.levelId}`
-        : `/shop?type=${type}&levelId=${currentLevel?.levelId}`;
+        ? `my?type=myPack&levelId=${levelId}`
+        : `/shop?type=${type}&levelId=${levelId}`;
+
+    let price, quantity, autoUpgrade, profitReward;
+    if (currentRender?.cfi && currentCard) {
+      quantity = (currentCard as CFOLIO_ITEM).maxMintable;
+    } else if (currentRender && currentLevel) {
+      quantity = (currentLevel as CARD_LEVEL).quantity;
+      autoUpgrade = (currentLevel as CARD_LEVEL).autoUpgrade;
+      if (autoUpgrade === '') autoUpgrade = undefined;
+      profitReward = currentRender?.sft
+        ? currentRender.sft.rewardRate / 10000
+        : (currentLevel as CARD_LEVEL).profitReward;
+      if (!currentRender?.sft) price = (currentLevel as CARD_LEVEL).price;
+    }
 
     return (
       <div
@@ -328,7 +386,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
               &lt;{t('page.back')}
             </span>
             <span className="tk-vincente-lightbold font-24 content-margin">
-              {currentLevel ? cards?.levelNames[currentLevel.levelId] : ''}
+              {currentLevel ? cards?.levelNames[levelId] : ''}
             </span>
           </div>
         )}
@@ -402,10 +460,10 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                       {t('page.motto')}:{currentCard.motto}
                     </span>
                   </h3>
-                  {currentRender?.id !== undefined && (
+                  {currentRender?.tokenId !== undefined && (
                     <h3 className="tk-vincente-lightbold">
                       <span>
-                        {` ${t('page4.tokenId')}: 0x${currentRender?.id.tokenId
+                        {` ${t('page4.tokenId')}: 0x${currentRender?.tokenId
                           .mask(128)
                           .toHexString()
                           .replace('0x', '')
@@ -417,23 +475,29 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                   <span className="font-16">{currentCard.description}</span>
                   <ul className="tk-vincente-lightbold font-24 rarity-box">
                     <li>
-                      <h2>RARITY: 1/{currentLevel?.quantity}</h2>
+                      <h3 className="no-margin">RARITY: 1/{quantity}</h3>
                     </li>
-                    <li>
-                      <h2>PROFIT REWARD: {currentLevel?.profitReward}% </h2>
-                    </li>
-                    {/*<li>
-                      <h2>RAIDING POTENTIAL: 50%</h2>
-                    </li>
-                    <li>
-                      <h2>APY: 430%</h2>
-                    </li>*/}
-                    <li>
-                      <h2>AUTO UPGRADES: {currentLevel?.autoUpgrade}</h2>
-                    </li>
-                    <li>
-                      <h2>COST: {currentLevel?.price} WOWS</h2>
-                    </li>
+                    {profitReward && (
+                      <li>
+                        <h3 className="no-margin">
+                          {t('page.prowess')}: {profitReward}%{' '}
+                        </h3>
+                      </li>
+                    )}
+                    {autoUpgrade && (
+                      <li>
+                        <h3 className="no-margin">
+                          {t('page.autoUpgrade')}: {autoUpgrade}
+                        </h3>
+                      </li>
+                    )}
+                    {price && (
+                      <li>
+                        <h3 className="no-margin">
+                          {t('page.price')}: {price} WOWS
+                        </h3>
+                      </li>
+                    )}
                   </ul>
                 </div>
                 <input

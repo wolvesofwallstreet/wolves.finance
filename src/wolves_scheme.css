@@ -82,15 +82,14 @@
   border: var(--wolves-orange) 1px solid;
 }
 
-.bg-wolves {
+.bg-wolves,
+.bg-lpInvestment {
   background-image: url(./assets/background_wolves.png);
 }
 
-.bg-bois {
-  background-image: url(./assets/background_bois.jpg);
-}
-
-.bg-myPack {
+.bg-bois,
+.bg-myPack,
+.bg-yearnInvestment {
   background-image: url(./assets/background_bois.jpg);
 }
 
