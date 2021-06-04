@@ -355,6 +355,46 @@ contract WOWSSftMinter is Context, Ownable {
     }
   }
 
+  /**
+   * @dev Claim rewards from all bound cfolio farms
+   *
+   * @param sftTokenId valid SFT tokenId, must not be locked in TF
+   */
+  function claimSFTRewards(uint256 sftTokenId) external {
+    require(sftTokenId.isBaseCard(), 'Invalid tokenId');
+    address cfolio = _sftContract.tokenIdToAddress(sftTokenId);
+    require(cfolio != address(0), 'CFolio invalid');
+
+    // Get cfolioItems
+    (uint256[] memory cFolioItems, uint256 cfolioLength) =
+      IWOWSCryptofolio(cfolio).getCryptofolio(tradeFloor);
+
+    // Create unique list of CFIH
+    uint256 numCFIH = 0;
+    ICFolioItemHandler[] memory cfihs = new ICFolioItemHandler[](cfolioLength);
+    while (cfolioLength > 0) {
+      --cfolioLength;
+      cfolio = _sftContract.tokenIdToAddress(
+        cFolioItems[cfolioLength].toSftTokenId()
+      );
+      require(cfolio != address(0), 'SubCFolio invalid');
+      ICFolioItemHandler cfih =
+        ICFolioItemHandler(IWOWSCryptofolio(cfolio)._tradefloors(0));
+      uint256 i = 0;
+      for (; i < numCFIH; ++i) {
+        if (cfihs[i] == cfih) break;
+      }
+      if (i == numCFIH) {
+        cfihs[numCFIH++] = cfih;
+      }
+    }
+
+    // Call the reward handlers
+    for (uint256 i = 0; i < numCFIH; ++i) {
+      cfihs[i].getRewards(msg.sender, sftTokenId);
+    }
+  }
+
   //////////////////////////////////////////////////////////////////////////////
   // ERC1155Holder
   //////////////////////////////////////////////////////////////////////////////

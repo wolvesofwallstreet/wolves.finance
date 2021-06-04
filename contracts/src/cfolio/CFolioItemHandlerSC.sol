@@ -265,10 +265,13 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
     address cfolio = sftHolder.tokenIdToAddress(sftTokenId);
     require(cfolio != address(0), 'Invalid c-folio address');
 
-    // Verify that the tokenId is owned by msg.sender in the SFT contract.
+    // Verify that the tokenId is owned by msg.sender in case of direct
+    // call or recipient in case of sftMinter call in the SFT contract.
     // This also verifies that the token is not locked in TradeFloor.
     require(
-      IERC1155(address(sftHolder)).balanceOf(_msgSender(), sftTokenId) == 1,
+      IERC1155(address(sftHolder)).balanceOf(_msgSender(), sftTokenId) == 1 ||
+        (_msgSender() == sftMinter &&
+          IERC1155(address(sftHolder)).balanceOf(recipient, sftTokenId) == 1),
       'CFHI: Access denied'
     );
 
