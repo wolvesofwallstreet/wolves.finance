@@ -15,7 +15,6 @@ import { RouteComponentProps } from 'react-router-dom';
 import Logo from '../../assets/logo.png';
 import {
   ASSETS_STATE,
-  CONNECTION_CHANGED,
   SFT_BUY,
   SFT_CLAIM,
   SFT_LOCK,
@@ -24,7 +23,6 @@ import {
 } from '../../stores/constants';
 import {
   AssetStateresult,
-  ConnectResult,
   Payload,
   SFT,
   SFTCHILD,
@@ -86,7 +84,6 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       cfolios: StoreClasses.store.getAssets().cfolioItems,
       tokenIds: StoreClasses.store.getAssets().userSFT,
     };
-    this.onConnectionChanged = this.onConnectionChanged.bind(this);
     this.onAssetsState = this.onAssetsState.bind(this);
     this.onSFTTransaction = this.onSFTTransaction.bind(this);
   }
@@ -94,7 +91,6 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
   componentDidMount(): void {
     this._updateContent();
     this.setState({ isWalletConnected: StoreClasses.store.isConnected() });
-    StoreClasses.emitter.on(CONNECTION_CHANGED, this.onConnectionChanged);
     StoreClasses.emitter.on(ASSETS_STATE, this.onAssetsState);
     StoreClasses.emitter.on(SFT_BUY, this.onSFTTransaction);
     StoreClasses.emitter.on(SFT_CLAIM, this.onSFTTransaction);
@@ -116,14 +112,6 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     StoreClasses.emitter.off(SFT_CLAIM, this.onSFTTransaction);
     StoreClasses.emitter.off(SFT_BUY, this.onSFTTransaction);
     StoreClasses.emitter.off(ASSETS_STATE, this.onAssetsState);
-    StoreClasses.emitter.off(CONNECTION_CHANGED, this.onConnectionChanged);
-  }
-
-  onConnectionChanged(params: ConnectResult): void {
-    if (params.type === 'prod') {
-      this.setState({ isWalletConnected: params.address !== '' });
-      this.needUpdate = true;
-    }
   }
 
   onAssetsState(status: AssetStateresult): void {
@@ -133,6 +121,9 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       this.setState({ cfolios: StoreClasses.store.getAssets().cfolioItems });
     } else if (status.status === 'tokens') {
       this.setState({ tokenIds: StoreClasses.store.getAssets().userSFT });
+      this.setState({
+        isWalletConnected: StoreClasses.store.getAssets().userSFT.length > 0,
+      });
     } else if (status.status === 'rewards') {
       if (this.state.currentIndex < this.renderList.length) {
         this.setState({
@@ -231,7 +222,10 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         }
       });
     }
-    if (currentIndex < 0 && this.renderList.length > 0) currentIndex = 0;
+    if (currentIndex < 0 && this.renderList.length > 0) {
+      this._fixUrl(0);
+      return;
+    }
     if (this.state.currentIndex !== currentIndex) {
       this.setState({ currentIndex });
       this.onProgressIteration();
@@ -256,10 +250,28 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
           (elem) => cards.cards[elem.level].cards[elem.index].id === curCardId
         );
       }
-      if (currentIndex < 0) currentIndex = 0;
+      if (currentIndex < 0 && this.renderList.length > 0) {
+        this._fixUrl(0);
+        return;
+      }
       if (this.state.currentIndex !== currentIndex) {
         this.setState({ currentIndex });
         this.onProgressIteration();
+      }
+    }
+  }
+
+  _fixUrl(index: number) {
+    const { history, location } = this.props;
+    const query = new URLSearchParams(location.search);
+    if (index < this.renderList.length) {
+      if (this.state.type === 'myPack') {
+        query.delete('tokenId');
+        const tokenId = this.renderList[index].tokenId;
+        if (tokenId) {
+          query.append('tokenId', tokenId.toHexString());
+        }
+        history.replace('?' + query.toString());
       }
     }
   }
@@ -415,7 +427,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       ? { l: t('page4.txPending'), d: true }
       : {
           l: t('page4.claim', { amount: rewardEarned.toFixed(6) }).toString(),
-          d: locked,
+          d: locked || rewardEarned === 0,
         };
 
     const renderCFolioItems = () => {
@@ -568,6 +580,11 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                   {currentRender?.sft && (
                     <p className="font-14">
                       {t(locked ? 'page4.lockedSft' : 'page4.unlockedSft')}
+                    </p>
+                  )}
+                  {currentRender?.cfi && (
+                    <p className="font-14">
+                      {t(locked ? 'page4.lockedCfi' : 'page4.unlockedCfi')}
                     </p>
                   )}
                   <ul className="tk-vincente-lightbold font-24 rarity-box">
