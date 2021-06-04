@@ -63,3 +63,10 @@
 .line-h {
   line-height: 24px;
 }
+
+.card-container .progress {
+  display: block;
+  height: 1px;
+  width: 0%;
+  background-color: whitesmoke;
+}

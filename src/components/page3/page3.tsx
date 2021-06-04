@@ -68,6 +68,10 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
   scrollOnUpdate = true;
   mainRef: React.RefObject<HTMLDivElement> = React.createRef();
 
+  progessStart: Date = new Date();
+  progressRefs: React.RefObject<HTMLSpanElement>[] = [];
+  progressInterval?: number;
+
   constructor(props: PAGE3_PROPS) {
     super(props);
     this.state = INITIAL_PAGE3_STATE;
@@ -94,6 +98,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
   componentWillUnmount(): void {
     StoreClasses.emitter.off(ASSETS_STATE, this.onAssetsState);
     StoreClasses.emitter.off(CONNECTION_CHANGED, this.onConnectionChanged);
+    window.clearInterval(this.progressInterval);
   }
 
   onConnectionChanged(params: ConnectResult): void {
@@ -138,6 +143,8 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
       }
       const newLevelId = parseInt(query.get('levelId') || '0') | 0;
       if (levelId !== newLevelId) {
+        window.clearInterval(this.progressInterval);
+        this.progressInterval = undefined;
         // retrieve level description
         // reset level filter
         this.levelFilter = 0;
@@ -184,10 +191,15 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
             StoreClasses.store.getAssets().userSFT.find((n) => n.isWallet)
               ?.cfolioItems ?? [];
           // collect tokenId bitmask
-          this.tokenIds.forEach(
-            (n) =>
-              (this.levelFilter |= 1 << this.content.cards[n.levelId].levelId)
-          );
+          let hasCFolioItems = false;
+          this.tokenIds.forEach((n) => {
+            this.levelFilter |= 1 << this.content.cards[n.levelId].levelId;
+            if (
+              this.content.cards[n.levelId].levelId === newLevelId &&
+              n.cfolioItems.length > 0
+            )
+              hasCFolioItems = true;
+          });
           this.levelDescription =
             (this.levelFilter & (1 << newLevelId)) === 0
               ? ''
@@ -199,6 +211,13 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
                 ));
           if (this.walletTokenIds.length > 0) {
             this.levelFilter |= 1 << 4;
+          }
+          if (hasCFolioItems) {
+            this.progessStart = new Date();
+            this.progressInterval = window.setInterval(
+              this._ticker.bind(this),
+              1000
+            );
           }
         }
 
@@ -232,12 +251,24 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
     if (query.get('scroll') === 'false') this.scrollOnUpdate = false;
   }
 
-  _updateRewards() {
+  _ticker() {
+    let perc = 100 - (new Date().getTime() - this.progessStart.getTime()) / 300;
+    if (perc < 0) {
+      this._updateRewards();
+      this.progessStart = new Date();
+      perc = 100;
+    }
+    this.progressRefs.forEach((ref) => {
+      if (ref.current) ref.current.style.width = perc.toString() + '%';
+    });
+  }
+
+  _updateRewards = async () => {
     StoreClasses.dispatcher.dispatch({
       type: SFT_REWARD,
       content: {},
     } as Payload);
-  }
+  };
 
   render(): JSX.Element {
     const { display, t } = this.props;
@@ -249,14 +280,14 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
 
     return (
       <>
-        {type === 'myPack' && levelId !== 4 && isWalletConnected && (
+        {/*type === 'myPack' && levelId !== 4 && isWalletConnected && (
           <span className="bg-orange">
             <span
               className="info-progress"
               onAnimationIteration={this._updateRewards.bind(this)}
             />
           </span>
-        )}
+        )*/}
         <div
           ref={this.mainRef}
           className={'wolves-container wolves-header bg-' + type}
@@ -355,6 +386,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
                             earned={id.rewardEarned}
                             key={'card_' + index}
                             t={t}
+                            progressRefs={this.progressRefs}
                           />
                         )
                       );

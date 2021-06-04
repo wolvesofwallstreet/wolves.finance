@@ -8,6 +8,7 @@
 import './cardbox.css';
 
 import { TFunction } from 'i18next';
+import { RefObject, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
 import { BIGNUMBER_MAX, SFT, SFTCHILD, StoreClasses } from '../../stores/store';
@@ -17,11 +18,20 @@ type CARDBOX_PROPS = {
   cfolio?: SFTCHILD;
   earned: number;
   t: TFunction;
+  progressRefs?: RefObject<HTMLSpanElement>[];
 };
 
 export function CardBox(props: CARDBOX_PROPS): JSX.Element {
-  const { cfolio, earned, sft, t } = props;
+  const { cfolio, earned, progressRefs, sft, t } = props;
   const assets = StoreClasses.store.getAssets();
+  const progressRef: RefObject<HTMLSpanElement> = useRef(null);
+
+  useEffect(() => {
+    progressRefs?.push(progressRef);
+    return () => {
+      progressRefs?.splice(progressRefs.indexOf(progressRef), 1);
+    };
+  }, [progressRefs]);
 
   let name,
     motto,
@@ -145,7 +155,12 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
         <span className="tk-grotesk-lightbold font-14 ellipsis">
           {t('page.motto')}: {motto}
         </span>
-        <hr className="wolves" />
+        <span className="bg-orange my-2">
+          <span
+            className="progress"
+            ref={sft && sft.cfolioItems.length > 0 ? progressRef : undefined}
+          ></span>
+        </span>
         {tokenId === undefined ? (
           <>
             <span className="tk-grotesk-lightbold font-14 ellipsis">
