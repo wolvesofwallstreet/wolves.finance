@@ -17,12 +17,15 @@ import {
   ASSETS_STATE,
   CONNECTION_CHANGED,
   SFT_BUY,
+  SFT_CLAIM,
   SFT_LOCK,
+  SFT_REWARD,
   SFT_UNLOCK,
 } from '../../stores/constants';
 import {
   AssetStateresult,
   ConnectResult,
+  Payload,
   SFT,
   SFTCHILD,
   StatusResult,
@@ -52,6 +55,7 @@ type PAGE4_STATE = {
   isWalletConnected: boolean;
   txPending: boolean;
   currentIndex: number;
+  rewardEarned: number;
 };
 
 const INITIAL_PAGE4_STATE: PAGE4_STATE = {
@@ -59,6 +63,7 @@ const INITIAL_PAGE4_STATE: PAGE4_STATE = {
   isWalletConnected: false,
   txPending: false,
   currentIndex: -1,
+  rewardEarned: 0,
 };
 
 class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
@@ -92,6 +97,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     StoreClasses.emitter.on(CONNECTION_CHANGED, this.onConnectionChanged);
     StoreClasses.emitter.on(ASSETS_STATE, this.onAssetsState);
     StoreClasses.emitter.on(SFT_BUY, this.onSFTTransaction);
+    StoreClasses.emitter.on(SFT_CLAIM, this.onSFTTransaction);
     StoreClasses.emitter.on(SFT_LOCK, this.onSFTTransaction);
     StoreClasses.emitter.on(SFT_UNLOCK, this.onSFTTransaction);
   }
@@ -107,6 +113,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
   componentWillUnmount(): void {
     StoreClasses.emitter.off(SFT_UNLOCK, this.onSFTTransaction);
     StoreClasses.emitter.off(SFT_LOCK, this.onSFTTransaction);
+    StoreClasses.emitter.off(SFT_CLAIM, this.onSFTTransaction);
     StoreClasses.emitter.off(SFT_BUY, this.onSFTTransaction);
     StoreClasses.emitter.off(ASSETS_STATE, this.onAssetsState);
     StoreClasses.emitter.off(CONNECTION_CHANGED, this.onConnectionChanged);
@@ -126,6 +133,13 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       this.setState({ cfolios: StoreClasses.store.getAssets().cfolioItems });
     } else if (status.status === 'tokens') {
       this.setState({ tokenIds: StoreClasses.store.getAssets().userSFT });
+    } else if (status.status === 'rewards') {
+      if (this.state.currentIndex < this.renderList.length) {
+        this.setState({
+          rewardEarned:
+            this.renderList[this.state.currentIndex].sft?.rewardEarned ?? 0,
+        });
+      }
     }
   }
 
@@ -179,7 +193,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         tokenIds.length &&
         tokenIds[0].cfolioItems.find((cfi) => cfi.tokenId.eq(curTokenId))
       ) {
-        // loop through tokenIds and create renderlist
+        // loop through cfolio items and create renderlist
         tokenIds[0].cfolioItems.forEach((cfi) => {
           if (curTokenId && cfi.tokenId.eq(curTokenId))
             currentIndex = this.renderList.length;
@@ -194,8 +208,9 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         // loop through tokenIds and create renderlist
         tokenIds.forEach((sft) => {
           if (sft.isStockCard) {
-            if (curTokenId && sft.tokenId.eq(curTokenId))
+            if (curTokenId && sft.tokenId.eq(curTokenId)) {
               currentIndex = this.renderList.length;
+            }
             this.renderList.push({
               sft,
               tokenId: sft.tokenId,
@@ -217,8 +232,10 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       });
     }
     if (currentIndex < 0 && this.renderList.length > 0) currentIndex = 0;
-    if (this.state.currentIndex !== currentIndex)
+    if (this.state.currentIndex !== currentIndex) {
       this.setState({ currentIndex });
+      this.onProgressIteration();
+    }
   }
 
   _getCurrentIndex() {
@@ -240,8 +257,10 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         );
       }
       if (currentIndex < 0) currentIndex = 0;
-      if (this.state.currentIndex !== currentIndex)
+      if (this.state.currentIndex !== currentIndex) {
         this.setState({ currentIndex });
+        this.onProgressIteration();
+      }
     }
   }
 
@@ -272,10 +291,35 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     }
   }
 
+  _onClaim(): void {
+    const payload: Payload = {
+      type: SFT_CLAIM,
+      content: {
+        id: this.renderList[this.state.currentIndex].sft?.tokenId,
+      },
+    };
+    this.setState({ txPending: true });
+    StoreClasses.dispatcher.dispatch(payload);
+  }
+
+  onProgressIteration() {
+    StoreClasses.dispatcher.dispatch({
+      type: SFT_REWARD,
+      content: {},
+    } as Payload);
+  }
+
   render(): JSX.Element {
     const { history, t } = this.props;
-    const { cards, cfolios, currentIndex, isWalletConnected, txPending, type } =
-      this.state;
+    const {
+      cards,
+      cfolios,
+      currentIndex,
+      isWalletConnected,
+      rewardEarned,
+      txPending,
+      type,
+    } = this.state;
 
     const currentRender =
       currentIndex >= 0 ? this.renderList[currentIndex] : undefined;
@@ -349,7 +393,8 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         ? `my?type=myPack&levelId=${levelId}`
         : `/shop?type=${type}&levelId=${levelId}`;
 
-    let price, quantity, autoUpgrade, profitReward, locked;
+    let price, quantity, autoUpgrade, profitReward;
+    let locked = false;
     if (currentRender?.cfi && currentCard) {
       quantity = (currentCard as CFOLIO_ITEM).maxMintable;
       locked = currentRender.cfi.locked;
@@ -363,6 +408,15 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       if (!currentRender?.sft) price = (currentLevel as CARD_LEVEL).price;
       locked = currentRender.sft?.locked ?? false;
     }
+
+    const claimText = !isWalletConnected
+      ? { l: t('header.connectWallet').toString(), d: true }
+      : txPending
+      ? { l: t('page4.txPending'), d: true }
+      : {
+          l: t('page4.claim', { amount: rewardEarned.toFixed(6) }).toString(),
+          d: locked,
+        };
 
     const renderCFolioItems = () => {
       if (
@@ -438,16 +492,14 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
           className="tk-vincente-lightbold font-20 single-line"
         >
           <span>
-            <>
-              <span
-                className={`tk-vincente-lightbold font-24 single-line ${
-                  prevUrl ? 'c-pointer' : 'disabled-link'
-                }`}
-                onClick={() => (prevUrl ? history.push(prevUrl) : undefined)}
-              >
-                &lt;{t('page.previousCard')}
-              </span>
-            </>
+            <span
+              className={`tk-vincente-lightbold font-24 single-line ${
+                prevUrl ? 'c-pointer' : 'disabled-link'
+              }`}
+              onClick={() => (prevUrl ? history.push(prevUrl) : undefined)}
+            >
+              &lt;{t('page.previousCard')}
+            </span>
           </span>
           <span
             className={`tk-vincente-lightbold font-24 single-line ${
@@ -545,13 +597,34 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                     )}
                   </ul>
                 </div>
-                <input
-                  className="wolves-btn buy-btn"
-                  type="button"
-                  value={getButtonText(currentCard.name)}
-                  disabled={!isWalletConnected || noQuantity || txPending}
-                  onClick={() => this._onBuy()}
-                />
+                <div>
+                  {currentRender?.sft &&
+                    currentRender?.sft.cfolioItems.length > 0 && (
+                      <span className="p_relative" style={{ display: 'block' }}>
+                        <input
+                          className="wolves-btn mt-1"
+                          type="button"
+                          value={claimText.l}
+                          disabled={claimText.d}
+                          onClick={() => this._onClaim()}
+                        />
+                        {!txPending && isWalletConnected && (
+                          <span
+                            onAnimationIteration={this.onProgressIteration}
+                            className="info-progress absolute"
+                            style={{ marginLeft: '2px', marginRight: '2px' }}
+                          />
+                        )}
+                      </span>
+                    )}
+                  <input
+                    className="wolves-btn mt-1"
+                    type="button"
+                    value={getButtonText(currentCard.name)}
+                    disabled={!isWalletConnected || noQuantity || txPending}
+                    onClick={() => this._onBuy()}
+                  />
+                </div>
               </>
             )}
           </div>

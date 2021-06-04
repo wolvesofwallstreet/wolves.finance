@@ -42,6 +42,7 @@ import {
   ERC20_TOKEN_CONTRACT,
   NEW_BLOCK,
   SFT_BUY,
+  SFT_CLAIM,
   SFT_LOCK,
   SFT_REWARD,
   SFT_UNLOCK,
@@ -321,6 +322,9 @@ class Store {
         /** SFT */
         case SFT_BUY:
           this._doSftBuy(_payload.content);
+          break;
+        case SFT_CLAIM:
+          this._doSftClaim(_payload.content);
           break;
         case SFT_LOCK:
           this._doSftLock(_payload.content);
@@ -1670,6 +1674,48 @@ class Store {
       console.log(e);
       emitter.emit(CFOLIO_ITEM_LOCK_TRANSFER, {
         status: 'error',
+        errorMessage: e.error ? e.error.message : e.message,
+      } as StatusResult);
+    }
+  };
+
+  _doSftClaim = async (payloadContent: PayloadContent) => {
+    try {
+      if (!payloadContent.id) {
+        throw new Error('Invalid id');
+      }
+      if (!this.sftMintContractRO || !this.ethersSigner) {
+        throw new Error('Invalid contract state');
+      }
+
+      const mintContract = this.sftMintContractRO.connect(this.ethersSigner);
+      const tx: ethers.ContractTransaction = await mintContract.claimSFTRewards(
+        payloadContent.id
+      );
+      emitter.emit(SFT_CLAIM, {
+        status: 'tx',
+        type: SFT_CLAIM,
+        tx: tx.hash,
+      } as StatusResult);
+
+      this.ethersProvider?.once(
+        tx.hash,
+        (receipt: ethers.providers.TransactionReceipt) => {
+          emitter.emit(SFT_CLAIM, {
+            status: 'success',
+            type: SFT_CLAIM,
+            tx: tx.hash,
+          } as StatusResult);
+          this._addDQ(tx.blockNumber ?? 0, {
+            type: SFT_REWARD,
+            content: {},
+          } as Payload);
+        }
+      );
+    } catch (e) {
+      emitter.emit(SFT_CLAIM, {
+        status: 'error',
+        type: SFT_CLAIM,
         errorMessage: e.error ? e.error.message : e.message,
       } as StatusResult);
     }

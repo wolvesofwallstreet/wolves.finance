@@ -72,6 +72,7 @@
     "buy": "BUY {{name}}",
     "lock": "LOCK {{name}}",
     "unlock": "UNLOCK {{name}}",
+    "claim": "CLAIM {{amount}} WOWS REWARDS",
     "tokenId": "TOKEN ID",
     "noQuantity": "NO CARDS AVAILABLE",
     "txPending": "TRANSACTION PENDING",
