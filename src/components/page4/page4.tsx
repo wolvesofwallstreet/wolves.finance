@@ -12,7 +12,7 @@ import React, { Component } from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { RouteComponentProps } from 'react-router-dom';
 
-import Logo from '../../assets/logo.png';
+import Logo from '../../assets/wolves-token_99.png';
 import {
   ASSETS_STATE,
   SFT_BUY,
@@ -54,6 +54,7 @@ type PAGE4_STATE = {
   txPending: boolean;
   currentIndex: number;
   rewardEarned: number;
+  selectedCFolio: number;
 };
 
 const INITIAL_PAGE4_STATE: PAGE4_STATE = {
@@ -62,6 +63,7 @@ const INITIAL_PAGE4_STATE: PAGE4_STATE = {
   txPending: false,
   currentIndex: -1,
   rewardEarned: 0,
+  selectedCFolio: -1,
 };
 
 class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
@@ -115,11 +117,12 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
   }
 
   onAssetsState(status: AssetStateresult): void {
-    this.needUpdate = true;
     if (status.status === 'loaded' || status.status === 'cards') {
+      this.needUpdate = true;
       this.setState({ cards: StoreClasses.store.getAssets().cards });
       this.setState({ cfolios: StoreClasses.store.getAssets().cfolioItems });
     } else if (status.status === 'tokens') {
+      this.needUpdate = true;
       this.setState({ tokenIds: StoreClasses.store.getAssets().userSFT });
       this.setState({
         isWalletConnected: StoreClasses.store.getAssets().userSFT.length > 0,
@@ -227,9 +230,13 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       return;
     }
     if (this.state.currentIndex !== currentIndex) {
-      this.setState({ currentIndex });
-      this.onProgressIteration();
+      this.setState({ currentIndex, selectedCFolio: -1 });
     }
+    if (
+      currentIndex >= 0 &&
+      (this.renderList[currentIndex].sft?.cfolioItems.length ?? 0) > 0
+    )
+      this.onProgressIteration();
   }
 
   _getCurrentIndex() {
@@ -255,8 +262,12 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         return;
       }
       if (this.state.currentIndex !== currentIndex) {
-        this.setState({ currentIndex });
-        this.onProgressIteration();
+        this.setState({ currentIndex, selectedCFolio: -1 });
+        if (
+          currentIndex >= 0 &&
+          (this.renderList[currentIndex].sft?.cfolioItems.length ?? 0) > 0
+        )
+          this.onProgressIteration();
       }
     }
   }
@@ -272,6 +283,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
           query.append('tokenId', tokenId.toHexString());
         }
         history.replace('?' + query.toString());
+        if (index === this.state.currentIndex) this.onProgressIteration();
       }
     }
   }
@@ -321,12 +333,22 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     } as Payload);
   }
 
+  toggleImage(event: React.MouseEvent<HTMLImageElement>) {
+    this.setState({
+      selectedCFolio:
+        this.state.selectedCFolio < 0
+          ? parseInt(event.currentTarget.getAttribute('data-id') || '-1')
+          : -1,
+    });
+  }
+
   render(): JSX.Element {
     const { history, t } = this.props;
     const {
       cards,
       cfolios,
       currentIndex,
+      selectedCFolio,
       isWalletConnected,
       rewardEarned,
       txPending,
@@ -445,25 +467,65 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                 86
               )
             : 0;
+        const sftChild =
+          selectedCFolio >= 0 &&
+          selectedCFolio < currentRender.sft.cfolioItems.length &&
+          currentRender.sft.cfolioItems[selectedCFolio];
         return (
-          <div id="cfi-image">
+          <>
             {currentRender.sft.cfolioItems.map((sftc, index) => {
               const cfi = cfolios[sftc.levelId].cards[sftc.cardId];
               return (
                 <img
                   key={'cfi' + index}
                   id="cfi-image"
-                  style={{ top: 6 + index * topOffset + 'px' }}
-                  height="80px"
+                  data-id={index}
+                  onClick={this.toggleImage.bind(this)}
+                  className="selectable"
+                  style={
+                    selectedCFolio !== index
+                      ? { right: '6px', top: 6 + index * topOffset + 'px' }
+                      : {
+                          right: '15%',
+                          zIndex: 20,
+                          top: '12px',
+                          transition: 'all 0.5s',
+                        }
+                  }
+                  height={selectedCFolio !== index ? '80px' : '70%'}
                   alt={cfi.name}
-                  src={cfi.url.replace('{res}', '300')}
+                  src={cfi.url.replace('{res}', '500')}
                 />
               );
             })}
-          </div>
+            <span
+              id="page4-content-image-inner-info"
+              className="tk-vincente-lightbold"
+              style={{ visibility: selectedCFolio < 0 ? 'hidden' : 'visible' }}
+            >
+              {sftChild && (
+                <>
+                  <h3>
+                    {cfolios[sftChild.levelId].cards[sftChild.cardId].name}
+                  </h3>
+                  <h3>
+                    {t('page.tokenId')}:{' '}
+                    {sftChild.tokenId.mask(128).toHexString()}
+                  </h3>
+                  <h3>
+                    {t('page.investment')}: {sftChild.assets[0].toFixed(4)}{' '}
+                    {cfolios[sftChild.levelId].token}
+                  </h3>
+                </>
+              )}
+            </span>
+          </>
         );
       }
     };
+
+    const imgClass =
+      selectedCFolio < 0 ? 'card-visual' : 'card-visual monochrome';
 
     return (
       <div
@@ -519,133 +581,138 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
             } `}
             onClick={() => (nextUrl ? history.replace(nextUrl) : undefined)}
           >
-            {currentCard && (
-              <>
-                <span>{t('page.nextCard')}</span>
-                &gt;
-              </>
-            )}
+            {t('page.nextCard')}&gt;
           </span>
         </div>
-        <div id="page4-content-container">
-          <div id="page4-content-image">
-            <div id="page4-content-image-inner" ref={this.imageContainerRef}>
-              {currentCard &&
-                (currentCard.type === 'movie' ? (
-                  <video
-                    disableRemotePlayback={true}
-                    className="card-visual"
-                    autoPlay={true}
-                    loop={true}
-                    src={currentCard.url.replace('{res}', '500')}
-                    poster={currentCard.url.replace('{res}', '300') + '.jpg'}
-                    playsInline
-                  />
-                ) : (
-                  <img
-                    className="card-visual"
-                    src={currentCard.url.replace('{res}', '500')}
-                    alt={currentCard.name}
-                  />
-                ))}
-              {locked && <div className={'locked'} />}
-              {renderCFolioItems()}
+        {!isWalletConnected && type === 'myPack' ? (
+          <span className="font-32 tk-vincente-lightbold wallet-warning">
+            Wallet is not connected.
+            <br /> Please connect your wallet.
+          </span>
+        ) : (
+          <div id="page4-content-container">
+            <div id="page4-content-image">
+              <div id="page4-content-image-inner" ref={this.imageContainerRef}>
+                {currentCard &&
+                  (currentCard.type === 'movie' ? (
+                    <video
+                      disableRemotePlayback={true}
+                      className={imgClass}
+                      autoPlay={true}
+                      loop={true}
+                      src={currentCard.url.replace('{res}', '500')}
+                      poster={currentCard.url.replace('{res}', '300') + '.jpg'}
+                      playsInline
+                    />
+                  ) : (
+                    <img
+                      className={imgClass}
+                      src={currentCard.url.replace('{res}', '500')}
+                      alt={currentCard.name}
+                    />
+                  ))}
+                {locked && <div className={'locked'} />}
+                {renderCFolioItems()}
+              </div>
             </div>
-          </div>
-          <div id="page4-content-text" className="gro">
-            {currentCard && (
-              <>
-                <div>
-                  <h1 className="tk-vincente-lightbold h-1 single-line">
-                    {currentCard.name}
-                  </h1>
-                  <h3 className="tk-vincente-lightbold">
-                    <span>
-                      {t('page.motto')}:{currentCard.motto}
-                    </span>
-                  </h3>
-                  {currentRender?.tokenId !== undefined && (
+            <div id="page4-content-text" className="gro">
+              {currentCard && (
+                <>
+                  <div>
+                    <h1 className="tk-vincente-lightbold h-1 single-line">
+                      {currentCard.name}
+                    </h1>
                     <h3 className="tk-vincente-lightbold">
                       <span>
-                        {` ${t('page4.tokenId')}: 0x${currentRender?.tokenId
-                          .mask(128)
-                          .toHexString()
-                          .replace('0x', '')
-                          .toUpperCase()
-                          .padStart(8, '0')}`}
+                        {t('page.motto')}:{currentCard.motto}
                       </span>
                     </h3>
-                  )}
-                  <p className="font-16">{currentCard.description}</p>
-                  {currentRender?.sft && (
-                    <p className="font-14">
-                      {t(locked ? 'page4.lockedSft' : 'page4.unlockedSft')}
-                    </p>
-                  )}
-                  {currentRender?.cfi && (
-                    <p className="font-14">
-                      {t(locked ? 'page4.lockedCfi' : 'page4.unlockedCfi')}
-                    </p>
-                  )}
-                  <ul className="tk-vincente-lightbold font-24 rarity-box">
-                    <li>
-                      <h3 className="no-margin">RARITY: 1/{quantity}</h3>
-                    </li>
-                    {profitReward && (
-                      <li>
-                        <h3 className="no-margin">
-                          {t('page.prowess')}: {profitReward}%{' '}
-                        </h3>
-                      </li>
+                    {currentRender?.tokenId !== undefined && (
+                      <h3 className="tk-vincente-lightbold">
+                        <span>
+                          {` ${t('page.tokenId')}: 0x${currentRender?.tokenId
+                            .mask(128)
+                            .toHexString()
+                            .replace('0x', '')
+                            .toUpperCase()
+                            .padStart(8, '0')}`}
+                        </span>
+                      </h3>
                     )}
-                    {autoUpgrade && (
-                      <li>
-                        <h3 className="no-margin">
-                          {t('page.autoUpgrade')}: {autoUpgrade}
-                        </h3>
-                      </li>
+                    <p className="font-16">{currentCard.description}</p>
+                    {currentRender?.sft && (
+                      <p className="font-14">
+                        {t(locked ? 'page4.lockedSft' : 'page4.unlockedSft')}
+                      </p>
                     )}
-                    {price && (
-                      <li>
-                        <h3 className="no-margin">
-                          {t('page.price')}: {price} WOWS
-                        </h3>
-                      </li>
+                    {currentRender?.cfi && (
+                      <p className="font-14">
+                        {t(locked ? 'page4.lockedCfi' : 'page4.unlockedCfi')}
+                      </p>
                     )}
-                  </ul>
-                </div>
-                <div>
-                  {currentRender?.sft &&
-                    currentRender?.sft.cfolioItems.length > 0 && (
-                      <span className="p_relative" style={{ display: 'block' }}>
-                        <input
-                          className="wolves-btn mt-1"
-                          type="button"
-                          value={claimText.l}
-                          disabled={claimText.d}
-                          onClick={() => this._onClaim()}
-                        />
-                        {!txPending && isWalletConnected && (
-                          <span
-                            onAnimationIteration={this.onProgressIteration}
-                            className="info-progress absolute"
-                            style={{ marginLeft: '2px', marginRight: '2px' }}
+                    <ul className="tk-vincente-lightbold font-24 rarity-box">
+                      <li>
+                        <h3 className="no-margin">RARITY: 1/{quantity}</h3>
+                      </li>
+                      {profitReward && (
+                        <li>
+                          <h3 className="no-margin">
+                            {t('page.prowess')}: {profitReward}%{' '}
+                          </h3>
+                        </li>
+                      )}
+                      {autoUpgrade && (
+                        <li>
+                          <h3 className="no-margin">
+                            {t('page.autoUpgrade')}: {autoUpgrade}
+                          </h3>
+                        </li>
+                      )}
+                      {price && (
+                        <li>
+                          <h3 className="no-margin">
+                            {t('page.price')}: {price} WOWS
+                          </h3>
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                  <div>
+                    {currentRender?.sft &&
+                      currentRender?.sft.cfolioItems.length > 0 && (
+                        <span
+                          className="p_relative"
+                          style={{ display: 'block' }}
+                        >
+                          <input
+                            className="wolves-btn mt-1"
+                            type="button"
+                            value={claimText.l}
+                            disabled={claimText.d}
+                            onClick={() => this._onClaim()}
                           />
-                        )}
-                      </span>
-                    )}
-                  <input
-                    className="wolves-btn mt-1"
-                    type="button"
-                    value={getButtonText(currentCard.name)}
-                    disabled={!isWalletConnected || noQuantity || txPending}
-                    onClick={() => this._onBuy()}
-                  />
-                </div>
-              </>
-            )}
+                          {!txPending && isWalletConnected && (
+                            <span
+                              onAnimationIteration={this.onProgressIteration}
+                              className="info-progress absolute"
+                              style={{ marginLeft: '2px', marginRight: '2px' }}
+                            />
+                          )}
+                        </span>
+                      )}
+                    <input
+                      className="wolves-btn mt-1"
+                      type="button"
+                      value={getButtonText(currentCard.name)}
+                      disabled={!isWalletConnected || noQuantity || txPending}
+                      onClick={() => this._onBuy()}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     );
   }

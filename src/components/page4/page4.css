@@ -62,6 +62,31 @@
   clear: both;
 }
 
+#page4-content-image-inner > .monochrome {
+  -webkit-filter: grayscale(100%);
+  filter: grayscale(100%);
+}
+
+#page4-content-image-inner-info {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+  padding: 81% 8px 8px 8px;
+  visibility: hidden;
+  z-index: 12;
+  background-color: rgba(74, 77, 89, 0.9);
+}
+
+#page4-content-image-inner-info h3 {
+  margin: 0px;
+}
+
+#cfi-image.selectable:hover {
+  cursor: pointer;
+}
+
 #page4-content-image-inner .card-visual {
   display: block;
   width: 100%;

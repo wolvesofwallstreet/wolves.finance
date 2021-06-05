@@ -11,7 +11,7 @@ import React, { Component } from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { Link, RouteComponentProps } from 'react-router-dom';
 
-import Logo from '../../assets/logo.png';
+import Logo from '../../assets/wolves-token_99.png';
 import {
   ASSETS_STATE,
   CONNECTION_CHANGED,

@@ -48,6 +48,7 @@ export type CFOLIO_ITEM = {
 
 export type CFOLIO_ITEMS = {
   type: string;
+  token: string;
   title: string;
   shortDescription: string;
   description: string;
@@ -57,6 +58,7 @@ export type CFOLIO_ITEMS = {
 
 export const INITIAL_CFOLIO_ITEMS: CFOLIO_ITEMS = {
   type: '',
+  token: '',
   title: '',
   shortDescription: '',
   description: '',

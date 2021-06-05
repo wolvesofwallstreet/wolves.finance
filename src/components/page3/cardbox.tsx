@@ -118,7 +118,7 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
           levelId +
           '&cardId=' +
           cardId +
-          (tokenId !== undefined ? '&tokenId=' + tokenId : '')
+          (tokenId !== undefined ? '&tokenId=' + tokenId.toHexString() : '')
         }
       >
         {cardType === 'movie' ? (
