@@ -15,15 +15,15 @@ import '../../0xerc1155/interfaces/IERC20.sol';
 import '../../0xerc1155/interfaces/IERC1155TokenReceiver.sol';
 import '../../0xerc1155/utils/SafeMath.sol';
 
+import '../investment/interfaces/ICFolioFarm.sol'; // Wolves rewards
+import '../token/interfaces/IWOWSCryptofolio.sol';
+import '../token/interfaces/IWOWSERC1155.sol'; // SFT contract
+import '../utils/interfaces/IAddressRegistry.sol';
+import '../utils/AddressBook.sol';
+import '../utils/TokenIds.sol';
+
 import './interfaces/ICFolioItemHandler.sol';
 import './interfaces/ISFTEvaluator.sol';
-
-import '../investment/interfaces/ICFolioFarm.sol'; // Wolves rewards
-import '../token/interfaces/IWOWSERC1155.sol'; // SFT contract
-import '../token/interfaces/IWOWSCryptofolio.sol';
-import '../utils/AddressBook.sol';
-import '../utils/interfaces/IAddressRegistry.sol';
-import '../utils/TokenIds.sol';
 
 /**
  * @dev CFolioItemHandlerSC manages CFolioItems, minted in the SFT contract.
