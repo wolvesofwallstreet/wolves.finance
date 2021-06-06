@@ -29,6 +29,9 @@ const UPGRADE_PROXY_CONTRACT = 'UpgradeProxy';
 const CFOLIO_FARM_LP_CONTRACT = 'CFolioFarmLP';
 const CFOLIO_FARM_SC_CONTRACT = 'CFolioFarmSC';
 
+// Contract ABIs
+const CFOLIO_ITEM_HANDLER_SC_ABI = `${__dirname}/../src/abi/contracts/src/cfolio/CFolioItemHandlerSC.sol/CFolioItemHandlerSC.json`;
+
 // Path to address files
 const CONFIG_ADDRESSES = `${__dirname}/../src/config/addresses.json`;
 const GENERATED_ADDRESSES = `${__dirname}/../src/config/generated-addresses.json`;
@@ -89,7 +92,7 @@ async function setRegistryKey(deployer, execute, registryInstance, key, value) {
 const func = async function (hardhat_re) {
   const { deployments, getNamedAccounts } = hardhat_re;
 
-  const { deploy, execute } = deployments;
+  const { deploy, execute, get } = deployments;
   const { deployer } = await getNamedAccounts();
 
   // Get chain ID
@@ -105,6 +108,11 @@ const func = async function (hardhat_re) {
 
   const configAddresses = (!IGNORE_ADDRESSES && configNetworks[chainId]) || {};
   const generatedAddresses = generatedNetworks[chainId] || {};
+
+  // Load ABIs
+  const cfolioItemHandlerSCAbi = JSON.parse(
+    fs.readFileSync(CFOLIO_ITEM_HANDLER_SC_ABI)
+  );
 
   //////////////////////////////////////////////////////////////////////////////
   //
@@ -357,6 +365,20 @@ const func = async function (hardhat_re) {
 
   //////////////////////////////////////////////////////////////////////////////
   //
+  // Create initialization calldata
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  const cfolioItemHandlerSCInterface = new ethers.utils.Interface(
+    cfolioItemHandlerSCAbi
+  );
+  const proxyCallData = cfolioItemHandlerSCInterface.encodeFunctionData(
+    'initialize',
+    []
+  );
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
   // Deploy CFolioItemHandlerSCProxy
   //
   //////////////////////////////////////////////////////////////////////////////
@@ -370,20 +392,36 @@ const func = async function (hardhat_re) {
   } else {
     log_step('Deploying CFolioItemHandlerSC proxy');
 
-    const cfolioItemHandlerSCProxyReceipt = await deploy(
-      CFOLIO_ITEM_HANDLER_SC_PROXY_CONTRACT,
-      {
-        contract: UPGRADE_PROXY_CONTRACT,
-        from: deployer,
-        args: [
-          ADDRESS_REGISTRY_ADDRESS,
-          generatedAddresses.cfolioItemHandlerSC,
-          [],
-        ],
-        log: true,
-        deterministicDeployment: true,
+    let cfolioItemHandlerSCProxyReceipt = undefined;
+    try {
+      cfolioItemHandlerSCProxyReceipt = await get(
+        CFOLIO_ITEM_HANDLER_SC_PROXY_CONTRACT
+      );
+
+      if (!cfolioItemHandlerSCProxyReceipt.address) {
+        throw new Error('No address');
       }
-    );
+
+      console.log(
+        'INFO: Proxy upgrade required! Initialization: ',
+        proxyCallData
+      );
+    } catch (err) {
+      cfolioItemHandlerSCProxyReceipt = await deploy(
+        CFOLIO_ITEM_HANDLER_SC_PROXY_CONTRACT,
+        {
+          contract: UPGRADE_PROXY_CONTRACT,
+          from: deployer,
+          args: [
+            ADDRESS_REGISTRY_ADDRESS,
+            generatedAddresses.cfolioItemHandlerSC,
+            proxyCallData,
+          ],
+          log: true,
+          deterministicDeployment: true,
+        }
+      );
+    }
 
     generatedAddresses.cfolioItemHandlerSCProxy =
       cfolioItemHandlerSCProxyReceipt.address;
