@@ -21,6 +21,7 @@ contract Booster is Ownable {
   // Dummy booster implementation, send token to next implementation
   function transferTo(address _token, address _recipient) external onlyOwner {
     require(_recipient != address(0), 'burn not allowed');
+
     IERC20(_token).safeTransfer(
       _recipient,
       IERC20(_token).balanceOf(address(this))

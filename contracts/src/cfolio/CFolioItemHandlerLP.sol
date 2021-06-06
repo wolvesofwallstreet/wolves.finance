@@ -294,12 +294,13 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
     uint256 tokenId,
     uint256[] calldata amounts
   ) external override {
+    // Validate parameters
     require(amounts.length == 1 && amounts[0] > 0, 'CFIH: invalid amount');
     (address baseCFolio, address itemCFolio) =
       _verifyAssetAccess(baseTokenId, tokenId);
 
     // Record assets in Farm contract. They don't earn rewards.
-    // addAsset must only be called from Investment CFolios
+    // removeAsset must only be called from Investment CFolios
     cfolioFarm.removeAssets(itemCFolio, amounts[0]);
 
     // Transfer LP token from this contract

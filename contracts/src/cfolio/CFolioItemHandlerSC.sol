@@ -84,7 +84,7 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev Constructs the CFolioItemHandlerLP
+   * @dev Constructs the CFolioItemHandlerSC
    *
    * We gather all current addresses from address registry into immutable vars.
    * If one of the relevant addresses changes, the contract has to be updated.
