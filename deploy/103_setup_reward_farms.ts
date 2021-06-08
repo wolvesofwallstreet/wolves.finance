@@ -303,7 +303,7 @@ const func = async function (hardhat_re) {
     (await SFT_MINTER_INSTANCE.getCFolioSpec([0])).maxMintable[0].isZero() ||
     (await SFT_MINTER_INSTANCE.getCFolioSpec([16])).maxMintable[0].isZero()
   ) {
-    // We initialize 8 different LP cards
+    // We initialize 8 different investment SFT cards
     const CFI_TYPES = [
       '0x00',
       '0x01',
