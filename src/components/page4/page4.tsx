@@ -20,6 +20,7 @@ import {
   SFT_LOCK,
   SFT_REWARD,
   SFT_UNLOCK,
+  SFT_UPGRADE,
 } from '../../stores/constants';
 import {
   AssetStateresult,
@@ -29,6 +30,7 @@ import {
   StatusResult,
   StoreClasses,
 } from '../../stores/store';
+import { remainingFromSecs } from '../../utils/utils';
 import {
   CARD,
   CARD_LEVEL,
@@ -98,6 +100,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     StoreClasses.emitter.on(SFT_CLAIM, this.onSFTTransaction);
     StoreClasses.emitter.on(SFT_LOCK, this.onSFTTransaction);
     StoreClasses.emitter.on(SFT_UNLOCK, this.onSFTTransaction);
+    StoreClasses.emitter.on(SFT_UPGRADE, this.onSFTTransaction);
   }
 
   componentDidUpdate(): void {
@@ -109,6 +112,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
   }
 
   componentWillUnmount(): void {
+    StoreClasses.emitter.off(SFT_UPGRADE, this.onSFTTransaction);
     StoreClasses.emitter.off(SFT_UNLOCK, this.onSFTTransaction);
     StoreClasses.emitter.off(SFT_LOCK, this.onSFTTransaction);
     StoreClasses.emitter.off(SFT_CLAIM, this.onSFTTransaction);
@@ -326,6 +330,17 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     StoreClasses.dispatcher.dispatch(payload);
   }
 
+  _onUpgrade(): void {
+    const payload: Payload = {
+      type: SFT_UPGRADE,
+      content: {
+        id: this.renderList[this.state.currentIndex].tokenId,
+      },
+    };
+    this.setState({ txPending: true });
+    StoreClasses.dispatcher.dispatch(payload);
+  }
+
   onProgressIteration() {
     StoreClasses.dispatcher.dispatch({
       type: SFT_REWARD,
@@ -427,7 +442,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         ? `my?type=myPack&levelId=${levelId}`
         : `/shop?type=${type}&levelId=${levelId}`;
 
-    let price, quantity, autoUpgrade, profitReward;
+    let price, quantity, autoUpgrade, profitReward, autoUpgradeText;
     let locked = false;
     if (currentRender?.cfi && currentCard) {
       quantity = (currentCard as CFOLIO_ITEM).maxMintable;
@@ -440,6 +455,20 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         ? currentRender.sft.rewardRate / 10000
         : (currentLevel as CARD_LEVEL).profitReward;
       if (!currentRender?.sft) price = (currentLevel as CARD_LEVEL).price;
+      if (autoUpgrade && currentRender.sft) {
+        if (profitReward === (currentLevel as CARD_LEVEL).profitReward) {
+          autoUpgrade =
+            60 * 86400 + currentRender.sft?.mintTimestamp - Date.now() / 1000;
+          autoUpgradeText = txPending
+            ? t('page4.txPending')
+            : autoUpgrade <= 0
+            ? 'UPGRADE TO 50% REWARD SHARE NOW'
+            : 'UPGRADE TO 50% REWARD SHARE IN ' +
+              remainingFromSecs(autoUpgrade);
+        } else {
+          autoUpgrade = undefined;
+        }
+      }
       locked = currentRender.sft?.locked ?? false;
     }
 
@@ -663,9 +692,19 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                       )}
                       {autoUpgrade && (
                         <li>
-                          <h3 className="no-margin">
-                            {t('page.autoUpgrade')}: {autoUpgrade}
-                          </h3>
+                          {typeof autoUpgrade !== 'number' ? (
+                            <h3 className="no-margin">
+                              {t('page.autoUpgrade')}: {autoUpgrade}
+                            </h3>
+                          ) : (
+                            <input
+                              className="wolves-btn tk-grotesk-lightbold font-16 mt-1"
+                              type="button"
+                              value={autoUpgradeText}
+                              disabled={autoUpgrade > 0 || txPending}
+                              onClick={() => this._onUpgrade()}
+                            />
+                          )}
                         </li>
                       )}
                       {price && (

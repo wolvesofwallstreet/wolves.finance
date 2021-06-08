@@ -10,6 +10,7 @@ import WalletConnectProvider from '@walletconnect/web3-provider';
 import IERC20Abi from 'abi/@openzeppelin/contracts/token/ERC20/IERC20.sol/IERC20.json';
 import UniV2PairAbi from 'abi/contracts/interfaces/uniswap/IUniswapV2Pair.sol/IUniswapV2Pair.json';
 import CFolioItemHandlerAbi from 'abi/contracts/src/cfolio/interfaces/ICFolioItemHandler.sol/ICFolioItemHandler.json';
+import SftEvaluatorAbi from 'abi/contracts/src/cfolio/SFTEvaluator.sol/SFTEvaluator.json';
 import SFTMinterAbi from 'abi/contracts/src/crowdsale/WOWSSftMinter.sol/WOWSSftMinter.json';
 import CFolioFarmAbi from 'abi/contracts/src/investment/CFolioFarm.sol/CFolioFarm.json';
 import StakeAbi from 'abi/contracts/src/investment/UniV2StakeFarm.sol/UniV2StakeFarm.json';
@@ -46,6 +47,7 @@ import {
   SFT_LOCK,
   SFT_REWARD,
   SFT_UNLOCK,
+  SFT_UPGRADE,
   STAKE_ADD,
   STAKE_CLAIM,
   STAKE_EXIT,
@@ -90,6 +92,7 @@ type ChainAddresses = {
   sftMinter: string;
   sftHolder: string;
   tradeFloorProxy: string;
+  sftEvaluatorProxy: string;
   cfolioItemHandlerLPProxy: string;
   cfolioFarmLP: string;
 };
@@ -192,6 +195,7 @@ class Store {
   /* Contracts */
   tokenContract: ethers.Contract | null = null;
   cfihLpContract: ethers.Contract | null = null;
+  sftEvaluatorContract: ethers.Contract | null = null;
 
   sftHolderContractRO: ethers.Contract | null = null;
   sftMintContractRO: ethers.Contract | null = null;
@@ -341,6 +345,9 @@ class Store {
         case SFT_UNLOCK:
           this._doSftUnlock(_payload.content);
           break;
+        case SFT_UPGRADE:
+          this._doSftUpgrade(_payload.content);
+          break;
         default: {
           return;
         }
@@ -462,6 +469,7 @@ class Store {
       this.tokenContract = null;
       this.ethersProvider = null;
       this.cfihLpContract = null;
+      this.sftEvaluatorContract = null;
       this.ethersSigner = undefined;
     }
     this.address = '';
@@ -691,6 +699,11 @@ class Store {
       this.cfihLpContract = new ethers.Contract(
         chainAddresses.cfolioItemHandlerLPProxy,
         CFolioItemHandlerAbi,
+        signer
+      );
+      this.sftEvaluatorContract = new ethers.Contract(
+        chainAddresses.sftEvaluatorProxy,
+        SftEvaluatorAbi,
         signer
       );
       return true;
@@ -988,6 +1001,25 @@ class Store {
                 return false;
               })
           );
+          return true;
+        }
+      }
+      return false;
+    });
+  }
+
+  _setRewardRate(receipt: ethers.providers.TransactionReceipt): void {
+    const iface = new ethers.utils.Interface(SftEvaluatorAbi);
+    receipt.logs.find((log) => {
+      if (log.address === this.sftEvaluatorContract?.address) {
+        const parsed = iface.parseLog(log);
+        if (parsed.name === 'RewardRate') {
+          const sft = this.assets.userSFT.find((sft) =>
+            sft.tokenId.eq(parsed.args[0])
+          );
+          if (sft) {
+            sft.rewardRate = parsed.args[1];
+          }
           return true;
         }
       }
@@ -1716,6 +1748,39 @@ class Store {
       emitter.emit(SFT_CLAIM, {
         status: 'error',
         type: SFT_CLAIM,
+        errorMessage: e.error ? e.error.message : e.message,
+      } as StatusResult);
+    }
+  };
+
+  _doSftUpgrade = async (payloadContent: PayloadContent) => {
+    try {
+      if (!payloadContent.id) {
+        throw new Error('Invalid id');
+      }
+      if (!this.sftEvaluatorContract) {
+        throw new Error('Invalid contract state');
+      }
+      const tx: ethers.ContractTransaction =
+        await this.sftEvaluatorContract.setRewardRate(payloadContent.id, true);
+      emitter.emit(SFT_UPGRADE, {
+        status: 'tx',
+        tx: tx.hash,
+      } as StatusResult);
+
+      this.ethersProvider?.once(
+        tx.hash,
+        (receipt: ethers.providers.TransactionReceipt) => {
+          this._setRewardRate(receipt);
+          emitter.emit(SFT_UPGRADE, {
+            status: 'success',
+            tx: tx?.hash,
+          } as StatusResult);
+        }
+      );
+    } catch (e) {
+      emitter.emit(SFT_UPGRADE, {
+        status: 'error',
         errorMessage: e.error ? e.error.message : e.message,
       } as StatusResult);
     }

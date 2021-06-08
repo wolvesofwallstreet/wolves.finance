@@ -87,7 +87,7 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
           ? Math.min((314 - 82) / (sft.cfolioItems.length - 1), 86)
           : 0;
       return (
-        <div id="cfi-image">
+        <>
           {sft.cfolioItems.map((sftc, index) => {
             const cfi = assets.cfolioItems[sftc.levelId].cards[sftc.cardId];
             return (
@@ -101,7 +101,7 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
               />
             );
           })}
-        </div>
+        </>
       );
     }
   };

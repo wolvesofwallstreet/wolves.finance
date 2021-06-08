@@ -131,7 +131,10 @@ const ImageSlider = ({
   }, []);
 
   return (
-    <div className="image_slide_container" ref={containerRef}>
+    <div
+      className="image_slide_container tk-aktiv-grotesk-condensed"
+      ref={containerRef}
+    >
       <div
         className={`image_slide_track ${useTransition && 'trans'}`}
         style={{ left: left + 'px' }}
@@ -179,7 +182,7 @@ const ImageSlider = ({
                   <img width="100%" height="100%" src={elem.url} alt="" />
                 </div>
 
-                <span className="p-0 m-0 font-12 image_slider_tid">
+                <span className="p-0 m-0 font-13 image_slider_tid">
                   {elem.tokenId && elem.tokenId.mask(128).toHexString()}
                 </span>
               </div>
