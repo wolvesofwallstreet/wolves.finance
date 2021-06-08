@@ -126,7 +126,7 @@ contract SFTEvaluator is ISFTEvaluator {
       _rewardRates[tokenId] = timed;
 
       IWOWSCryptofolio cFolio =
-        IWOWSCryptofolio(_sftHolder.tokenIdToAddress(tokenId));
+        IWOWSCryptofolio(_sftHolder.tokenIdToAddress(tokenId.toSftTokenId()));
       require(address(cFolio) != address(0), 'SFTE: invalid tokenId');
 
       // Run through all cfolioItems of main tradefloor
