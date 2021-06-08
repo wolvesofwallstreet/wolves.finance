@@ -139,7 +139,9 @@ contract SFTEvaluator is ISFTEvaluator {
         for (uint256 i = 0; i < length; ++i) {
           // Secondary c-folio items have one tradefloor which is the handler
           address handler =
-            IWOWSCryptofolio(_sftHolder.tokenIdToAddress(cFolioItems[i]))
+            IWOWSCryptofolio(
+              _sftHolder.tokenIdToAddress(cFolioItems[i].toSftTokenId())
+            )
               ._tradefloors(0);
           require(
             address(handler) != address(0),
