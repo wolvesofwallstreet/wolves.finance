@@ -340,7 +340,7 @@ describe('LP NFTs', function () {
       wowsTokenIdWolf
     );
     chai.expect(cryptofolioAddressWolf).to.be.properAddress;
-    chai.expect(cryptofolioAddressBoi).to.not.equal(ADDRESS_ZERO);
+    chai.expect(cryptofolioAddressWolf).to.not.equal(ADDRESS_ZERO);
   });
 
   it('should instantiate cryptofolio contracts', async function () {
