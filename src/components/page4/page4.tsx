@@ -462,9 +462,8 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
           autoUpgradeText = txPending
             ? t('page4.txPending')
             : autoUpgrade <= 0
-            ? 'UPGRADE TO 50% REWARD SHARE NOW'
-            : 'UPGRADE TO 50% REWARD SHARE IN ' +
-              remainingFromSecs(autoUpgrade);
+            ? 'UPGRADE TO 50% PROWESS NOW'
+            : 'UPGRADE TO 50% PROWESS IN ' + remainingFromSecs(autoUpgrade);
         } else {
           autoUpgrade = undefined;
         }

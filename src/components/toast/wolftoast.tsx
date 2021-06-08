@@ -29,6 +29,7 @@ import {
   SFT_CLAIM,
   SFT_LOCK,
   SFT_UNLOCK,
+  SFT_UPGRADE,
   STAKE_ADD,
   STAKE_CLAIM,
   STAKE_EXIT,
@@ -73,6 +74,7 @@ class WolfToast extends Component<TOASTPROPS, TOASTSTATE> {
     StoreClasses.emitter.on(SFT_CLAIM, this.onTransaction);
     StoreClasses.emitter.on(SFT_LOCK, this.onTransaction);
     StoreClasses.emitter.on(SFT_UNLOCK, this.onTransaction);
+    StoreClasses.emitter.on(SFT_UPGRADE, this.onTransaction);
     StoreClasses.emitter.on(CFOLIO_ITEM_BUY, this.onTransaction);
     StoreClasses.emitter.on(CFOLIO_ITEM_DEPOSIT_LP, this.onTransaction);
     StoreClasses.emitter.on(CFOLIO_ITEM_WITHDRAW_LP, this.onTransaction);
@@ -84,6 +86,7 @@ class WolfToast extends Component<TOASTPROPS, TOASTSTATE> {
     StoreClasses.emitter.off(CFOLIO_ITEM_WITHDRAW_LP, this.onTransaction);
     StoreClasses.emitter.off(CFOLIO_ITEM_DEPOSIT_LP, this.onTransaction);
     StoreClasses.emitter.off(CFOLIO_ITEM_BUY, this.onTransaction);
+    StoreClasses.emitter.off(SFT_UPGRADE, this.onTransaction);
     StoreClasses.emitter.off(SFT_UNLOCK, this.onTransaction);
     StoreClasses.emitter.off(SFT_LOCK, this.onTransaction);
     StoreClasses.emitter.off(SFT_CLAIM, this.onTransaction);
