@@ -63,7 +63,7 @@ async function setRegistryKey(deployer, execute, registryInstance, key, value) {
     console.log(`No registry value for ${key}`);
   }
 
-  console.log(`Settings registry value for ${key}`);
+  console.log(`Setting registry value for ${key}`);
 
   // Assign new value
   await execute(
