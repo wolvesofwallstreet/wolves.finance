@@ -82,11 +82,12 @@ contract SFTEvaluator is ISFTEvaluator {
     // Validate parameters
     require(tokenId.isBaseCard(), 'Invalid tokenId');
 
+    uint256 sftTokenId = tokenId.toSftTokenId();
     // Load state
     return
-      _rewardRates[tokenId] == 0
-        ? _baseRate(tokenId)
-        : uint32(_rewardRates[tokenId]);
+      _rewardRates[sftTokenId] == 0
+        ? _baseRate(sftTokenId)
+        : uint32(_rewardRates[sftTokenId]);
   }
 
   /**
@@ -102,7 +103,7 @@ contract SFTEvaluator is ISFTEvaluator {
     require(tokenId.isCFolioCard(), 'Invalid tokenId');
 
     // Load state
-    return _cfolioItemTypes[tokenId];
+    return _cfolioItemTypes[tokenId.toSftTokenId()];
   }
 
   /**
@@ -115,18 +116,21 @@ contract SFTEvaluator is ISFTEvaluator {
     // Validate parameters
     require(tokenId.isBaseCard(), 'Invalid tokenId');
 
+    // We allow upgrades of locked and unlocked SFTs
+    uint256 sftTokenId = tokenId.toSftTokenId();
+
     // Load state
     (uint32 untimed, uint32 timed) =
       // solhint-disable-next-line not-rely-on-time
-      _baseRates(tokenId, uint64(block.timestamp - 60 days));
+      _baseRates(sftTokenId, uint64(block.timestamp - 60 days));
 
     // First implementation, check timed auto upgrade only
     if (untimed != timed) {
       // Update state
-      _rewardRates[tokenId] = timed;
+      _rewardRates[sftTokenId] = timed;
 
       IWOWSCryptofolio cFolio =
-        IWOWSCryptofolio(_sftHolder.tokenIdToAddress(tokenId.toSftTokenId()));
+        IWOWSCryptofolio(_sftHolder.tokenIdToAddress(sftTokenId));
       require(address(cFolio) != address(0), 'SFTE: invalid tokenId');
 
       // Run through all cfolioItems of main tradefloor
@@ -152,7 +156,7 @@ contract SFTEvaluator is ISFTEvaluator {
           uint256 j = numCalledHandlers;
           while (j > 0 && calledHandlers[j - 1] != handler) --j;
           if (j == 0) {
-            ICFolioItemHandler(handler).sftUpgrade(tokenId, timed);
+            ICFolioItemHandler(handler).sftUpgrade(sftTokenId, timed);
             calledHandlers[numCalledHandlers++] = handler;
           }
         }
@@ -186,8 +190,8 @@ contract SFTEvaluator is ISFTEvaluator {
   // Implementation details
   //////////////////////////////////////////////////////////////////////////////
 
-  function _baseRate(uint256 tokenId) private view returns (uint32) {
-    (uint32 untimed, ) = _baseRates(tokenId, 0);
+  function _baseRate(uint256 sftTokenId) private view returns (uint32) {
+    (uint32 untimed, ) = _baseRates(sftTokenId, 0);
     return untimed;
   }
 
@@ -200,7 +204,8 @@ contract SFTEvaluator is ISFTEvaluator {
       [uint32(25e4), uint32(50e4), uint32(75e4), uint32(1e6)];
 
     // Load state
-    (uint64 time, uint8 level) = _sftHolder.getTokenData(tokenId);
+    (uint64 time, uint8 level) =
+      _sftHolder.getTokenData(tokenId.toSftTokenId());
 
     uint8 update = (level & 3) < 3 && time <= upgradeTime ? 1 : 0;
 

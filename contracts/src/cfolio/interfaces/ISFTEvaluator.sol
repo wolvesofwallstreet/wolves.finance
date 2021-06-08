@@ -32,6 +32,7 @@ interface ISFTEvaluator {
 
   /**
    * @dev Sets the cfolioItemType of a cfolioItem tokenId, not yet used
+   * sftHolder tokenId expected (without hash)
    */
   function setCFolioItemType(uint256 tokenId, uint256 cfolioItemType_) external;
 }
