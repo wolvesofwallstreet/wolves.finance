@@ -9,7 +9,7 @@
       "price": 2.5,
       "autoUpgrade": "2 MONTHS",
       "profitReward": 25,
-      "header": "1/{Q} RARITY - 25% BASE PROFIT SHARE",
+      "header": "1/{Q} RARITY - 25% BASE PROWESS",
       "cards": [
         {
           "id": "bugsey",
@@ -61,7 +61,7 @@
       "price": 4.5,
       "autoUpgrade": "",
       "profitReward": 50,
-      "header": "1/{Q} RARITY - 50% BASE PROFIT SHARE",
+      "header": "1/{Q} RARITY - 50% BASE PROWESS",
       "cards": [
         {
           "id": "barkley",
@@ -135,7 +135,7 @@
       "price": 2.5,
       "autoUpgrade": "2 MONTHS",
       "profitReward": 25,
-      "header": "1/{Q} RARITY - 25% BASE PROFIT SHARE",
+      "header": "1/{Q} RARITY - 25% BASE PROWESS",
       "cards": [
         {
           "id": "aksinia",
@@ -187,7 +187,7 @@
       "price": 4.5,
       "autoUpgrade": "",
       "profitReward": 50,
-      "header": "1/{Q} RARITY - 50% BASE PROFIT SHARE",
+      "header": "1/{Q} RARITY - 50% BASE PROWESS",
       "cards": [
         {
           "id": "decko",
@@ -239,7 +239,7 @@
       "price": 0,
       "autoUpgrade": "",
       "profitReward": 75,
-      "header": "1/{Q} RARITY - 75% BASE PROFIT SHARE",
+      "header": "1/{Q} RARITY - 75% BASE PROWESS",
       "cards": []
     },
     {
@@ -250,7 +250,7 @@
       "price": 0,
       "autoUpgrade": "",
       "profitReward": 100,
-      "header": "1/{Q} RARITY - 100% BASE PROFIT SHARE",
+      "header": "1/{Q} RARITY - 100% BASE PROWESS",
       "cards": []
     }
   ]
