@@ -442,7 +442,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         ? `my?type=myPack&levelId=${levelId}`
         : `/shop?type=${type}&levelId=${levelId}`;
 
-    let price, quantity, autoUpgrade, profitReward, autoUpgradeText;
+    let price, quantity, autoUpgrade, profitReward, autoUpgradeText, apr;
     let locked = false;
     if (currentRender?.cfi && currentCard) {
       quantity = (currentCard as CFOLIO_ITEM).maxMintable;
@@ -469,6 +469,8 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         }
       }
       locked = currentRender.sft?.locked ?? false;
+      if (profitReward && currentLevel && currentLevel.type === 'wolves')
+        apr = StoreClasses.store.getAssets().rewardInfo[0].apr * profitReward;
     }
 
     const claimText = !isWalletConnected
@@ -686,6 +688,13 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                         <li>
                           <h3 className="no-margin">
                             {t('page.prowess')}: {profitReward}%{' '}
+                          </h3>
+                        </li>
+                      )}
+                      {apr && (
+                        <li>
+                          <h3 className="no-margin">
+                            {t('page4.aprapy', { apr, apy: 0 })}
                           </h3>
                         </li>
                       )}

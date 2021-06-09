@@ -7,7 +7,6 @@
  */
 
 import WalletConnectProvider from '@walletconnect/web3-provider';
-import IERC20Abi from 'abi/@openzeppelin/contracts/token/ERC20/IERC20.sol/IERC20.json';
 import UniV2PairAbi from 'abi/contracts/interfaces/uniswap/IUniswapV2Pair.sol/IUniswapV2Pair.json';
 import CFolioItemHandlerAbi from 'abi/contracts/src/cfolio/interfaces/ICFolioItemHandler.sol/ICFolioItemHandler.json';
 import SftEvaluatorAbi from 'abi/contracts/src/cfolio/SFTEvaluator.sol/SFTEvaluator.json';
@@ -95,6 +94,7 @@ type ChainAddresses = {
   sftEvaluatorProxy: string;
   cfolioItemHandlerLPProxy: string;
   cfolioFarmLP: string;
+  uniDaiWeth: string;
 };
 interface IIndexable {
   [key: number]: ChainAddresses;
@@ -165,15 +165,21 @@ export const BIGNUMBER_MAX = ethers.BigNumber.from(
   '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
 );
 
+const SECONDS_PER_YEAR = 31536000;
+
 type cbf = async.AsyncResultCallback<unknown, Error>;
 
 export const REWARD_POOL_LP = 0;
 export const REWARD_POOL_SC = 1;
 
 type REWARD_INFO = {
-  total: number;
+  total: ethers.BigNumber;
   rewardDuration: number;
-  rewardPerDuration: number;
+  rewardPerDuration: ethers.BigNumber;
+  priceWOWS: number;
+  priceToken: number;
+  apr: number;
+  apy: number;
 };
 
 type ASSETS = {
@@ -219,6 +225,7 @@ class Store {
   tokenContractAddress = Store.nullAddress;
   pauseSFTUser = false;
   eventBlockNumber = 0;
+  lastAprTime = 0;
 
   dispatchQueue: Payload[] = [];
 
@@ -539,6 +546,10 @@ class Store {
       this.eventBlockNumber = blockNumber;
       this.dispatchQueue.forEach((payload) => dispatcher.dispatch(payload));
       this.dispatchQueue = [];
+      if (this.lastAprTime + 60000 < Date.now()) {
+        this.lastAprTime = Date.now();
+        this._updatePoolAPY();
+      }
     });
     this.sftHolderContractRO?.on('TransferSingle', (operator, from, to) =>
       handleTransfer(from, to)
@@ -649,7 +660,7 @@ class Store {
       );
       this.lpContractRO = new ethers.Contract(
         await this.stakeContractRO.stakingToken(),
-        IERC20Abi,
+        UniV2PairAbi,
         provider
       );
       this.sftHolderContractRO = new ethers.Contract(
@@ -673,9 +684,9 @@ class Store {
       this.cfolioFarmLpAddress = chainAddresses.cfolioFarmLP;
 
       // Temporary because of missing route in stakefarm
-      if (this.chainId === 1) {
+      if (chainAddresses.uniDaiWeth !== '') {
         this.uniDaiWethPairContractRO = new ethers.Contract(
-          '0xA478c2975Ab1Ea89e8196811F51A7B7Ade33eB11', // UniV2Pair DAI/ETH
+          chainAddresses.uniDaiWeth,
           UniV2PairAbi,
           provider
         );
@@ -964,13 +975,14 @@ class Store {
       );
       let readIndex = 0;
       const ri = this.assets.rewardInfo[0];
-      ri.total = this.fromWei(readUint256(result, readIndex++));
+      ri.total = readUint256(result, readIndex++);
       ri.rewardDuration = readUint256(result, readIndex++).toNumber();
-      ri.rewardPerDuration = this.fromWei(readUint256(result, readIndex++));
+      ri.rewardPerDuration = readUint256(result, readIndex++);
       wolves.forEach((sft) => {
         sft.rewardShare = this.fromWei(readUint256(result, readIndex++));
         sft.rewardEarned = this.fromWei(readUint256(result, readIndex++));
       });
+      this._updatePoolAPY();
       emitter.emit(ASSETS_STATE, { status: 'rewards' } as AssetStateresult);
     } catch (e) {
       console.log(e.message);
@@ -1054,6 +1066,57 @@ class Store {
       }
     );
   };
+
+  async _updatePoolAPY() {
+    if (this.uniDaiWethPairContractRO && this.lpContractRO) {
+      const e18 = ethers.BigNumber.from('10').pow(18);
+
+      const daiWethReserves = await this.uniDaiWethPairContractRO.getReserves();
+      // Price of 1 WETH in DAI
+      const wethPrice = daiWethReserves.reserve0
+        .mul(e18)
+        .div(daiWethReserves.reserve1);
+
+      const wowsWethReserves = await this.lpContractRO.getReserves();
+      // Price of 1 WOWS
+      const wowsPrice = wowsWethReserves.reserve0
+        .mul(wethPrice)
+        .div(wowsWethReserves.reserve1);
+
+      // Total price of pool
+      const poolPrice = wowsWethReserves.reserve0
+        .mul(wethPrice)
+        .add(wowsWethReserves.reserve1.mul(wowsPrice))
+        .div(e18);
+
+      // TotalSupply of the WOWS/WETH pool
+      const wowsWethTotalSupply = await this.lpContractRO.totalSupply();
+
+      const rewardInfo = this.assets.rewardInfo[0];
+
+      rewardInfo.priceWOWS = this.fromWei(wowsPrice);
+      rewardInfo.priceToken = this.fromWei(
+        poolPrice.mul(e18).div(wowsWethTotalSupply)
+      );
+
+      if (rewardInfo.rewardDuration) {
+        // Staked share
+        const stakedPrice = poolPrice
+          .mul(ethers.BigNumber.from(rewardInfo.total))
+          .div(wowsWethTotalSupply);
+
+        // yearly emission
+        const emmission = wowsPrice.mul(
+          rewardInfo.rewardPerDuration
+            .mul(ethers.BigNumber.from(SECONDS_PER_YEAR))
+            .div(ethers.BigNumber.from(rewardInfo.rewardDuration).mul(e18))
+        );
+
+        rewardInfo.apr = emmission.div(stakedPrice).toNumber();
+        rewardInfo.apy = (Math.pow(1.0 + rewardInfo.apr / 52, 52) - 1.0) * 100;
+      }
+    }
+  }
 
   /************** TX ****************/
 
