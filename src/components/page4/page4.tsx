@@ -392,15 +392,11 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                     <li>
                       <h2>PROFIT REWARD: {this.content?.profitReward}% </h2>
                     </li>
-                    {/*<li>
-                      <h2>RAIDING POTENTIAL: 50%</h2>
-                    </li>
-                    <li>
-                      <h2>APY: 430%</h2>
-                    </li>*/}
-                    <li>
-                      <h2>AUTO UPGRADES: {this.content?.autoUpgrade}</h2>
-                    </li>
+                    {this.content?.levelId === 0 && (
+                      <li>
+                        <h2>AUTO UPGRADES: {this.content?.autoUpgrade}</h2>
+                      </li>
+                    )}
                     <li>
                       <h2>COST: {this.content?.price} WOWS</h2>
                     </li>
