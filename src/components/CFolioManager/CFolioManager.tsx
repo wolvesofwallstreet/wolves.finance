@@ -225,8 +225,9 @@ class CFolioManager extends React.Component<PROPS, STATE> {
       ) {
         sliderImagesMiddle = this.sliderImagesMiddleAll;
       } else {
-        const filter =
-          this.cards.cards[bottomImages[this.sliderIndex[2]].sft.levelId].type;
+        const filter = this.cards.cards[
+          bottomImages[this.sliderIndex[2]].sft.levelId
+        ].type;
         sliderImagesMiddle = this.sliderImagesMiddleAll.filter(
           (elem) => !elem.constraints || elem.constraints === filter
         );

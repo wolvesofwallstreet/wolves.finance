@@ -65,7 +65,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
   ISFTEvaluator public immutable sftEvaluator;
 
   // Reward emitter
-  ICFolioFarm public immutable cfolioFarm;
+  ICFolioFarmOwnable public immutable cfolioFarm;
 
   // Admin
   address public immutable admin;
@@ -121,7 +121,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
     );
 
     // WOWS reward farm
-    cfolioFarm = ICFolioFarm(
+    cfolioFarm = ICFolioFarmOwnable(
       addressRegistry.getRegistryEntry(AddressBook.WOLVES_REWARDS)
     );
   }
@@ -401,6 +401,9 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
       address(newContract),
       stakingToken.balanceOf(address(this))
     );
+    // Let new handler control the reward farm
+    cfolioFarm.transferOwnership(address(newContract));
+
     selfdestruct(payable(address(newContract)));
   }
 

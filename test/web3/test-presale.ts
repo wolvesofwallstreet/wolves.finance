@@ -408,8 +408,10 @@ describe('Presale contract', function () {
     const options = { gasPrice, value: toWei(amount) };
 
     // Buy tokens and add liquidity
-    const tx: Promise<ethers.ContractTransaction> =
-      presaleContract.buyTokensAddLiquidity(signer.address, options);
+    const tx: Promise<ethers.ContractTransaction> = presaleContract.buyTokensAddLiquidity(
+      signer.address,
+      options
+    );
     await chai.expect(tx).to.emit(presaleContract, 'Staked').withArgs(
       signer.address, // Beneficiary
       ethers.BigNumber.from('29999999999999999000') // Liquidity - ~30 LP tokens

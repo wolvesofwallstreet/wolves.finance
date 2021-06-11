@@ -299,9 +299,10 @@ const func = async function (hardhat_re) {
   // 10.) Call WOWSSftMinter.sol::setCFolioSpec(types, handlers, maxMint, prices)
   //
 
+  const cfolioSpec = await SFT_MINTER_INSTANCE.getCFolioSpec([0, 16]);
   if (
-    (await SFT_MINTER_INSTANCE.getCFolioSpec([0])).maxMintable[0].isZero() ||
-    (await SFT_MINTER_INSTANCE.getCFolioSpec([16])).maxMintable[0].isZero()
+    cfolioSpec.maxMintable[0].isZero() ||
+    cfolioSpec.maxMintable[1].isZero()
   ) {
     // We initialize 8 different investment SFT cards
     const CFI_TYPES = [

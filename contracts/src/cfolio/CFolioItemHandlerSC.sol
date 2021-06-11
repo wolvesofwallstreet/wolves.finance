@@ -62,7 +62,7 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
   ISFTEvaluator public immutable sftEvaluator;
 
   // Reward emitter
-  ICFolioFarm public immutable cfolioFarm;
+  ICFolioFarmOwnable public immutable cfolioFarm;
 
   // Admin
   address public immutable admin;
@@ -113,7 +113,7 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
     );
 
     // WOWS reward farm
-    cfolioFarm = ICFolioFarm(
+    cfolioFarm = ICFolioFarmOwnable(
       addressRegistry.getRegistryEntry(AddressBook.BOIS_REWARDS)
     );
   }
@@ -360,6 +360,10 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
   function upgradeContract(CFolioItemHandlerSC newContract) external {
     // Validate access
     require(_msgSender() == admin, 'Admin only');
+
+    // Let new handler control the reward farm
+    cfolioFarm.transferOwnership(address(newContract));
+
     selfdestruct(payable(address(newContract)));
   }
 

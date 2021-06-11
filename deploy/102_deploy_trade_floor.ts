@@ -20,8 +20,9 @@ const TRADE_FLOOR_CONTRACT = 'TradeFloor';
 const TRADE_FLOOR_PROXY_CONTRACT = 'TradeFloorProxy';
 const UPGRADE_PROXY_CONTRACT = 'UpgradeProxy';
 
-const ADDRESS_BOOK_TRADE_FLOOR_PROXY_KEY =
-  ethers.utils.formatBytes32String('TRADE_FLOOR_PROXY');
+const ADDRESS_BOOK_TRADE_FLOOR_PROXY_KEY = ethers.utils.formatBytes32String(
+  'TRADE_FLOOR_PROXY'
+);
 
 // Contract ABIs
 const TRADE_FLOOR_ABI = `${__dirname}/../src/abi/contracts/src/token/TradeFloor.sol/TradeFloor.json`;
@@ -131,7 +132,7 @@ const func = async function (hardhat_re) {
       from: deployer,
       args: [
         ADDRESS_REGISTRY_ADDRESS,
-        configAddresses.openSeaProxy ||
+        configAddresses.openSeaProxyRegistry ||
           '0x0000000000000000000000000000000000000000',
       ],
       log: true,

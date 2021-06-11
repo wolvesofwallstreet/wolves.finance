@@ -20,11 +20,13 @@ const SFT_HOLDER_CONTRACT = 'WOWSERC1155';
 const SFT_CRYPTOFOLIO = 'WOWSCryptofolio';
 const SFT_MINTER_CONTRACT = 'WOWSSftMinter';
 
-const ADDRESS_BOOK_SFT_HOLDER_KEY =
-  ethers.utils.formatBytes32String('SFT_HOLDER');
+const ADDRESS_BOOK_SFT_HOLDER_KEY = ethers.utils.formatBytes32String(
+  'SFT_HOLDER'
+);
 
-const ADDRESS_BOOK_SFT_MINTER_KEY =
-  ethers.utils.formatBytes32String('SFT_MINTER');
+const ADDRESS_BOOK_SFT_MINTER_KEY = ethers.utils.formatBytes32String(
+  'SFT_MINTER'
+);
 
 // ERC-1155 metadata URI
 const METADATA_URI = 'https://4travelers.de/wolves_assets/metadata/';

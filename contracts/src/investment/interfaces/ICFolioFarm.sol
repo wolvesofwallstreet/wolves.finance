@@ -54,3 +54,14 @@ interface ICFolioFarm {
    */
   function exit(address account, address rewardRecipient) external;
 }
+
+/**
+ * @title ICFolioFarmOwnable
+ */
+
+interface ICFolioFarmOwnable is ICFolioFarm {
+  /**
+   * @dev Transfer ownership
+   */
+  function transferOwnership(address newOwner) external;
+}
