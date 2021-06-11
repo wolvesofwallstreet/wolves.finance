@@ -14,10 +14,9 @@ Installs the Javascript dependencies of the project.
 
 Audits installed Javascript dependencies for vulnerabilities.
 
-### `yarn depends TEST=0`
+### `yarn depends`
 
 Invokes the dependency build system and installs built depends.
-Omit `TEST=0` to also run the test cases for depends.
 
 ### `yarn compile`
 

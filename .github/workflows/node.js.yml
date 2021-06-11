@@ -66,7 +66,7 @@ jobs:
           path: |
             contracts/depends
             depends
-          key: restore-contracts-${{ hashFiles('tools/Makefile', 'tools/*.mk', 'tools/depends/chain/**', 'tools/depends/native/nvm/**') }}
+          key: restore-contracts-${{ hashFiles('tools/build-depends.sh', 'tools/depends/chain/**') }}
 
       - name: yarn install
         if: steps.restore-node.outputs.cache-hit != 'true'
@@ -77,7 +77,7 @@ jobs:
 
       - name: Build smart contract dependencies
         if: steps.restore-contracts.outputs.cache-hit != 'true'
-        run: yarn depends TEST=0
+        run: yarn depends
 
       - name: yarn lint
         run: yarn lint
