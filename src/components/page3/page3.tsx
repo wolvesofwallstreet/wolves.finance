@@ -280,14 +280,6 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
 
     return (
       <>
-        {/*type === 'myPack' && levelId !== 4 && isWalletConnected && (
-          <span className="bg-orange">
-            <span
-              className="info-progress"
-              onAnimationIteration={this._updateRewards.bind(this)}
-            />
-          </span>
-        )*/}
         <div
           ref={this.mainRef}
           className={'wolves-container wolves-header bg-' + type}

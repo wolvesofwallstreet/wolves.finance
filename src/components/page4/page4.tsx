@@ -55,7 +55,6 @@ type PAGE4_STATE = {
   isWalletConnected: boolean;
   txPending: boolean;
   currentIndex: number;
-  rewardEarned: number;
   selectedCFolio: number;
 };
 
@@ -64,7 +63,6 @@ const INITIAL_PAGE4_STATE: PAGE4_STATE = {
   isWalletConnected: false,
   txPending: false,
   currentIndex: -1,
-  rewardEarned: 0,
   selectedCFolio: -1,
 };
 
@@ -132,12 +130,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         isWalletConnected: StoreClasses.store.getAssets().userSFT.length > 0,
       });
     } else if (status.status === 'rewards') {
-      if (this.state.currentIndex < this.renderList.length) {
-        this.setState({
-          rewardEarned:
-            this.renderList[this.state.currentIndex].sft?.rewardEarned ?? 0,
-        });
-      }
+      this.setState({ tokenIds: StoreClasses.store.getAssets().userSFT });
     }
   }
 
@@ -365,7 +358,6 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       currentIndex,
       selectedCFolio,
       isWalletConnected,
-      rewardEarned,
       txPending,
       type,
     } = this.state;
@@ -442,11 +434,22 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         ? `my?type=myPack&levelId=${levelId}`
         : `/shop?type=${type}&levelId=${levelId}`;
 
-    let price, quantity, autoUpgrade, profitReward, autoUpgradeText, apr, apy;
+    let price,
+      quantity,
+      autoUpgrade,
+      profitReward,
+      autoUpgradeText,
+      apr,
+      apy,
+      investment;
     let locked = false;
     if (currentRender?.cfi && currentCard) {
       quantity = (currentCard as CFOLIO_ITEM).maxMintable;
       locked = currentRender.cfi.locked;
+      investment =
+        currentRender?.cfi.assets[0].toFixed(6) +
+        ' ' +
+        (currentLevel as CFOLIO_ITEMS).token;
     } else if (currentRender && currentLevel) {
       quantity = (currentLevel as CARD_LEVEL).quantity;
       autoUpgrade = (currentLevel as CARD_LEVEL).autoUpgrade;
@@ -481,14 +484,21 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       }
     }
 
-    const claimText = !isWalletConnected
-      ? { l: t('header.connectWallet').toString(), d: true }
-      : txPending
-      ? { l: t('page4.txPending'), d: true }
-      : {
-          l: t('page4.claim', { amount: rewardEarned.toFixed(6) }).toString(),
-          d: locked || rewardEarned === 0,
-        };
+    const claimText =
+      currentRender?.sft &&
+      (currentRender.sft.cfolioItems.length > 0 ||
+        currentRender.sft.rewardEarned > 0)
+        ? !isWalletConnected
+          ? { l: t('header.connectWallet').toString(), d: true }
+          : txPending
+          ? { l: t('page4.txPending'), d: true }
+          : {
+              l: t('page4.claim', {
+                amount: currentRender.sft.rewardEarned.toFixed(6),
+              }).toString(),
+              d: locked || currentRender.sft.rewardEarned === 0,
+            }
+        : undefined;
 
     const renderCFolioItems = () => {
       if (
@@ -732,31 +742,37 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                           </h3>
                         </li>
                       )}
+                      {investment && (
+                        <li>
+                          <h3 className="no-margin">
+                            {t('page.investment')}: {investment}
+                          </h3>
+                        </li>
+                      )}
                     </ul>
                   </div>
                   <div>
-                    {currentRender?.sft &&
-                      currentRender?.sft.cfolioItems.length > 0 && (
-                        <span
-                          className="p_relative"
-                          style={{ display: 'block' }}
-                        >
-                          <input
-                            className="wolves-btn mt-1"
-                            type="button"
-                            value={claimText.l}
-                            disabled={claimText.d}
-                            onClick={() => this._onClaim()}
-                          />
-                          {!txPending && isWalletConnected && (
+                    {claimText && (
+                      <span className="p_relative" style={{ display: 'block' }}>
+                        <input
+                          className="wolves-btn mt-1"
+                          type="button"
+                          value={claimText.l}
+                          disabled={claimText.d}
+                          onClick={() => this._onClaim()}
+                        />
+                        {!txPending &&
+                          isWalletConnected &&
+                          currentRender?.sft &&
+                          currentRender.sft.cfolioItems.length > 0 && (
                             <span
                               onAnimationIteration={this.onProgressIteration}
                               className="info-progress absolute"
                               style={{ marginLeft: '2px', marginRight: '2px' }}
                             />
                           )}
-                        </span>
-                      )}
+                      </span>
+                    )}
                     <input
                       className="wolves-btn mt-1"
                       type="button"

@@ -45,7 +45,8 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
     price,
     minted,
     prowess,
-    locked;
+    locked,
+    investment;
   if (sft) {
     const level = assets.cards.cards[sft.levelId];
     const card = level.cards[sft.cardId];
@@ -78,6 +79,10 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
     price = card.price;
     prowess = 0;
     locked = cfolio.locked;
+    investment =
+      cfolio.assets[0].toFixed(6) +
+      ' ' +
+      assets.cfolioItems[cfolio.levelId].token;
   } else return <></>;
 
   const renderCFolioItems = () => {
@@ -180,7 +185,11 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
             </span>
           </>
         ) : (
-          <></>
+          <>
+            <span className="tk-grotesk-lightbold font-14 ellipsis">
+              {t('page.investment')}: {investment}
+            </span>
+          </>
         )}
       </div>
     </div>

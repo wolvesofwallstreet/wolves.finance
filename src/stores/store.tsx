@@ -1119,7 +1119,8 @@ class Store {
             .div(ethers.BigNumber.from(rewardInfo.rewardDuration).mul(e18))
         );
 
-        rewardInfo.apr = emmission.div(stakedPrice).toNumber();
+        rewardInfo.apr =
+          stakedPrice > 0 ? emmission.div(stakedPrice).toNumber() : 0;
         rewardInfo.apy = (Math.pow(1.0 + rewardInfo.apr / 52, 52) - 1.0) * 100;
       }
     }
