@@ -588,7 +588,7 @@ describe('SFT minter', function () {
     chai.expect(balance).to.equal(1);
   });
 
-  it('should get address of investment SFT (with LP))', async function () {
+  it('should get address of investment SFT (with LP)', async function () {
     this.timeout(60 * 1000);
 
     const { sftHolderContract } = contracts;
@@ -654,7 +654,7 @@ describe('SFT minter', function () {
     chai.expect(balance).to.equal(1);
   });
 
-  it('should get address of investment SFT (without LP))', async function () {
+  it('should get address of investment SFT (without LP)', async function () {
     this.timeout(60 * 1000);
 
     const { sftHolderContract } = contracts;
