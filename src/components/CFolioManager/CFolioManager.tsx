@@ -207,12 +207,16 @@ class CFolioManager extends React.Component<PROPS, STATE> {
           pred2
         )
       );
+      this.setState({ sliderImagesBottom: bottomImages });
+      this._filterSliderImagesMiddle(topImages, bottomImages, false);
     }
-    this.setState({ sliderImagesBottom: bottomImages });
-    this._filterSliderImagesMiddle(topImages, bottomImages);
   }
 
-  _filterSliderImagesMiddle(topImages: IMAGE[], bottomImages: IMAGE[]) {
+  _filterSliderImagesMiddle(
+    topImages: IMAGE[],
+    bottomImages: IMAGE[],
+    onlyIfChanged: boolean
+  ) {
     let sliderImagesMiddle: SUBIMAGE[] = [];
     if (
       this.cards &&
@@ -233,8 +237,9 @@ class CFolioManager extends React.Component<PROPS, STATE> {
       }
     }
     if (
+      !onlyIfChanged ||
       JSON.stringify(sliderImagesMiddle) !==
-      JSON.stringify(this.state.sliderImagesMiddle)
+        JSON.stringify(this.state.sliderImagesMiddle)
     ) {
       this.setState({ checkedMiddle: [] });
       this.setState({ sliderImagesMiddle });
@@ -250,7 +255,8 @@ class CFolioManager extends React.Component<PROPS, STATE> {
     else if (pos === 2) {
       this._filterSliderImagesMiddle(
         this.state.sliderImagesTop,
-        this.state.sliderImagesBottom
+        this.state.sliderImagesBottom,
+        true
       );
     }
   }
