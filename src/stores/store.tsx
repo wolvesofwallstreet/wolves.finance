@@ -740,11 +740,10 @@ class Store {
 
   _getStakeState = async (payloadContent: PayloadContent | undefined) => {
     try {
-      const result:
-        | ethers.BigNumber[]
-        | undefined = await this.stakeContractRO?.getUIData(
-        this.address === '' ? Store.nullAddress : this.address
-      );
+      const result: ethers.BigNumber[] | undefined =
+        await this.stakeContractRO?.getUIData(
+          this.address === '' ? Store.nullAddress : this.address
+        );
 
       if (result) {
         const stakeInfo: StakeResult = {
@@ -787,12 +786,8 @@ class Store {
     );
 
     try {
-      const sftResult:
-        | number[]
-        | undefined = await this.sftHolderContractRO?.getCardDataBatch(
-        levels,
-        cardIds
-      );
+      const sftResult: number[] | undefined =
+        await this.sftHolderContractRO?.getCardDataBatch(levels, cardIds);
 
       if (sftResult !== undefined && sftResult.length > 0) {
         let index = 0;
@@ -842,10 +837,8 @@ class Store {
       );
 
     try {
-      const result: [
-        ethers.BigNumber[],
-        ethers.BigNumber[]
-      ] = await this.sftMintContractRO.getTokenIds(this.address);
+      const result: [ethers.BigNumber[], ethers.BigNumber[]] =
+        await this.sftMintContractRO.getTokenIds(this.address);
 
       const mergeList = filterSpecialCards(result[0]);
       mergeList.push(...filterSpecialCards(result[1]));
@@ -1175,9 +1168,8 @@ class Store {
       }
 
       const stakeContract = this.stakeContractRO.connect(this.ethersSigner);
-      const tx:
-        | ethers.ContractTransaction
-        | undefined = await stakeContract?.stake(stakeAmount);
+      const tx: ethers.ContractTransaction | undefined =
+        await stakeContract?.stake(stakeAmount);
       emitter.emit(STAKE_ADD, {
         status: 'tx',
         tx: tx?.hash,
@@ -1203,9 +1195,8 @@ class Store {
       }
 
       const stakeContract = this.stakeContractRO.connect(this.ethersSigner);
-      const tx:
-        | ethers.ContractTransaction
-        | undefined = await stakeContract.getReward();
+      const tx: ethers.ContractTransaction | undefined =
+        await stakeContract.getReward();
       emitter.emit(STAKE_CLAIM, {
         status: 'tx',
         type: STAKE_CLAIM,
@@ -1234,9 +1225,8 @@ class Store {
       }
 
       const stakeContract = this.stakeContractRO.connect(this.ethersSigner);
-      const tx:
-        | ethers.ContractTransaction
-        | undefined = await stakeContract.exit();
+      const tx: ethers.ContractTransaction | undefined =
+        await stakeContract.exit();
       emitter.emit(STAKE_EXIT, {
         status: 'tx',
         tx: tx?.hash,
@@ -1306,14 +1296,13 @@ class Store {
         await tx.wait();
       }
 
-      const tx:
-        | ethers.ContractTransaction
-        | undefined = await sftMintContract?.mintWowsSFT(
-        this.address,
-        id.toNumber() >> 8,
-        id.toNumber() & 0xff,
-        { gasLimit: 420000 }
-      );
+      const tx: ethers.ContractTransaction | undefined =
+        await sftMintContract?.mintWowsSFT(
+          this.address,
+          id.toNumber() >> 8,
+          id.toNumber() & 0xff,
+          { gasLimit: 420000 }
+        );
       emitter.emit(SFT_BUY, {
         status: 'tx',
         tx: tx?.hash,
@@ -1362,15 +1351,14 @@ class Store {
 
     try {
       this.pauseSFTUser = true;
-      const tx:
-        | ethers.ContractTransaction
-        | undefined = await sftHolderContract.safeTransferFrom(
-        this.address,
-        this.tradeFloorContractRO.address,
-        id,
-        1,
-        []
-      );
+      const tx: ethers.ContractTransaction | undefined =
+        await sftHolderContract.safeTransferFrom(
+          this.address,
+          this.tradeFloorContractRO.address,
+          id,
+          1,
+          []
+        );
       emitter.emit(SFT_LOCK, {
         status: 'tx',
         tx: tx?.hash,
@@ -1416,9 +1404,8 @@ class Store {
       );
 
       this.pauseSFTUser = true;
-      const tx:
-        | ethers.ContractTransaction
-        | undefined = await tradeFloorContract.burn(this.address, id, 1);
+      const tx: ethers.ContractTransaction | undefined =
+        await tradeFloorContract.burn(this.address, id, 1);
       emitter.emit(SFT_UNLOCK, {
         status: 'tx',
         tx: tx?.hash,
@@ -1516,12 +1503,13 @@ class Store {
         }
       }
 
-      const tx: ethers.ContractTransaction = await sftMintContract?.mintCFolioItemSFT(
-        this.address,
-        cfolioType,
-        sftTokenId,
-        cfolioType < 0x10 ? [investWeiAmount] : []
-      );
+      const tx: ethers.ContractTransaction =
+        await sftMintContract?.mintCFolioItemSFT(
+          this.address,
+          cfolioType,
+          sftTokenId,
+          cfolioType < 0x10 ? [investWeiAmount] : []
+        );
       emitter.emit(CFOLIO_ITEM_BUY, {
         status: 'tx',
         tx: tx.hash,
@@ -1837,10 +1825,8 @@ class Store {
       if (!this.sftEvaluatorContract) {
         throw new Error('Invalid contract state');
       }
-      const tx: ethers.ContractTransaction = await this.sftEvaluatorContract.setRewardRate(
-        payloadContent.id,
-        true
-      );
+      const tx: ethers.ContractTransaction =
+        await this.sftEvaluatorContract.setRewardRate(payloadContent.id, true);
       emitter.emit(SFT_UPGRADE, {
         status: 'tx',
         tx: tx.hash,

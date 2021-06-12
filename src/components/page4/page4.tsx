@@ -678,9 +678,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                     {currentRender?.tokenId !== undefined && (
                       <h3 className="tk-vincente-lightbold">
                         <span>
-                          {` ${t(
-                            'page.tokenId'
-                          )}: 0x${currentRender?.tokenId
+                          {` ${t('page.tokenId')}: 0x${currentRender?.tokenId
                             .mask(128)
                             .toHexString()
                             .replace('0x', '')

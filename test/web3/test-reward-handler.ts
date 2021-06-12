@@ -94,11 +94,8 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
 
 // Extended fixture that grants the rewarder role
 async function setupTestForRewarder(marketingWalletAddress: string) {
-  const {
-    tokenContract,
-    boosterContract,
-    rewardHandlerContract,
-  } = await setupTest();
+  const { tokenContract, boosterContract, rewardHandlerContract } =
+    await setupTest();
 
   const REWARD_ROLE = await rewardHandlerContract.REWARD_ROLE();
 
@@ -147,11 +144,8 @@ describe('Reward handler', function () {
   it('should distribute to targets', async function () {
     this.timeout(60 * 1000);
 
-    const {
-      tokenContract,
-      boosterContract,
-      rewardHandlerContract,
-    } = await setupTest();
+    const { tokenContract, boosterContract, rewardHandlerContract } =
+      await setupTest();
 
     // Test parameters
     const amountToDistribute = '1000000000000000000'; // 1 WOWS
@@ -237,11 +231,8 @@ describe('Reward handler', function () {
   it('should terminate contract without selfdestruct', async function () {
     this.timeout(60 * 1000);
 
-    const {
-      tokenContract,
-      boosterContract,
-      rewardHandlerContract,
-    } = await setupTestForRewarder(marketingWallet.address);
+    const { tokenContract, boosterContract, rewardHandlerContract } =
+      await setupTestForRewarder(marketingWallet.address);
 
     // Test parameters
     const amountToDistribute = '1000000000000000000'; // 1 WOWS
@@ -327,11 +318,8 @@ describe('Reward handler', function () {
   it('should terminate contract with selfdestruct', async function () {
     this.timeout(60 * 1000);
 
-    const {
-      tokenContract,
-      boosterContract,
-      rewardHandlerContract,
-    } = await setupTestForRewarder(marketingWallet.address);
+    const { tokenContract, boosterContract, rewardHandlerContract } =
+      await setupTestForRewarder(marketingWallet.address);
 
     // Test parameters
     const amountToDistribute = '1000000000000000000'; // 1 WOWS

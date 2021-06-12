@@ -532,9 +532,8 @@ describe('LP NFTs', function () {
     );
 
     // Get the address of the investment card clone contract
-    const cryptofolioItemAddressWolfLP = await sftHolderContract.tokenIdToAddress(
-      cfolioItemTokenId
-    );
+    const cryptofolioItemAddressWolfLP =
+      await sftHolderContract.tokenIdToAddress(cfolioItemTokenId);
     await chai.expect(tx).to.emit(cfolioFarmLPContract, 'AssetAdded').withArgs(
       cryptofolioItemAddressWolfLP, // Recipient
       lpBalance, // Amount

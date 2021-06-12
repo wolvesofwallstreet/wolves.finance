@@ -232,11 +232,8 @@ describe('SFT contracts', function () {
   it('should have a trade floor', async function () {
     this.timeout(60 * 1000);
 
-    const {
-      sftHolderContract,
-      tradeFloorContract,
-      tradeFloorProxyContract,
-    } = await setupTest();
+    const { sftHolderContract, tradeFloorContract, tradeFloorProxyContract } =
+      await setupTest();
 
     // Check that the SFT knows the trade floor
     let isTradeFloor = await sftHolderContract.isTradeFloor(
@@ -511,12 +508,8 @@ describe('SFT contracts', function () {
     const cardId = [1, 2];
 
     // Check card data by batch
-    const [
-      cap,
-      minted,
-      cap2,
-      minted2,
-    ] = await sftHolderContract.getCardDataBatch(level, cardId);
+    const [cap, minted, cap2, minted2] =
+      await sftHolderContract.getCardDataBatch(level, cardId);
     chai.expect(cap).to.equal(20);
     chai.expect(minted).to.equal(0);
     chai.expect(cap2).to.equal(0);
@@ -604,7 +597,8 @@ describe('SFT contracts', function () {
 
     const { rewardHandlerContract, sftMinterContract } = await setupTest();
 
-    const RH_DEFAULT_ADMIN_ROLE = await rewardHandlerContract.DEFAULT_ADMIN_ROLE();
+    const RH_DEFAULT_ADMIN_ROLE =
+      await rewardHandlerContract.DEFAULT_ADMIN_ROLE();
     const RH_REWARD_ROLE = await rewardHandlerContract.REWARD_ROLE();
 
     // Check roles of SFT minter for the ERC-20 token contract
@@ -682,11 +676,8 @@ describe('SFT contracts', function () {
   it('should mint a WOWS SFT', async function () {
     this.timeout(60 * 1000);
 
-    const {
-      tokenContract,
-      sftHolderContract,
-      sftMinterContract,
-    } = await setupTest();
+    const { tokenContract, sftHolderContract, sftMinterContract } =
+      await setupTest();
 
     // Test parameters
     const level = 1;
