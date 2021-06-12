@@ -157,6 +157,32 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
     ) _updateRewards(from, sftEvaluator.rewardRate(sftTokenId));
   }
 
+  /**
+   * @dev See {ICFolioItemCallback-appendHash}
+   */
+  function appendHash(address cfolioItem, bytes calldata current)
+    external
+    view
+    override
+    returns (bytes memory)
+  {
+    return
+      abi.encodePacked(
+        current,
+        address(this),
+        cfolioFarm.balanceOf(cfolioItem)
+      );
+  }
+
+  /**
+   * @dev See {ICFolioItemCallback-uri}
+   */
+  function uri(
+    uint256 /* tokenId*/
+  ) external pure override returns (string memory) {
+    return '';
+  }
+
   //////////////////////////////////////////////////////////////////////////////
   // Implementation of {ICFolioItemHandler}
   //////////////////////////////////////////////////////////////////////////////
@@ -225,7 +251,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
   }
 
   /**
-   * @dev See {ICFolioItemCallback-deposit}
+   * @dev See {ICFolioItemHandler-deposit}
    *
    * Note: tokenId can be owned by a base SFT
    * In this case base SFT cannot be locked
@@ -255,7 +281,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
   }
 
   /**
-   * @dev See {ICFolioItemCallback-withdraw}
+   * @dev See {ICFolioItemHandler-withdraw}
    *
    * Note: tokenId can be owned by a base SFT
    * In this case base SFT cannot be locked
@@ -284,7 +310,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
   }
 
   /**
-   * @dev See {ICFolioItemCallback-getRewards}
+   * @dev See {ICFolioItemHandler-getRewards}
    *
    * Note: tokenId must be a base SFT card
    *
@@ -311,32 +337,6 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
     );
 
     cfolioFarm.getReward(cfolio, recipient);
-  }
-
-  /**
-   * @dev See {ICFolioItemCallback-appendHash}
-   */
-  function appendHash(address cfolioItem, bytes calldata current)
-    external
-    view
-    override
-    returns (bytes memory)
-  {
-    return
-      abi.encodePacked(
-        current,
-        address(this),
-        cfolioFarm.balanceOf(cfolioItem)
-      );
-  }
-
-  /**
-   * @dev See {ICFolioItemCallback-uri}
-   */
-  function uri(
-    uint256 /* tokenId*/
-  ) external pure override returns (string memory) {
-    return '';
   }
 
   /**
