@@ -420,7 +420,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
                   <img id="cover-image" src={CoverLogo} alt="COVER" />
                   <a
                     id="cover-inner"
-                    className="tk-grotesk-lightbold"
+                    className="tk-grotesk-lightbold font-13"
                     target="_blank"
                     rel="noreferrer"
                     href="https://wolvesofwallstreet.finance"

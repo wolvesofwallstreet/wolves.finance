@@ -93,17 +93,17 @@
 
 #cover-image {
   position: absolute;
-  left: 12px;
-  height: 64px;
-  width: 64px;
+  left: 6px;
+  height: 56px;
+  width: 56px;
 }
 
 #cover-inner {
   height: 32px;
   width: 100%;
-  margin-top: 16px;
-  padding-left: 80px;
-  padding-top: 4px;
+  margin-top: 12px;
+  padding-left: 64px;
+  padding-top: 6px;
   background-color: rgba(127, 95, 201, 0.75);
   text-align: center;
   color: white;
