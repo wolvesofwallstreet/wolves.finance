@@ -616,7 +616,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         >
           <span>
             <span
-              className={`tk-vincente-lightbold font-24 single-line ${
+              className={`tk-vincente-lightbold font-24 single-line noselect ${
                 prevUrl ? 'c-pointer' : 'disabled-link'
               }`}
               onClick={() => (prevUrl ? history.push(prevUrl) : undefined)}
@@ -625,7 +625,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
             </span>
           </span>
           <span
-            className={`tk-vincente-lightbold font-24 single-line ${
+            className={`tk-vincente-lightbold font-24 single-line noselect ${
               nextUrl ? 'c-pointer' : 'disabled-link'
             } `}
             onClick={() => (nextUrl ? history.replace(nextUrl) : undefined)}

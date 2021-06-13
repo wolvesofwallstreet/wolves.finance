@@ -12,6 +12,7 @@ import React from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { Link, RouteComponentProps } from 'react-router-dom';
 
+import CoverLogo from '../../assets/COVER_LOGO.png';
 import WalletLogo from '../../assets/openwallet_low.png';
 import { ASSETS_STATE } from '../../stores/constants';
 import {
@@ -414,6 +415,18 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
                   ) : (
                     <YearnQuad {...controlAttr} />
                   )}
+                </div>
+                <div className="d-flex p_relative mt-1">
+                  <img id="cover-image" src={CoverLogo} alt="COVER" />
+                  <a
+                    id="cover-inner"
+                    className="tk-grotesk-lightbold"
+                    target="_blank"
+                    rel="noreferrer"
+                    href="https://wolvesofwallstreet.finance"
+                  >
+                    <u>GET COVER INSURANCE FOR YOUR INVESTMENT</u>
+                  </a>
                 </div>
               </div>
             </div>

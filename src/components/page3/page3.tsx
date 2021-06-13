@@ -316,9 +316,14 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
                 <span className="tk-vincente-lightbold font-24 single-line wolves-color-orange fixed-pos">
                   &lt;
                   {levelPosition <= startPosition ? (
-                    <Link to="/">{t('page.home')}</Link>
+                    <Link className="noselect" to="/">
+                      {t('page.home')}
+                    </Link>
                   ) : (
-                    <Link to={'?type=' + type + '&levelId=' + this.prevLevel}>
+                    <Link
+                      className="noselect"
+                      to={'?type=' + type + '&levelId=' + this.prevLevel}
+                    >
                       {t('page.previous')}
                     </Link>
                   )}
@@ -351,7 +356,10 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
                 </span>
                 <span className="tk-vincente-lightbold font-24 single-line wolves-color-orange">
                   {hasMoreLevels ? (
-                    <Link to={'?type=' + type + '&levelId=' + this.nextLevel}>
+                    <Link
+                      className="noselect"
+                      to={'?type=' + type + '&levelId=' + this.nextLevel}
+                    >
                       {t('page.nextLevel')}
                     </Link>
                   ) : (

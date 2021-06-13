@@ -90,3 +90,21 @@
 #cfolioInvest-control-nav .c-pointer:hover {
   color: var(--wolves-orange);
 }
+
+#cover-image {
+  position: absolute;
+  left: 12px;
+  height: 64px;
+  width: 64px;
+}
+
+#cover-inner {
+  height: 32px;
+  width: 100%;
+  margin-top: 16px;
+  padding-left: 80px;
+  padding-top: 4px;
+  background-color: rgba(127, 95, 201, 0.75);
+  text-align: center;
+  color: white;
+}

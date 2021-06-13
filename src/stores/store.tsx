@@ -449,7 +449,7 @@ class Store {
     });
 
     provider.on('accountsChanged', async (accounts: string[]) => {
-      if (accounts[0] !== this.address) {
+      if (this.address !== Store.nullAddress && accounts[0] !== this.address) {
         this.address = ethers.utils.getAddress(accounts[0]);
         this._emitNetworkChange();
       }
