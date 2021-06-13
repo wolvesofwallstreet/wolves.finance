@@ -125,9 +125,10 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       this.setState({ cfolios: StoreClasses.store.getAssets().cfolioItems });
     } else if (status.status === 'tokens') {
       this.needUpdate = true;
-      this.setState({ tokenIds: StoreClasses.store.getAssets().userSFT });
       this.setState({
+        tokenIds: StoreClasses.store.getAssets().userSFT,
         isWalletConnected: StoreClasses.store.getAssets().userSFT.length > 0,
+        selectedCFolio: -1,
       });
     } else if (status.status === 'rewards') {
       this.setState({ tokenIds: StoreClasses.store.getAssets().userSFT });

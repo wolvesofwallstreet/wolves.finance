@@ -207,9 +207,11 @@ class CFolioManager extends React.Component<PROPS, STATE> {
           pred2
         )
       );
-      this.setState({ sliderImagesBottom: bottomImages });
-      this._filterSliderImagesMiddle(topImages, bottomImages, false);
+    } else if (topImages.length > 0) {
+      return;
     }
+    this.setState({ sliderImagesBottom: bottomImages });
+    this._filterSliderImagesMiddle(topImages, bottomImages, false);
   }
 
   _filterSliderImagesMiddle(

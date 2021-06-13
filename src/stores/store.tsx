@@ -450,7 +450,7 @@ class Store {
 
     provider.on('accountsChanged', async (accounts: string[]) => {
       if (accounts[0] !== this.address) {
-        this.address = accounts[0];
+        this.address = ethers.utils.getAddress(accounts[0]);
         this._emitNetworkChange();
       }
     });
@@ -537,6 +537,7 @@ class Store {
       ) {
         filter.push('tokens');
       }
+      console.log('TransferEvent: ', filter);
       this._addDQ(0, { type: ASSETS_STATE, content: { filter } } as Payload);
     };
 
