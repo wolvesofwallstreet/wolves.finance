@@ -418,15 +418,16 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
                 </div>
                 <div className="d-flex p_relative mt-1">
                   <img id="cover-image" src={CoverLogo} alt="COVER" />
-                  <a
-                    id="cover-inner"
-                    className="tk-grotesk-lightbold font-13"
-                    target="_blank"
-                    rel="noreferrer"
-                    href="https://wolvesofwallstreet.finance"
-                  >
-                    <u>GET COVER INSURANCE FOR YOUR INVESTMENT</u>
-                  </a>
+                  <span id="cover-inner">
+                    <a
+                      className="tk-grotesk-lightbold"
+                      target="_blank"
+                      rel="noreferrer"
+                      href="https://wolvesofwallstreet.finance"
+                    >
+                      <u>GET COVER INSURANCE FOR YOUR INVESTMENT</u>
+                    </a>
+                  </span>
                 </div>
               </div>
             </div>

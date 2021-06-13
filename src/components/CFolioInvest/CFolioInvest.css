@@ -103,8 +103,8 @@
   width: 100%;
   margin-top: 12px;
   padding-left: 64px;
-  padding-top: 6px;
+  padding-top: 4px;
   background-color: rgba(127, 95, 201, 0.75);
   text-align: center;
-  color: white;
+  font-size: 14px;
 }
