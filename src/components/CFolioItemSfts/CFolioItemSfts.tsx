@@ -85,19 +85,24 @@ class CFolioItemSfts extends Component<PROPS, STATE> {
                 alt={card.name}
               />
             </Link>
-            <span className="tk-vincente-lightbold font-32 m-0 mt-2 line-h">
-              {card.name}
-            </span>
-            <hr className="wolves" />
-            {
-              <span className="tk-grotesk-lightbold font-14 ellipsis">
-                {t('page.available')}: {card.maxMintable - card.minted}/
-                {card.maxMintable}
+            <div className="wrapper">
+              <span className="tk-vincente-lightbold font-32 m-0 mt-2 line-h">
+                {card.name}
               </span>
-            }
-            <span className="tk-grotesk-lightbold font-14 m-0 line-h ellipsis">
-              {t('page.price')}: {card.price.toFixed(2)} WOWS
-            </span>
+              <span className="tk-grotesk-lightbold font-14 ellipsis">
+                {t('page.motto')}: {card.motto}
+              </span>
+              <hr className="wolves" />
+              {
+                <span className="tk-grotesk-lightbold font-14 ellipsis">
+                  {t('page.available')}: {card.maxMintable - card.minted}/
+                  {card.maxMintable}
+                </span>
+              }
+              <span className="tk-grotesk-lightbold font-14 m-0 line-h ellipsis">
+                {t('page.price')}: {card.price.toFixed(2)} WOWS
+              </span>
+            </div>
           </div>
         );
       });

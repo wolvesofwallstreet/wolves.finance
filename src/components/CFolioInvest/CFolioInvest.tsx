@@ -372,12 +372,23 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
               </div>
 
               <div className={'right t-left'}>
-                <h1 className={'tk-vincente'}>
+                <h1
+                  className={
+                    'tk-vincente no-margin' +
+                    (renderCFolioItem ? ' golden-shaddow' : '')
+                  }
+                >
                   {' '}
                   {cfolioItemCard ? cfolioItemCard.name : 'NFT'}{' '}
                   {renderCFolioItem ? ' - MY NFT' : ' - NEW NFT'}
                 </h1>
-
+                {cfolioItemCard && (
+                  <h3 className="tk-vincente-lightbold">
+                    <span>
+                      {t('page.motto')}:{cfolioItemCard.motto}
+                    </span>
+                  </h3>
+                )}
                 <div
                   className={'tk-grotesk-lightbold font-16 line-break-enable'}
                 >

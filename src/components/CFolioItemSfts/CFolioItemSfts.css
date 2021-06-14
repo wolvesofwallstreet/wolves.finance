@@ -84,6 +84,7 @@
   flex-direction: column;
   justify-content: flex-start;
   margin: 15px;
+  flex-basis: 21%;
 }
 
 .cfisft-card .card-media {
