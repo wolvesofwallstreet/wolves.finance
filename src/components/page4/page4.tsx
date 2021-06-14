@@ -668,7 +668,14 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
               {currentCard && (
                 <>
                   <div>
-                    <h1 className="tk-vincente-lightbold h-1 single-line">
+                    <h1
+                      className={
+                        'tk-vincente-lightbold h-1 single-line' +
+                        (currentRender?.tokenId !== undefined
+                          ? ' wolves-text-shaddow'
+                          : '')
+                      }
+                    >
                       {currentCard.name}
                     </h1>
                     <h3 className="tk-vincente-lightbold">

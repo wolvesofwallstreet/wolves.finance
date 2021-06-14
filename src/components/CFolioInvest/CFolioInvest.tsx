@@ -375,7 +375,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
                 <h1
                   className={
                     'tk-vincente no-margin' +
-                    (renderCFolioItem ? ' golden-shaddow' : '')
+                    (renderCFolioItem ? ' wolves-text-shaddow' : '')
                   }
                 >
                   {' '}
