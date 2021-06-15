@@ -55,9 +55,13 @@ cards.levels.forEach((level) =>
     };
 
     console.log(`Generating ${lc}.json`);
-    fs.writeFileSync('./generated/' + lc + '.json', JSON.stringify(content), {
-      encoding: 'utf8',
-    });
+    fs.writeFileSync(
+      './generated/' + lc + '.json',
+      JSON.stringify(content, null, 2),
+      {
+        encoding: 'utf8',
+      }
+    );
 
     console.log(`Generating ${lc}_zh_CN.json`);
     fs.writeFileSync(
