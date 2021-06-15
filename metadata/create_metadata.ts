@@ -34,6 +34,26 @@ cards.levels.forEach((level) =>
         '{res}',
         '500'
       ),
+      attributes: [
+        {
+          trait_type: 'Team',
+          value:
+            level.type === 'wolves' ? 'One of the Wolves' : 'One of the Bois',
+        },
+        {
+          trait_type: 'Cryptofolio Level',
+          value: cards.levelNames[level.levelId],
+        },
+        {
+          trait_type: 'Max Supply',
+          value: 0,
+        },
+        {
+          display_type: 'boost_percentage',
+          trait_type: 'Profit Prowess',
+          value: level.profitReward,
+        },
+      ],
       external_url:
         'https://app.wows.finance/detail?type=' +
         level.type +
