@@ -44,15 +44,6 @@ cards.levels.forEach((level) =>
           trait_type: 'Cryptofolio Level',
           value: cards.levelNames[level.levelId],
         },
-        {
-          trait_type: 'Max Supply',
-          value: 0,
-        },
-        {
-          display_type: 'boost_percentage',
-          trait_type: 'Profit Prowess',
-          value: level.profitReward,
-        },
       ],
       external_url:
         'https://app.wows.finance/detail?type=' +
