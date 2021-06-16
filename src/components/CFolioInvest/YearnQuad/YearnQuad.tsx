@@ -37,7 +37,7 @@ function YearnQuad({
   sft,
   t,
 }: PROPS): JSX.Element {
-  const [tabOption] = useState(0);
+  const [tabOption, setTabOption] = useState(0);
   const [inputVal, setInputVal] = useState(0);
   const [txRunning, setTXRunning] = useState(false);
 
@@ -68,6 +68,10 @@ function YearnQuad({
     };
   }, []);
 
+  useEffect(() => {
+    setTabOption(0);
+  }, [cfolioItem]);
+
   const buttonText = txRunning
     ? { l: 'TRANSACTION PENDING ...', e: false }
     : sft
@@ -87,8 +91,35 @@ function YearnQuad({
         }
     : { l: 'ACCOUNT NOT INITIALIZED', e: false };
 
+  const renderSpan = (id: number, caption: string) => {
+    return id === tabOption ? (
+      <div>
+        <span className="border_thin_b">{caption}</span>
+      </div>
+    ) : (
+      <div>
+        <span className="c-pointer" onClick={() => setTabOption(id)}>
+          {caption}
+        </span>
+      </div>
+    );
+  };
+
+  const spanText = cfolioItem
+    ? 'DEPOSIT MORE'
+    : sft?.isWallet
+    ? 'ADD "YUSD INVESTMENT NFT" INTO MY WALLET'
+    : 'ADD "YUSD INVESTMENT NFT" INTO MY CFOLIO';
+
   return (
     <>
+      <div
+        id="cfolioInvest-control-nav"
+        className="tk-vincente-lightbold font-22"
+      >
+        {renderSpan(0, spanText)}
+        {cfolioItem && renderSpan(1, 'WITHDRAW')}
+      </div>
       {/* Orange Horizontal Bar */}
       <AssetInput
         currency={investCurrency}
@@ -137,6 +168,33 @@ function YearnQuad({
           }}
         >
           100%
+        </div>
+      </div>
+      <div id="currency-container" className="tk-grotesk-lightbold">
+        <div>
+          USDC
+          <br />
+          100.00
+        </div>
+        <div>
+          USDT
+          <br />
+          100.00
+        </div>
+        <div>
+          DAI
+          <br />
+          100.00
+        </div>
+        <div>
+          TUSD
+          <br />
+          100.00
+        </div>
+        <div>
+          YUSD
+          <br />
+          1.00
         </div>
       </div>
       <button

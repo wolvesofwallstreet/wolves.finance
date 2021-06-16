@@ -29,6 +29,20 @@
 }
 
 .yq-bar-chart > .tick:last-child {
-  left: calc(var(--percentage) - 6%);
+  left: calc(var(--percentage) - 28px);
   border-left: 0;
+  border-right: 2px solid var(--wolves-white);
+}
+
+#currency-container {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+}
+
+#currency-container > div {
+  flex-basis: 19%;
+  text-align: center;
+  padding: 4px;
+  border: 1px solid var(--wolves-white);
 }

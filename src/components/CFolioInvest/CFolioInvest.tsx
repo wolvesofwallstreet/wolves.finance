@@ -12,7 +12,7 @@ import React from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { Link, RouteComponentProps } from 'react-router-dom';
 
-import CoverLogo from '../../assets/COVER_LOGO.png';
+import CoverLogo from '../../assets/COVER_LOGO_SMALL.png';
 import WalletLogo from '../../assets/openwallet_low.png';
 import { ASSETS_STATE } from '../../stores/constants';
 import {
