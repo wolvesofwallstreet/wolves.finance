@@ -123,8 +123,8 @@ function YearnQuad({
   const spanText = cfolioItem
     ? 'DEPOSIT MORE'
     : sft?.isWallet
-    ? 'ADD "YUSD INVESTMENT NFT" INTO MY WALLET'
-    : 'ADD "YUSD INVESTMENT NFT" INTO MY CFOLIO';
+    ? `ADD "${investCurrency} INVESTMENT NFT" INTO MY WALLET`
+    : `ADD "${investCurrency} INVESTMENT NFT" INTO MY CFOLIO`;
 
   return (
     <>
@@ -135,6 +135,11 @@ function YearnQuad({
         {renderSpan(0, spanText)}
         {cfolioItem && renderSpan(1, 'WITHDRAW')}
       </div>
+      <span className="mt-1 font-14">
+        AVAILABLE IN{tabOption === 0 ? ' MY WALLET: ' : ' MY NFT: '}
+        {currencies[currencyIndex].value.toFixed(4)}{' '}
+        {currencies[currencyIndex].name}
+      </span>
       {/* Orange Horizontal Bar */}
       <AssetInput
         currency={currencies[currencyIndex].name}
