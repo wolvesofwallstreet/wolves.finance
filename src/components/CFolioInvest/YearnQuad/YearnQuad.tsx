@@ -147,50 +147,7 @@ function YearnQuad({
         maxAmount={0}
         cb={(n) => setInputVal(n)}
       />
-      {/* Bar percentage chart, based on barDivisions */}
-      <div className="yq-bar-chart">
-        <div
-          className="tick"
-          style={{
-            ['--percentage' as string]: '0%',
-          }}
-        >
-          0%
-        </div>
-        <div
-          className="tick"
-          style={{
-            ['--percentage' as string]: '25%',
-          }}
-        >
-          25%
-        </div>
-        <div
-          className="tick"
-          style={{
-            ['--percentage' as string]: '50%',
-          }}
-        >
-          50%
-        </div>
-        <div
-          className="tick"
-          style={{
-            ['--percentage' as string]: '75%',
-          }}
-        >
-          75%
-        </div>
-        <div
-          className="tick"
-          style={{
-            ['--percentage' as string]: '100%',
-          }}
-        >
-          100%
-        </div>
-      </div>
-      <div id="currency-container" className="tk-grotesk-lightbold">
+      <div id="currency-container" className="tk-grotesk-lightbold mt-3">
         {currencies.map((currency, index) => (
           <div
             key={'cidx_' + index}
