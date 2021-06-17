@@ -60,7 +60,6 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
   sliderInterface?: IMAGE_SLIDER_INTERFACE;
   slideIndex = 0;
   initialCFolio = -1;
-  investCurrency = '';
   displayType = '';
 
   constructor(props: PROPS) {
@@ -76,8 +75,6 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
     const query = new URLSearchParams(location.search);
     this.initialCFolio = parseInt(query.get('item') || '-1');
     this.displayType = query.get('type') || 'lpInvestment';
-    this.investCurrency =
-      this.displayType === 'lpInvestment' ? 'WOWS/ETH LP' : 'DAI';
   }
 
   setCurrentImage(val: number) {
@@ -90,8 +87,6 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
     const newDisplayType = query.get('type') || 'lpInvestment';
     if (newDisplayType !== this.displayType) {
       this.displayType = newDisplayType;
-      this.investCurrency =
-        this.displayType === 'lpInvestment' ? 'WOWS/ETH LP' : 'DAI';
       this.slideIndex = 0;
       this.sliderInterface?.go(0);
       this.setState({ currentImage: 0 });
@@ -261,7 +256,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
     const controlAttr = {
       nftPrice: cfolioItemCard ? cfolioItemCard.price : 0,
       nftType: cfolioItemCard ? cfolioItemCard.chainRef : 0,
-      investCurrency: this.investCurrency,
+      investCurrency: this.cfolioItems?.token ?? '',
       cfolioItem: renderCFolioItem || undefined,
       sft:
         this.slideIndex < this.receiverImages.length
@@ -399,7 +394,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
                         {renderCFolioItem.tokenId.mask(128).toHexString()}
                         <br />
                         INVESTMENT: {renderCFolioItem.assets[0].toFixed(4)}
-                        {' ' + this.investCurrency}
+                        {' ' + controlAttr.investCurrency}
                       </>
                     ) : (
                       cfolioItemCard && (

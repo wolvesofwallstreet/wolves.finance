@@ -38,8 +38,18 @@ function YearnQuad({
   t,
 }: PROPS): JSX.Element {
   const [tabOption, setTabOption] = useState(0);
+  const [currencyIndex, setCurrencyIndex] = useState(0);
+  const [checkedIndex, setCheckedIndex] = useState(-1);
   const [inputVal, setInputVal] = useState(0);
   const [txRunning, setTXRunning] = useState(false);
+
+  const currencies = [
+    { name: 'USDC', value: 0, decimals: 18 },
+    { name: 'USDT', value: 0, decimals: 6 },
+    { name: 'DAI', value: 0, decimals: 18 },
+    { name: 'TUSD', value: 0, decimals: 18 },
+    { name: 'YCRV', value: 0, decimals: 18 },
+  ];
 
   const handleBuy = () => {
     const payload = {
@@ -71,6 +81,11 @@ function YearnQuad({
   useEffect(() => {
     setTabOption(0);
   }, [cfolioItem]);
+
+  useEffect(() => {
+    if (tabOption) setCurrencyIndex(4);
+    setCheckedIndex(-1);
+  }, [tabOption]);
 
   const buttonText = txRunning
     ? { l: 'TRANSACTION PENDING ...', e: false }
@@ -122,7 +137,7 @@ function YearnQuad({
       </div>
       {/* Orange Horizontal Bar */}
       <AssetInput
-        currency={investCurrency}
+        currency={currencies[currencyIndex].name}
         minAmount={0}
         maxAmount={0}
         cb={(n) => setInputVal(n)}
@@ -171,31 +186,29 @@ function YearnQuad({
         </div>
       </div>
       <div id="currency-container" className="tk-grotesk-lightbold">
-        <div>
-          USDC
-          <br />
-          100.00
-        </div>
-        <div>
-          USDT
-          <br />
-          100.00
-        </div>
-        <div>
-          DAI
-          <br />
-          100.00
-        </div>
-        <div>
-          TUSD
-          <br />
-          100.00
-        </div>
-        <div>
-          YUSD
-          <br />
-          1.00
-        </div>
+        {currencies.map((currency, index) => (
+          <div
+            key={'cidx_' + index}
+            className={
+              index === currencyIndex
+                ? 'selected'
+                : index === checkedIndex
+                ? 'checked'
+                : ''
+            }
+            onClick={
+              index === currencyIndex
+                ? undefined
+                : tabOption === 1
+                ? () => setCheckedIndex(index === checkedIndex ? -1 : index)
+                : () => setCurrencyIndex(index)
+            }
+          >
+            {currency.name}
+            <br />
+            {currency.value.toFixed(2)}
+          </div>
+        ))}
       </div>
       <button
         className={'wolves-btn white-border mt-2'}

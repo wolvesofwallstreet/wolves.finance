@@ -45,4 +45,15 @@
   text-align: center;
   padding: 4px;
   border: 1px solid var(--wolves-white);
+  cursor: pointer;
+}
+
+#currency-container > div.selected {
+  border: 2px solid var(--wolves-orange);
+  background-color: var(--wolves-orange-transparent);
+  cursor: default;
+}
+
+#currency-container > div.checked {
+  border: 2px solid var(--wolves-orange);
 }
