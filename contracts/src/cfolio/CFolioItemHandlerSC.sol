@@ -259,11 +259,10 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
   /**
    * @dev See {ICFolioItemHandler-withdraw}
    *
-   * Note: tokenId can be owned by a base SFT
-   * In this case base SFT cannot be locked
+   * Note: tokenId can be owned by a base SFT. In this case, the base SFT
+   * cannot be locked.
    *
-   * There is only need to update rewards if tokenId
-   * is part of an unlocked base SFT
+   * There is only need to update rewards if tokenId is part of an unlocked base SFT
    */
   function withdraw(
     uint256 baseTokenId,

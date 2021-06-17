@@ -283,11 +283,11 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
   /**
    * @dev See {ICFolioItemHandler-withdraw}
    *
-   * Note: tokenId can be owned by a base SFT
-   * In this case base SFT cannot be locked
+   * Note: tokenId can be owned by a base SFT. In this case, the base SFT
+   * cannot be locked.
    *
-   * There is only need to update rewards if tokenId
-   * is part of an unlocked base SFT
+   * There is only need to update rewards if tokenId is part of an unlocked
+   * base SFT.
    */
   function withdraw(
     uint256 baseTokenId,
@@ -365,7 +365,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
   {
     uint256[5] memory uiData;
 
-    // get basic data once
+    // Get basic data once
     uiData = cfolioFarm.getUIData(address(0));
     // total / rewardDuration / rewardPerDuration
     result = abi.encodePacked(uiData[0], uiData[2], uiData[3]);
@@ -402,6 +402,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
       address(newContract),
       stakingToken.balanceOf(address(this))
     );
+
     // Let new handler control the reward farm
     cfolioFarm.transferOwnership(address(newContract));
 
@@ -501,9 +502,10 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
    * @param baseTokenId Base card tokenId or uint(-1)
    * @param cfolioItemTokenId CFolioItem tokenId handled by this contract
    *
-   * A tokenId is "unlocked", if msg.sender is the owner of a tokenId in SFT contract.
-   * If baseTokenId is uint(-1), cfolioItemTokenId has to be be unlocked, otherwise
-   * baseTokenId has to be unlocked and the locked cfolioItemTokenId inside its cfolio.
+   * A tokenId is "unlocked", if msg.sender is the owner of a tokenId in SFT
+   * contract. If baseTokenId is uint(-1), cfolioItemTokenId has to be be
+   * unlocked, otherwise baseTokenId has to be unlocked and the locked
+   * cfolioItemTokenId inside its cfolio.
    */
   function _verifyAssetAccess(uint256 baseTokenId, uint256 cfolioItemTokenId)
     private
