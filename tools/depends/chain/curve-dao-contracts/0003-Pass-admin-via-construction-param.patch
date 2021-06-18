@@ -1,0 +1,34 @@
+From ec9f62d8a21bc6e9159196a446a845f0ccce64cb Mon Sep 17 00:00:00 2001
+From: juztamau5 <juztamau5@gmail.com>
+Date: Fri, 18 Jun 2021 11:00:23 -0700
+Subject: [PATCH 3/3] Pass admin via construction param
+
+---
+ contracts/GaugeController.vy | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/contracts/GaugeController.vy b/contracts/GaugeController.vy
+index 576f498..9164b84 100644
+--- a/contracts/GaugeController.vy
++++ b/contracts/GaugeController.vy
+@@ -110,7 +110,7 @@ time_type_weight: public(uint256[1000000000])  # type_id -> last scheduled time
+ 
+ 
+ @external
+-def __init__(_token: address, _voting_escrow: address):
++def __init__(_token: address, _voting_escrow: address, _admin: address):
+     """
+     @notice Contract constructor
+     @param _token `ERC20CRV` contract address
+@@ -119,7 +119,7 @@ def __init__(_token: address, _voting_escrow: address):
+     assert _token != ZERO_ADDRESS
+     assert _voting_escrow != ZERO_ADDRESS
+ 
+-    self.admin = msg.sender
++    self.admin = _admin
+     self.token = _token
+     self.voting_escrow = _voting_escrow
+     self.time_total = block.timestamp / WEEK * WEEK
+-- 
+2.30.2
+

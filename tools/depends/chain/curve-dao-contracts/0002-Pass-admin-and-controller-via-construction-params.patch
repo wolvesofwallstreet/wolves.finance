@@ -1,0 +1,39 @@
+From c2055f873f448aa0ca85ad044051e6c7744ae1a2 Mon Sep 17 00:00:00 2001
+From: juztamau5 <juztamau5@gmail.com>
+Date: Fri, 18 Jun 2021 11:00:22 -0700
+Subject: [PATCH 2/3] Pass admin and controller via construction params
+
+---
+ contracts/VotingEscrow.vy | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/contracts/VotingEscrow.vy b/contracts/VotingEscrow.vy
+index 67426de..4e596e5 100644
+--- a/contracts/VotingEscrow.vy
++++ b/contracts/VotingEscrow.vy
+@@ -115,7 +115,7 @@ future_admin: public(address)
+ 
+ 
+ @external
+-def __init__(token_addr: address, _name: String[64], _symbol: String[32], _version: String[32]):
++def __init__(token_addr: address, _name: String[64], _symbol: String[32], _version: String[32], _admin: address, _controller: address):
+     """
+     @notice Contract constructor
+     @param token_addr `ERC20CRV` token address
+@@ -123,11 +123,11 @@ def __init__(token_addr: address, _name: String[64], _symbol: String[32], _versi
+     @param _symbol Token symbol
+     @param _version Contract version - required for Aragon compatibility
+     """
+-    self.admin = msg.sender
++    self.admin = _admin
+     self.token = token_addr
+     self.point_history[0].blk = block.number
+     self.point_history[0].ts = block.timestamp
+-    self.controller = msg.sender
++    self.controller = _controller
+     self.transfersEnabled = True
+ 
+     _decimals: uint256 = ERC20(token_addr).decimals()
+-- 
+2.30.2
+

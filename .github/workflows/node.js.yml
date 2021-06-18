@@ -78,7 +78,7 @@ jobs:
         with:
           path: |
             ~/.vvm
-          key: restore-vyper-${{ hashFiles('tools/depends/chain/curve-contracts/**') }}
+          key: restore-vyper-${{ hashFiles('tools/depends/chain/curve-contracts/**', 'tools/depends/chain/curve-dao-contracts/**') }}
           restore-keys: |
             restore-vyper-
 
@@ -89,7 +89,7 @@ jobs:
         with:
           path: |
             ~/.solcx
-          key: restore-solcx-${{ hashFiles('tools/depends/chain/curve-contracts/**') }}
+          key: restore-solcx-${{ hashFiles('tools/depends/chain/curve-contracts/**', 'tools/depends/chain/curve-dao-contracts/**') }}
           restore-keys: |
             restore-solcx-
 
@@ -101,6 +101,15 @@ jobs:
           path: |
             tools/repos/curve-contracts
           key: restore-curve-${{ hashFiles('tools/depends/chain/curve-contracts/**') }}
+
+      - name: Restore Curve DAO build files
+        if: steps.restore-contracts.outputs.cache-hit != 'true'
+        id: restore-curve-dao
+        uses: actions/cache@v2
+        with:
+          path: |
+            tools/repos/curve-dao-contracts
+          key: restore-curve-dao-${{ hashFiles('tools/depends/chain/curve-dao-contracts/**') }}
 
       - name: Restore downloaded dependencies
         id: restore-downloads
