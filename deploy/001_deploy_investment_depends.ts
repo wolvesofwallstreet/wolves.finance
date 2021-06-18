@@ -17,6 +17,11 @@ require('hardhat-deploy-ethers');
 const CurveTokenV1Artifact = require('../contracts/bytecode/curve-contracts/CurveTokenV1.json');
 const DepositYArtifact = require('../contracts/bytecode/curve-contracts/DepositY.json');
 const StableSwapYArtifact = require('../contracts/bytecode/curve-contracts/StableSwapY.json');
+const Erc20CrvArtifact = require('../contracts/bytecode/curve-dao-contracts/ERC20CRV.json');
+const GaugeControllerArtifact = require('../contracts/bytecode/curve-dao-contracts/GaugeController.json');
+const LiquidityGaugeArtifact = require('../contracts/bytecode/curve-dao-contracts/LiquidityGauge.json');
+const MinterArtifact = require('../contracts/bytecode/curve-dao-contracts/Minter.json');
+const VotingEscrowArtifact = require('../contracts/bytecode/curve-dao-contracts/VotingEscrow.json');
 
 // TODO: Fully qualified contract names
 const DAI_TOKEN_CONTRACT = 'DAI';
@@ -28,6 +33,11 @@ const YEARN_STRATEGY_CONTRACT = 'StrategyHODL';
 const YEARN_VAULT_CONTRACT = 'yVault';
 
 // Deployed contract aliases
+const CRV_CONTROLLER_CONTRACT = 'CRVController';
+const CRV_MINTER_CONTRACT = 'CRVMinter';
+const CRV_TOKEN_CONTRACT = 'CRV';
+const CRV_VOTING_CONTRACT = 'CRVVoting';
+const CURVE_Y_GAUGE_CONTRACT = 'CurveYGauge';
 const CURVE_Y_DEPOSIT_CONTRACT = 'CurveYDeposit';
 const CURVE_Y_SWAP_CONTRACT = 'CurveYSwap';
 const CURVE_Y_TOKEN_CONTRACT = 'CurveYToken';
@@ -388,6 +398,130 @@ const func = async function (hardhat_re) {
 
   //////////////////////////////////////////////////////////////////////////////
   //
+  // Deploy Curve DAO contracts
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  // Mainnet address: 0xD533a949740bb3306d119CC777fa900bA034cd52
+  if (configAddresses?.crvToken) {
+    log_step(`Using deployed CRV token contract: ${configAddresses.crvToken}`);
+    generatedAddresses.crvToken = configAddresses.crvToken;
+  } else {
+    log_step('Deploying CRV token contract');
+
+    const crvTokenReceipt = await deploy(CRV_TOKEN_CONTRACT, {
+      from: deployer,
+      contract: {
+        abi: Erc20CrvArtifact['abi'],
+        bytecode: Erc20CrvArtifact['bytecode'],
+      },
+      args: [
+        'Curve DAO Token', // name
+        'CRV', // symbol
+        18, // decimals
+        marketingWallet, // admin
+        marketingWallet, // initial holder
+      ],
+      log: true,
+      deterministicDeployment: true,
+    });
+
+    generatedAddresses.crvToken = crvTokenReceipt.address;
+  }
+
+  const CRV_TOKEN_ADDRESS = generatedAddresses.crvToken;
+
+  // Mainnet address: 0x5f3b5DfEb7B28CDbD7FAba78963EE202a494e2A2
+  if (configAddresses?.crvVoting) {
+    log_step(
+      `Using deployed CRV voting contract: ${configAddresses.crvVoting}`
+    );
+    generatedAddresses.crvVoting = configAddresses.crvVoting;
+  } else {
+    log_step('Deploying CRV voting contract');
+
+    const crvVotingReceipt = await deploy(CRV_VOTING_CONTRACT, {
+      from: deployer,
+      contract: {
+        abi: VotingEscrowArtifact['abi'],
+        bytecode: VotingEscrowArtifact['bytecode'],
+      },
+      args: [
+        CRV_TOKEN_ADDRESS, // token
+        'Vote-escrowed CRV', // name
+        'veCRV', // symbol
+        'veCRV_1.0.0', // version
+        marketingWallet, // admin
+        marketingWallet, // controller
+      ],
+      log: true,
+      deterministicDeployment: true,
+    });
+
+    generatedAddresses.crvVoting = crvVotingReceipt.address;
+  }
+
+  const CRV_VOTING_ADDRESS = generatedAddresses.crvVoting;
+
+  // Mainnet address: 0x2F50D538606Fa9EDD2B11E2446BEb18C9D5846bB
+  if (configAddresses?.crvController) {
+    log_step(
+      `Using deployed CRV controller contract: ${configAddresses.crvController}`
+    );
+    generatedAddresses.crvController = configAddresses.crvController;
+  } else {
+    log_step('Deploying CRV controller contract');
+
+    const crvControllerReceipt = await deploy(CRV_CONTROLLER_CONTRACT, {
+      from: deployer,
+      contract: {
+        abi: GaugeControllerArtifact['abi'],
+        bytecode: GaugeControllerArtifact['bytecode'],
+      },
+      args: [
+        CRV_TOKEN_ADDRESS, // token
+        CRV_VOTING_ADDRESS, // voting escrow
+        marketingWallet, // admin
+      ],
+      log: true,
+      deterministicDeployment: true,
+    });
+
+    generatedAddresses.crvController = crvControllerReceipt.address;
+  }
+
+  const CRV_CONTROLLER_ADDRESS = generatedAddresses.crvController;
+
+  // Mainnet address: 0xd061D61a4d941c39E5453435B6345Dc261C2fcE0
+  if (configAddresses?.crvMinter) {
+    log_step(
+      `Using deployed CRV minter contract: ${configAddresses.crvMinter}`
+    );
+    generatedAddresses.crvMinter = configAddresses.crvMinter;
+  } else {
+    log_step('Deploying CRV minter contract');
+
+    const crvMinterReceipt = await deploy(CRV_MINTER_CONTRACT, {
+      from: deployer,
+      contract: {
+        abi: MinterArtifact['abi'],
+        bytecode: MinterArtifact['bytecode'],
+      },
+      args: [
+        CRV_TOKEN_ADDRESS, // token
+        CRV_CONTROLLER_ADDRESS, // controller
+      ],
+      log: true,
+      deterministicDeployment: true,
+    });
+
+    generatedAddresses.crvMinter = crvMinterReceipt.address;
+  }
+
+  const CRV_MINTER_ADDRESS = generatedAddresses.crvMinter;
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
   // Deploy Curve Y pool contracts
   //
   //////////////////////////////////////////////////////////////////////////////
@@ -501,6 +635,33 @@ const func = async function (hardhat_re) {
     });
 
     generatedAddresses.curveYDeposit = curveYDepositReceipt.address;
+  }
+
+  // Mainnet address: 0xFA712EE4788C042e2B7BB55E6cb8ec569C4530c1
+  if (configAddresses?.curveYGauge) {
+    log_step(
+      `Using deployed Curve gauge contract: ${configAddresses.curveYGauge}`
+    );
+    generatedAddresses.curveYGauge = configAddresses.curveYGauge;
+  } else {
+    log_step('Deploying Curve gauge contract');
+
+    const curveYGaugeReceipt = await deploy(CURVE_Y_GAUGE_CONTRACT, {
+      from: deployer,
+      contract: {
+        abi: LiquidityGaugeArtifact['abi'],
+        bytecode: LiquidityGaugeArtifact['bytecode'],
+      },
+      args: [
+        CURVE_Y_TOKEN_ADDRESS, // LP address
+        CRV_MINTER_ADDRESS, // minter
+        marketingWallet, // admin
+      ],
+      log: true,
+      deterministicDeployment: true,
+    });
+
+    generatedAddresses.curveYGauge = curveYGaugeReceipt.address;
   }
 
   //////////////////////////////////////////////////////////////////////////////

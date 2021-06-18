@@ -48,10 +48,6 @@ const ADDRESS_BOOK_REWARD_HANDLER_KEY =
 const ADDRESS_BOOK_DEPLOYER_KEY = ethers.utils.formatBytes32String('DEPLOYER');
 const ADDRESS_BOOK_UNIV2_PAIR_KEY =
   ethers.utils.formatBytes32String('UNISWAP_V2_PAIR');
-const ADDRESS_BOOK_CURVE_Y_TOKEN_KEY =
-  ethers.utils.formatBytes32String('CURVE_Y_TOKEN');
-const ADDRESS_BOOK_CURVE_Y_DEPOSIT_KEY =
-  ethers.utils.formatBytes32String('CURVE_Y_DEPOSIT');
 
 // Useful constants
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
@@ -211,20 +207,6 @@ const func = async function (hardhat_re) {
     ADDRESS_REGISTRY_INSTANCE,
     ADDRESS_BOOK_UNISWAP_V2_ROUTER02_KEY,
     generatedAddresses.uniV2Router
-  );
-  await setRegistryKey(
-    deployer,
-    execute,
-    ADDRESS_REGISTRY_INSTANCE,
-    ADDRESS_BOOK_CURVE_Y_TOKEN_KEY,
-    generatedAddresses.curveYToken
-  );
-  await setRegistryKey(
-    deployer,
-    execute,
-    ADDRESS_REGISTRY_INSTANCE,
-    ADDRESS_BOOK_CURVE_Y_DEPOSIT_KEY,
-    generatedAddresses.curveYDeposit
   );
 
   //////////////////////////////////////////////////////////////////////////////

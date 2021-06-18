@@ -38,6 +38,12 @@ const GENERATED_ADDRESSES = `${__dirname}/../src/config/generated-addresses.json
 const IGNORE_ADDRESSES = process.env.IGNORE_ADDRESSES !== undefined;
 
 // Addressbook constants
+const ADDRESS_BOOK_CURVE_Y_TOKEN_KEY =
+  ethers.utils.formatBytes32String('CURVE_Y_TOKEN');
+const ADDRESS_BOOK_CURVE_Y_DEPOSIT_KEY =
+  ethers.utils.formatBytes32String('CURVE_Y_DEPOSIT');
+const ADDRESS_BOOK_CURVE_Y_GAUGE_KEY =
+  ethers.utils.formatBytes32String('CURVE_Y_GAUGE');
 const BOIS_REWARDS_KEY = ethers.utils.formatBytes32String('BOIS_REWARDS');
 const WOLVES_REWARDS_KEY = ethers.utils.formatBytes32String('WOLVES_REWARDS');
 
@@ -131,6 +137,36 @@ const func = async function (hardhat_re) {
 
   const ADDRESS_REGISTRY_INSTANCE = await hardhat_re.ethers.getContract(
     ADDRESS_REGISTRY_CONTRACT
+  );
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // Register addresses for dependencies
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  log_step('Setting addresses in address registry');
+
+  await setRegistryKey(
+    deployer,
+    execute,
+    ADDRESS_REGISTRY_INSTANCE,
+    ADDRESS_BOOK_CURVE_Y_TOKEN_KEY,
+    generatedAddresses.curveYToken
+  );
+  await setRegistryKey(
+    deployer,
+    execute,
+    ADDRESS_REGISTRY_INSTANCE,
+    ADDRESS_BOOK_CURVE_Y_DEPOSIT_KEY,
+    generatedAddresses.curveYDeposit
+  );
+  await setRegistryKey(
+    deployer,
+    execute,
+    ADDRESS_REGISTRY_INSTANCE,
+    ADDRESS_BOOK_CURVE_Y_GAUGE_KEY,
+    generatedAddresses.curveYGauge
   );
 
   //////////////////////////////////////////////////////////////////////////////

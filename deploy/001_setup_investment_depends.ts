@@ -22,6 +22,8 @@ const USDT_TOKEN_CONTRACT = 'TetherToken';
 const YEARN_CONTROLLER_CONTRACT = 'YearnController';
 
 // Deployed contract aliases
+const CRV_CONTROLLER_CONTRACT = 'CRVController';
+const CRV_TOKEN_CONTRACT = 'CRV';
 const CURVE_Y_DEPOSIT_CONTRACT = 'CurveYDeposit';
 const CURVE_Y_TOKEN_CONTRACT = 'CurveYToken';
 
@@ -76,8 +78,10 @@ const func = async function (hardhat_re) {
   const YUSDC_STRATEGY_ADDRESS = generatedAddresses.yusdcStrategy;
   const YUSDT_STRATEGY_ADDRESS = generatedAddresses.yusdtStrategy;
 
+  const CRV_MINTER_ADDRESS = generatedAddresses.crvMinter;
   const CURVE_Y_SWAP_ADDRESS = generatedAddresses.curveYSwap;
   const CURVE_Y_DEPOSIT_ADDRESS = generatedAddresses.curveYDeposit;
+  const CURVE_Y_GAUGE_ADDRESS = generatedAddresses.curveYGauge;
 
   // Contract instances
   const CURVE_Y_TOKEN_INSTANCE = await hardhat_re.ethers.getContract(
@@ -245,11 +249,82 @@ const func = async function (hardhat_re) {
 
   //////////////////////////////////////////////////////////////////////////////
   //
-  // Setup calls for Curve
+  // Setup calls for Curve DAO
   //
   //////////////////////////////////////////////////////////////////////////////
 
-  log_step('Curve setup calls');
+  log_step('Curve DAO setup calls');
+
+  //
+  // Set the CRV token minter
+  //
+
+  try {
+    await catchUnknownSigner(
+      execute(
+        CRV_TOKEN_CONTRACT,
+        {
+          from: marketingWallet,
+          log: true,
+        },
+        'set_minter',
+        CRV_MINTER_ADDRESS
+      )
+    );
+  } catch (err) {
+    console.log('CRV minter already set');
+  }
+
+  //
+  // Add the gauge type (i.e. "Liquidity" on mainnet, "Liquidity (Fantom)" on fantom)
+  //
+
+  try {
+    await catchUnknownSigner(
+      execute(
+        CRV_CONTROLLER_CONTRACT,
+        {
+          from: marketingWallet,
+          log: true,
+        },
+        'add_type(string,uint256)',
+        'Liquidity', // name
+        0 // weight (TODO)
+      )
+    );
+  } catch (err) {
+    console.log('Gauge type already added');
+  }
+
+  //
+  // Add the Y pool gauge
+  //
+
+  try {
+    await catchUnknownSigner(
+      execute(
+        CRV_CONTROLLER_CONTRACT,
+        {
+          from: marketingWallet,
+          log: true,
+        },
+        'add_gauge(address,int128,uint256)',
+        CURVE_Y_GAUGE_ADDRESS, // address
+        0, // gauge type,
+        0 // weight (TODO)
+      )
+    );
+  } catch (err) {
+    console.log('Y pool gauge already added');
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // Setup calls for Curve Y pool
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  log_step('Curve Y pool setup calls');
 
   //
   // Set the Y pool token minter
