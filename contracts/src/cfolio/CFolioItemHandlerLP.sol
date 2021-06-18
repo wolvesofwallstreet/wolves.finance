@@ -70,6 +70,17 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
   IWOWSERC1155 private immutable sftHolder;
 
   //////////////////////////////////////////////////////////////////////////////
+  // Events
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * @dev Emitted when a new minter is set by the admin
+   *
+   * @param minter The new minter
+   */
+  event NewLPMinter(address minter);
+
+  //////////////////////////////////////////////////////////////////////////////
   // Modifiers
   //////////////////////////////////////////////////////////////////////////////
 
@@ -105,6 +116,7 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
 
     // The SFT minter
     sftMinter = addressRegistry.getRegistryEntry(AddressBook.SFT_MINTER);
+    emit NewLPMinter(sftMinter);
 
     // SFT evaluator
     sftEvaluator = ISFTEvaluator(
@@ -417,6 +429,9 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
 
     // Update state
     sftMinter = newMinter;
+
+    // Dispatch event
+    emit NewLPMinter(newMinter);
   }
 
   //////////////////////////////////////////////////////////////////////////////

@@ -77,6 +77,17 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
   ICurveFiDepositY public immutable curveYDeposit;
 
   //////////////////////////////////////////////////////////////////////////////
+  // Events
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * @dev Emitted when a new minter is set by the admin
+   *
+   * @param minter The new minter
+   */
+  event NewSCMinter(address minter);
+
+  //////////////////////////////////////////////////////////////////////////////
   // Modifiers
   //////////////////////////////////////////////////////////////////////////////
 
@@ -115,6 +126,7 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
 
     // The SFT minter
     sftMinter = addressRegistry.getRegistryEntry(AddressBook.SFT_MINTER);
+    emit NewSCMinter(sftMinter);
 
     // SFT evaluator
     sftEvaluator = ISFTEvaluator(
@@ -568,6 +580,9 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
 
     // Update state
     sftMinter = newMinter;
+
+    // Dispatch event
+    emit NewSCMinter(newMinter);
   }
 
   //////////////////////////////////////////////////////////////////////////////
