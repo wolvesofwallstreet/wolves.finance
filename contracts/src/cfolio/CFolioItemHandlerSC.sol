@@ -16,6 +16,8 @@ import '../../0xerc1155/interfaces/IERC20.sol';
 import '../../0xerc1155/utils/SafeERC20.sol';
 import '../../0xerc1155/utils/SafeMath.sol';
 import '../../interfaces/curve/CurveDepositInterface.sol';
+import '../../interfaces/curve/CurveGaugeInterface.sol';
+import '../../interfaces/curve/CurveMinterInterface.sol';
 
 import '../investment/interfaces/ICFolioFarm.sol'; // Wolves rewards
 import '../token/interfaces/IWOWSCryptofolio.sol';
@@ -78,6 +80,9 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
   // Curve Y pool deposit contract
   ICurveFiDepositY public immutable curveYDeposit;
 
+  // Curve Y pool liquidity gauge contract
+  ICurveFiGauge public immutable curveYGauge;
+
   //////////////////////////////////////////////////////////////////////////////
   // Events
   //////////////////////////////////////////////////////////////////////////////
@@ -89,6 +94,20 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
    * @param newAmount The amount after updating the reward
    */
   event SCRewardUpdated(uint256 previousAmount, uint256 newAmount);
+
+  /*
+   * @dev Emitted when the claimable CRV is queried
+   *
+   * @param crvAmount The amount of CRV that is claimable from the yCRV gauge
+   */
+  event ClaimableCRVUpdated(uint256 crvAmount);
+
+  /**
+   * @dev Emitted when the claimable CRV is claimed
+   *
+   * @param crvAmount The amount of CRV that is claimable from the yCRV gauge
+   */
+  event CRVClaimed(address recipient, uint256 crvAmount);
 
   /**
    * @dev Emitted when a new minter is set by the admin
@@ -161,6 +180,11 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
       addressRegistry.getRegistryEntry(AddressBook.CURVE_Y_TOKEN)
     );
 
+    // The Y pool liquidity gauge contract (rewards CRV)
+    curveYGauge = ICurveFiGauge(
+      addressRegistry.getRegistryEntry(AddressBook.CURVE_Y_GAUGE)
+    );
+
     // WOWS reward farm
     cfolioFarm = ICFolioFarmOwnable(
       addressRegistry.getRegistryEntry(AddressBook.BOIS_REWARDS)
@@ -178,7 +202,8 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
     }
 
     // Approve yCRV spending
-    curveYToken.approve(address(curveYDeposit), uint256(-1));
+    curveYToken.approve(address(curveYDeposit), uint256(-1)); // On withdraw
+    curveYToken.approve(address(curveYGauge), uint256(-1)); // On deposit
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -341,6 +366,11 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
       // This call is allowed without any investment.
       if (afterBalance > beforeBalance)
         cfolioFarm.addAssets(cFolio, afterBalance.sub(beforeBalance));
+
+      // Deposit Y pool tokens in CRV liquidity gauge
+      if (afterBalance > 0) {
+        curveYGauge.deposit(afterBalance);
+      }
     }
 
     // Transfer a dummy NFT token to cFolio so we get informed if the cFolio
@@ -420,6 +450,11 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
     // addAsset must only be called from Investment CFolios
     cfolioFarm.addAssets(itemCFolio, afterBalance.sub(beforeBalance));
 
+    // Deposit Y pool tokens in CRV liquidity gauge
+    if (afterBalance > 0) {
+      curveYGauge.deposit(afterBalance);
+    }
+
     if (baseTokenId != uint256(-1)) {
       _updateRewards(baseCFolio, sftEvaluator.rewardRate(baseTokenId));
     }
@@ -468,6 +503,13 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
 
     // Keep track of how many Y pool tokens were sent
     uint256 balanceBefore = curveYToken.balanceOf(address(this));
+
+    // Withdraw from liquidity gauge, if necessary
+    if (yPoolAmount > balanceBefore) {
+      uint256 deficit = yPoolAmount - balanceBefore;
+      curveYGauge.withdraw(deficit);
+      balanceBefore = curveYToken.balanceOf(address(this));
+    }
 
     if (stableCoinIndex != -1) {
       // Call to external contract
@@ -634,6 +676,53 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
 
     // Dispatch event
     emit NewSCMinter(newMinter);
+  }
+
+  /**
+   * @dev Emit the amount of claimable CRV tokens as an event
+   *
+   * Reverts if no CRV tokens are claimable.
+   */
+  function getClaimableCRV() external {
+    // Validate access
+    require(_msgSender() == admin, 'Admin only');
+
+    // Check claimable tokens (mutates the gauge)
+    uint256 claimableTokens = curveYGauge.claimable_tokens(address(this));
+
+    // Check revert condition
+    require(claimableTokens > 0, 'No claimable CRV');
+
+    // Dispatch event
+    emit ClaimableCRVUpdated(claimableTokens);
+  }
+
+  /**
+   * @dev Claim available CRV tokens
+   *
+   * Reverts if no CRV tokens are claimable.
+   *
+   * @dev recipient The receiver of the CRV tokens
+   */
+  function claimCRV(address recipient) external {
+    // Validate access
+    require(_msgSender() == admin, 'Admin only');
+
+    // Claim CRV
+    ICurveFiMinter(curveYGauge.minter()).mint(address(curveYGauge));
+
+    // Get token contract
+    IERC20 crvToken = IERC20(curveYGauge.crv_token());
+
+    // Check revert condition
+    uint256 claimableTokens = crvToken.balanceOf(address(this));
+    require(claimableTokens > 0, 'No claimable CRV');
+
+    // Transfer CRV to recipient
+    crvToken.transfer(recipient, claimableTokens);
+
+    // Dispatch event
+    emit CRVClaimed(recipient, claimableTokens);
   }
 
   //////////////////////////////////////////////////////////////////////////////
