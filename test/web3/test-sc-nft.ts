@@ -747,9 +747,7 @@ describe('SC NFTs', function () {
   it('should check c-folio item shares', async function () {
     this.timeout(60 * 1000);
 
-    const { cfolioItemHandlerSCProxyContract } = contracts;
-
-    const tokenAmounts = await cfolioItemHandlerSCProxyContract.getAmounts(
+    const tokenAmounts = await cfolioItemHandlerSCProxyInstance.getAmounts(
       cryptofolioItemAddressBoiSC
     );
 
@@ -836,9 +834,7 @@ describe('SC NFTs', function () {
   it('should fail to withdraw from locked NFT', async function () {
     this.timeout(60 * 1000);
 
-    const { cfolioItemHandlerSCProxyContract } = contracts;
-
-    const tx = cfolioItemHandlerSCProxyContract.withdraw(
+    const tx = cfolioItemHandlerSCProxyInstance.withdraw(
       wowsTokenIdBoi,
       cfolioItemTokenId,
       [1, 0, 0, 0, 0]
@@ -906,9 +902,7 @@ describe('SC NFTs', function () {
   it('should fail to withdraw too much DAI', async function () {
     this.timeout(60 * 1000);
 
-    const { cfolioItemHandlerSCProxyContract } = contracts;
-
-    const tx = cfolioItemHandlerSCProxyContract.withdraw(
+    const tx = cfolioItemHandlerSCProxyInstance.withdraw(
       MAX_UINT256,
       cfolioItemTokenId,
       [daiBalance.mul(10), 0, 0, 0]
@@ -919,9 +913,7 @@ describe('SC NFTs', function () {
   it('should withdraw DAI from CFIHSC', async function () {
     this.timeout(60 * 1000);
 
-    const { cfolioItemHandlerSCProxyContract } = contracts;
-
-    const tx = cfolioItemHandlerSCProxyContract.withdraw(
+    const tx = cfolioItemHandlerSCProxyInstance.withdraw(
       MAX_UINT256,
       cfolioItemTokenId,
       [100, 0, 0, 0, 100]
@@ -969,9 +961,7 @@ describe('SC NFTs', function () {
   it('should deposit DAI to CFIHSC (unlocked investment SFT)', async function () {
     this.timeout(60 * 1000);
 
-    const { cfolioItemHandlerSCProxyContract } = contracts;
-
-    const tx = cfolioItemHandlerSCProxyContract.deposit(
+    const tx = cfolioItemHandlerSCProxyInstance.deposit(
       MAX_UINT256,
       cfolioItemTokenId,
       [100, 0, 0, 0, 0]
@@ -1011,9 +1001,7 @@ describe('SC NFTs', function () {
   it('should withdraw yCRV from CFIHSC', async function () {
     this.timeout(60 * 1000);
 
-    const { cfolioItemHandlerSCProxyContract } = contracts;
-
-    const tx = cfolioItemHandlerSCProxyContract.withdraw(
+    const tx = cfolioItemHandlerSCProxyInstance.withdraw(
       MAX_UINT256,
       cfolioItemTokenId,
       [0, 0, 0, 0, 100]
@@ -1061,9 +1049,7 @@ describe('SC NFTs', function () {
   it('should deposit yCRV to CFIHSC (unlocked investment SFT)', async function () {
     this.timeout(60 * 1000);
 
-    const { cfolioItemHandlerSCProxyContract } = contracts;
-
-    const tx = cfolioItemHandlerSCProxyContract.deposit(
+    const tx = cfolioItemHandlerSCProxyInstance.deposit(
       MAX_UINT256,
       cfolioItemTokenId,
       [0, 0, 0, 0, 100]
@@ -1215,9 +1201,7 @@ describe('SC NFTs', function () {
   it('should withdraw DAI from CFIHSC (locked NFT, unlocked card)', async function () {
     this.timeout(60 * 1000);
 
-    const { cfolioItemHandlerSCProxyContract } = contracts;
-
-    const tx = cfolioItemHandlerSCProxyContract.withdraw(
+    const tx = cfolioItemHandlerSCProxyInstance.withdraw(
       wowsTokenIdBoi,
       cfolioItemTokenIdTf,
       [100, 0, 0, 0, 100]
@@ -1265,9 +1249,7 @@ describe('SC NFTs', function () {
   it('should deposit DAI to CFIHSC (locked investment SFT)', async function () {
     this.timeout(60 * 1000);
 
-    const { cfolioItemHandlerSCProxyContract } = contracts;
-
-    const tx = cfolioItemHandlerSCProxyContract.deposit(
+    const tx = cfolioItemHandlerSCProxyInstance.deposit(
       wowsTokenIdBoi,
       cfolioItemTokenIdTf,
       [100, 0, 0, 0, 0]
@@ -1334,9 +1316,7 @@ describe('SC NFTs', function () {
   it('should fail to withdraw DAI from CFIHSC (locked NFT, locked card)', async function () {
     this.timeout(60 * 1000);
 
-    const { cfolioItemHandlerSCProxyContract } = contracts;
-
-    const tx = cfolioItemHandlerSCProxyContract.withdraw(
+    const tx = cfolioItemHandlerSCProxyInstance.withdraw(
       wowsTokenIdBoi,
       cfolioItemTokenIdTf,
       [1, 0, 0, 0, 0]
@@ -1467,9 +1447,7 @@ describe('SC NFTs', function () {
   it('should check c-folio item shares in c-folio farm', async function () {
     this.timeout(60 * 1000);
 
-    const { cfolioItemHandlerSCProxyContract } = contracts;
-
-    const tokenAmounts = await cfolioItemHandlerSCProxyContract.getAmounts(
+    const tokenAmounts = await cfolioItemHandlerSCProxyInstance.getAmounts(
       cryptofolioItemAddressBoiSC
     );
 
