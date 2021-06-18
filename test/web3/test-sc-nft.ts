@@ -559,7 +559,7 @@ describe('SC NFTs', function () {
     await chai.expect(tx).to.not.be.reverted;
   });
 
-  it('should get curve stablecoin swap contract', async function () {
+  it('should check curve stablecoin swap contract', async function () {
     this.timeout(60 * 1000);
 
     const options = {
@@ -609,7 +609,7 @@ describe('SC NFTs', function () {
     chai.expect(idsLength).to.equal(0);
   });
 
-  it('should mint SC NFT into boi cryptofolio', async function () {
+  it('should mint locked SC NFT into boi cryptofolio', async function () {
     this.timeout(60 * 1000);
 
     const options = {
@@ -641,7 +641,7 @@ describe('SC NFTs', function () {
         .mul(await getGasPrice())
         .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
     console.log(
-      `    Mint SC NFT (into card) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+      `    Mint locked SC NFT (into card) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
         gasCost
       )})`
     );
@@ -720,7 +720,7 @@ describe('SC NFTs', function () {
     chai.expect(balance).to.equal(1);
   });
 
-  it('should check CFIHSC for Curve tokens', async function () {
+  it('should check CFIHSC for yCRV tokens', async function () {
     this.timeout(60 * 1000);
 
     const { cfolioItemHandlerSCProxyContract, curveYTokenContract } = contracts;
@@ -732,7 +732,7 @@ describe('SC NFTs', function () {
     chai.expect(currentYPoolBalance).to.equal(yPoolBalance);
   });
 
-  it('should check marketing wallet for Curve tokens', async function () {
+  it('should check marketing wallet for yCRV tokens', async function () {
     this.timeout(60 * 1000);
 
     const { curveYTokenContract } = contracts;
@@ -791,7 +791,7 @@ describe('SC NFTs', function () {
         .mul(await getGasPrice())
         .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
     console.log(
-      `    Transfer SC NFT (from card to wallet) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+      `    Transfer locked SC NFT (from card to wallet) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
         gasCost
       )})`
     );
@@ -805,7 +805,7 @@ describe('SC NFTs', function () {
       );
   });
 
-  it('should check empty cryptofolio', async function () {
+  it('should check empty cryptofolio for no c-folio items', async function () {
     this.timeout(60 * 1000);
 
     const { tradeFloorProxyContract } = contracts;
@@ -872,7 +872,7 @@ describe('SC NFTs', function () {
         .mul(await getGasPrice())
         .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
     console.log(
-      `    Burn SC NFT (in wallet) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+      `    Burn locked SC NFT (in wallet) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
         gasCost
       )})`
     );
@@ -903,7 +903,7 @@ describe('SC NFTs', function () {
   // Now that the investment SFT is unlocked, we test deposits and withdrawals.
   //
 
-  it('should fail to withdraw too much', async function () {
+  it('should fail to withdraw too much DAI', async function () {
     this.timeout(60 * 1000);
 
     const { cfolioItemHandlerSCProxyContract } = contracts;
@@ -936,7 +936,7 @@ describe('SC NFTs', function () {
         .mul(await getGasPrice())
         .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
     console.log(
-      `    Withdraw DAI from SC SFT (in wallet) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+      `    Withdraw DAI from unlocked SC SFT (in wallet) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
         gasCost
       )})`
     );
@@ -954,7 +954,7 @@ describe('SC NFTs', function () {
     chai.expect(currentDaiBalance).to.equal(100);
   });
 
-  it('should check CFIHSC for remaining SC tokens', async function () {
+  it('should check CFIHSC for remaining yCRV tokens', async function () {
     this.timeout(60 * 1000);
 
     const { curveYTokenContract, cfolioItemHandlerSCProxyContract } = contracts;
@@ -986,7 +986,7 @@ describe('SC NFTs', function () {
         .mul(await getGasPrice())
         .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
     console.log(
-      `    Deposit DAI into SC SFT (in wallet) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+      `    Deposit DAI into unlocked SC SFT (in wallet) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
         gasCost
       )})`
     );
@@ -996,7 +996,7 @@ describe('SC NFTs', function () {
   // Test deposits and withdrawals again, this time with Y pool tokens instead of DAI
   //
 
-  it('should approve CFIHSC to spend Y pool tokens', async function () {
+  it('should approve CFIHSC to spend yCRV tokens', async function () {
     this.timeout(60 * 1000);
 
     const { curveYTokenContract, cfolioItemHandlerSCProxyContract } = contracts;
@@ -1028,7 +1028,7 @@ describe('SC NFTs', function () {
         .mul(await getGasPrice())
         .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
     console.log(
-      `    Withdraw yCRV from SC SFT (in wallet) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+      `    Withdraw yCRV from unlocked SC SFT (in wallet) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
         gasCost
       )})`
     );
@@ -1046,7 +1046,7 @@ describe('SC NFTs', function () {
     chai.expect(currentYPoolBalance).to.equal(100);
   });
 
-  it('should check CFIHSC for remaining SC tokens', async function () {
+  it('should check CFIHSC for remaining yCRV tokens', async function () {
     this.timeout(60 * 1000);
 
     const { curveYTokenContract, cfolioItemHandlerSCProxyContract } = contracts;
@@ -1078,13 +1078,13 @@ describe('SC NFTs', function () {
         .mul(await getGasPrice())
         .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
     console.log(
-      `    Deposit yCRV into SC SFT (in wallet) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+      `    Deposit yCRV into unlocked SC SFT (in wallet) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
         gasCost
       )})`
     );
   });
 
-  it('should check wallet for no yCRV', async function () {
+  it('should check wallet for no yCRV tokens', async function () {
     this.timeout(60 * 1000);
 
     const { curveYTokenContract } = contracts;
@@ -1096,7 +1096,7 @@ describe('SC NFTs', function () {
     chai.expect(currentYPoolBalance).to.equal(0);
   });
 
-  it('should check CFIHSC for all SC tokens', async function () {
+  it('should check CFIHSC for all yCRV tokens', async function () {
     this.timeout(60 * 1000);
 
     const { curveYTokenContract, cfolioItemHandlerSCProxyContract } = contracts;
@@ -1200,7 +1200,7 @@ describe('SC NFTs', function () {
         .mul(await getGasPrice())
         .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
     console.log(
-      `    Transfer SC NFT (from wallet to card) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+      `    Transfer locked SC NFT (from wallet to card) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
         gasCost
       )})`
     );
@@ -1212,7 +1212,7 @@ describe('SC NFTs', function () {
   // deposit -> lock -> transfer transaction.
   //
 
-  it('should withdraw from CFIHSC (locked NFT, unlocked card)', async function () {
+  it('should withdraw DAI from CFIHSC (locked NFT, unlocked card)', async function () {
     this.timeout(60 * 1000);
 
     const { cfolioItemHandlerSCProxyContract } = contracts;
@@ -1232,13 +1232,13 @@ describe('SC NFTs', function () {
         .mul(await getGasPrice())
         .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
     console.log(
-      `    Withdraw from SC NFT (in card) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+      `    Withdraw DAI from locked SC NFT (in card) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
         gasCost
       )})`
     );
   });
 
-  it('should check wallet for withdrawn SC token', async function () {
+  it('should check wallet for withdrawn DAI', async function () {
     this.timeout(60 * 1000);
 
     const { daiContract } = contracts;
@@ -1250,7 +1250,7 @@ describe('SC NFTs', function () {
     chai.expect(currentDaiBalance).to.equal(100);
   });
 
-  it('should check CFIHSC for remaining SC tokens', async function () {
+  it('should check CFIHSC for remaining yCRV tokens', async function () {
     this.timeout(60 * 1000);
 
     const { curveYTokenContract, cfolioItemHandlerSCProxyContract } = contracts;
@@ -1262,7 +1262,7 @@ describe('SC NFTs', function () {
     chai.expect(currentYPoolBalance).to.equal(yPoolBalance.sub(100));
   });
 
-  it('should deposit to CFIHSC (locked investment SFT)', async function () {
+  it('should deposit DAI to CFIHSC (locked investment SFT)', async function () {
     this.timeout(60 * 1000);
 
     const { cfolioItemHandlerSCProxyContract } = contracts;
@@ -1282,7 +1282,7 @@ describe('SC NFTs', function () {
         .mul(await getGasPrice())
         .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
     console.log(
-      `    Deposit into SC NFT (in card) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+      `    Deposit DAI into locked SC NFT (in card) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
         gasCost
       )})`
     );
@@ -1331,7 +1331,7 @@ describe('SC NFTs', function () {
     wowsTokenIdBoiTf = tokenIds[0];
   });
 
-  it('should fail to withdraw from CFIHSC (locked NFT, locked card)', async function () {
+  it('should fail to withdraw DAI from CFIHSC (locked NFT, locked card)', async function () {
     this.timeout(60 * 1000);
 
     const { cfolioItemHandlerSCProxyContract } = contracts;
@@ -1358,7 +1358,7 @@ describe('SC NFTs', function () {
 
   //
   // Previously, we burned the SC NFT from the user's wallet to redeem the
-  // investment SFT. Now try burning the SC NFT from within the user'
+  // investment SFT. Now try burning the SC NFT from within the user's
   // cryptofolio.
   //
 
@@ -1381,7 +1381,7 @@ describe('SC NFTs', function () {
         .mul(await getGasPrice())
         .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
     console.log(
-      `    Burn SC NFT (in card) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+      `    Burn locked SC NFT (in card) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
         gasCost
       )})`
     );
@@ -1405,7 +1405,7 @@ describe('SC NFTs', function () {
     await chai.expect(tx).to.be.revertedWith('CFIH: not empty');
   });
 
-  it('should get the remaining balance in CFIHSC', async function () {
+  it('should get the remaining yCRV balance in CFIHSC', async function () {
     this.timeout(60 * 1000);
 
     const { curveYTokenContract, cfolioItemHandlerSCProxyContract } = contracts;
@@ -1417,7 +1417,7 @@ describe('SC NFTs', function () {
     chai.expect(remainingYPoolBalance).to.equal(yPoolBalance);
   });
 
-  it('should withdraw everything from CFIHSC', async function () {
+  it('should withdraw all DAI from CFIHSC', async function () {
     this.timeout(60 * 1000);
 
     const { cfolioItemHandlerSCProxyContract } = contracts;
@@ -1434,7 +1434,7 @@ describe('SC NFTs', function () {
     await chai.expect(tx).to.not.be.reverted;
   });
 
-  it('should check that SC tokens were returned', async function () {
+  it('should check that DAI was returned to wallet', async function () {
     this.timeout(60 * 1000);
 
     const { daiContract } = contracts;
@@ -1452,7 +1452,7 @@ describe('SC NFTs', function () {
       .to.be.closeTo(4000, 2); // 4 DAI
   });
 
-  it('should check the remaining Y pool token balance', async function () {
+  it('should check the remaining yCRV balance in wallet', async function () {
     this.timeout(60 * 1000);
 
     const { curveYTokenContract } = contracts;
@@ -1464,7 +1464,7 @@ describe('SC NFTs', function () {
     chai.expect(currentYPoolBalance).to.equal(0);
   });
 
-  it('should check shares in c-folio farm', async function () {
+  it('should check c-folio item shares in c-folio farm', async function () {
     this.timeout(60 * 1000);
 
     const { cfolioItemHandlerSCProxyContract } = contracts;
@@ -1501,7 +1501,7 @@ describe('SC NFTs', function () {
         .mul(await getGasPrice())
         .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
     console.log(
-      `    Burn SC SFT gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+      `    Burn unlocked SC SFT (in wallet) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
         gasCost
       )})`
     );
