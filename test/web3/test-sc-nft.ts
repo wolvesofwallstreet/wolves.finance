@@ -20,6 +20,9 @@ import fs from 'fs';
 import { abi as CurveYTokenAbi } from '../../contracts/bytecode/curve-contracts/CurveTokenV1.json';
 import { abi as CurveYDepositAbi } from '../../contracts/bytecode/curve-contracts/DepositY.json';
 import { abi as CurveYSwapAbi } from '../../contracts/bytecode/curve-contracts/StableSwapY.json';
+import { abi as Erc20CrvAbi } from '../../contracts/bytecode/curve-dao-contracts/ERC20CRV.json';
+import { abi as LiquidityGaugeAbi } from '../../contracts/bytecode/curve-dao-contracts/LiquidityGauge.json';
+import { abi as MinterAbi } from '../../contracts/bytecode/curve-dao-contracts/Minter.json';
 //import CurveYDepositAbi from '../../src/abi/contracts/interfaces/curve/CurveDepositInterface.sol/ICurveFiDepositY.json';
 import YearnVaultAbi from '../../src/abi/contracts/interfaces/curve/YTokenInterface.sol/IYERC20.json';
 import CFolioItemHandlerScAbi from '../../src/abi/contracts/src/cfolio/CFolioItemHandlerSC.sol/CFolioItemHandlerSC.json';
@@ -140,6 +143,16 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
     YearnVaultAbi,
     marketingWallet
   );
+  const crvTokenContract = new ethers.Contract(
+    addresses.crvToken,
+    Erc20CrvAbi,
+    marketingWallet
+  );
+  const crvMinterContract = new ethers.Contract(
+    addresses.crvMinter,
+    MinterAbi,
+    marketingWallet
+  );
   const curveYTokenContract = new ethers.Contract(
     addresses.curveYToken,
     CurveYTokenAbi,
@@ -153,6 +166,11 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
   const curveYDepositContract = new ethers.Contract(
     addresses.curveYDeposit,
     CurveYDepositAbi,
+    marketingWallet
+  );
+  const curveYGaugeContract = new ethers.Contract(
+    addresses.curveYGauge,
+    LiquidityGaugeAbi,
     marketingWallet
   );
   const sftHolderContract = new ethers.Contract(
@@ -201,9 +219,12 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
     ytusdContract,
     yusdcContract,
     yusdtContract,
+    crvTokenContract,
+    crvMinterContract,
     curveYTokenContract,
     curveYSwapContract,
     curveYDepositContract,
+    curveYGaugeContract,
     sftHolderContract,
     sftMinterContract,
     tradeFloorContract,
@@ -574,6 +595,36 @@ describe('SC NFTs', function () {
   });
 
   //////////////////////////////////////////////////////////////////////////////
+  // Setup: Curve tokens
+  //////////////////////////////////////////////////////////////////////////////
+
+  it('should check curve minter contract', async function () {
+    this.timeout(60 * 1000);
+
+    const options = {
+      gasLimit: ethers.BigNumber.from('100000'), // 100K GWei
+    };
+
+    const { crvTokenContract, crvMinterContract } = contracts;
+
+    const curve = await crvTokenContract.minter(options);
+    chai.expect(curve).to.be.properAddress;
+    chai.expect(curve).to.equal(crvMinterContract.address);
+  });
+
+  it('should approve CFIHSC to spend yCRV tokens', async function () {
+    this.timeout(60 * 1000);
+
+    const { curveYTokenContract } = contracts;
+
+    const tx = curveYTokenContract.approve(
+      cfolioItemHandlerSCProxyInstance.address,
+      100
+    );
+    await chai.expect(tx).to.not.be.reverted;
+  });
+
+  //////////////////////////////////////////////////////////////////////////////
   // Test SC NFTs
   //////////////////////////////////////////////////////////////////////////////
 
@@ -720,13 +771,37 @@ describe('SC NFTs', function () {
     chai.expect(balance).to.equal(1);
   });
 
-  it('should check CFIHSC for yCRV tokens', async function () {
+  it('should check CFIHSC for no yCRV tokens', async function () {
     this.timeout(60 * 1000);
 
     const { cfolioItemHandlerSCProxyContract, curveYTokenContract } = contracts;
 
     // Check CFolioItemHandlerSC balance
     const currentYPoolBalance = await curveYTokenContract.balanceOf(
+      cfolioItemHandlerSCProxyContract.address
+    );
+    chai.expect(currentYPoolBalance).to.equal(0);
+  });
+
+  it('should check yCRV gauge for yCRV tokens', async function () {
+    this.timeout(60 * 1000);
+
+    const { curveYTokenContract, curveYGaugeContract } = contracts;
+
+    // Check CFolioItemHandlerSC balance
+    const currentYPoolBalance = await curveYTokenContract.balanceOf(
+      curveYGaugeContract.address
+    );
+    chai.expect(currentYPoolBalance).to.equal(yPoolBalance);
+  });
+
+  it('should check CFIHSC for yCRV gauge balance', async function () {
+    this.timeout(60 * 1000);
+
+    const { curveYGaugeContract, cfolioItemHandlerSCProxyContract } = contracts;
+
+    // Check CFolioItemHandlerSC balance
+    const currentYPoolBalance = await curveYGaugeContract.balanceOf(
       cfolioItemHandlerSCProxyContract.address
     );
     chai.expect(currentYPoolBalance).to.equal(yPoolBalance);
@@ -946,14 +1021,14 @@ describe('SC NFTs', function () {
     chai.expect(currentDaiBalance).to.equal(100);
   });
 
-  it('should check CFIHSC for remaining yCRV tokens', async function () {
+  it('should check yCRV gauge for remaining yCRV tokens', async function () {
     this.timeout(60 * 1000);
 
-    const { curveYTokenContract, cfolioItemHandlerSCProxyContract } = contracts;
+    const { curveYTokenContract, curveYGaugeContract } = contracts;
 
     // Check CFolioItemHandlerSC balance
     const currentYPoolBalance = await curveYTokenContract.balanceOf(
-      cfolioItemHandlerSCProxyContract.address
+      curveYGaugeContract.address
     );
     chai.expect(currentYPoolBalance).to.equal(yPoolBalance.sub(100));
   });
@@ -985,18 +1060,6 @@ describe('SC NFTs', function () {
   //
   // Test deposits and withdrawals again, this time with Y pool tokens instead of DAI
   //
-
-  it('should approve CFIHSC to spend yCRV tokens', async function () {
-    this.timeout(60 * 1000);
-
-    const { curveYTokenContract, cfolioItemHandlerSCProxyContract } = contracts;
-
-    const tx = curveYTokenContract.approve(
-      cfolioItemHandlerSCProxyContract.address,
-      100
-    );
-    await chai.expect(tx).to.not.be.reverted;
-  });
 
   it('should withdraw yCRV from CFIHSC', async function () {
     this.timeout(60 * 1000);
@@ -1034,14 +1097,14 @@ describe('SC NFTs', function () {
     chai.expect(currentYPoolBalance).to.equal(100);
   });
 
-  it('should check CFIHSC for remaining yCRV tokens', async function () {
+  it('should check yCRV gauge for remaining yCRV tokens', async function () {
     this.timeout(60 * 1000);
 
-    const { curveYTokenContract, cfolioItemHandlerSCProxyContract } = contracts;
+    const { curveYTokenContract, curveYGaugeContract } = contracts;
 
     // Check CFolioItemHandlerSC balance
     const currentYPoolBalance = await curveYTokenContract.balanceOf(
-      cfolioItemHandlerSCProxyContract.address
+      curveYGaugeContract.address
     );
     chai.expect(currentYPoolBalance).to.equal(yPoolBalance.sub(100));
   });
@@ -1082,14 +1145,14 @@ describe('SC NFTs', function () {
     chai.expect(currentYPoolBalance).to.equal(0);
   });
 
-  it('should check CFIHSC for all yCRV tokens', async function () {
+  it('should check yCRV gauge for all yCRV tokens', async function () {
     this.timeout(60 * 1000);
 
-    const { curveYTokenContract, cfolioItemHandlerSCProxyContract } = contracts;
+    const { curveYTokenContract, curveYGaugeContract } = contracts;
 
     // Check CFolioItemHandlerSC balance
     const currentYPoolBalance = await curveYTokenContract.balanceOf(
-      cfolioItemHandlerSCProxyContract.address
+      curveYGaugeContract.address
     );
     chai.expect(currentYPoolBalance).to.equal(yPoolBalance);
   });
@@ -1234,14 +1297,14 @@ describe('SC NFTs', function () {
     chai.expect(currentDaiBalance).to.equal(100);
   });
 
-  it('should check CFIHSC for remaining yCRV tokens', async function () {
+  it('should check yCRV gauge for remaining yCRV tokens', async function () {
     this.timeout(60 * 1000);
 
-    const { curveYTokenContract, cfolioItemHandlerSCProxyContract } = contracts;
+    const { curveYTokenContract, curveYGaugeContract } = contracts;
 
     // Check CFolioItemHandlerSC balance
     const currentYPoolBalance = await curveYTokenContract.balanceOf(
-      cfolioItemHandlerSCProxyContract.address
+      curveYGaugeContract.address
     );
     chai.expect(currentYPoolBalance).to.equal(yPoolBalance.sub(100));
   });
@@ -1368,6 +1431,62 @@ describe('SC NFTs', function () {
   });
 
   //
+  // Test claiming CRV tokens
+  //
+
+  it('should check empty CRV balance in yCRV gauge', async function () {
+    this.timeout(60 * 1000);
+
+    const tx = cfolioItemHandlerSCProxyInstance.getClaimableCRV();
+    await chai.expect(tx).to.be.revertedWith('No claimable CRV');
+  });
+
+  it('should fail to claim empty CRV balance in yCRV gauge', async function () {
+    this.timeout(60 * 1000);
+
+    const tx = cfolioItemHandlerSCProxyInstance.claimCRV(
+      marketingWallet.address
+    );
+    await chai.expect(tx).to.be.revertedWith('No claimable CRV');
+  });
+
+  it('should advance time by 24 hours', async function () {
+    this.timeout(60 * 1000);
+
+    // Add 24 hours and mine the next block
+    await hardhat.network.provider.send('evm_increaseTime', [24 * 60 * 60]);
+    await hardhat.network.provider.send('evm_mine');
+  });
+
+  /* TODO: Fix CRV calculations
+  it('should check non-empty CRV balance in yCRV gauge', async function () {
+    this.timeout(60 * 1000);
+
+    const { cfolioItemHandlerSCProxyContract } = contracts;
+
+    const tx = cfolioItemHandlerSCProxyInstance.getClaimableCRV();
+    await chai
+      .expect(tx)
+      .to.emit(cfolioItemHandlerSCProxyContract, 'ClaimableCRVUpdated')
+      .withArgs(1);
+  });
+
+  it('should claim CRV balance from yCRV gauge to wallet', async function () {
+    this.timeout(60 * 1000);
+
+    const { cfolioItemHandlerSCProxyContract } = contracts;
+
+    const tx = cfolioItemHandlerSCProxyInstance.claimCRV(
+      marketingWallet.address
+    );
+    await chai
+      .expect(tx)
+      .to.emit(cfolioItemHandlerSCProxyContract, 'CRVClaimed')
+      .withArgs(1);
+  });
+  */
+
+  //
   // Finally, we burn the investment SFT after withdrawing all SC tokens.
   //
 
@@ -1385,14 +1504,14 @@ describe('SC NFTs', function () {
     await chai.expect(tx).to.be.revertedWith('CFIH: not empty');
   });
 
-  it('should get the remaining yCRV balance in CFIHSC', async function () {
+  it('should get the remaining yCRV balance in yCRV gauge', async function () {
     this.timeout(60 * 1000);
 
-    const { curveYTokenContract, cfolioItemHandlerSCProxyContract } = contracts;
+    const { curveYTokenContract, curveYGaugeContract } = contracts;
 
     // Get the remaining balance
     const remainingYPoolBalance = await curveYTokenContract.balanceOf(
-      cfolioItemHandlerSCProxyContract.address
+      curveYGaugeContract.address
     );
     chai.expect(remainingYPoolBalance).to.equal(yPoolBalance);
   });
