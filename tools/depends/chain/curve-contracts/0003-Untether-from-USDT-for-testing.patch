@@ -1,0 +1,25 @@
+From b82f1afa693829a78dff110e414c414d1b25e20d Mon Sep 17 00:00:00 2001
+From: Garrett Brown <themagnificentmrb@gmail.com>
+Date: Tue, 8 Jun 2021 21:32:48 -0700
+Subject: [PATCH 3/3] Untether from USDT for testing
+
+---
+ contracts/pools/y/DepositY.vy | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/contracts/pools/y/DepositY.vy b/contracts/pools/y/DepositY.vy
+index 21613fa..08153a1 100644
+--- a/contracts/pools/y/DepositY.vy
++++ b/contracts/pools/y/DepositY.vy
+@@ -38,7 +38,7 @@ contract Curve:
+ 
+ 
+ N_COINS: constant(int128) = 4
+-TETHERED: constant(bool[N_COINS]) = [False, False, True, False]
++TETHERED: constant(bool[N_COINS]) = [False, False, False, False]
+ ZERO256: constant(uint256) = 0  # This hack is really bad XXX
+ ZEROS: constant(uint256[N_COINS]) = [ZERO256, ZERO256, ZERO256, ZERO256]  # <- change
+ LENDING_PRECISION: constant(uint256) = 10 ** 18
+-- 
+2.30.2
+

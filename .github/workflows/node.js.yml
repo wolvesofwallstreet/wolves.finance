@@ -64,9 +64,19 @@ jobs:
         uses: actions/cache@v2
         with:
           path: |
+            contracts/bytecode
             contracts/depends
             depends
           key: restore-contracts-${{ hashFiles('tools/build-depends.sh', 'tools/depends/chain/**') }}
+
+      - name: Restore Curve build files
+        if: steps.restore-contracts.outputs.cache-hit != 'true'
+        id: restore-curve
+        uses: actions/cache@v2
+        with:
+          path: |
+            tools/repos/curve-contracts
+          key: restore-curve-${{ hashFiles('tools/depends/chain/curve-contracts/**') }}
 
       - name: yarn install
         if: steps.restore-node.outputs.cache-hit != 'true'

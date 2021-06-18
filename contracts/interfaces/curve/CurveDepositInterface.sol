@@ -23,6 +23,19 @@ abstract contract ICurveFiDepositY {
     uint256 maxBurnAmount
   ) external virtual;
 
+  function calc_withdraw_one_coin(uint256 wrappedAmount, int128 coinIndex)
+    external
+    view
+    virtual
+    returns (uint256 underlyingAmount);
+
+  function remove_liquidity_one_coin(
+    uint256 wrappedAmount,
+    int128 coinIndex,
+    uint256 minAmount,
+    bool donateDust
+  ) external virtual;
+
   function coins(int128 i) external view virtual returns (address);
 
   function underlying_coins(int128 i) external view virtual returns (address);

@@ -11,9 +11,10 @@ pragma solidity >=0.7.0 <0.8.0;
 import '@openzeppelin/contracts/utils/Context.sol';
 
 import '../../0xerc1155/interfaces/IERC1155.sol';
-import '../../0xerc1155/interfaces/IERC20.sol';
 import '../../0xerc1155/interfaces/IERC1155TokenReceiver.sol';
+import '../../0xerc1155/interfaces/IERC20.sol';
 import '../../0xerc1155/utils/SafeMath.sol';
+import '../../interfaces/curve/CurveDepositInterface.sol';
 
 import '../investment/interfaces/ICFolioFarm.sol'; // Wolves rewards
 import '../token/interfaces/IWOWSCryptofolio.sol';
@@ -44,10 +45,6 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
   using TokenIds for uint256;
 
   //////////////////////////////////////////////////////////////////////////////
-  // State
-  //////////////////////////////////////////////////////////////////////////////
-
-  //////////////////////////////////////////////////////////////////////////////
   // Routing
   //////////////////////////////////////////////////////////////////////////////
 
@@ -70,6 +67,15 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
   // The SFT contract needed to check if the address is a c-folio
   IWOWSERC1155 private immutable sftHolder;
 
+  // Address registry containing system addresses
+  IAddressRegistry private immutable _addressRegistry;
+
+  // Curve Y pool token contract
+  IERC20 public immutable curveYToken;
+
+  // Curve Y pool deposit contract
+  ICurveFiDepositY public immutable curveYDeposit;
+
   //////////////////////////////////////////////////////////////////////////////
   // Modifiers
   //////////////////////////////////////////////////////////////////////////////
@@ -91,6 +97,9 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
    * There is little state here, user state is completely handled in CFolioFarm.
    */
   constructor(IAddressRegistry addressRegistry) {
+    // Address registry
+    _addressRegistry = addressRegistry;
+
     // TradeFloor
     tradeFloor = addressRegistry.getRegistryEntry(
       AddressBook.TRADE_FLOOR_PROXY
@@ -112,10 +121,34 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
       addressRegistry.getRegistryEntry(AddressBook.SFT_EVALUATOR_PROXY)
     );
 
+    // The Y pool deposit contract
+    curveYDeposit = ICurveFiDepositY(
+      addressRegistry.getRegistryEntry(AddressBook.CURVE_Y_DEPOSIT)
+    );
+
+    // The Y pool token contract
+    curveYToken = IERC20(
+      addressRegistry.getRegistryEntry(AddressBook.CURVE_Y_TOKEN)
+    );
+
     // WOWS reward farm
     cfolioFarm = ICFolioFarmOwnable(
       addressRegistry.getRegistryEntry(AddressBook.BOIS_REWARDS)
     );
+  }
+
+  /**
+   * @dev One time contract initializer
+   */
+  function initialize() public {
+    // Approve stablecoin spending
+    for (uint256 i = 0; i < 4; ++i) {
+      address underlyingCoin = curveYDeposit.underlying_coins(int128(i));
+      IERC20(underlyingCoin).approve(address(curveYDeposit), uint256(-1));
+    }
+
+    // Approve yCRV spending
+    curveYToken.approve(address(curveYDeposit), uint256(-1));
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -204,9 +237,13 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
    *
    * Refer to the Minimal ERC1155 section below to learn which functions are
    * needed for this.
+   *
+   * @param sftTokenId The token ID of the SFT being setup
+   * @param amounts The token amounts, in this order: DAI, USDC, USDT, TUSD, yCRV
+   * `amounts` can be empty when setting up a CFolio with no initial investments.
    */
   function setupCFolio(
-    address, /* payer*/
+    address payer,
     uint256 sftTokenId,
     uint256[] calldata amounts
   ) external override {
@@ -216,15 +253,61 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
     // Validate parameters, no unmasking required, must be SFT
     address cFolio = sftHolder.tokenIdToAddress(sftTokenId);
     require(cFolio != address(0), 'Invalid sftTokenId');
-
-    require(amounts.length == 0, 'CFIH: not impl');
+    require(
+      amounts.length == 0 || amounts.length == 5,
+      'Need DAI/USDC/USDT/TUSD/yCRV'
+    );
 
     // Verify that this function is called the first time
     try IWOWSCryptofolio(cFolio)._tradefloors(0) returns (address) {
       revert('CFIH: TradeFloor not empty');
     } catch {}
 
-    // TODO: Investment????
+    // Keep track of how many Y pool tokens were received
+    uint256 beforeBalance = curveYToken.balanceOf(address(this));
+
+    // Handle stablecoins
+    if (amounts.length > 0) {
+      uint256[4] memory stableAmounts;
+      uint256 totalStableAmount;
+      for (uint256 i = 0; i < 4; ++i) {
+        address underlyingCoin = curveYDeposit.underlying_coins(int128(i));
+
+        IERC20(underlyingCoin).transferFrom(payer, address(this), amounts[i]);
+
+        uint256 stableAmount = IERC20(underlyingCoin).balanceOf(address(this));
+
+        stableAmounts[i] = stableAmount;
+        totalStableAmount += stableAmount;
+      }
+
+      if (totalStableAmount > 0) {
+        // Call to external contract
+        curveYDeposit.add_liquidity(stableAmounts, 0);
+
+        // Validate state
+        uint256 afterStableBalance = curveYToken.balanceOf(address(this));
+        require(
+          afterStableBalance > beforeBalance,
+          'No liquidity from stables'
+        );
+      }
+
+      // Handle Y pool
+      uint256 yPoolAmount = amounts[4];
+
+      if (yPoolAmount > 0) {
+        curveYToken.transferFrom(payer, address(this), yPoolAmount);
+      }
+
+      // Validate state
+      uint256 afterBalance = curveYToken.balanceOf(address(this));
+      require(afterBalance > beforeBalance, 'No liquidity added');
+
+      // Record assets in Farm contract. They don't earn rewards.
+      // addAsset must only be called from Investment CFolios
+      cfolioFarm.addAssets(cFolio, afterBalance.sub(beforeBalance));
+    }
 
     // Transfer a dummy NFT token to cFolio so we get informed if the cFolio
     // gets burned
@@ -250,10 +333,60 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
     uint256 baseTokenId,
     uint256 tokenId,
     uint256[] calldata amounts
-  ) external view override {
+  ) external override {
     // Validate parameters
-    require(amounts.length == 0, 'CFIH: Not impl');
-    _verifyAssetAccess(baseTokenId, tokenId);
+    require(amounts.length == 5, 'Need DAI/USDC/USDT/TUSD/yCRV');
+    (address baseCFolio, address itemCFolio) =
+      _verifyAssetAccess(baseTokenId, tokenId);
+
+    // Keep track of how many Y pool tokens were received
+    uint256 beforeBalance = curveYToken.balanceOf(address(this));
+
+    // Handle stablecoins
+    uint256[4] memory stableAmounts;
+    uint256 totalStableAmount;
+    for (uint256 i = 0; i < 4; ++i) {
+      address underlyingCoin = curveYDeposit.underlying_coins(int128(i));
+
+      IERC20(underlyingCoin).transferFrom(
+        _msgSender(),
+        address(this),
+        amounts[i]
+      );
+
+      uint256 stableAmount = IERC20(underlyingCoin).balanceOf(address(this));
+
+      stableAmounts[i] = stableAmount;
+      totalStableAmount += stableAmount;
+    }
+
+    if (totalStableAmount > 0) {
+      // Call to external contract
+      curveYDeposit.add_liquidity(stableAmounts, 0);
+
+      // Validate state
+      uint256 afterStableBalance = curveYToken.balanceOf(address(this));
+      require(afterStableBalance > beforeBalance, 'No liquidity from stables');
+    }
+
+    // Handle Y pool
+    uint256 yPoolAmount = amounts[4];
+
+    if (yPoolAmount > 0) {
+      curveYToken.transferFrom(_msgSender(), address(this), yPoolAmount);
+    }
+
+    // Validate state
+    uint256 afterBalance = curveYToken.balanceOf(address(this));
+    require(afterBalance > beforeBalance, 'No liquidity added');
+
+    // Record assets in Farm contract. They don't earn rewards.
+    // addAsset must only be called from Investment CFolios
+    cfolioFarm.addAssets(itemCFolio, afterBalance.sub(beforeBalance));
+
+    if (baseTokenId != uint256(-1)) {
+      _updateRewards(baseCFolio, sftEvaluator.rewardRate(baseTokenId));
+    }
   }
 
   /**
@@ -268,9 +401,55 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
     uint256 baseTokenId,
     uint256 tokenId,
     uint256[] calldata amounts
-  ) external view override {
-    require(amounts.length == 0, 'CFIH: Not impl');
-    _verifyAssetAccess(baseTokenId, tokenId);
+  ) external override {
+    // Validate parameters
+    require(amounts.length == 5, 'Need DAI/USDC/USDT/TUSD/yCRV');
+    (address baseCFolio, address itemCFolio) =
+      _verifyAssetAccess(baseTokenId, tokenId);
+
+    // Validate parameters
+    uint256 yPoolAmount = amounts[4];
+    require(yPoolAmount > 0, 'yCRV amount is 0');
+
+    // Get single coin and amount
+    (int128 stableCoinIndex, uint256 stableCoinAmount) =
+      _getStableCoinInfo(amounts);
+
+    // Keep track of how many Y pool tokens were sent
+    uint256 balanceBefore = curveYToken.balanceOf(address(this));
+
+    if (stableCoinIndex != -1) {
+      // Call to external contract
+      curveYDeposit.remove_liquidity_one_coin(
+        yPoolAmount,
+        stableCoinIndex,
+        stableCoinAmount,
+        true
+      );
+
+      address underlyingCoin =
+        curveYDeposit.underlying_coins(int128(stableCoinIndex));
+      uint256 underlyingCoinAmount =
+        IERC20(underlyingCoin).balanceOf(address(this));
+
+      // Transfer stablecoins back to the sender
+      IERC20(underlyingCoin).transfer(_msgSender(), underlyingCoinAmount);
+    } else {
+      // No stablecoins were passed, sender is withdrawing Y pool tokens directly
+      // Transfer Y pool tokens back to the sender
+      curveYToken.transfer(_msgSender(), yPoolAmount);
+    }
+
+    // Valiate state
+    uint256 balanceAfter = curveYToken.balanceOf(address(this));
+    require(balanceAfter < balanceBefore, 'Nothing withdrawn');
+
+    // Record assets in Farm contract. They don't earn rewards.
+    // removeAsset must only be called from Investment CFolios
+    cfolioFarm.removeAssets(itemCFolio, balanceBefore.sub(balanceAfter));
+
+    if (baseTokenId != uint256(-1))
+      _updateRewards(baseCFolio, sftEvaluator.rewardRate(baseTokenId));
   }
 
   /**
@@ -312,8 +491,19 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
     override
     returns (uint256[] memory)
   {
-    uint256[] memory result = new uint256[](1);
-    result[0] = cfolioFarm.balanceOf(cfolioItem);
+    uint256[] memory result = new uint256[](5);
+
+    uint256 wrappedAmount = cfolioFarm.balanceOf(cfolioItem);
+
+    for (uint256 i = 0; i < 4; ++i) {
+      result[i] = curveYDeposit.calc_withdraw_one_coin(
+        wrappedAmount,
+        int128(i)
+      );
+    }
+
+    result[4] = wrappedAmount;
+
     return result;
   }
 
@@ -515,5 +705,31 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
       );
     }
     return (baseCFolio, cFolio);
+  }
+
+  /**
+   * @dev Get single coin and amount
+   *
+   * @param amounts The amounts array: DAI/USDC/USDT/TUSD/yCRV
+   *
+   * @return stableCoinIndex The index of the amount > 0, or -1 if all four
+   * stablecoin amounts are 0
+   * @return stableCoinAmount The amount of the stablecoin, or 0 if all four
+   * stablecoin amounts are 0
+   */
+  function _getStableCoinInfo(uint256[] calldata amounts)
+    private
+    pure
+    returns (int128 stableCoinIndex, uint256 stableCoinAmount)
+  {
+    stableCoinIndex = -1;
+
+    for (uint128 i = 0; i < 4; ++i) {
+      if (amounts[i] > 0) {
+        require(stableCoinIndex == -1, 'Only one amount > 0');
+        stableCoinIndex = int8(i);
+        stableCoinAmount = amounts[i];
+      }
+    }
   }
 }

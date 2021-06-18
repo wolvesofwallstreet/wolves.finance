@@ -23,7 +23,7 @@
   "scripts": {
     "audit": "audit-ci --moderate --package-manager yarn --allowlist postcss lodash underscore --report-type summary",
     "build": "react-scripts build",
-    "clean": "rimraf artifacts build cache contracts/depends depends deployments node_modules src/abi",
+    "clean": "rimraf artifacts build cache contracts/bytecode contracts/depends depends deployments node_modules src/abi",
     "compile": "hardhat compile",
     "create-metadata": "cd metadata && node create_metadata.ts",
     "depends": "bash tools/build-depends.sh",

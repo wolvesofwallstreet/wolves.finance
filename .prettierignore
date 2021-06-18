@@ -11,6 +11,7 @@
 /deployments
 
 # Depends build chain
+/contracts/bytecode
 /contracts/depends
 /depends
 /tools
