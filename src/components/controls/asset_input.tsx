@@ -12,6 +12,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 type PROPS = {
   currency: string;
+  defaultValue?: string;
   minAmount: number;
   maxAmount: number;
   cb?: (n: number) => void;
@@ -20,6 +21,7 @@ type PROPS = {
 function AssetInput({
   cb,
   currency,
+  defaultValue,
   maxAmount,
   minAmount,
 }: PROPS): JSX.Element {
@@ -41,7 +43,10 @@ function AssetInput({
 
   const verifyAndCb = useCallback(() => {
     if (cb && inputRef.current) {
-      const num = parseFloat(inputRef.current.value);
+      const num =
+        minAmount === 0 && inputRef.current.value === ''
+          ? 0
+          : parseFloat(inputRef.current.value);
       cb(num < minAmount || num > maxAmount ? NaN : num);
     }
   }, [cb, minAmount, maxAmount]);
@@ -50,6 +55,15 @@ function AssetInput({
     if (inputRef.current) inputRef.current.value = '';
     setAmountChanged(true);
   }, [maxAmount]);
+
+  useEffect(() => {
+    if (defaultValue && inputRef.current) {
+      if (minAmount === 0 && parseInt(defaultValue) === 0)
+        inputRef.current.value = '';
+      else inputRef.current.value = defaultValue;
+      setAmountChanged(true);
+    }
+  }, [defaultValue, minAmount]);
 
   useEffect(() => {
     if (amountChanged) {

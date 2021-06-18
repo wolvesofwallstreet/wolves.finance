@@ -568,7 +568,9 @@ contract WOWSSftMinter is Context, Ownable {
   {
     amounts = new uint256[](addresses.length);
     for (uint256 i = 0; i < addresses.length; ++i)
-      amounts[i] = IERC20(addresses[i]).balanceOf(account);
+      amounts[i] = addresses[i] == address(0)
+        ? 0
+        : IERC20(addresses[i]).balanceOf(account);
   }
 
   //////////////////////////////////////////////////////////////////////////////

@@ -16,7 +16,6 @@ import StakeAbi from 'abi/contracts/src/investment/UniV2StakeFarm.sol/UniV2Stake
 import TradeFloorAbi from 'abi/contracts/src/token/TradeFloor.sol/TradeFloor.json';
 import TokenAbi from 'abi/contracts/src/token/WOWSErc20.sol/WowsToken.json';
 import SFTHolderAbi from 'abi/contracts/src/token/WOWSErc1155.sol/WOWSERC1155.json';
-import async from 'async';
 import { ethers } from 'ethers';
 import Emitter from 'events';
 import Dispatcher from 'flux';
@@ -39,7 +38,6 @@ import {
   CFOLIO_ITEM_LOCK_TRANSFER,
   CFOLIO_ITEM_WITHDRAW_LP,
   CONNECTION_CHANGED,
-  ERC20_TOKEN_CONTRACT,
   NEW_BLOCK,
   SFT_BUY,
   SFT_CLAIM,
@@ -95,13 +93,25 @@ type ChainAddresses = {
   cfolioItemHandlerLPProxy: string;
   cfolioFarmLP: string;
   uniDaiWeth: string;
+  daiToken: string;
+  tusdToken: string;
+  usdcToken: string;
+  usdtToken: string;
+  curveYToken: string;
 };
 interface IIndexable {
   [key: number]: ChainAddresses;
 }
 
 export type AssetStateresult = {
-  status: 'error' | 'loaded' | 'cards' | 'tokens' | 'cfolio_amount' | 'rewards';
+  status:
+    | 'error'
+    | 'loaded'
+    | 'cards'
+    | 'tokens'
+    | 'cfolio_amount'
+    | 'rewards'
+    | 'balances';
 };
 
 export type TokenContractResult = {
@@ -167,8 +177,6 @@ export const BIGNUMBER_MAX = ethers.BigNumber.from(
 
 const SECONDS_PER_YEAR = 31536000;
 
-type cbf = async.AsyncResultCallback<unknown, Error>;
-
 export const REWARD_POOL_LP = 0;
 export const REWARD_POOL_SC = 1;
 
@@ -182,7 +190,15 @@ type REWARD_INFO = {
   apy: number;
 };
 
+export type ASSET_BALANCE = {
+  name: string;
+  decimals: number;
+  value: number;
+  address?: string;
+};
+
 type ASSETS = {
+  balances: ASSET_BALANCE[];
   userSFT: SFT[];
   cards: CARDS;
   cfolioItems: CFOLIO_ITEMS[];
@@ -230,6 +246,43 @@ class Store {
   dispatchQueue: Payload[] = [];
 
   assets = {
+    balances: [
+      {
+        name: 'WOWS',
+        decimals: 18,
+        value: 0,
+      },
+      {
+        name: 'WETH/WOWS LP',
+        decimals: 18,
+        value: 0,
+      },
+      {
+        name: 'USDC',
+        decimals: 6,
+        value: 0,
+      },
+      {
+        name: 'USDT',
+        decimals: 6,
+        value: 0,
+      },
+      {
+        name: 'DAI',
+        decimals: 18,
+        value: 0,
+      },
+      {
+        name: 'TUSD',
+        decimals: 18,
+        value: 0,
+      },
+      {
+        name: 'YCRV',
+        decimals: 18,
+        value: 0,
+      },
+    ],
     userSFT: [],
     cards: { levelNames: [], cards: [], myPackLevelDescriptions: [] },
     cfolioItems: [],
@@ -311,9 +364,6 @@ class Store {
             _payload.content as PayloadContentCFolioItemLT
           );
           break;
-        case ERC20_TOKEN_CONTRACT:
-          this._getTokenContractData(_payload.content);
-          break;
         /** Staking */
         case STAKE_ADD:
           this._doStakeAdd(_payload.content);
@@ -348,6 +398,8 @@ class Store {
             this._getSftState(_payload.content);
           if (_payload.content.filter?.includes('tokens'))
             this._getUserSft(_payload.content);
+          if (_payload.content.filter?.includes('balances'))
+            this._getAssetsBalances(_payload.content);
           break;
         case SFT_UNLOCK:
           this._doSftUnlock(_payload.content);
@@ -582,9 +634,13 @@ class Store {
     if (this.address !== '')
       dispatcher.dispatch({
         type: ASSETS_STATE,
-        content: { filter: ['tokens'] },
+        content: { filter: ['tokens', 'balances'] },
       } as Payload);
     else {
+      this.assets.balances.forEach((b) => {
+        b.address = undefined;
+        b.value = 0;
+      });
       this.assets.userSFT = [];
       emitter.emit(ASSETS_STATE, { status: 'tokens' } as AssetStateresult);
     }
@@ -692,8 +748,21 @@ class Store {
           provider
         );
       }
+
+      // Setup our balances
+      this.assets.balances[0].address = chainAddresses.token; // WOWS
+      this.assets.balances[1].address = this.lpContractRO.address; // WETH/WOWS LP
+      this.assets.balances[2].address = chainAddresses.usdcToken;
+      this.assets.balances[3].address = chainAddresses.usdtToken;
+      this.assets.balances[4].address = chainAddresses.daiToken;
+      this.assets.balances[5].address = chainAddresses.tusdToken;
+      this.assets.balances[6].address = chainAddresses.curveYToken;
     } else {
       this.tokenContractAddress = Store.nullAddress;
+      this.assets.balances.forEach((b) => {
+        b.address = undefined;
+        b.value = 0;
+      });
     }
   }
 
@@ -1044,28 +1113,23 @@ class Store {
     return this.tokenContractAddress;
   }
 
-  _getTokenContractData = async (payloadContent: PayloadContent) => {
-    async.parallel(
-      [
-        (callbackInner) => {
-          this._getTokenAmount(payloadContent, callbackInner);
-        },
-      ],
-      (err, data: unknown) => {
-        if (err) {
-          console.log(err);
-          emitter.emit(ERC20_TOKEN_CONTRACT, { error: err.toString() });
-        } else {
-          const asset: TokenContractResult = {
-            error: undefined,
-            tokenAmount: 0,
-          };
-          const numberArray = data as Array<number>;
-          asset.tokenAmount = numberArray[0];
-          emitter.emit(ERC20_TOKEN_CONTRACT, asset);
-        }
-      }
-    );
+  _getAssetsBalances = async (payloadContent: PayloadContent) => {
+    if (!this.sftMintContractRO || this.address === '') return;
+    try {
+      const input = this.assets.balances.map(
+        (b) => b.address ?? Store.nullAddress
+      );
+      const balances = await this.sftMintContractRO.getErc20Balances(
+        this.address,
+        input
+      );
+      this.assets.balances.forEach(
+        (b, i) => (b.value = this.fromWei(balances[i], b.decimals))
+      );
+      emitter.emit(ASSETS_STATE, { status: 'balances' } as AssetStateresult);
+    } catch (e) {
+      console.log(e);
+    }
   };
 
   async _updatePoolAPY() {
@@ -1848,19 +1912,6 @@ class Store {
         status: 'error',
         errorMessage: e.error ? e.error.message : e.message,
       } as StatusResult);
-    }
-  };
-
-  /************** Getter ****************/
-
-  _getTokenAmount = async (payloadContent: PayloadContent, callback: cbf) => {
-    try {
-      const result = ethers.BigNumber.from(0);
-      //const result = await this.tokenContract.balanceOf(this.address);
-      callback(null, this.fromWei(result));
-    } catch (e) {
-      console.log(e);
-      return callback(e);
     }
   };
 
