@@ -8,16 +8,29 @@
 
 /* eslint @typescript-eslint/no-var-requires: "off" */
 
+const ethers = require('ethers');
 const fs = require('fs');
 
 require('hardhat-deploy');
 require('hardhat-deploy-ethers');
 
 // TODO: Fully qualified contract names
+const DAI_TOKEN_CONTRACT = 'DAI';
+const TUSD_TOKEN_CONTRACT = 'TrueUSD';
+const USDC_TOKEN_CONTRACT = 'USDC';
+const USDT_TOKEN_CONTRACT = 'TetherToken';
 const YEARN_CONTROLLER_CONTRACT = 'YearnController';
 
 // Deployed contract aliases
+const CURVE_Y_DEPOSIT_CONTRACT = 'CurveYDeposit';
 const CURVE_Y_TOKEN_CONTRACT = 'CurveYToken';
+
+// Y pool deployment parameters
+const INITIAL_Y_POOL_DAI = ethers.BigNumber.from('1000000000000000000000'); // 1000 DAI
+const INITIAL_Y_POOL_TUSD = ethers.BigNumber.from('1000000000000000000000'); // 1000 TUSD
+const INITIAL_Y_POOL_USDC = ethers.BigNumber.from('1000000000'); // 1000 USDC
+const INITIAL_Y_POOL_USDT = ethers.BigNumber.from('1000000000'); // 1000 USDT
+const INITIAL_Y_POOL_TOKENS = 4000; // Sum of Y pool stablecoins above
 
 // Path to generated addresses file
 const GENERATED_ADDRESSES = `${__dirname}/../src/config/generated-addresses.json`;
@@ -57,6 +70,15 @@ const func = async function (hardhat_re) {
   const YUSDT_STRATEGY_ADDRESS = generatedAddresses.yusdtStrategy;
 
   const CURVE_Y_SWAP_ADDRESS = generatedAddresses.curveYSwap;
+  const CURVE_Y_DEPOSIT_ADDRESS = generatedAddresses.curveYDeposit;
+
+  // Contract instances
+  const CURVE_Y_TOKEN_INSTANCE = await hardhat_re.ethers.getContract(
+    CURVE_Y_TOKEN_CONTRACT
+  );
+  const YEARN_CONTROLLER_INSTANCE = await hardhat_re.ethers.getContract(
+    YEARN_CONTROLLER_CONTRACT
+  );
 
   //////////////////////////////////////////////////////////////////////////////
   //
@@ -240,6 +262,137 @@ const func = async function (hardhat_re) {
     );
   } catch (err) {
     console.log('Curve minter already set');
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // Seed the Y pool with some funds
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  log_step('Adding funds to Y pool');
+
+  // Check of previously seeded
+  const yPoolTokenBalance = await CURVE_Y_TOKEN_INSTANCE.balanceOf(deployer);
+  if (yPoolTokenBalance < INITIAL_Y_POOL_TOKENS) {
+    //
+    // Mint
+    //
+
+    await execute(
+      DAI_TOKEN_CONTRACT,
+      {
+        from: deployer,
+        log: true,
+      },
+      'mint',
+      deployer,
+      INITIAL_Y_POOL_DAI
+    );
+
+    await execute(
+      TUSD_TOKEN_CONTRACT,
+      {
+        from: deployer,
+        log: true,
+      },
+      'mint',
+      deployer,
+      INITIAL_Y_POOL_TUSD
+    );
+
+    await execute(
+      USDC_TOKEN_CONTRACT,
+      {
+        from: deployer,
+        log: true,
+      },
+      'mint',
+      deployer,
+      INITIAL_Y_POOL_USDC
+    );
+
+    await execute(
+      USDT_TOKEN_CONTRACT,
+      {
+        from: deployer,
+        log: true,
+      },
+      'mint',
+      deployer,
+      INITIAL_Y_POOL_USDT
+    );
+
+    //
+    // Approve
+    //
+
+    await execute(
+      DAI_TOKEN_CONTRACT,
+      {
+        from: deployer,
+        log: true,
+      },
+      'approve',
+      CURVE_Y_DEPOSIT_ADDRESS,
+      INITIAL_Y_POOL_DAI
+    );
+
+    await execute(
+      TUSD_TOKEN_CONTRACT,
+      {
+        from: deployer,
+        log: true,
+      },
+      'approve',
+      CURVE_Y_DEPOSIT_ADDRESS,
+      INITIAL_Y_POOL_TUSD
+    );
+
+    await execute(
+      USDC_TOKEN_CONTRACT,
+      {
+        from: deployer,
+        log: true,
+      },
+      'approve',
+      CURVE_Y_DEPOSIT_ADDRESS,
+      INITIAL_Y_POOL_USDC
+    );
+
+    await execute(
+      USDT_TOKEN_CONTRACT,
+      {
+        from: deployer,
+        log: true,
+      },
+      'approve',
+      CURVE_Y_DEPOSIT_ADDRESS,
+      INITIAL_Y_POOL_USDT
+    );
+
+    //
+    // Add liquidity
+    //
+
+    await execute(
+      CURVE_Y_DEPOSIT_CONTRACT,
+      {
+        from: deployer,
+        gasLimit: 10000000, // 10M GWei
+        log: true,
+      },
+      'add_liquidity',
+      [
+        INITIAL_Y_POOL_DAI,
+        INITIAL_Y_POOL_USDC,
+        INITIAL_Y_POOL_USDT,
+        INITIAL_Y_POOL_TUSD,
+      ],
+      0
+    );
+  } else {
+    console.log(`Deployer has ${yPoolTokenBalance} Y pool tokens`);
   }
 };
 
