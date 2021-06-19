@@ -516,7 +516,7 @@ contract WOWSSftMinter is Context, Ownable {
 
     for (uint256 i = 0; i < tokenIds.length; ++i) {
       if (tokenIds[i].isBaseCard()) {
-        // only main TradeFloor supported
+        // Only main TradeFloor supported
         uint256 sftTokenId = tokenIds[i].toSftTokenId();
         address cfolio = _sftContract.tokenIdToAddress(sftTokenId);
         if (address(cfolio) != address(0)) {
@@ -532,7 +532,7 @@ contract WOWSSftMinter is Context, Ownable {
       } else {
         oneCFolioItem[0] = tokenIds[i];
         cfolioLength = 1;
-        cFolioItems = oneCFolioItem; //Reference, no copy
+        cFolioItems = oneCFolioItem; // Reference, no copy
         rewardRate = 0;
         timestamp = 0;
       }
