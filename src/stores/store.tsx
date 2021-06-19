@@ -638,7 +638,6 @@ class Store {
       } as Payload);
     else {
       this.assets.balances.forEach((b) => {
-        b.address = undefined;
         b.value = 0;
       });
       this.assets.userSFT = [];
