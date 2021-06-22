@@ -21,9 +21,9 @@ import logo from '../../assets/wolves-token_99.png';
 import {
   ADDRESS_COPIED,
   CFOLIO_ITEM_BUY,
-  CFOLIO_ITEM_DEPOSIT_LP,
+  CFOLIO_ITEM_DEPOSIT,
   CFOLIO_ITEM_LOCK_TRANSFER,
-  CFOLIO_ITEM_WITHDRAW_LP,
+  CFOLIO_ITEM_WITHDRAW,
   CONNECTION_CHANGED,
   SFT_BUY,
   SFT_CLAIM,
@@ -76,15 +76,15 @@ class WolfToast extends Component<TOASTPROPS, TOASTSTATE> {
     StoreClasses.emitter.on(SFT_UNLOCK, this.onTransaction);
     StoreClasses.emitter.on(SFT_UPGRADE, this.onTransaction);
     StoreClasses.emitter.on(CFOLIO_ITEM_BUY, this.onTransaction);
-    StoreClasses.emitter.on(CFOLIO_ITEM_DEPOSIT_LP, this.onTransaction);
-    StoreClasses.emitter.on(CFOLIO_ITEM_WITHDRAW_LP, this.onTransaction);
+    StoreClasses.emitter.on(CFOLIO_ITEM_DEPOSIT, this.onTransaction);
+    StoreClasses.emitter.on(CFOLIO_ITEM_WITHDRAW, this.onTransaction);
     StoreClasses.emitter.on(CFOLIO_ITEM_LOCK_TRANSFER, this.onTransaction);
   }
 
   componentWillUnmount(): void {
     StoreClasses.emitter.off(CFOLIO_ITEM_LOCK_TRANSFER, this.onTransaction);
-    StoreClasses.emitter.off(CFOLIO_ITEM_WITHDRAW_LP, this.onTransaction);
-    StoreClasses.emitter.off(CFOLIO_ITEM_DEPOSIT_LP, this.onTransaction);
+    StoreClasses.emitter.off(CFOLIO_ITEM_WITHDRAW, this.onTransaction);
+    StoreClasses.emitter.off(CFOLIO_ITEM_DEPOSIT, this.onTransaction);
     StoreClasses.emitter.off(CFOLIO_ITEM_BUY, this.onTransaction);
     StoreClasses.emitter.off(SFT_UPGRADE, this.onTransaction);
     StoreClasses.emitter.off(SFT_UNLOCK, this.onTransaction);

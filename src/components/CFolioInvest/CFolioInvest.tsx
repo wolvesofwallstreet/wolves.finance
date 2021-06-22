@@ -393,7 +393,10 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
                         TOKEN ID:{' '}
                         {renderCFolioItem.tokenId.mask(128).toHexString()}
                         <br />
-                        INVESTMENT: {renderCFolioItem.assets[0].toFixed(4)}
+                        INVESTMENT:{' '}
+                        {renderCFolioItem.assets[
+                          renderCFolioItem.assets.length - 1
+                        ].toFixed(4)}
                         {' ' + controlAttr.investCurrency}
                       </>
                     ) : (

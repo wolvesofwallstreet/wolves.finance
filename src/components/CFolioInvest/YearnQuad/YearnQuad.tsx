@@ -11,7 +11,11 @@ import './YearnQuad.css';
 import { useEffect, useState } from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 
-import { CFOLIO_ITEM_BUY } from '../../../stores/constants';
+import {
+  CFOLIO_ITEM_BUY,
+  CFOLIO_ITEM_DEPOSIT,
+  CFOLIO_ITEM_WITHDRAW,
+} from '../../../stores/constants';
 import {
   SFT,
   SFTCHILD,
@@ -44,11 +48,15 @@ function YearnQuad({
   const [txRunning, setTXRunning] = useState(false);
   const [balances] = useState(StoreClasses.store.getAssets().balances);
 
-  const cmap = [2, 3, 4, 5, 6]; // maps from internal to asset index
+  const currencies = ['DAI', 'USDC', 'USDT', 'TUSD', 'yCrv']; // maps from internal to asset index
 
   const handleBuy = () => {
     const payload = {
-      type: CFOLIO_ITEM_BUY,
+      type: cfolioItem
+        ? tabOption === 1
+          ? CFOLIO_ITEM_WITHDRAW
+          : CFOLIO_ITEM_DEPOSIT
+        : CFOLIO_ITEM_BUY,
       content: {
         wowsAmount: nftPrice,
         investAmount: inputVals,
@@ -67,8 +75,12 @@ function YearnQuad({
     };
 
     StoreClasses.emitter.on(CFOLIO_ITEM_BUY, resetTx);
+    StoreClasses.emitter.on(CFOLIO_ITEM_DEPOSIT, resetTx);
+    StoreClasses.emitter.on(CFOLIO_ITEM_WITHDRAW, resetTx);
     //Cleanup
     return () => {
+      StoreClasses.emitter.off(CFOLIO_ITEM_WITHDRAW, resetTx);
+      StoreClasses.emitter.off(CFOLIO_ITEM_DEPOSIT, resetTx);
       StoreClasses.emitter.off(CFOLIO_ITEM_BUY, resetTx);
     };
   }, []);
@@ -80,6 +92,7 @@ function YearnQuad({
   useEffect(() => {
     if (tabOption) setCurrencyIndex(4);
     setCheckedIndex(-1);
+    setInputVals([0, 0, 0, 0, 0]);
   }, [tabOption]);
 
   const validCurrencies = () => {
@@ -88,12 +101,9 @@ function YearnQuad({
         ? undefined
         : inputVals[4] <= 0
         ? []
-        : [balances[cmap[4]].name];
+        : [currencies[4]];
     else if (inputVals.find((v) => isNaN(v)) !== undefined) return undefined;
-    else
-      return cmap
-        .filter((_, index) => inputVals[index] > 0)
-        .map((cm) => balances[cm].name);
+    else return currencies.filter((_, index) => inputVals[index] > 0);
   };
 
   const setCurrentValue = (v: number) => {
@@ -115,7 +125,7 @@ function YearnQuad({
           l:
             `WITHDRAW ${investCurrency}` +
             (checkedIndex >= 0
-              ? ` AND RECEIVE ${balances[cmap[checkedIndex]].name}`
+              ? ` AND RECEIVE ${currencies[checkedIndex]}`
               : ''),
           e: true,
         }
@@ -149,6 +159,18 @@ function YearnQuad({
     ? `ADD "${investCurrency} INVESTMENT NFT" INTO MY WALLET`
     : `ADD "${investCurrency} INVESTMENT NFT" INTO MY CFOLIO`;
 
+  const curMaxAmount =
+    tabOption === 0
+      ? balances[currencies[currencyIndex]].value
+      : (cfolioItem && cfolioItem.assets[currencyIndex]) ?? 0;
+
+  const checkedAmount =
+    checkedIndex >= 0 && curMaxAmount > 0 && !isNaN(inputVals[4])
+      ? (((cfolioItem && cfolioItem.assets[checkedIndex]) ?? 0) *
+          inputVals[4]) /
+        curMaxAmount
+      : undefined;
+
   return (
     <>
       <div
@@ -160,23 +182,22 @@ function YearnQuad({
       </div>
       <span className="mt-1 font-14">
         AVAILABLE IN{tabOption === 0 ? ' MY WALLET: ' : ' MY NFT: '}
-        {balances[cmap[currencyIndex]].value.toFixed(4)}{' '}
-        {balances[cmap[currencyIndex]].name}
+        {curMaxAmount.toFixed(4)} {currencies[currencyIndex]}
       </span>
       {/* Orange Horizontal Bar */}
       <AssetInput
-        currency={balances[cmap[currencyIndex]].name}
+        currency={currencies[currencyIndex]}
         defaultValue={
           isNaN(inputVals[currencyIndex])
             ? ''
             : inputVals[currencyIndex].toString()
         }
         minAmount={0}
-        maxAmount={balances[cmap[currencyIndex]].value}
+        maxAmount={curMaxAmount}
         cb={(n) => setCurrentValue(n)}
       />
       <div id="currency-container" className="tk-grotesk-lightbold mt-3">
-        {cmap.map((currency, index) => (
+        {currencies.map((currency, index) => (
           <div
             key={'cidx_' + index}
             className={
@@ -194,9 +215,15 @@ function YearnQuad({
                 : () => setCurrencyIndex(index)
             }
           >
-            {balances[currency].name}
+            {currency}
             <br />
-            {isNaN(inputVals[index]) ? 'INVALID' : inputVals[index].toFixed(2)}
+            {index === checkedIndex
+              ? checkedAmount === undefined
+                ? 'INVALID'
+                : checkedAmount.toFixed(2)
+              : isNaN(inputVals[index])
+              ? 'INVALID'
+              : inputVals[index].toFixed(2)}
           </div>
         ))}
       </div>

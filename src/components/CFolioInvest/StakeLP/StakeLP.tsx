@@ -13,8 +13,8 @@ import { TFunction, withTranslation } from 'react-i18next';
 
 import {
   CFOLIO_ITEM_BUY,
-  CFOLIO_ITEM_DEPOSIT_LP,
-  CFOLIO_ITEM_WITHDRAW_LP,
+  CFOLIO_ITEM_DEPOSIT,
+  CFOLIO_ITEM_WITHDRAW,
   STAKE_LP_AVAILABLE,
 } from '../../../stores/constants';
 import {
@@ -74,12 +74,12 @@ function StakeLP({
 
     StoreClasses.emitter.on(STAKE_LP_AVAILABLE, onLpAvailable);
     StoreClasses.emitter.on(CFOLIO_ITEM_BUY, resetTx);
-    StoreClasses.emitter.on(CFOLIO_ITEM_DEPOSIT_LP, resetTx);
-    StoreClasses.emitter.on(CFOLIO_ITEM_WITHDRAW_LP, resetTx);
+    StoreClasses.emitter.on(CFOLIO_ITEM_DEPOSIT, resetTx);
+    StoreClasses.emitter.on(CFOLIO_ITEM_WITHDRAW, resetTx);
     //Cleanup
     return () => {
-      StoreClasses.emitter.off(CFOLIO_ITEM_WITHDRAW_LP, resetTx);
-      StoreClasses.emitter.off(CFOLIO_ITEM_DEPOSIT_LP, resetTx);
+      StoreClasses.emitter.off(CFOLIO_ITEM_WITHDRAW, resetTx);
+      StoreClasses.emitter.off(CFOLIO_ITEM_DEPOSIT, resetTx);
       StoreClasses.emitter.off(CFOLIO_ITEM_BUY, resetTx);
       StoreClasses.emitter.off(STAKE_LP_AVAILABLE, onLpAvailable);
     };
@@ -113,8 +113,8 @@ function StakeLP({
     const payload = {
       type: cfolioItem
         ? tabOption === 1
-          ? CFOLIO_ITEM_WITHDRAW_LP
-          : CFOLIO_ITEM_DEPOSIT_LP
+          ? CFOLIO_ITEM_WITHDRAW
+          : CFOLIO_ITEM_DEPOSIT
         : CFOLIO_ITEM_BUY,
       content: {
         wowsAmount: nftPrice,
