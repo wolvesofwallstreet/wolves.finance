@@ -188,7 +188,7 @@ function YearnQuad({
       <AssetInput
         currency={currencies[currencyIndex]}
         defaultValue={
-          isNaN(inputVals[currencyIndex])
+          isNaN(inputVals[currencyIndex]) || inputVals[currencyIndex] === 0
             ? ''
             : inputVals[currencyIndex].toString()
         }

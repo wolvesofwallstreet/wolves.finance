@@ -52,9 +52,9 @@ function AssetInput({
   }, [cb, minAmount, maxAmount]);
 
   useEffect(() => {
-    if (inputRef.current) inputRef.current.value = '';
+    if (inputRef.current) inputRef.current.value = defaultValue ?? '';
     setAmountChanged(true);
-  }, [maxAmount]);
+  }, [maxAmount, defaultValue]);
 
   useEffect(() => {
     if (defaultValue && inputRef.current) {
