@@ -333,7 +333,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
               </span>
 
               <Link
-                to={'/cfolio-sfts?type=lpInvestment'}
+                to={`/cfolio-sfts?type=${this.displayType}`}
                 className={`link _btn _btn_effect tk-vincente-lightbold font-24 single-line c-pointer `}
               >
                 BACK TO INVESTMENT SFTS
