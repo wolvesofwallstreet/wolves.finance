@@ -165,7 +165,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 4.) If we have an Controller Upgrade, call OldController::transferAllFarms(newController)
+  // 4.) If we have a Controller Upgrade, call OldController::transferAllFarms(newController)
   // !! In deployments a ControllerUpdate.json file is expected with the old Controller
   //
   if (
