@@ -211,11 +211,11 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 5.) Call Controller.sol::setWorker(teamwallet)
+  // 6.) Call Controller.sol::setWorker(teamwallet)
   //     Until we haven't an automatic process for maintanance
   //     the current tem wallet is the "worker" (see next)
   //
-  // 6.) Call Controller.sol::refuelfarms < 1 day before duration ends
+  // 7.) Call Controller.sol::refuelfarms < 1 day before duration ends
   //     Until we haven't an automatic process for maintanance
   //     this has to be done every 2 weeks
   //
