@@ -100,7 +100,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 2.) Call WOWSErc20.sol::grantRole(WOWSErc20.sol.REWARD_ROLE(), controller)
+  // 2.) Call WOWSErc20.sol::grantRole(WOWSErc20.sol.MINTER_ROLE(), controller)
   //     This is to allow controller to call into WOWSErc20.sol to distribute
   //     rewards.
   //
