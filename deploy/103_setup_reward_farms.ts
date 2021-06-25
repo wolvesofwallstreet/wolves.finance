@@ -129,6 +129,8 @@ const func = async function (hardhat_re) {
       generatedAddresses.cfolioItemHandlerLPProxy
     ))
   ) {
+    console.log('Grant trade floor role to CFIHLP');
+
     await catchUnknownSigner(
       execute(
         SFT_HOLDER_CONTRACT,
@@ -141,6 +143,8 @@ const func = async function (hardhat_re) {
         generatedAddresses.cfolioItemHandlerLPProxy
       )
     );
+  } else {
+    console.log('Trade floor role already granted to CFIHLP');
   }
 
   //
@@ -151,6 +155,8 @@ const func = async function (hardhat_re) {
     (await CFOLIO_FARM_LP_INSTANCE.owner()).toLowerCase() !==
     generatedAddresses.cfolioItemHandlerLPProxy.toLowerCase()
   ) {
+    console.log('Transfering ownership of CFolioFarmLP to CFIHLP');
+
     await catchUnknownSigner(
       execute(
         CFOLIO_FARM_LP_CONTRACT,
@@ -162,6 +168,8 @@ const func = async function (hardhat_re) {
         generatedAddresses.cfolioItemHandlerLPProxy
       )
     );
+  } else {
+    console.log('CFolioFarmLP already owned by CFIHLP');
   }
 
   //
@@ -174,6 +182,8 @@ const func = async function (hardhat_re) {
       generatedAddresses.cfolioItemHandlerSCProxy
     ))
   ) {
+    console.log('Granting trade floor role to CFIHSC');
+
     await catchUnknownSigner(
       execute(
         SFT_HOLDER_CONTRACT,
@@ -186,6 +196,8 @@ const func = async function (hardhat_re) {
         generatedAddresses.cfolioItemHandlerSCProxy
       )
     );
+  } else {
+    console.log('Trade floor role already granted to CFIHSC');
   }
 
   //
@@ -196,6 +208,8 @@ const func = async function (hardhat_re) {
     (await CFOLIO_FARM_SC_INSTANCE.owner()).toLowerCase() !==
     generatedAddresses.cfolioItemHandlerSCProxy.toLowerCase()
   ) {
+    console.log('Transfering ownership of CFolioFarmSC to CFIHSC');
+
     await catchUnknownSigner(
       execute(
         CFOLIO_FARM_SC_CONTRACT,
@@ -207,6 +221,8 @@ const func = async function (hardhat_re) {
         generatedAddresses.cfolioItemHandlerSCProxy
       )
     );
+  } else {
+    console.log('CFolioFarmLP already owned by CFIHLP');
   }
 
   //
@@ -227,6 +243,8 @@ const func = async function (hardhat_re) {
       await CONTROLLER_INSTANCE.farms(generatedAddresses.cfolioFarmLP)
     ).farmStartedAtBlock.isZero()
   ) {
+    console.log('Registering CFolioFarmLP with controller');
+
     const REWARD_CAP = hardhat_re.ethers.BigNumber.from(
       '15000000000000000000000'
     );
@@ -250,6 +268,8 @@ const func = async function (hardhat_re) {
         REWARD_FEE
       )
     );
+  } else {
+    console.log('CFolioFarmLP already registered with controller');
   }
 
   //
@@ -270,6 +290,8 @@ const func = async function (hardhat_re) {
       await CONTROLLER_INSTANCE.farms(generatedAddresses.cfolioFarmSC)
     ).farmStartedAtBlock.isZero()
   ) {
+    console.log('Registering CFolioFarmSC with controller');
+
     const REWARD_CAP = hardhat_re.ethers.BigNumber.from(
       '15000000000000000000000'
     );
@@ -293,6 +315,8 @@ const func = async function (hardhat_re) {
         REWARD_FEE
       )
     );
+  } else {
+    console.log('CFolioFarmLP already registered with controller');
   }
 
   //
@@ -304,6 +328,8 @@ const func = async function (hardhat_re) {
     cfolioSpec.maxMintable[0].isZero() ||
     cfolioSpec.maxMintable[1].isZero()
   ) {
+    console.log('Setting c-folio specs for WOWSSftMinter');
+
     // We initialize 8 different investment SFT cards
     const CFI_TYPES = [
       '0x00',
@@ -335,11 +361,14 @@ const func = async function (hardhat_re) {
         configAddresses.sftMinterUpdate || NULL_ADDRESS
       )
     );
+
     // Assumption: SFTMinter is newly deployed, lets upgrade
     if (
       configAddresses.sftMinterUpdate &&
       configAddresses.sftMinterUpdate !== generatedAddresses.sftMinter
     ) {
+      console.log('Upgrading WOWSSftMinter');
+
       // old contracts don't have destructContract
       await catchUnknownSigner(
         execute(
@@ -351,7 +380,11 @@ const func = async function (hardhat_re) {
           'destructContract'
         )
       );
+    } else {
+      console.log('Not upgrading WOWSSftMinter');
     }
+  } else {
+    console.log('C-folio specs already set for WOWSSftMinter');
   }
 
   //
@@ -362,6 +395,8 @@ const func = async function (hardhat_re) {
     (await SFT_MINTER_INSTANCE.sftEvaluator()) !==
     generatedAddresses.sftEvaluatorProxy
   ) {
+    console.log('Setting SFT evaluator in WOWSSftMinter');
+
     await catchUnknownSigner(
       execute(
         SFT_MINTER_CONTRACT,
@@ -373,6 +408,8 @@ const func = async function (hardhat_re) {
         generatedAddresses.sftEvaluatorProxy
       )
     );
+  } else {
+    console.log('SFT evaluator already set in WOWSSftMinter');
   }
 
   //
@@ -384,6 +421,8 @@ const func = async function (hardhat_re) {
       generatedAddresses.sftEvaluatorProxy
     )) !== generatedAddresses.sftEvaluator
   ) {
+    console.log('Upgrading SFT evaluator');
+
     await catchUnknownSigner(
       execute(
         SFT_EVALUATOR_PROXY_CONTRACT,
@@ -395,15 +434,19 @@ const func = async function (hardhat_re) {
         generatedAddresses.sftEvaluator
       )
     );
+  } else {
+    console.log('Not upgrading SFT evaluator');
   }
 
   //
-  // 12.) Set the SFTMinter in CFIHLPP contract if required
+  // 12.) Set the SFTMinter in CFIHLP contract if required
   //
   if (
     (await CFOLIO_ITEM_HANDLER_LP_INSTANCE.sftMinter()) !==
     generatedAddresses.sftMinter
   ) {
+    console.log('Set SFT minter in CFIHLP');
+
     await catchUnknownSigner(
       execute(
         CFOLIO_ITEM_HANDLER_LP_CONTRACT,
@@ -416,6 +459,8 @@ const func = async function (hardhat_re) {
         generatedAddresses.sftMinter
       )
     );
+  } else {
+    console.log('SFT minter already set in CFIHLP');
   }
 
   //
@@ -427,6 +472,8 @@ const func = async function (hardhat_re) {
       generatedAddresses.cfolioItemHandlerLPProxy
     )) !== generatedAddresses.cfolioItemHandlerLP
   ) {
+    console.log('Upgrading CFIHLP');
+
     await catchUnknownSigner(
       execute(
         CFOLIO_ITEM_HANDLER_LP_PROXY_CONTRACT,
@@ -438,6 +485,8 @@ const func = async function (hardhat_re) {
         generatedAddresses.cfolioItemHandlerLP
       )
     );
+  } else {
+    console.log('Not upgrading CFIHLP');
   }
 
   //
@@ -447,6 +496,8 @@ const func = async function (hardhat_re) {
     (await CFOLIO_ITEM_HANDLER_SC_INSTANCE.sftMinter()) !==
     generatedAddresses.sftMinter
   ) {
+    console.log('Set SFT minter in CFIHSC');
+
     await catchUnknownSigner(
       execute(
         CFOLIO_ITEM_HANDLER_SC_CONTRACT,
@@ -459,6 +510,8 @@ const func = async function (hardhat_re) {
         generatedAddresses.sftMinter
       )
     );
+  } else {
+    console.log('SFT minter already set in CFIHLP');
   }
 
   //
@@ -470,6 +523,8 @@ const func = async function (hardhat_re) {
       generatedAddresses.cfolioItemHandlerSCProxy
     )) !== generatedAddresses.cfolioItemHandlerSC
   ) {
+    console.log('Upgrading CFIHSC');
+
     await catchUnknownSigner(
       execute(
         CFOLIO_ITEM_HANDLER_SC_PROXY_CONTRACT,
@@ -481,6 +536,8 @@ const func = async function (hardhat_re) {
         generatedAddresses.cfolioItemHandlerSC
       )
     );
+  } else {
+    console.log('Not upgrading CFIHSC');
   }
 };
 

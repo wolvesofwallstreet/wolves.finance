@@ -85,6 +85,8 @@ const func = async function (hardhat_re) {
       generatedAddresses.controller
     ))
   ) {
+    console.log('Grant reward role to controller');
+
     await catchUnknownSigner(
       execute(
         REWARD_HANDLER_CONTRACT,
@@ -97,6 +99,8 @@ const func = async function (hardhat_re) {
         generatedAddresses.controller
       )
     );
+  } else {
+    console.log('Reward role already granted to controller');
   }
 
   //
@@ -111,6 +115,8 @@ const func = async function (hardhat_re) {
       generatedAddresses.rewardHandler
     ))
   ) {
+    console.log('Grant minter role to reward handler');
+
     await catchUnknownSigner(
       execute(
         TOKEN_CONTRACT,
@@ -123,6 +129,8 @@ const func = async function (hardhat_re) {
         generatedAddresses.rewardHandler
       )
     );
+  } else {
+    console.log('Minter role already granted to reward handler');
   }
 
   //
@@ -147,6 +155,8 @@ const func = async function (hardhat_re) {
       CONTROLLER_INSTANCE.address &&
     (await CONTROLLER_INSTANCE.farms(FARM_ADDRESS)).farmStartedAtBlock.isZero()
   ) {
+    console.log('Register farm with controller');
+
     await catchUnknownSigner(
       execute(
         CONTROLLER_CONTRACT,
@@ -162,6 +172,8 @@ const func = async function (hardhat_re) {
         REWARD_FEE
       )
     );
+  } else {
+    console.log('Farm already registered with controller');
   }
 
   //
@@ -172,6 +184,8 @@ const func = async function (hardhat_re) {
     configAddresses.controllerUpdate &&
     configAddresses.controllerUpdate !== generatedAddresses.controller
   ) {
+    console.log('Transfer farms');
+
     await catchUnknownSigner(
       execute(
         CONTROLLER_UPDATE_CONTRACT,
@@ -183,6 +197,8 @@ const func = async function (hardhat_re) {
         generatedAddresses.controller
       )
     );
+  } else {
+    console.log('No need to transfer farms');
   }
 
   //
@@ -196,6 +212,8 @@ const func = async function (hardhat_re) {
       generatedAddresses.presale
     ))
   ) {
+    console.log('Grant minter role to crowdsale');
+
     await catchUnknownSigner(
       execute(
         TOKEN_CONTRACT,
@@ -208,6 +226,8 @@ const func = async function (hardhat_re) {
         generatedAddresses.presale
       )
     );
+  } else {
+    console.log('Minter role already granted to crowdsale');
   }
 
   //
