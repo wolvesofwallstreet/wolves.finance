@@ -72,6 +72,8 @@ class Footer extends Component<FooterProps, FooterState> {
         <Modal
           show={showModal}
           onHide={() => this.setState({ showModal: false })}
+          size="lg"
+          animation={false}
         >
           <Modal.Header closeButton>
             <Modal.Title>

@@ -22,6 +22,7 @@ import {
   StatusResult,
   StoreClasses,
 } from '../../../stores/store';
+import Approval from '../../Approval';
 import AssetInput from '../../controls/asset_input';
 
 type PROPS = {
@@ -47,6 +48,7 @@ function YearnQuad({
   const [inputVals, setInputVals] = useState([0, 0, 0, 0, 0]);
   const [txRunning, setTXRunning] = useState(false);
   const [balances] = useState(StoreClasses.store.getAssets().balances);
+  const [modal, showModal] = useState(false);
 
   const currencies = ['DAI', 'USDC', 'USDT', 'TUSD', 'yCrv']; // maps from internal to asset index
 
@@ -171,6 +173,8 @@ function YearnQuad({
         curMaxAmount
       : undefined;
 
+  const hideModal = () => showModal(false);
+
   return (
     <>
       <div
@@ -180,10 +184,18 @@ function YearnQuad({
         {renderSpan(0, spanText)}
         {cfolioItem && renderSpan(1, 'WITHDRAW')}
       </div>
-      <span className="mt-1 font-14">
-        AVAILABLE IN{tabOption === 0 ? ' MY WALLET: ' : ' MY NFT: '}
-        {curMaxAmount.toFixed(4)} {currencies[currencyIndex]}
-      </span>
+      <div className="d-flex justify-content-between">
+        <span className="d-block my-1 font-14">
+          {tabOption === 0 ? ' MY WALLET: ' : ' MY NFT: '}
+          {curMaxAmount.toFixed(2)} {currencies[currencyIndex]}
+        </span>
+        <span
+          className="d-block my-1 font-14 c-pointer"
+          onClick={() => showModal(true)}
+        >
+          <u>MANAGE APPROVAL</u>
+        </span>
+      </div>
       {/* Orange Horizontal Bar */}
       <AssetInput
         currency={currencies[currencyIndex]}
@@ -234,6 +246,7 @@ function YearnQuad({
       >
         {buttonText.l}
       </button>
+      {modal && <Approval show={true} hideCB={hideModal} />}
     </>
   );
 }

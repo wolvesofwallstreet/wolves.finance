@@ -160,8 +160,8 @@ function StakeLP({
         {cfolioItem && renderSpan(1, 'UNSTAKE')}
       </div>
       <span className="mt-1 font-14">
-        AVAILABLE IN{tabOption === 0 ? ' MY WALLET: ' : ' MY NFT: '}
-        {curMaxAmount.toFixed(4)} {investCurrency}
+        {tabOption === 0 ? ' MY WALLET: ' : ' MY NFT: '}
+        {curMaxAmount.toFixed(2)} {investCurrency}
       </span>
       <AssetInput
         currency={investCurrency}

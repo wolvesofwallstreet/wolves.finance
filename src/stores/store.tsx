@@ -114,7 +114,8 @@ export type AssetStateresult = {
     | 'tokens'
     | 'cfolio_amount'
     | 'rewards'
-    | 'balances';
+    | 'balances'
+    | 'allowance';
 };
 
 export type TokenContractResult = {
@@ -201,6 +202,7 @@ export type ASSET_BALANCE = {
     dust: ethers.BigNumber;
     value: number;
     address?: string;
+    allowance: number;
   };
 };
 
@@ -261,36 +263,43 @@ class Store {
         decimals: 18,
         dust: Store.DUST_18,
         value: 0,
+        allowance: 0,
       },
       'WETH/WOWS LP': {
         decimals: 18,
         dust: Store.DUST_18,
         value: 0,
+        allowance: 0,
       },
       USDC: {
         decimals: 6,
         dust: Store.DUST_6,
         value: 0,
+        allowance: 0,
       },
       USDT: {
         decimals: 6,
         dust: Store.DUST_6,
         value: 0,
+        allowance: 0,
       },
       DAI: {
         decimals: 18,
         dust: Store.DUST_18,
         value: 0,
+        allowance: 0,
       },
       TUSD: {
         decimals: 18,
         dust: Store.DUST_18,
         value: 0,
+        allowance: 0,
       },
       yCrv: {
         decimals: 18,
         dust: Store.DUST_18,
         value: 0,
+        allowance: 0,
       },
     },
     userSFT: [],
