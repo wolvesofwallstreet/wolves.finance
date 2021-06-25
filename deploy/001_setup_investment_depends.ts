@@ -379,7 +379,7 @@ const func = async function (hardhat_re) {
       CURVE_Y_DEPOSIT_CONTRACT,
       {
         from: deployer,
-        gasLimit: 10000000, // 10M GWei
+        gasLimit: 2000000, // 2M GWei
         log: true,
       },
       'add_liquidity',
