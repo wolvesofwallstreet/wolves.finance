@@ -13,7 +13,7 @@ import { Modal } from 'react-bootstrap';
 import { TFunction, withTranslation } from 'react-i18next';
 
 import { ASSETS_STATE } from '../../stores/constants';
-import { AssetStateresult, StoreClasses } from '../../stores/store';
+import { AssetStateresult, Payload, StoreClasses } from '../../stores/store';
 
 type PROPS = {
   hideCB: () => void;
@@ -36,6 +36,11 @@ function Approval({ hideCB, show, t }: PROPS): JSX.Element {
     };
 
     StoreClasses.emitter.on(ASSETS_STATE, assetState);
+    StoreClasses.dispatcher.dispatch({
+      type: ASSETS_STATE,
+      content: { filter: ['allowance'] },
+    } as Payload);
+
     //Cleanup
     return () => {
       StoreClasses.emitter.off(ASSETS_STATE, assetState);

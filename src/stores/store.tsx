@@ -203,6 +203,7 @@ export type ASSET_BALANCE = {
     value: number;
     address?: string;
     allowance: number;
+    handlerAddress?: string;
   };
 };
 
@@ -419,6 +420,8 @@ class Store {
             this._getUserSft(_payload.content);
           if (_payload.content.filter?.includes('balances'))
             this._getAssetsBalances(_payload.content);
+          if (_payload.content.filter?.includes('allowance'))
+            this._getAssetsAllowances(_payload.content);
           break;
         case SFT_UNLOCK:
           this._doSftUnlock(_payload.content);
@@ -777,6 +780,20 @@ class Store {
       this.assets.balances['DAI'].address = chainAddresses.daiToken;
       this.assets.balances['TUSD'].address = chainAddresses.tusdToken;
       this.assets.balances['yCrv'].address = chainAddresses.curveYToken;
+
+      this.assets.balances['WOWS'].handlerAddress = chainAddresses.sftMinter;
+      this.assets.balances['WETH/WOWS LP'].handlerAddress =
+        chainAddresses.cfolioItemHandlerLPProxy;
+      this.assets.balances['USDC'].handlerAddress =
+        chainAddresses.cfolioItemHandlerSCProxy;
+      this.assets.balances['USDT'].handlerAddress =
+        chainAddresses.cfolioItemHandlerSCProxy;
+      this.assets.balances['DAI'].handlerAddress =
+        chainAddresses.cfolioItemHandlerSCProxy;
+      this.assets.balances['TUSD'].handlerAddress =
+        chainAddresses.cfolioItemHandlerSCProxy;
+      this.assets.balances['yCrv'].handlerAddress =
+        chainAddresses.cfolioItemHandlerSCProxy;
     } else {
       this.tokenContractAddress = Store.nullAddress;
       for (const [, value] of Object.entries(this.assets.balances)) {
@@ -1184,6 +1201,36 @@ class Store {
           (value.value = this.fromWei(balances[index], value.decimals))
       );
       emitter.emit(ASSETS_STATE, { status: 'balances' } as AssetStateresult);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  _getAssetsAllowances = async (payloadContent: PayloadContent) => {
+    if (!this.sftMintContractRO || this.address === '') return;
+    try {
+      const input = Object.entries(this.assets.balances).map(
+        ([_, value]) => value.address ?? Store.nullAddress
+      );
+      const spender = Object.entries(this.assets.balances).map(
+        ([_, value]) => value.handlerAddress ?? Store.nullAddress
+      );
+      const balances = await this.sftMintContractRO.getErc20Allowances(
+        this.address,
+        spender,
+        input
+      );
+      Object.entries(this.assets.balances).forEach(
+        ([_, value], index) =>
+          (value.allowance = balances[index].gt(
+            ethers.BigNumber.from(0xffffffff).mul(
+              ethers.BigNumber.from(10).pow(value.decimals)
+            )
+          )
+            ? -1
+            : this.fromWei(balances[index], value.decimals))
+      );
+      emitter.emit(ASSETS_STATE, { status: 'allowance' } as AssetStateresult);
     } catch (e) {
       console.log(e);
     }
