@@ -24,6 +24,7 @@ import {
   StoreClasses,
   TokenContractResult,
 } from '../../../stores/store';
+import Approval from '../../Approval';
 import AssetInput from '../../controls/asset_input';
 
 type PROPS = {
@@ -48,6 +49,7 @@ function StakeLP({
   const [hasSft, setHasSft] = useState(false);
   const [inputVal, setInputVal] = useState(0);
   const [txRunning, setTXRunning] = useState(false);
+  const [modal, showModal] = useState(false);
 
   if ((sft === undefined) === hasSft) {
     if (hasSft) setInvestAmount(0);
@@ -150,6 +152,8 @@ function StakeLP({
         }
     : { l: 'ACCOUNT NOT INITIALIZED', e: false };
 
+  const hideModal = () => showModal(false);
+
   return (
     <>
       <div
@@ -159,10 +163,18 @@ function StakeLP({
         {renderSpan(0, spanText)}
         {cfolioItem && renderSpan(1, 'UNSTAKE')}
       </div>
-      <span className="mt-1 font-14">
-        {tabOption === 0 ? ' MY WALLET: ' : ' MY NFT: '}
-        {curMaxAmount.toFixed(2)} {investCurrency}
-      </span>
+      <div className="d-flex justify-content-between">
+        <span className="d-block my-1 font-14">
+          {tabOption === 0 ? ' MY WALLET: ' : ' MY NFT: '}
+          {curMaxAmount.toFixed(2)} {investCurrency}
+        </span>
+        <span
+          className="d-block my-1 font-14 c-pointer"
+          onClick={() => showModal(true)}
+        >
+          <u>MANAGE APPROVAL</u>
+        </span>
+      </div>
       <AssetInput
         currency={investCurrency}
         minAmount={cfolioItem ? 0.0000000001 : 0}
@@ -189,6 +201,7 @@ function StakeLP({
       >
         {buttonText.l}
       </button>
+      {modal && <Approval show={true} hideCB={hideModal} />}
     </>
   );
 }
