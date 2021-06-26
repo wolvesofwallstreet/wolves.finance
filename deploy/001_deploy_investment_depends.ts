@@ -24,6 +24,10 @@ const MinterArtifact = require('../contracts/bytecode/curve-dao-contracts/Minter
 const VotingEscrowArtifact = require('../contracts/bytecode/curve-dao-contracts/VotingEscrow.json');
 
 // TODO: Fully qualified contract names
+const CONVEX_CONTROLLER_CONTRACT = 'ConvexController';
+const CONVEX_MINTER_CONTRACT = 'ConvexMinter';
+const CONVEX_TOKEN_CONTRACT = 'ConvexToken';
+const CONVEX_VOTING_CONTRACT = 'ConvexVoting';
 const DAI_TOKEN_CONTRACT = 'DAI';
 const TUSD_TOKEN_CONTRACT = 'TrueUSD';
 const USDC_TOKEN_CONTRACT = 'USDC';
@@ -662,6 +666,130 @@ const func = async function (hardhat_re) {
     });
 
     generatedAddresses.curveYGauge = curveYGaugeReceipt.address;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // Deploy Convex contracts
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  // Mainnet address: 0xD533a949740bb3306d119CC777fa900bA034cd52
+  if (configAddresses?.convexToken) {
+    log_step(
+      `Using deployed CRV token contract: ${configAddresses.convexToken}`
+    );
+    generatedAddresses.convexToken = configAddresses.convexToken;
+  } else {
+    log_step('Deploying CONVEX token contract');
+
+    const convexTokenReceipt = await deploy(CONVEX_TOKEN_CONTRACT, {
+      from: deployer,
+      contract: {
+        abi: Erc20CrvArtifact['abi'],
+        bytecode: Erc20CrvArtifact['bytecode'],
+      },
+      args: [
+        'Curve DAO Token', // name
+        'CONVEX', // symbol
+        18, // decimals
+        marketingWallet, // admin
+        marketingWallet, // initial holder
+      ],
+      log: true,
+      deterministicDeployment: true,
+    });
+
+    generatedAddresses.convexToken = convexTokenReceipt.address;
+  }
+
+  const CONVEX_TOKEN_ADDRESS = generatedAddresses.convexToken;
+
+  // Mainnet address: 0x5f3b5DfEb7B28CDbD7FAba78963EE202a494e2A2
+  if (configAddresses?.convexVoting) {
+    log_step(
+      `Using deployed CONVEX voting contract: ${configAddresses.convexVoting}`
+    );
+    generatedAddresses.convexVoting = configAddresses.convexVoting;
+  } else {
+    log_step('Deploying CONVEX voting contract');
+
+    const convexVotingReceipt = await deploy(CONVEX_VOTING_CONTRACT, {
+      from: deployer,
+      contract: {
+        abi: VotingEscrowArtifact['abi'],
+        bytecode: VotingEscrowArtifact['bytecode'],
+      },
+      args: [
+        CONVEX_TOKEN_ADDRESS, // token
+        'Vote-escrowed CONVEX', // name
+        'veCONVEX', // symbol
+        'veCONVEX_1.0.0', // version
+        marketingWallet, // admin
+        marketingWallet, // controller
+      ],
+      log: true,
+      deterministicDeployment: true,
+    });
+
+    generatedAddresses.convexVoting = convexVotingReceipt.address;
+  }
+
+  const CONVEX_VOTING_ADDRESS = generatedAddresses.convexVoting;
+
+  // Mainnet address: 0x2F50D538606Fa9EDD2B11E2446BEb18C9D5846bB
+  if (configAddresses?.convexController) {
+    log_step(
+      `Using deployed CONVEX controller contract: ${configAddresses.convexController}`
+    );
+    generatedAddresses.convexController = configAddresses.convexController;
+  } else {
+    log_step('Deploying CONVEX controller contract');
+
+    const convexControllerReceipt = await deploy(CONVEX_CONTROLLER_CONTRACT, {
+      from: deployer,
+      contract: {
+        abi: GaugeControllerArtifact['abi'],
+        bytecode: GaugeControllerArtifact['bytecode'],
+      },
+      args: [
+        CONVEX_TOKEN_ADDRESS, // token
+        CONVEX_VOTING_ADDRESS, // voting escrow
+        marketingWallet, // admin
+      ],
+      log: true,
+      deterministicDeployment: true,
+    });
+
+    generatedAddresses.convexController = convexControllerReceipt.address;
+  }
+
+  const CONVEX_CONTROLLER_ADDRESS = generatedAddresses.convexController;
+
+  // Mainnet address: 0xd061D61a4d941c39E5453435B6345Dc261C2fcE0
+  if (configAddresses?.convexMinter) {
+    log_step(
+      `Using deployed CONVEX minter contract: ${configAddresses.convexMinter}`
+    );
+    generatedAddresses.convexMinter = configAddresses.convexMinter;
+  } else {
+    log_step('Deploying CONVEX minter contract');
+
+    const convexMinterReceipt = await deploy(CONVEX_MINTER_CONTRACT, {
+      from: deployer,
+      contract: {
+        abi: MinterArtifact['abi'],
+        bytecode: MinterArtifact['bytecode'],
+      },
+      args: [
+        CONVEX_TOKEN_ADDRESS, // token
+        CONVEX_CONTROLLER_ADDRESS, // controller
+      ],
+      log: true,
+      deterministicDeployment: true,
+    });
+
+    generatedAddresses.convexMinter = convexMinterReceipt.address;
   }
 
   //////////////////////////////////////////////////////////////////////////////
