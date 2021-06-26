@@ -561,16 +561,34 @@ contract WOWSSftMinter is Context, Ownable {
   /**
    * @dev Get balances of given ERC20 addresses.
    */
-  function getErc20Balances(address account, address[] calldata addresses)
+  function getErc20Balances(address account, address[] calldata erc20)
     external
     view
     returns (uint256[] memory amounts)
   {
-    amounts = new uint256[](addresses.length);
-    for (uint256 i = 0; i < addresses.length; ++i)
-      amounts[i] = addresses[i] == address(0)
+    amounts = new uint256[](erc20.length);
+    for (uint256 i = 0; i < erc20.length; ++i)
+      amounts[i] = erc20[i] == address(0)
         ? 0
-        : IERC20(addresses[i]).balanceOf(account);
+        : IERC20(erc20[i]).balanceOf(account);
+  }
+
+  /**
+   * @dev Get allowances of given ERC20 addresses.
+   */
+  function getErc20Allowances(
+    address account,
+    address[] calldata spender,
+    address[] calldata erc20
+  ) external view returns (uint256[] memory amounts) {
+    // Validate parameters
+    require(spender.length == erc20.length, 'Length mismatch');
+
+    amounts = new uint256[](spender.length);
+    for (uint256 i = 0; i < spender.length; ++i)
+      amounts[i] = erc20[i] == address(0)
+        ? 0
+        : IERC20(erc20[i]).allowance(account, spender[i]);
   }
 
   //////////////////////////////////////////////////////////////////////////////
