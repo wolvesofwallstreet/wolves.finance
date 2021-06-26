@@ -1,0 +1,265 @@
+From ace38aa3205dbbab37666beb8b5444e2f5098726 Mon Sep 17 00:00:00 2001
+From: juztamau5 <juztamau5@gmail.com>
+Date: Fri, 25 Jun 2021 18:31:33 -0700
+Subject: [PATCH] Avoid name conflicts with Booster contract
+
+"Booster" is a common contract name, so add the "Convex" prefix
+to give other projects some isolation.
+---
+ contracts/contracts/Booster.sol             | 2 +-
+ contracts/migrations/1_initial_migration.js | 2 +-
+ contracts/test/10_Arbitrator.js             | 2 +-
+ contracts/test/11_Chef.js                   | 2 +-
+ contracts/test/19_ChefRewarder.js           | 2 +-
+ contracts/test/1_BasicDepositWithdraw.js    | 2 +-
+ contracts/test/20_ChefUI.js                 | 2 +-
+ contracts/test/2_RewardTest.js              | 2 +-
+ contracts/test/3_ExtraRewardTest.js         | 2 +-
+ contracts/test/3b_ExtraRewardTestV1.js      | 2 +-
+ contracts/test/4_CrvNoWhitelist.js          | 2 +-
+ contracts/test/5_Whitelist.js               | 2 +-
+ contracts/test/6_Voting.js                  | 2 +-
+ contracts/test/7_VecrvFees.js               | 2 +-
+ contracts/test/8_Shutdown.js                | 2 +-
+ contracts/test/UI_0_Bootstrap.js            | 2 +-
+ contracts/test/UI_2_EarmarkPools.js         | 2 +-
+ contracts/test/UI_3_vecrvFees.js            | 2 +-
+ 18 files changed, 18 insertions(+), 18 deletions(-)
+
+diff --git a/contracts/contracts/Booster.sol b/contracts/contracts/Booster.sol
+index e275102..4c1221c 100644
+--- a/contracts/contracts/Booster.sol
++++ b/contracts/contracts/Booster.sol
+@@ -8,7 +8,7 @@ import '@openzeppelin/contracts/utils/Address.sol';
+ import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
+ 
+ 
+-contract Booster{
++contract ConvexBooster{
+     using SafeERC20 for IERC20;
+     using Address for address;
+     using SafeMath for uint256;
+diff --git a/contracts/migrations/1_initial_migration.js b/contracts/migrations/1_initial_migration.js
+index d53ef53..690cb1d 100644
+--- a/contracts/migrations/1_initial_migration.js
++++ b/contracts/migrations/1_initial_migration.js
+@@ -4,7 +4,7 @@ var jsonfile = require('jsonfile');
+ var BN = require('big-number');
+ var distroList = jsonfile.readFileSync('./distro.json');
+ 
+-const Booster = artifacts.require("Booster");
++const Booster = artifacts.require("ConvexBooster");
+ const CurveVoterProxy = artifacts.require("CurveVoterProxy");
+ const RewardFactory = artifacts.require("RewardFactory");
+ const StashFactory = artifacts.require("StashFactory");
+diff --git a/contracts/test/10_Arbitrator.js b/contracts/test/10_Arbitrator.js
+index c24c506..2d0a49c 100644
+--- a/contracts/test/10_Arbitrator.js
++++ b/contracts/test/10_Arbitrator.js
+@@ -3,7 +3,7 @@ const { BN, time } = require('openzeppelin-test-helpers');
+ var jsonfile = require('jsonfile');
+ var contractList = jsonfile.readFileSync('./contracts.json');
+ 
+-const Booster = artifacts.require("Booster");
++const Booster = artifacts.require("ConvexBooster");
+ const CrvDepositor = artifacts.require("CrvDepositor");
+ const CurveVoterProxy = artifacts.require("CurveVoterProxy");
+ const ExtraRewardStashV1 = artifacts.require("ExtraRewardStashV1");
+diff --git a/contracts/test/11_Chef.js b/contracts/test/11_Chef.js
+index 695b2a1..3679a28 100644
+--- a/contracts/test/11_Chef.js
++++ b/contracts/test/11_Chef.js
+@@ -3,7 +3,7 @@ const { BN, time } = require('openzeppelin-test-helpers');
+ var jsonfile = require('jsonfile');
+ var contractList = jsonfile.readFileSync('./contracts.json');
+ 
+-const Booster = artifacts.require("Booster");
++const Booster = artifacts.require("ConvexBooster");
+ const CrvDepositor = artifacts.require("CrvDepositor");
+ const CurveVoterProxy = artifacts.require("CurveVoterProxy");
+ const ExtraRewardStashV1 = artifacts.require("ExtraRewardStashV1");
+diff --git a/contracts/test/19_ChefRewarder.js b/contracts/test/19_ChefRewarder.js
+index 2c5aa4a..bdfbe47 100644
+--- a/contracts/test/19_ChefRewarder.js
++++ b/contracts/test/19_ChefRewarder.js
+@@ -3,7 +3,7 @@ const { BN, time } = require('openzeppelin-test-helpers');
+ var jsonfile = require('jsonfile');
+ var contractList = jsonfile.readFileSync('./contracts.json');
+ 
+-const Booster = artifacts.require("Booster");
++const Booster = artifacts.require("ConvexBooster");
+ const CrvDepositor = artifacts.require("CrvDepositor");
+ const CurveVoterProxy = artifacts.require("CurveVoterProxy");
+ const ExtraRewardStashV1 = artifacts.require("ExtraRewardStashV1");
+diff --git a/contracts/test/1_BasicDepositWithdraw.js b/contracts/test/1_BasicDepositWithdraw.js
+index 5004063..be77280 100644
+--- a/contracts/test/1_BasicDepositWithdraw.js
++++ b/contracts/test/1_BasicDepositWithdraw.js
+@@ -3,7 +3,7 @@ const { BN, constants, expectEvent, expectRevert, time } = require('openzeppelin
+ var jsonfile = require('jsonfile');
+ var contractList = jsonfile.readFileSync('./contracts.json');
+ 
+-const Booster = artifacts.require("Booster");
++const Booster = artifacts.require("ConvexBooster");
+ const CrvDepositor = artifacts.require("CrvDepositor");
+ const CurveVoterProxy = artifacts.require("CurveVoterProxy");
+ const ExtraRewardStashV2 = artifacts.require("ExtraRewardStashV2");
+diff --git a/contracts/test/20_ChefUI.js b/contracts/test/20_ChefUI.js
+index 1a00e6d..6e2b04d 100644
+--- a/contracts/test/20_ChefUI.js
++++ b/contracts/test/20_ChefUI.js
+@@ -3,7 +3,7 @@ const { BN, time } = require('openzeppelin-test-helpers');
+ var jsonfile = require('jsonfile');
+ var contractList = jsonfile.readFileSync('./contracts.json');
+ 
+-const Booster = artifacts.require("Booster");
++const Booster = artifacts.require("ConvexBooster");
+ const CrvDepositor = artifacts.require("CrvDepositor");
+ const CurveVoterProxy = artifacts.require("CurveVoterProxy");
+ const ExtraRewardStashV1 = artifacts.require("ExtraRewardStashV1");
+diff --git a/contracts/test/2_RewardTest.js b/contracts/test/2_RewardTest.js
+index f47cfc3..75bcb1a 100644
+--- a/contracts/test/2_RewardTest.js
++++ b/contracts/test/2_RewardTest.js
+@@ -2,7 +2,7 @@ const { BN, constants, expectEvent, expectRevert, time } = require('openzeppelin
+ var jsonfile = require('jsonfile');
+ var contractList = jsonfile.readFileSync('./contracts.json');
+ 
+-const Booster = artifacts.require("Booster");
++const Booster = artifacts.require("ConvexBooster");
+ const CrvDepositor = artifacts.require("CrvDepositor");
+ const CurveVoterProxy = artifacts.require("CurveVoterProxy");
+ const ExtraRewardStashV2 = artifacts.require("ExtraRewardStashV2");
+diff --git a/contracts/test/3_ExtraRewardTest.js b/contracts/test/3_ExtraRewardTest.js
+index f56e656..a1a6a67 100644
+--- a/contracts/test/3_ExtraRewardTest.js
++++ b/contracts/test/3_ExtraRewardTest.js
+@@ -2,7 +2,7 @@ const { BN, constants, expectEvent, expectRevert, time } = require('openzeppelin
+ var jsonfile = require('jsonfile');
+ var contractList = jsonfile.readFileSync('./contracts.json');
+ 
+-const Booster = artifacts.require("Booster");
++const Booster = artifacts.require("ConvexBooster");
+ const CrvDepositor = artifacts.require("CrvDepositor");
+ const CurveVoterProxy = artifacts.require("CurveVoterProxy");
+ const ExtraRewardStashV2 = artifacts.require("ExtraRewardStashV2");
+diff --git a/contracts/test/3b_ExtraRewardTestV1.js b/contracts/test/3b_ExtraRewardTestV1.js
+index e26148a..20056d6 100644
+--- a/contracts/test/3b_ExtraRewardTestV1.js
++++ b/contracts/test/3b_ExtraRewardTestV1.js
+@@ -3,7 +3,7 @@ const { BN, time } = require('openzeppelin-test-helpers');
+ var jsonfile = require('jsonfile');
+ var contractList = jsonfile.readFileSync('./contracts.json');
+ 
+-const Booster = artifacts.require("Booster");
++const Booster = artifacts.require("ConvexBooster");
+ const CrvDepositor = artifacts.require("CrvDepositor");
+ const CurveVoterProxy = artifacts.require("CurveVoterProxy");
+ const ExtraRewardStashV1 = artifacts.require("ExtraRewardStashV1");
+diff --git a/contracts/test/4_CrvNoWhitelist.js b/contracts/test/4_CrvNoWhitelist.js
+index 7d6961f..9c8779c 100644
+--- a/contracts/test/4_CrvNoWhitelist.js
++++ b/contracts/test/4_CrvNoWhitelist.js
+@@ -2,7 +2,7 @@ const { BN, constants, expectEvent, expectRevert, time } = require('openzeppelin
+ var jsonfile = require('jsonfile');
+ var contractList = jsonfile.readFileSync('./contracts.json');
+ 
+-const Booster = artifacts.require("Booster");
++const Booster = artifacts.require("ConvexBooster");
+ const CrvDepositor = artifacts.require("CrvDepositor");
+ const CurveVoterProxy = artifacts.require("CurveVoterProxy");
+ const ExtraRewardStashV2 = artifacts.require("ExtraRewardStashV2");
+diff --git a/contracts/test/5_Whitelist.js b/contracts/test/5_Whitelist.js
+index 059d623..2350acd 100644
+--- a/contracts/test/5_Whitelist.js
++++ b/contracts/test/5_Whitelist.js
+@@ -2,7 +2,7 @@ const { BN, constants, expectEvent, expectRevert, time } = require('openzeppelin
+ var jsonfile = require('jsonfile');
+ var contractList = jsonfile.readFileSync('./contracts.json');
+ 
+-const Booster = artifacts.require("Booster");
++const Booster = artifacts.require("ConvexBooster");
+ const CrvDepositor = artifacts.require("CrvDepositor");
+ const CurveVoterProxy = artifacts.require("CurveVoterProxy");
+ const ExtraRewardStashV2 = artifacts.require("ExtraRewardStashV2");
+diff --git a/contracts/test/6_Voting.js b/contracts/test/6_Voting.js
+index c432085..22146ab 100644
+--- a/contracts/test/6_Voting.js
++++ b/contracts/test/6_Voting.js
+@@ -2,7 +2,7 @@ const { BN, constants, expectEvent, expectRevert, time } = require('openzeppelin
+ var jsonfile = require('jsonfile');
+ var contractList = jsonfile.readFileSync('./contracts.json');
+ 
+-const Booster = artifacts.require("Booster");
++const Booster = artifacts.require("ConvexBooster");
+ const CrvDepositor = artifacts.require("CrvDepositor");
+ const CurveVoterProxy = artifacts.require("CurveVoterProxy");
+ const ExtraRewardStashV2 = artifacts.require("ExtraRewardStashV2");
+diff --git a/contracts/test/7_VecrvFees.js b/contracts/test/7_VecrvFees.js
+index ac8b324..edd7469 100644
+--- a/contracts/test/7_VecrvFees.js
++++ b/contracts/test/7_VecrvFees.js
+@@ -2,7 +2,7 @@ const { BN, constants, expectEvent, expectRevert, time } = require('openzeppelin
+ var jsonfile = require('jsonfile');
+ var contractList = jsonfile.readFileSync('./contracts.json');
+ 
+-const Booster = artifacts.require("Booster");
++const Booster = artifacts.require("ConvexBooster");
+ const CrvDepositor = artifacts.require("CrvDepositor");
+ const CurveVoterProxy = artifacts.require("CurveVoterProxy");
+ const ExtraRewardStashV2 = artifacts.require("ExtraRewardStashV2");
+diff --git a/contracts/test/8_Shutdown.js b/contracts/test/8_Shutdown.js
+index e4d91a2..351834b 100644
+--- a/contracts/test/8_Shutdown.js
++++ b/contracts/test/8_Shutdown.js
+@@ -2,7 +2,7 @@ const { BN, constants, expectEvent, expectRevert, time } = require('openzeppelin
+ var jsonfile = require('jsonfile');
+ var contractList = jsonfile.readFileSync('./contracts.json');
+ 
+-const Booster = artifacts.require("Booster");
++const Booster = artifacts.require("ConvexBooster");
+ const CrvDepositor = artifacts.require("CrvDepositor");
+ const CurveVoterProxy = artifacts.require("CurveVoterProxy");
+ const ExtraRewardStashV2 = artifacts.require("ExtraRewardStashV2");
+diff --git a/contracts/test/UI_0_Bootstrap.js b/contracts/test/UI_0_Bootstrap.js
+index a7cb443..ed2a607 100644
+--- a/contracts/test/UI_0_Bootstrap.js
++++ b/contracts/test/UI_0_Bootstrap.js
+@@ -2,7 +2,7 @@ const { BN, constants, expectEvent, expectRevert, time } = require('openzeppelin
+ var jsonfile = require('jsonfile');
+ var contractList = jsonfile.readFileSync('./contracts.json');
+ 
+-const Booster = artifacts.require("Booster");
++const Booster = artifacts.require("ConvexBooster");
+ const CrvDepositor = artifacts.require("CrvDepositor");
+ const IERC20 = artifacts.require("IERC20");
+ const IExchange = artifacts.require("IExchange");
+diff --git a/contracts/test/UI_2_EarmarkPools.js b/contracts/test/UI_2_EarmarkPools.js
+index de303ce..6a3dd1c 100644
+--- a/contracts/test/UI_2_EarmarkPools.js
++++ b/contracts/test/UI_2_EarmarkPools.js
+@@ -3,7 +3,7 @@ const { BN, constants, expectEvent, expectRevert, time } = require('openzeppelin
+ var jsonfile = require('jsonfile');
+ var contractList = jsonfile.readFileSync('./contracts.json');
+ 
+-const Booster = artifacts.require("Booster");
++const Booster = artifacts.require("ConvexBooster");
+ 
+ contract("Earmark Pools", async accounts => {
+   it("should earmark all pools", async () => {
+diff --git a/contracts/test/UI_3_vecrvFees.js b/contracts/test/UI_3_vecrvFees.js
+index 66b526a..fb20700 100644
+--- a/contracts/test/UI_3_vecrvFees.js
++++ b/contracts/test/UI_3_vecrvFees.js
+@@ -4,7 +4,7 @@ var jsonfile = require('jsonfile');
+ var contractList = jsonfile.readFileSync('./contracts.json');
+ 
+ const CrvDepositor = artifacts.require("CrvDepositor");
+-const Booster = artifacts.require("Booster");
++const Booster = artifacts.require("ConvexBooster");
+ const CurveVoterProxy = artifacts.require("CurveVoterProxy");
+ const IERC20 = artifacts.require("IERC20");
+ const IWalletCheckerDebug = artifacts.require("IWalletCheckerDebug");
+-- 
+2.30.2
+

@@ -67,6 +67,7 @@ fi
 #
 
 source "${DEPENDS_DIR}/chain/canonical-weth/package.sh"
+source "${DEPENDS_DIR}/chain/convex-platform/package.sh"
 source "${DEPENDS_DIR}/chain/curve-contracts/package.sh"
 source "${DEPENDS_DIR}/chain/curve-dao-contracts/package.sh"
 source "${DEPENDS_DIR}/chain/uniswap-lib/package.sh"
@@ -79,6 +80,7 @@ source "${DEPENDS_DIR}/chain/yearn-protocol/package.sh"
 #
 
 checkout_canonical_weth
+checkout_convex
 checkout_curve
 checkout_curve_dao
 checkout_uniswap_lib
@@ -91,6 +93,7 @@ checkout_yearn
 #
 
 build_canonical_weth
+build_convex
 build_curve
 build_curve_dao
 build_uniswap_lib
@@ -103,6 +106,7 @@ build_yearn
 #
 
 install_canonical_weth
+install_convex
 install_curve
 install_curve_dao
 install_uniswap_lib
