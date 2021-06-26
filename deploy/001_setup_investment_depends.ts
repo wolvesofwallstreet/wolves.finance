@@ -33,7 +33,9 @@ const INITIAL_Y_POOL_USDT = ethers.BigNumber.from('1000000000'); // 1000 USDT
 const INITIAL_Y_POOL_TOKENS = 4000; // Sum of Y pool stablecoins above
 
 // Path to generated addresses file
+const CONFIG_ADDRESSES = `${__dirname}/../src/config/addresses.json`;
 const GENERATED_ADDRESSES = `${__dirname}/../src/config/generated-addresses.json`;
+const IGNORE_ADDRESSES = process.env.IGNORE_ADDRESSES !== undefined;
 
 // Helper function
 function log_step(step_string) {
@@ -53,9 +55,14 @@ const func = async function (hardhat_re) {
   const chainId = await hardhat_re.getChainId();
 
   // Load contract addresses
+  const configNetworks = JSON.parse(
+    fs.readFileSync(CONFIG_ADDRESSES).toString()
+  );
+
   const generatedNetworks = JSON.parse(
     fs.readFileSync(GENERATED_ADDRESSES).toString()
   );
+  const configAddresses = (!IGNORE_ADDRESSES && configNetworks[chainId]) || {};
   const generatedAddresses = generatedNetworks[chainId] || {};
 
   // Load deployed contract instances
@@ -248,20 +255,22 @@ const func = async function (hardhat_re) {
   // Set the Y pool token minter
   //
 
-  try {
-    await catchUnknownSigner(
-      execute(
-        CURVE_Y_TOKEN_CONTRACT,
-        {
-          from: marketingWallet,
-          log: true,
-        },
-        'set_minter',
-        CURVE_Y_SWAP_ADDRESS
-      )
-    );
-  } catch (err) {
-    console.log('Curve minter already set');
+  if (generatedAddresses.curveYSwap !== configAddresses.curveYSwap) {
+    try {
+      await catchUnknownSigner(
+        execute(
+          CURVE_Y_TOKEN_CONTRACT,
+          {
+            from: marketingWallet,
+            log: true,
+          },
+          'set_minter',
+          CURVE_Y_SWAP_ADDRESS
+        )
+      );
+    } catch (err) {
+      console.log('Curve minter already set');
+    }
   }
 
   //////////////////////////////////////////////////////////////////////////////
