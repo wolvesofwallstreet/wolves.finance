@@ -71,7 +71,7 @@ function Approval({ hideCB, show, t }: PROPS): JSX.Element {
           Revoke allowances early to make sure that in an extraordinary
           situation your assets are safe.
           <span className="d-block mt-2">
-            <b>Tipp: </b>MetaMask supports fine control for approval just before
+            <b>Hint: </b>MetaMask supports fine control for approval just before
             you confirm the approve transaction
           </span>
           <table className="mt-4 w-100 tk-aktiv-grotesk-condensed font-14 text-center">
