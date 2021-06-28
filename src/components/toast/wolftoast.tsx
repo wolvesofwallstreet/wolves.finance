@@ -25,6 +25,7 @@ import {
   CFOLIO_ITEM_LOCK_TRANSFER,
   CFOLIO_ITEM_WITHDRAW,
   CONNECTION_CHANGED,
+  REVOKE_APPROVAL,
   SFT_BUY,
   SFT_CLAIM,
   SFT_LOCK,
@@ -79,9 +80,11 @@ class WolfToast extends Component<TOASTPROPS, TOASTSTATE> {
     StoreClasses.emitter.on(CFOLIO_ITEM_DEPOSIT, this.onTransaction);
     StoreClasses.emitter.on(CFOLIO_ITEM_WITHDRAW, this.onTransaction);
     StoreClasses.emitter.on(CFOLIO_ITEM_LOCK_TRANSFER, this.onTransaction);
+    StoreClasses.emitter.on(REVOKE_APPROVAL, this.onTransaction);
   }
 
   componentWillUnmount(): void {
+    StoreClasses.emitter.off(REVOKE_APPROVAL, this.onTransaction);
     StoreClasses.emitter.off(CFOLIO_ITEM_LOCK_TRANSFER, this.onTransaction);
     StoreClasses.emitter.off(CFOLIO_ITEM_WITHDRAW, this.onTransaction);
     StoreClasses.emitter.off(CFOLIO_ITEM_DEPOSIT, this.onTransaction);

@@ -40,6 +40,7 @@ import {
   CFOLIO_ITEM_WITHDRAW,
   CONNECTION_CHANGED,
   NEW_BLOCK,
+  REVOKE_APPROVAL,
   SFT_BUY,
   SFT_CLAIM,
   SFT_LOCK,
@@ -383,6 +384,10 @@ class Store {
           this._doCFolioItemLockAndTransfer(
             _payload.content as PayloadContentCFolioItemLT
           );
+          break;
+        /** Staking */
+        case REVOKE_APPROVAL:
+          this._doRevokeApproval(_payload.content);
           break;
         /** Staking */
         case STAKE_ADD:
@@ -1326,7 +1331,7 @@ class Store {
         const lpContract = this.lpContractRO.connect(this.ethersSigner);
         const tx = await lpContract.approve(
           this.stakeContractRO.address,
-          stakeAmount
+          this._checkUnlimited('WETH/WOWS LP', stakeAmount)
         );
         emitter.emit(STAKE_ADD, {
           status: 'approve',
@@ -1635,7 +1640,7 @@ class Store {
         if (allowance.lt(weiAmount)) {
           const tx = await this.tokenContract.approve(
             sftMintContract.address,
-            weiAmount
+            this._checkUnlimited('WOWS', weiAmount)
           );
           emitter.emit(CFOLIO_ITEM_BUY, {
             status: 'approve',
@@ -1803,7 +1808,10 @@ class Store {
         if (allowance.lt(investWeiAmounts[index])) {
           const tx = await approvalContracts[index]?.approve(
             cfihContract?.address,
-            investWeiAmounts[index]
+            this._checkUnlimited(
+              balances[parseInt(index)],
+              investWeiAmounts[index]
+            )
           );
           emitter.emit(msgType, {
             status: 'approve',
@@ -2098,6 +2106,55 @@ class Store {
     }
   };
 
+  _doRevokeApproval = async (payloadContent: PayloadContent) => {
+    const currency = payloadContent.filter ? payloadContent.filter[0] : '';
+    const balance = this.assets.balances[currency];
+    try {
+      if (!this.ethersSigner) {
+        throw new Error('Contract not initialized');
+      }
+
+      if (!balance) {
+        throw new Error('Invalid input currency');
+      }
+
+      const approvalContract = new ethers.Contract(
+        balance.address ?? '',
+        ERC20Abi,
+        this.ethersSigner
+      );
+
+      const tx = await approvalContract.approve(balance.handlerAddress, 0);
+
+      emitter.emit(REVOKE_APPROVAL, {
+        status: 'tx',
+        type: currency,
+        tx: tx.hash,
+      } as StatusResult);
+
+      this.ethersProvider?.once(
+        tx.hash,
+        (receipt: ethers.providers.TransactionReceipt) => {
+          emitter.emit(REVOKE_APPROVAL, {
+            status: 'success',
+            type: currency,
+            tx: tx.hash,
+          } as StatusResult);
+          dispatcher.dispatch({
+            type: ASSETS_STATE,
+            content: { filter: ['allowance'] },
+          } as Payload);
+        }
+      );
+    } catch (e) {
+      emitter.emit(REVOKE_APPROVAL, {
+        status: 'error',
+        type: currency,
+        errorMessage: e.error ? e.error.message : e.message,
+      } as StatusResult);
+    }
+  };
+
   /******************** Misc *********************/
 
   fromWei(n: ethers.BigNumber, decimals = 18) {
@@ -2118,6 +2175,17 @@ class Store {
       this.pauseSFTUser = false;
       emitter.emit(ASSETS_STATE, { status: 'tokens' } as AssetStateresult);
     }
+  }
+
+  _checkUnlimited(currency: string, defaultReturn: ethers.BigNumber) {
+    const index = Object.keys(this.assets.balances).findIndex(
+      (b) => b === currency
+    );
+    if (index >= 0) {
+      const mask = parseInt(localStorage.getItem('APPROVAL') ?? '0');
+      if (mask & (1 << index)) return BIGNUMBER_MAX;
+    }
+    return defaultReturn;
   }
 }
 

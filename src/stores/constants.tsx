@@ -8,6 +8,7 @@
 
 // Events (used in dispatcher and emitter)
 export const ASSETS_STATE = 'ASSETS_STATE';
+export const REVOKE_APPROVAL = 'REVOKE_APPROVAL';
 
 export const ADDRESS_COPIED = 'ADDRESS_COPIED';
 export const CONNECTION_CHANGED = 'CONNECTION_CHANGED';

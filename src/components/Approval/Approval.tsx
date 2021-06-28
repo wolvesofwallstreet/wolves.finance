@@ -8,12 +8,17 @@
 
 import './Approval.css';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useReducer, useState } from 'react';
 import { Modal } from 'react-bootstrap';
 import { TFunction, withTranslation } from 'react-i18next';
 
-import { ASSETS_STATE } from '../../stores/constants';
-import { AssetStateresult, Payload, StoreClasses } from '../../stores/store';
+import { ASSETS_STATE, REVOKE_APPROVAL } from '../../stores/constants';
+import {
+  AssetStateresult,
+  Payload,
+  StatusResult,
+  StoreClasses,
+} from '../../stores/store';
 
 type PROPS = {
   hideCB: () => void;
@@ -22,7 +27,24 @@ type PROPS = {
 };
 
 function Approval({ hideCB, show, t }: PROPS): JSX.Element {
-  const [, setRedraw] = useState(false);
+  const [redraw, setRedraw] = useState(false);
+
+  const reducer = (
+    state: string[],
+    action: { action: number; key: string }
+  ) => {
+    switch (action.action) {
+      case 1:
+        return [...state, action.key];
+      case -1:
+        return state.filter((e) => e !== action.key);
+      default:
+        throw new Error();
+    }
+  };
+
+  const [approving, setApproving] = useReducer(reducer, []);
+
   let checkMask = parseInt(localStorage.getItem('APPROVAL') ?? '0');
 
   const setCheck = (index: number, checked: boolean) => {
@@ -35,7 +57,14 @@ function Approval({ hideCB, show, t }: PROPS): JSX.Element {
       if (result.status === 'allowance') setRedraw(true);
     };
 
+    const handleRevoke = (result: StatusResult) => {
+      if (result.status !== 'tx') {
+        setApproving({ action: -1, key: result.type });
+      }
+    };
+
     StoreClasses.emitter.on(ASSETS_STATE, assetState);
+    StoreClasses.emitter.on(REVOKE_APPROVAL, handleRevoke);
     StoreClasses.dispatcher.dispatch({
       type: ASSETS_STATE,
       content: { filter: ['allowance'] },
@@ -43,11 +72,25 @@ function Approval({ hideCB, show, t }: PROPS): JSX.Element {
 
     //Cleanup
     return () => {
+      StoreClasses.emitter.off(REVOKE_APPROVAL, handleRevoke);
       StoreClasses.emitter.off(ASSETS_STATE, assetState);
     };
   }, []);
 
   const balances = StoreClasses.store.getAssets().balances;
+
+  const revoke = (key: string) => {
+    const payload = {
+      type: REVOKE_APPROVAL,
+      content: {
+        filter: [key],
+      },
+    };
+    StoreClasses.dispatcher.dispatch(payload);
+    setApproving({ action: 1, key: key });
+  };
+
+  if (redraw) setRedraw(false);
 
   return (
     <>
@@ -100,7 +143,8 @@ function Approval({ hideCB, show, t }: PROPS): JSX.Element {
                   <td>
                     <button
                       className={'wolves-btn font-16 white-border'}
-                      disabled={v.allowance === 0}
+                      disabled={approving.includes(k) || v.allowance === 0}
+                      onClick={() => revoke(k)}
                     >
                       REVOKE
                     </button>
