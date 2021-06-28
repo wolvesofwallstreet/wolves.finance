@@ -383,6 +383,7 @@ contract Controller is IController, Context, Ownable {
 
   function refuelFarms() external onlyWorker {
     address iterAddress = farmHead;
+    bool oneRefueled = false;
     while (iterAddress != address(0)) {
       // Refuel if farm end is one day ahead
       Farm storage farm = farms[iterAddress];
@@ -394,12 +395,14 @@ contract Controller is IController, Context, Ownable {
         // Update state
         IFarm(iterAddress).notifyRewardAmount(farm.rewardPerDuration);
         farm.rewardProvided = farm.rewardProvided.add(farm.rewardPerDuration);
+        oneRefueled = true;
 
         // Dispatch event
         emit Refueled(iterAddress, farm.rewardPerDuration);
       }
       iterAddress = farm.nextFarm;
     }
+    require(oneRefueled, 'NOP');
   }
 
   //////////////////////////////////////////////////////////////////////////////
