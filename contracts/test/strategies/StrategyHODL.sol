@@ -13,8 +13,8 @@ import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import '@openzeppelin/contracts/math/SafeMath.sol';
 import '@openzeppelin/contracts/utils/Context.sol';
 
-import '../../depends/yearn-protocol/interfaces/yearn/IController.sol';
-import '../../depends/yearn-protocol/interfaces/yearn/IStrategy.sol';
+import '../../interfaces/yearn/IController.sol';
+import '../../interfaces/yearn/IStrategy.sol';
 
 import '../token/TestERC20Mintable.sol';
 
