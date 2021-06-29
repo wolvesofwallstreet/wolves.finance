@@ -8,6 +8,7 @@
 
 import './CFolioInvest.css';
 
+import { ethers } from 'ethers';
 import React from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 import { Link, RouteComponentProps } from 'react-router-dom';
@@ -61,6 +62,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
   slideIndex = 0;
   initialCFolio = -1;
   displayType = '';
+  toolTippLink = '';
 
   constructor(props: PROPS) {
     super(props);
@@ -82,9 +84,10 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
   }
 
   componentDidUpdate() {
-    const { location } = this.props;
+    const { history, location } = this.props;
     const query = new URLSearchParams(location.search);
     const newDisplayType = query.get('type') || 'lpInvestment';
+
     if (newDisplayType !== this.displayType) {
       this.displayType = newDisplayType;
       this.slideIndex = 0;
@@ -92,6 +95,23 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
       this.setState({ currentImage: 0 });
       this._updateImages();
     }
+
+    if (query.get('tokenId')) {
+      const newTokenId = ethers.BigNumber.from(query.get('tokenId'));
+      const index = this.state.cfiRender.findIndex(
+        (elem) => elem.cfolioItem && elem.cfolioItem.tokenId.eq(newTokenId)
+      );
+      if (index >= 0) {
+        if (index !== this.state.currentImage) {
+          this.setState({ currentImage: index });
+        }
+      } else {
+        query.delete('tokenId');
+        history.replace('?' + query.toString());
+        return;
+      }
+    }
+    this.toolTippLink = '?type=' + this.displayType;
   }
 
   componentDidMount() {
@@ -306,6 +326,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
                   slideWidth={150}
                   slides={this.receiverImages}
                   startSlideId={this.slideIndex}
+                  toolTippLink={this.toolTippLink}
                 />
                 <button
                   onClick={() => this.sliderInterface?.next()}

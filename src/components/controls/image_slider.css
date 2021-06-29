@@ -132,11 +132,12 @@
   border-radius: 8px;
   padding: 10px;
   text-align: center;
-  top: 52%;
-  transform: translateY(-50%) translateX(-10%);
+  top: 7px;
+  transform: translateX(-10%);
 }
 
-.image_slide .slide_count:hover + .slide_tooltip_wrapper {
+.image_slide .slide_count:hover + .slide_tooltip_wrapper,
+.image_slide .slide_tooltip_wrapper:hover {
   display: block;
 }
 
@@ -144,17 +145,19 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
+  color: var(--wolves-blue-dk);
 }
 
-.slide_tooltip_content p {
+.slide_tooltip_content p,
+.slide_tooltip_content a {
   transform: scale(0.85);
   padding: 0;
   margin: 0;
-  color: var(--wolves-blue-dk);
+  color: inherit;
   font-size: 13px;
   font-weight: bold;
   white-space: nowrap;
-  line-height: 100%;
+  line-height: 110%;
 }
 
 .slide_tooltip_content p.disabled {

@@ -253,7 +253,6 @@ class Store {
   chainId = 0;
   address = '';
   tokenContractAddress = Store.nullAddress;
-  pauseSFTUser = false;
   eventBlockNumber = 0;
   lastAprTime = 0;
 
@@ -611,10 +610,7 @@ class Store {
 
     const handleTransfer = (from: string, to: string) => {
       const filter = ['cards'];
-      if (
-        !this.pauseSFTUser &&
-        (from === this.address || to === this.address)
-      ) {
+      if (from === this.address || to === this.address) {
         filter.push('tokens');
       }
       console.log('TransferEvent: ', filter);
@@ -1524,8 +1520,7 @@ class Store {
     );
 
     try {
-      this.pauseSFTUser = true;
-      const tx: ethers.ContractTransaction | undefined =
+      const tx: ethers.ContractTransaction =
         await sftHolderContract.safeTransferFrom(
           this.address,
           this.tradeFloorContractRO.address,
@@ -1538,14 +1533,12 @@ class Store {
         tx: tx?.hash,
       } as StatusResult);
 
-      await tx?.wait();
-      this._resolveSFTUser(id, true);
+      await tx.wait();
       emitter.emit(SFT_LOCK, {
         status: 'success',
         tx: tx?.hash,
       } as StatusResult);
     } catch (e) {
-      this.pauseSFTUser = true;
       emitter.emit(SFT_LOCK, {
         status: 'error',
         type: SFT_LOCK,
@@ -1577,22 +1570,22 @@ class Store {
         this.ethersSigner
       );
 
-      this.pauseSFTUser = true;
-      const tx: ethers.ContractTransaction | undefined =
-        await tradeFloorContract.burn(this.address, id, 1);
+      const tx: ethers.ContractTransaction = await tradeFloorContract.burn(
+        this.address,
+        id,
+        1
+      );
       emitter.emit(SFT_UNLOCK, {
         status: 'tx',
-        tx: tx?.hash,
+        tx: tx.hash,
       } as StatusResult);
 
-      await tx?.wait();
-      this._resolveSFTUser(id, false);
+      await tx.wait();
       emitter.emit(SFT_UNLOCK, {
         status: 'success',
         tx: tx?.hash,
       } as StatusResult);
     } catch (e) {
-      this.pauseSFTUser = true;
       emitter.emit(SFT_UNLOCK, {
         status: 'error',
         errorMessage: e.error ? e.error.message : e.message,
@@ -2164,17 +2157,6 @@ class Store {
   toWei(n: number, decimals = 18) {
     const parsed = typeof n === 'number' ? n.toFixed(decimals) : n;
     return ethers.utils.parseUnits(parsed, decimals);
-  }
-
-  _resolveSFTUser(tokenId: ethers.BigNumber, locked: boolean) {
-    if (this.pauseSFTUser) {
-      const elem = this.assets.userSFT.find((entry) =>
-        entry.tokenId.eq(tokenId)
-      );
-      if (elem) elem.locked = locked;
-      this.pauseSFTUser = false;
-      emitter.emit(ASSETS_STATE, { status: 'tokens' } as AssetStateresult);
-    }
   }
 
   _checkUnlimited(currency: string, defaultReturn: ethers.BigNumber) {

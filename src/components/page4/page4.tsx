@@ -171,6 +171,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     }
 
     let currentIndex = -1;
+    let fixIndex = 0;
     this.renderList = [];
 
     this.needUpdate = false;
@@ -200,8 +201,12 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         // loop through tokenIds and create renderlist
         tokenIds.forEach((sft) => {
           if (sft.isStockCard) {
-            if (curTokenId && sft.tokenId.eq(curTokenId)) {
-              currentIndex = this.renderList.length;
+            if (curTokenId) {
+              if (sft.tokenId.eq(curTokenId)) {
+                currentIndex = this.renderList.length;
+              } else if (sft.tokenId.mask(128).eq(curTokenId.mask(128))) {
+                fixIndex = this.renderList.length;
+              }
             }
             this.renderList.push({
               sft,
@@ -224,7 +229,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       });
     }
     if (currentIndex < 0 && this.renderList.length > 0) {
-      this._fixUrl(0);
+      this._fixUrl(fixIndex);
       return;
     }
     if (this.state.currentIndex !== currentIndex) {
@@ -241,14 +246,23 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     const { cards, type } = this.state;
     const { location } = this.props;
     const query = new URLSearchParams(location.search);
+    let fixIndex = 0;
 
     if (cards && this.renderList.length > 0) {
       let currentIndex = -1;
       if (type === 'myPack' && query.get('tokenId')) {
         const curTokenId = ethers.BigNumber.from(query.get('tokenId'));
         currentIndex = this.renderList.findIndex((elem) =>
-          elem.tokenId?.eq(curTokenId)
+          elem.tokenId?.mask(128).eq(curTokenId.mask(128))
         );
+        if (
+          currentIndex >= 0 &&
+          this.renderList[currentIndex]?.tokenId &&
+          !this.renderList[currentIndex]?.tokenId?.eq(curTokenId)
+        ) {
+          fixIndex = currentIndex;
+          currentIndex = -1;
+        }
       } else if (type !== 'myPack' && query.get('cardId')) {
         const curCardId = query.get('cardId');
         currentIndex = this.renderList.findIndex(
@@ -256,7 +270,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         );
       }
       if (currentIndex < 0 && this.renderList.length > 0) {
-        this._fixUrl(0);
+        this._fixUrl(fixIndex);
         return;
       }
       if (this.state.currentIndex !== currentIndex) {

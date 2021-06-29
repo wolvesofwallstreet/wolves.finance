@@ -9,6 +9,7 @@ import './image_slider.css';
 
 import { ethers } from 'ethers';
 import { Fragment, RefObject, useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 export interface IMAGE_SLIDER_CFOLIO {
   name: string;
@@ -41,6 +42,7 @@ type PROPS = {
   slides: IMAGE_SLIDER_SLIDE[];
   startSlideId?: number;
   checkbox?: boolean;
+  toolTippLink?: string;
 };
 
 const ImageSlider = ({
@@ -51,6 +53,7 @@ const ImageSlider = ({
   slides,
   startSlideId,
   checkbox,
+  toolTippLink,
 }: PROPS): JSX.Element => {
   const containerRef: RefObject<HTMLDivElement> = useRef(null);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -165,14 +168,29 @@ const ImageSlider = ({
                       </div>
                       <div className="slide_tooltip_wrapper">
                         <div className="slide_tooltip_content">
-                          {elem.cfolioItems.map((cfi) => (
-                            <p
-                              key={cfi.tokenId.toHexString()}
-                              className={cfi.disabled ? 'disabled' : ''}
-                            >
-                              {cfi.name}
-                            </p>
-                          ))}
+                          {elem.cfolioItems.map((cfi) =>
+                            !toolTippLink ||
+                            index !== displayIndex ||
+                            cfi.disabled ? (
+                              <p
+                                key={cfi.tokenId.toHexString()}
+                                className={cfi.disabled ? 'disabled' : ''}
+                              >
+                                {cfi.name}
+                              </p>
+                            ) : (
+                              <Link
+                                key={cfi.tokenId.toHexString()}
+                                to={
+                                  toolTippLink +
+                                  '&tokenId=' +
+                                  cfi.tokenId.toHexString()
+                                }
+                              >
+                                {cfi.name}
+                              </Link>
+                            )
+                          )}
                         </div>
                       </div>
                     </>
