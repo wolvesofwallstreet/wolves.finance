@@ -449,6 +449,11 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         ? `my?type=myPack&levelId=${levelId}`
         : `/shop?type=${type}&levelId=${levelId}`;
 
+    const assetIndex =
+      currentLevel?.type === 'bois' || currentLevel?.type === 'yearnInvestment'
+        ? 4
+        : 0;
+
     let price,
       quantity,
       autoUpgrade,
@@ -462,7 +467,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       quantity = (currentCard as CFOLIO_ITEM).maxMintable;
       locked = currentRender.cfi.locked;
       investment =
-        currentRender?.cfi.assets[0].toFixed(6) +
+        currentRender?.cfi.assets[assetIndex].toFixed(6) +
         ' ' +
         (currentLevel as CFOLIO_ITEMS).token;
     } else if (currentRender && currentLevel) {
@@ -576,7 +581,8 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                     {sftChild.tokenId.mask(128).toHexString()}
                   </h3>
                   <h3>
-                    {t('page.investment')}: {sftChild.assets[0].toFixed(4)}{' '}
+                    {t('page.investment')}:{' '}
+                    {sftChild.assets[assetIndex].toFixed(4)}{' '}
                     {cfolios[sftChild.levelId].token}
                   </h3>
                 </>
