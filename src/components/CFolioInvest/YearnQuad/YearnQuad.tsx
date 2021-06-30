@@ -71,6 +71,11 @@ function YearnQuad({
     setTXRunning(true);
   };
 
+  const curMaxAmount =
+    tabOption === 0
+      ? balances[currencies[currencyIndex]].value
+      : (cfolioItem && cfolioItem.assets[currencyIndex]) ?? 0;
+
   useEffect(() => {
     const resetTx = (result: StatusResult) => {
       if (['success', 'error'].includes(result.status)) setTXRunning(false);
@@ -96,6 +101,22 @@ function YearnQuad({
     setCheckedIndex(-1);
     setInputVals([0, 0, 0, 0, 0]);
   }, [tabOption]);
+
+  useEffect(() => {
+    if (tabOption === 1) {
+      const newValues = [0, 0, 0, 0, inputVals[4]];
+      if (checkedIndex >= 0 && curMaxAmount > 0) {
+        newValues[checkedIndex] = isNaN(inputVals[4])
+          ? NaN
+          : (((cfolioItem && cfolioItem.assets[checkedIndex]) ?? 0) *
+              inputVals[4]) /
+            curMaxAmount;
+      }
+      if (newValues.find((v, index) => v !== inputVals[index]) !== undefined) {
+        setInputVals(newValues);
+      }
+    }
+  }, [checkedIndex, tabOption, inputVals, cfolioItem, curMaxAmount]);
 
   const validCurrencies = () => {
     if (tabOption === 1)
@@ -161,18 +182,6 @@ function YearnQuad({
     ? `ADD "${investCurrency} INVESTMENT NFT" INTO MY WALLET`
     : `ADD "${investCurrency} INVESTMENT NFT" INTO MY CFOLIO`;
 
-  const curMaxAmount =
-    tabOption === 0
-      ? balances[currencies[currencyIndex]].value
-      : (cfolioItem && cfolioItem.assets[currencyIndex]) ?? 0;
-
-  const checkedAmount =
-    checkedIndex >= 0 && curMaxAmount > 0 && !isNaN(inputVals[4])
-      ? (((cfolioItem && cfolioItem.assets[checkedIndex]) ?? 0) *
-          inputVals[4]) /
-        curMaxAmount
-      : undefined;
-
   const hideModal = () => showModal(false);
 
   return (
@@ -229,13 +238,7 @@ function YearnQuad({
           >
             {currency}
             <br />
-            {index === checkedIndex
-              ? checkedAmount === undefined
-                ? 'INVALID'
-                : checkedAmount.toFixed(2)
-              : isNaN(inputVals[index])
-              ? 'INVALID'
-              : inputVals[index].toFixed(2)}
+            {isNaN(inputVals[index]) ? 'INVALID' : inputVals[index].toFixed(2)}
           </div>
         ))}
       </div>
