@@ -1078,29 +1078,34 @@ class Store {
 
   _getSftRewards = async (plc: PayloadContent) => {
     try {
-      if (!this.cfihLpContract) return;
+      const filter = ['wolves', 'bois'];
+      const contracts = [this.cfihLpContract, this.cfihScContract];
 
-      const wolves = this.assets.userSFT.filter(
-        (sft) =>
-          sft.isBaseCard &&
-          this.assets.cards.cards[sft.levelId].type === 'wolves'
-      );
+      for (let i = 0; i < 2; ++i) {
+        if (!contracts[i]) continue;
 
-      if (wolves.length === 0) return;
+        const sfts = this.assets.userSFT.filter(
+          (sft) =>
+            sft.isBaseCard &&
+            this.assets.cards.cards[sft.levelId].type === filter[i]
+        );
 
-      // Returns totalsupply, rewardDur, rewardsPerDur, [share, earned]
-      const result = await this.cfihLpContract.getRewardInfo(
-        wolves.map((sft) => sft.tokenId)
-      );
-      let readIndex = 0;
-      const ri = this.assets.rewardInfo[0];
-      ri.total = readUint256(result, readIndex++);
-      ri.rewardDuration = readUint256(result, readIndex++).toNumber();
-      ri.rewardPerDuration = readUint256(result, readIndex++);
-      wolves.forEach((sft) => {
-        sft.rewardShare = this.fromWei(readUint256(result, readIndex++));
-        sft.rewardEarned = this.fromWei(readUint256(result, readIndex++));
-      });
+        if (sfts.length === 0) continue;
+
+        // Returns totalsupply, rewardDur, rewardsPerDur, [share, earned]
+        const result = await contracts[i]?.getRewardInfo(
+          sfts.map((sft) => sft.tokenId)
+        );
+        let readIndex = 0;
+        const ri = this.assets.rewardInfo[0];
+        ri.total = readUint256(result, readIndex++);
+        ri.rewardDuration = readUint256(result, readIndex++).toNumber();
+        ri.rewardPerDuration = readUint256(result, readIndex++);
+        sfts.forEach((sft) => {
+          sft.rewardShare = this.fromWei(readUint256(result, readIndex++));
+          sft.rewardEarned = this.fromWei(readUint256(result, readIndex++));
+        });
+      }
       this._updatePoolAPY();
       emitter.emit(ASSETS_STATE, { status: 'rewards' } as AssetStateresult);
     } catch (e) {
