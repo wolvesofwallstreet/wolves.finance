@@ -77,6 +77,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
     const query = new URLSearchParams(location.search);
     this.initialCFolio = parseInt(query.get('item') || '-1');
     this.displayType = query.get('type') || 'lpInvestment';
+    this.toolTippLink = '?type=' + this.displayType;
   }
 
   setCurrentImage(val: number) {
@@ -89,6 +90,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
     const newDisplayType = query.get('type') || 'lpInvestment';
 
     if (newDisplayType !== this.displayType) {
+      this.toolTippLink = '?type=' + this.displayType;
       this.displayType = newDisplayType;
       this.slideIndex = 0;
       this.sliderInterface?.go(0);
@@ -111,7 +113,6 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
         return;
       }
     }
-    this.toolTippLink = '?type=' + this.displayType;
   }
 
   componentDidMount() {
