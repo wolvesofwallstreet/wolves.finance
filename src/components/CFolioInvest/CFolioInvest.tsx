@@ -60,7 +60,6 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
   cfolioItems?: CFOLIO_ITEMS;
   sliderInterface?: IMAGE_SLIDER_INTERFACE;
   slideIndex = 0;
-  initialCFolio = -1;
   displayType = '';
   toolTippLink = '';
 
@@ -75,13 +74,22 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
 
     const { location } = this.props;
     const query = new URLSearchParams(location.search);
-    this.initialCFolio = parseInt(query.get('item') || '-1');
     this.displayType = query.get('type') || 'lpInvestment';
     this.toolTippLink = '?type=' + this.displayType;
   }
 
   setCurrentImage(val: number) {
-    this.setState({ currentImage: val });
+    const { cfiRender } = this.state;
+    const { history } = this.props;
+    if (cfiRender[val].cfolioItem) {
+      history.push(
+        `?type=${this.displayType}&tokenId=${cfiRender[
+          val
+        ].cfolioItem?.tokenId.toHexString()}`
+      );
+    } else {
+      history.push(`?type=${this.displayType}&item=${cfiRender[val].index}`);
+    }
   }
 
   componentDidUpdate() {
@@ -90,26 +98,37 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
     const newDisplayType = query.get('type') || 'lpInvestment';
 
     if (newDisplayType !== this.displayType) {
-      this.toolTippLink = '?type=' + this.displayType;
       this.displayType = newDisplayType;
       this.slideIndex = 0;
       this.sliderInterface?.go(0);
+      this.toolTippLink = '?type=' + this.displayType;
       this.setState({ currentImage: 0 });
       this._updateImages();
     }
 
+    let index: number | undefined;
     if (query.get('tokenId')) {
       const newTokenId = ethers.BigNumber.from(query.get('tokenId'));
-      const index = this.state.cfiRender.findIndex(
+      index = this.state.cfiRender.findIndex(
         (elem) => elem.cfolioItem && elem.cfolioItem.tokenId.eq(newTokenId)
       );
+    } else if (query.get('item')) {
+      const item = parseInt(query.get('item') || '-1');
+      index = this.state.cfiRender.findIndex(
+        (elem) => !elem.cfolioItem && elem.index === item
+      );
+    }
+
+    if (index !== undefined) {
       if (index >= 0) {
         if (index !== this.state.currentImage) {
           this.setState({ currentImage: index });
         }
-      } else {
+      } else if (this.receiverImages.length > 0) {
         query.delete('tokenId');
+        query.delete('item');
         history.replace('?' + query.toString());
+        this.setState({ currentImage: 0 });
         return;
       }
     }
@@ -189,7 +208,6 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
   _updateCFolioItems() {
     const cfolioItems = StoreClasses.store.getAssets().cfolioItems;
     const cfiRender: CFI_RENDER[] = [];
-    let existingCards = 0;
 
     if (cfolioItems.length > 0) {
       this.cfolioItems = cfolioItems.filter(
@@ -213,23 +231,12 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
             }
           );
         }
-        existingCards = cfiRender.length;
         // Get all New cards
         cfiRender.push(
           ...this.cfolioItems.cards.map((_, index) => {
             return { index };
           })
         );
-      }
-
-      if (this.initialCFolio >= 0 && this.receiverImages.length > 0) {
-        this.setState({ currentImage: this.initialCFolio + existingCards });
-        this.initialCFolio = -1;
-      } else if (
-        this.receiverImages.length &&
-        this.state.currentImage >= cfiRender.length
-      ) {
-        this.setState({ currentImage: 0 });
       }
     }
     this.setState({ cfiRender });
