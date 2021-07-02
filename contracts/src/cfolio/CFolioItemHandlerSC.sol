@@ -407,7 +407,19 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
    * Note: tokenId can be owned by a base SFT. In this case, the base SFT
    * cannot be locked.
    *
-   * There is only need to update rewards if tokenId is part of an unlocked base SFT
+   * There is only need to update rewards if tokenId is part of an unlocked
+   * base SFT.
+   *
+   * @param baseTokenId The token ID of the base c-folio, or uint(-1) if
+   *     tokenId is not owned by a base c-folio.
+   * @param tokenId The token ID of the investment SFT to withdraw from
+   * @param amounts The amounts, with the tokens being DAI/USDC/USDT/TUSD/yCRV.
+   *     yCRV must be specified, as yCRV tokens are held by this contract.
+   *     If all four stablecoin amounts are 0, then yCRV is withdrawn to the
+   *     sender's wallet. If exactly one of the four stablecoin amounts is > 0,
+   *     then yCRV will be converted to the specified stablecoin. The amount in
+   *     the array is the minimum amount of stablecoin tokens that must be
+   *     withdrawn.
    */
   function withdraw(
     uint256 baseTokenId,
@@ -496,6 +508,12 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
 
   /**
    * @dev See {ICFolioItemHandler-getAmounts}
+   *
+   * The returned token array is DAI/USDC/USDT/TUSD/yCRV. Tokens are held in
+   * this contract as yCRV, so the fifth item will be the amount of yCRV. The
+   * four stablecoin amounts are the amount that would be withdrawn if all
+   * yCRV were converted to the corresponding stablecoin upon withdrawal. This
+   * value is calculated by Curve.
    */
   function getAmounts(address cfolioItem)
     external
@@ -725,12 +743,22 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
   /**
    * @dev Get single coin and amount
    *
+   * This is a helper function for {withdraw}. Per the documentation above, no
+   * more than one stablecoin amount can be > 0. If more than one stablecoin
+   * amount is specified, the revert condition below will be reached.
+   *
+   * If exactly one stablecoin amount is specified, then the return values will
+   * be the index of that coin and its amount.
+   *
+   * If no stablecoin amounts are > 0, then a coin index of -1 is returned,
+   * with a 0 amount.
+   *
    * @param amounts The amounts array: DAI/USDC/USDT/TUSD/yCRV
    *
-   * @return stableCoinIndex The index of the amount > 0, or -1 if all four
-   * stablecoin amounts are 0
+   * @return stableCoinIndex The index of the stablecoin with amount > 0, or -1
+   *     if all four stablecoin amounts are 0
    * @return stableCoinAmount The amount of the stablecoin, or 0 if all four
-   * stablecoin amounts are 0
+   *     stablecoin amounts are 0
    */
   function _getStableCoinInfo(uint256[] calldata amounts)
     private
@@ -741,7 +769,7 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
 
     for (uint128 i = 0; i < 4; ++i) {
       if (amounts[i] > 0) {
-        require(stableCoinIndex == -1, 'Only one amount > 0');
+        require(stableCoinIndex == -1, 'Multiple amounts > 0');
         stableCoinIndex = int8(i);
         stableCoinAmount = amounts[i];
       }
