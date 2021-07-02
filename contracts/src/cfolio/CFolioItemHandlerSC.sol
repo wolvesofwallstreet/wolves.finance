@@ -80,12 +80,28 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
   // Events
   //////////////////////////////////////////////////////////////////////////////
 
+  /*
+   * @dev Emitted when a reward is updated, either increased or decreased
+   *
+   * @param previousAmount The amount before updating the reward
+   * @param newAmount The amount after updating the reward
+   */
+  event SCRewardUpdated(uint256 previousAmount, uint256 newAmount);
+
   /**
    * @dev Emitted when a new minter is set by the admin
    *
    * @param minter The new minter
    */
   event NewSCMinter(address minter);
+
+  /**
+   * @dev Emitted when the contract is upgraded
+   *
+   * @param thisContract The address of this contract
+   * @param newContract The address of the contract being upgraded to
+   */
+  event SCContractUpgraded(address thisContract, address newContract);
 
   //////////////////////////////////////////////////////////////////////////////
   // Modifiers
@@ -583,6 +599,9 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
     // Let new handler control the reward farm
     cfolioFarm.transferOwnership(address(newContract));
 
+    // Dispatch event
+    SCContractUpgraded(address(this), address(newContract));
+
     selfdestruct(payable(address(newContract)));
   }
 
@@ -670,10 +689,19 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
     uint256 exitingRewardAmount = cfolioFarm.balanceOf(cfolio);
 
     // Compare amounts and add/remove shares
-    if (newRewardAmount > exitingRewardAmount)
+    if (newRewardAmount > exitingRewardAmount) {
+      // Update state
       cfolioFarm.addShares(cfolio, newRewardAmount.sub(exitingRewardAmount));
-    else if (newRewardAmount < exitingRewardAmount)
+
+      // Dispatch event
+      emit SCRewardUpdated(exitingRewardAmount, newRewardAmount);
+    } else if (newRewardAmount < exitingRewardAmount) {
+      // Update state
       cfolioFarm.removeShares(cfolio, exitingRewardAmount.sub(newRewardAmount));
+
+      // Dispatch event
+      emit SCRewardUpdated(exitingRewardAmount, newRewardAmount);
+    }
   }
 
   /**

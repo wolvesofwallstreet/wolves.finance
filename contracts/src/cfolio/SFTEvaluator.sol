@@ -50,6 +50,8 @@ contract SFTEvaluator is ISFTEvaluator {
 
   event RewardRate(uint256 indexed tokenId, uint32 rate);
 
+  event UpdatedCFolioType(uint256 indexed tokenId, uint256 cfolioItemType);
+
   //////////////////////////////////////////////////////////////////////////////
   // Initialization
   //////////////////////////////////////////////////////////////////////////////
@@ -184,6 +186,9 @@ contract SFTEvaluator is ISFTEvaluator {
     );
 
     _cfolioItemTypes[tokenId] = cfolioItemType;
+
+    // Dispatch event
+    emit UpdatedCFolioType(tokenId, cfolioItemType);
   }
 
   //////////////////////////////////////////////////////////////////////////////
