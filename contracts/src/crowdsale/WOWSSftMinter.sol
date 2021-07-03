@@ -160,7 +160,7 @@ contract WOWSSftMinter is Context, Ownable {
   }
 
   /**
-   * @dev Set Trade Floor
+   * @dev Set SFT evaluator
    */
   function setSFTEvaluator(ISFTEvaluator sftEvaluator_) external onlyOwner {
     // Validate parameters
@@ -347,7 +347,7 @@ contract WOWSSftMinter is Context, Ownable {
     // outside this function.
 
     // If the SFT's c-folio is final recipient of c-folio item, we call the
-    // handler and lock the SFT in the TradeFloor contract before we transfer
+    // handler and lock the c-folio item in the TradeFloor contract before we transfer
     // it to the SFT
     if (sftCFolio != address(0)) {
       // Lock the SFT into the TradeFloor contract
@@ -365,7 +365,7 @@ contract WOWSSftMinter is Context, Ownable {
   }
 
   /**
-   * @dev Claim rewards from all cfolio farms
+   * @dev Claim rewards from all c-folio farms
    *
    * @param sftTokenId valid SFT tokenId, must not be locked in TF
    */
@@ -527,6 +527,7 @@ contract WOWSSftMinter is Context, Ownable {
           cFolioItems = oneCFolioItem;
           cfolioLength = 0;
         }
+
         rewardRate = sftEvaluator.rewardRate(tokenIds[i]);
         (timestamp, ) = _sftContract.getTokenData(sftTokenId);
       } else {
@@ -536,17 +537,21 @@ contract WOWSSftMinter is Context, Ownable {
         rewardRate = 0;
         timestamp = 0;
       }
+
       result = abi.encodePacked(result, rewardRate, timestamp, cfolioLength);
+
       for (uint256 j = 0; j < cfolioLength; ++j) {
         uint256 sftTokenId = cFolioItems[j].toSftTokenId();
         uint256 cfolioType = sftEvaluator.getCFolioItemType(sftTokenId);
         uint256[] memory amounts;
+
         address cfolio = _sftContract.tokenIdToAddress(sftTokenId);
         if (address(cfolio) != address(0)) {
           address handler = IWOWSCryptofolio(cfolio)._tradefloors(0);
           if (handler != address(0))
             amounts = ICFolioItemHandler(handler).getAmounts(cfolio);
         }
+
         result = abi.encodePacked(
           result,
           cFolioItems[j],

@@ -85,6 +85,7 @@ contract SFTEvaluator is ISFTEvaluator {
     require(tokenId.isBaseCard(), 'Invalid tokenId');
 
     uint256 sftTokenId = tokenId.toSftTokenId();
+
     // Load state
     return
       _rewardRates[sftTokenId] == 0
@@ -93,7 +94,7 @@ contract SFTEvaluator is ISFTEvaluator {
   }
 
   /**
-   * @dev See {ISFTEvaluator-cfolioType}.
+   * @dev See {ISFTEvaluator-getCFolioItemType}.
    */
   function getCFolioItemType(uint256 tokenId)
     external

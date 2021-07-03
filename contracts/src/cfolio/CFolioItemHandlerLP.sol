@@ -495,8 +495,8 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev Run through all cFolioItems collected in cFolio and
-   * select the amount of LP tokens. Update cfolioFarm.
+   * @dev Run through all cFolioItems collected in cFolio and select the amount
+   * of LP tokens. Update cfolioFarm.
    */
   function _updateRewards(address cfolio, uint32 rate) private {
     // Get c-folio items of this base cFolio

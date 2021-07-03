@@ -231,7 +231,7 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
    * @dev See {ICFolioItemCallback-uri}
    */
   function uri(
-    uint256 /* tokenId*/
+    uint256 /* tokenId */
   ) external pure override returns (string memory) {
     return '';
   }
@@ -351,11 +351,11 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
   /**
    * @dev See {ICFolioItemHandler-deposit}
    *
-   * Note: tokenId can be owned by a base SFT
-   * In this case base SFT cannot be locked
+   * Note: tokenId can be owned by a base SFT. In this case base SFT cannot be
+   *     locked.
    *
-   * There is only need to update rewards if tokenId
-   * is part of an unlocked base SFT
+   * There is only need to update rewards if tokenId is part of an unlocked
+   * base SFT.
    */
   function deposit(
     uint256 baseTokenId,
@@ -488,6 +488,7 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
     // removeAsset must only be called from Investment CFolios
     cfolioFarm.removeAssets(itemCFolio, balanceBefore.sub(balanceAfter));
 
+    // Update state
     if (baseTokenId != uint256(-1))
       _updateRewards(baseCFolio, sftEvaluator.rewardRate(baseTokenId));
   }
@@ -664,8 +665,8 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev Run through all cFolioItems collected in cFolio and
-   * select the amount of LP tokens. Update cfolioFarm.
+   * @dev Run through all cFolioItems collected in cFolio and select the amount
+   * of tokens. Update cfolioFarm.
    */
   function _updateRewards(address cfolio, uint32 rate) private {
     // Get c-folio items of this base cFolio
@@ -682,6 +683,7 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
       address secondaryCFolio =
         sftHolder.tokenIdToAddress(tokenIds[i].toSftTokenId());
       require(secondaryCFolio != address(0), 'CFIH: Invalid secondary cFolio');
+
       if (IWOWSCryptofolio(secondaryCFolio)._tradefloors(0) == address(this))
         newRewardAmount = newRewardAmount.add(
           cfolioFarm.balanceOf(secondaryCFolio)
