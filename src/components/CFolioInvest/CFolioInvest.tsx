@@ -10,6 +10,7 @@ import './CFolioInvest.css';
 
 import { ethers } from 'ethers';
 import React from 'react';
+import { Modal } from 'react-bootstrap';
 import { TFunction, withTranslation } from 'react-i18next';
 import { Link, RouteComponentProps } from 'react-router-dom';
 
@@ -46,6 +47,7 @@ type CFI_RENDER = {
 type STATE = {
   cfiRender: CFI_RENDER[];
   currentImage: number;
+  modalOpen: boolean;
 };
 
 interface IMAGE extends IMAGE_SLIDER_SLIDE {
@@ -62,12 +64,14 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
   slideIndex = 0;
   displayType = '';
   toolTippLink = '';
+  continueBuy: (() => void) | undefined;
 
   constructor(props: PROPS) {
     super(props);
     this.state = {
       cfiRender: [],
       currentImage: 0,
+      modalOpen: false,
     };
     this._onAssetsState = this._onAssetsState.bind(this);
     this.sliderCB = this.sliderCB.bind(this);
@@ -253,9 +257,28 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
     }
   }
 
+  beforeBuyCallback = (cb: () => void) => {
+    const { cfiRender, currentImage, modalOpen } = this.state;
+    if (
+      !modalOpen &&
+      cfiRender.length > 1 &&
+      this.slideIndex === 0 &&
+      currentImage < cfiRender.length
+    ) {
+      const currentRender = cfiRender[currentImage];
+      if (!currentRender.cfolioItem) {
+        this.continueBuy = cb;
+        this.setState({ modalOpen: true });
+        return false;
+      } else {
+        return true;
+      }
+    } else return true;
+  };
+
   render(): JSX.Element {
     const { t } = this.props;
-    const { cfiRender } = this.state;
+    const { cfiRender, modalOpen } = this.state;
 
     const handleImageChange = (change: number) => {
       if (cfiRender.length > 1) {
@@ -290,6 +313,11 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
         this.slideIndex < this.receiverImages.length
           ? this.receiverImages[this.slideIndex].sft
           : undefined,
+      beforeBuy: this.beforeBuyCallback,
+    };
+
+    const hideCB = () => {
+      this.setState({ modalOpen: false });
     };
 
     return (
@@ -470,6 +498,41 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
               </div>
             </div>
           </div>
+          {modalOpen && (
+            <Modal
+              show={true}
+              backdrop="static"
+              onHide={hideCB}
+              animation={false}
+            >
+              <Modal.Body>
+                Your current target for the new I-NFT is "My Wallet". In order
+                to receive WOWS rewards, the new I-NFT has to be in one of your
+                CFolios.
+                <br />
+                If you want to buy the new I-NFT into one of your CFolios,
+                CANCEL this message and select a CFolio on top of the page.
+              </Modal.Body>
+              <Modal.Footer>
+                <button
+                  className={
+                    'wolves-btn white-border mt-2 w-25 tk-aktiv-grotesk-condensed'
+                  }
+                  onClick={this.continueBuy}
+                >
+                  CONTINUE
+                </button>
+                <button
+                  className={
+                    'wolves-btn white-border mt-2 w-25 tk-aktiv-grotesk-condensed'
+                  }
+                  onClick={hideCB}
+                >
+                  CANCEL
+                </button>
+              </Modal.Footer>
+            </Modal>
+          )}
         </>
       </>
     );

@@ -32,6 +32,7 @@ type PROPS = {
   investCurrency: string;
   cfolioItem?: SFTCHILD;
   sft?: SFT;
+  beforeBuy: (successCb: () => void) => boolean;
 };
 
 function YearnQuad({
@@ -40,6 +41,7 @@ function YearnQuad({
   nftPrice,
   nftType,
   sft,
+  beforeBuy,
   t,
 }: PROPS): JSX.Element {
   const [tabOption, setTabOption] = useState(0);
@@ -53,6 +55,7 @@ function YearnQuad({
   const currencies = ['DAI', 'USDC', 'USDT', 'TUSD', 'yCrv']; // maps from internal to asset index
 
   const handleBuy = () => {
+    if (!beforeBuy(handleBuy)) return;
     const payload = {
       type: cfolioItem
         ? tabOption === 1

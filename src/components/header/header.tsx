@@ -140,11 +140,11 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
             disabled: type === 'wolves',
           },
           {
-            id: 'WOLF TRADE FLOOR',
+            id: t('header.buyStake'),
             to: '/cfolio-sfts?type=lpInvestment',
           },
           {
-            id: 'STAKED INVEST',
+            id: t('header.stakeInvest'),
             to: '/cfolio-invest?type=lpInvestment',
           },
         ],
@@ -159,16 +159,12 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
             to: '/shop?type=bois&levelId=' + levelId,
             disabled: type === 'bois',
           },
-          /*{
-            id: 'BOIS BOARDROOMS',
-            to: '/bois_boardrooms',
-          },*/
           {
-            id: 'YEARN INVESTMENT SFTS',
+            id: t('header.buyYearn'),
             to: '/cfolio-sfts?type=yearnInvestment',
           },
           {
-            id: 'YEARN INVEST',
+            id: t('header.yearnInvest'),
             to: '/cfolio-invest?type=yearnInvestment',
           },
         ],

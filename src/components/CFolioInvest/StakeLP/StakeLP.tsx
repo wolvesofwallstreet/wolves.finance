@@ -34,6 +34,7 @@ type PROPS = {
   investCurrency: string;
   cfolioItem?: SFTCHILD;
   sft?: SFT;
+  beforeBuy: (successCb: () => void) => boolean;
 };
 
 function StakeLP({
@@ -42,6 +43,7 @@ function StakeLP({
   nftPrice,
   nftType,
   sft,
+  beforeBuy,
   t,
 }: PROPS): JSX.Element {
   const [tabOption, setTabOption] = useState(0);
@@ -112,6 +114,7 @@ function StakeLP({
     : 'ADD "STAKE INVESTMENT NFT" INTO MY CFOLIO';
 
   const handleBuy = () => {
+    if (!beforeBuy(handleBuy)) return;
     const payload = {
       type: cfolioItem
         ? tabOption === 1
@@ -137,7 +140,9 @@ function StakeLP({
     ? { l: 'TRANSACTION PENDING ...', e: false }
     : sft
     ? isNaN(inputVal)
-      ? { l: 'INPUT AMOUNT MUST BE SET', e: false }
+      ? { l: 'INPUT AMOUNT IS INVALID', e: false }
+      : inputVal === 0 && cfolioItem
+      ? { l: 'INPUT AMOUNT MISSING', e: false }
       : tabOption === 1
       ? { l: `UNSTAKE ${inputVal.toFixed(2)} ${investCurrency}`, e: true }
       : cfolioItem
@@ -177,8 +182,11 @@ function StakeLP({
       </div>
       <AssetInput
         currency={investCurrency}
-        minAmount={cfolioItem ? 0.0000000001 : 0}
+        minAmount={0}
         maxAmount={curMaxAmount}
+        defaultValue={
+          isNaN(inputVal) || inputVal === 0 ? '' : inputVal.toString()
+        }
         cb={(n) => setInputVal(n)}
       />
       <span className="d-block left mt-1 font-14">
