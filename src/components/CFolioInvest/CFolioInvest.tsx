@@ -320,6 +320,11 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
       this.setState({ modalOpen: false });
     };
 
+    const continueBuy = () => {
+      this.setState({ modalOpen: false });
+      if (this.continueBuy) this.continueBuy();
+    };
+
     return (
       <>
         <>
@@ -393,7 +398,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
                 to={`/cfolio-sfts?type=${this.displayType}`}
                 className={`link _btn _btn_effect tk-vincente-lightbold font-24 single-line c-pointer `}
               >
-                BACK TO INVESTMENT SFTS
+                BACK TO I-NFTs
               </Link>
 
               <span
@@ -518,7 +523,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
                   className={
                     'wolves-btn white-border mt-2 w-25 tk-aktiv-grotesk-condensed'
                   }
-                  onClick={this.continueBuy}
+                  onClick={continueBuy}
                 >
                   CONTINUE
                 </button>

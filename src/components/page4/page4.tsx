@@ -496,10 +496,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         const rewardInfo = StoreClasses.store.getAssets().rewardInfo[0];
         if (rewardInfo.apr) {
           apr = (rewardInfo.apr * profitReward) / 100;
-          apy =
-            rewardInfo.apy > 1e8
-              ? 'INF'
-              : (rewardInfo.apy * profitReward) / 100;
+          apy = StoreClasses.store.aprToApy(apr);
         }
       }
     }

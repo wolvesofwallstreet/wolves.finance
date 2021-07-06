@@ -194,7 +194,6 @@ type REWARD_INFO = {
   priceWOWS: number;
   priceToken: number;
   apr: number;
-  apy: number;
 };
 
 export type ASSET_BALANCE = {
@@ -421,7 +420,9 @@ class Store {
           if (_payload.content.filter?.includes('cards'))
             this._getSftState(_payload.content);
           if (_payload.content.filter?.includes('tokens'))
-            this._getUserSft(_payload.content);
+            this._getUserSft(_payload.content).then(() =>
+              this._getSftRewards(_payload.content)
+            );
           if (_payload.content.filter?.includes('balances'))
             this._getAssetsBalances(_payload.content);
           if (_payload.content.filter?.includes('allowance'))
@@ -625,7 +626,7 @@ class Store {
       this.dispatchQueue = [];
       if (this.lastAprTime + 60000 < Date.now()) {
         this.lastAprTime = Date.now();
-        this._updatePoolAPY();
+        this._updatePoolAPR();
       }
     });
     this.sftHolderContractRO?.on('TransferSingle', (operator, from, to) =>
@@ -658,7 +659,7 @@ class Store {
     if (this.address !== '')
       dispatcher.dispatch({
         type: ASSETS_STATE,
-        content: { filter: ['tokens', 'balances'] },
+        content: { filter: ['tokens', 'balances', 'rewards'] },
       } as Payload);
     else {
       for (const [, value] of Object.entries(this.assets.balances)) {
@@ -1106,7 +1107,7 @@ class Store {
           sft.rewardEarned = this.fromWei(readUint256(result, readIndex++));
         });
       }
-      this._updatePoolAPY();
+      await this._updatePoolAPR();
       emitter.emit(ASSETS_STATE, { status: 'rewards' } as AssetStateresult);
     } catch (e) {
       console.log(e.message);
@@ -1242,7 +1243,7 @@ class Store {
     }
   };
 
-  async _updatePoolAPY() {
+  async _updatePoolAPR() {
     if (this.uniDaiWethPairContractRO && this.lpContractRO) {
       const e18 = ethers.BigNumber.from('10').pow(18);
 
@@ -1287,11 +1288,15 @@ class Store {
             .div(ethers.BigNumber.from(rewardInfo.rewardDuration).mul(e18))
         );
 
-        rewardInfo.apr =
-          stakedPrice > 0 ? emmission.div(stakedPrice).toNumber() : 0;
-        rewardInfo.apy = (Math.pow(1.0 + rewardInfo.apr / 52, 52) - 1.0) * 100;
+        const apr = stakedPrice > 0 ? emmission.div(stakedPrice).toNumber() : 0;
+        rewardInfo.apr = apr * 100;
       }
     }
+  }
+
+  aprToApy(apr: number): string {
+    const apy = (Math.pow(1.0 + apr / 100 / 52, 52) - 1.0) * 100;
+    return apy > 1e4 ? 'INF' : (apy * 100).toFixed(2);
   }
 
   /************** TX ****************/

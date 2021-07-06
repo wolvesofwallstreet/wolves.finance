@@ -60,7 +60,7 @@ function AssetInput({
 
   useEffect(() => {
     if (defaultValue && inputRef.current) {
-      if (minAmount === 0 && parseInt(defaultValue) === 0)
+      if (minAmount === 0 && parseFloat(defaultValue) === 0)
         inputRef.current.value = '';
       else inputRef.current.value = defaultValue;
       setAmountChanged(true);
