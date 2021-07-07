@@ -219,6 +219,7 @@ contract Controller is IController, Context, Ownable {
       farm.active = true;
       farm.rewardCap = _rewardCap;
       farm.rewardFee = _rewardFee;
+      farm.rewardPerDuration = _rewardPerDuration;
       if (_rewardProvided > 0) farm.rewardProvided = _rewardProvided;
 
       // Dispatch event
