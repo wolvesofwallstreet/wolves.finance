@@ -672,6 +672,10 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
     (uint256[] memory tokenIds, uint256 length) =
       IWOWSCryptofolio(cfolio).getCryptofolio(tradeFloor);
 
+    // Marginal increase in gas per item is around 25K. Bounding items to 100
+    // fits in sensible gas limits.
+    require(length <= 100, 'CFIHSC: Too many items');
+
     // Calculate new reward amount
     uint256 newRewardAmount = 0;
     for (uint256 i = 0; i < length; ++i) {

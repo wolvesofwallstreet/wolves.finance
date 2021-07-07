@@ -666,4 +666,18 @@ describe('SFT evaluator', function () {
       )})`
     );
   });
+
+  it('should fail to transfer 101st NFT into boi card', async function () {
+    this.timeout(60 * 1000);
+
+    // Transfer locked cryptofolio item NFTs
+    const tx = tradeFloorProxyInstance.safeTransferFrom(
+      marketingWallet.address,
+      cryptofolioAddressBoi,
+      cfolioItemTokenIdsTf[100],
+      1,
+      []
+    );
+    await chai.expect(tx).to.be.revertedWith('CFIHSC: Too many items');
+  });
 });

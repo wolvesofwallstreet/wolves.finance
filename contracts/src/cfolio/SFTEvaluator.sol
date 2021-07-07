@@ -139,6 +139,9 @@ contract SFTEvaluator is ISFTEvaluator {
       (uint256[] memory cFolioItems, uint256 length) =
         cFolio.getCryptofolio(_tradeFloor);
       if (length > 0) {
+        // Bound loop to 100 c-folio items to fit in sensible gas limits
+        require(length <= 100, 'SFTE: Too many items');
+
         address[] memory calledHandlers = new address[](length);
         uint256 numCalledHandlers = 0;
 
