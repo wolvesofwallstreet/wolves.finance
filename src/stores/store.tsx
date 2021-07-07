@@ -1678,7 +1678,7 @@ class Store {
           if (!sftTokenId.eq(BIGNUMBER_MAX))
             this._addDQ(tx?.blockNumber ?? 0, {
               type: ASSETS_STATE,
-              content: { filter: ['tokens'] },
+              content: { filter: ['tokens', 'balances'] },
             } as Payload);
         }
       );
