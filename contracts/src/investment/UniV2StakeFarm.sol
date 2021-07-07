@@ -170,7 +170,6 @@ contract UniV2StakeFarm is
   {
     require(amount > 0, 'Cannot stake 0');
 
-    /*(uint256 fee) = */
     controller.onDeposit(amount);
 
     _totalSupply = _totalSupply.add(amount);
@@ -192,7 +191,6 @@ contract UniV2StakeFarm is
   {
     require(amount > 0, 'Cannot withdraw 0');
 
-    /*(uint256 fee) = */
     controller.onWithdraw(amount);
 
     _totalSupply = _totalSupply.sub(amount);
