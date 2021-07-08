@@ -176,6 +176,14 @@ const func = async function (hardhat_re) {
 
   log_step('Setting addresses in address registry');
 
+  // Transfer predefined dependency addresses
+  if (!generatedAddresses.uniV2Router)
+    generatedAddresses.uniV2Router = configAddresses.uniV2Router;
+  if (!generatedAddresses.curveYToken)
+    generatedAddresses.curveYToken = configAddresses.curveYToken;
+  if (!generatedAddresses.curveYDeposit)
+    generatedAddresses.curveYDeposit = configAddresses.curveYDeposit;
+
   await setRegistryKey(
     deployer,
     execute,

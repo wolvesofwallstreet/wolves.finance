@@ -173,6 +173,10 @@ const config = {
       url: `https://ropsten.infura.io/v3/${env.INFURA_API_KEY}`,
       accounts: TESTNET_ACCOUNTS,
     },
+    mainnet: {
+      url: `https://mainnet.infura.io/v3/${env.INFURA_API_KEY}`,
+      accounts: TESTNET_ACCOUNTS,
+    },
   },
   etherscan: {
     apiKey: env.ETHERSCAN_API_KEY,

@@ -77,11 +77,14 @@ Contracts can be deployed on the following networks:
 - `yarn ropsten:deploy`
 - `yarn kovan:deploy`
 - `yarn goerli:deploy`
+- `yarn mainnet:deploy`
 
 You can also specify tags with `yarn hardhat:deploy --tags <tags>`.
 The following tags are available:
 
 - `TokenDepends` - the dependencies needed for the token
+- `InvestmentDepends` - the dependencies needed for investment
+- `SetupInvestmentDepends` - transactions to setup the investment dependency contracts
 - `Token` - the ERC-20 token and presale launch contracts
 - `TokenSetup` - transactions to setup the token contracts
 - `SFT` - the WOWS SFT contract and minter
@@ -107,6 +110,7 @@ Contracts can be verified on the following networks:
 - `yarn ropsten:verify`
 - `yarn kovan:verify`
 - `yarn goerli:verify`
+- `yarn mainnet:verify`
 
 ### `yarn clean`
 
