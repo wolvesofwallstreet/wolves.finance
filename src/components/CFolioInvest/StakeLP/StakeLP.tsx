@@ -110,8 +110,8 @@ function StakeLP({
   const spanText = cfolioItem
     ? 'STAKE MORE'
     : sft?.isWallet
-    ? 'ADD "STAKE INVESTMENT NFT" INTO MY WALLET'
-    : 'ADD "STAKE INVESTMENT NFT" INTO MY CFOLIO';
+    ? 'ADD "STAKE I-NFT" INTO MY WALLET'
+    : 'ADD "STAKE I-NFT" INTO MY C-FOLIO';
 
   const handleBuy = () => {
     if (!beforeBuy(handleBuy)) return;
@@ -198,7 +198,7 @@ function StakeLP({
             StoreClasses.store._getTokenContractAddress()
           }
         >
-          <u>GET UNIV2 WOWS/ETH LP TOKENS HERE</u>
+          <u>GET UNI-V2 WOWS/ETH LP TOKENS HERE</u>
         </a>
       </span>
 

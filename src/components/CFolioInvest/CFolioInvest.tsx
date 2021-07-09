@@ -442,7 +442,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
                 {cfolioItemCard && (
                   <h3 className="tk-vincente-lightbold">
                     <span>
-                      {t('page.motto')}:{cfolioItemCard.motto}
+                      {t('page.motto')}: {cfolioItemCard.motto}
                     </span>
                   </h3>
                 )}

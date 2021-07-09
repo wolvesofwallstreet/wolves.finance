@@ -302,11 +302,11 @@ class CFolioManager extends React.Component<PROPS, STATE> {
       ? this.state.checkedMiddle.length > 0
         ? unLockedCount > 0
           ? {
-              l: `LOCK (${unLockedCount}) AND TRANSFER (${this.state.checkedMiddle.length}) CFOLIO ITEM`,
+              l: `LOCK (${unLockedCount}) AND TRANSFER (${this.state.checkedMiddle.length}) C-FOLIO ITEM`,
               e: true,
             }
           : {
-              l: `TRANSFER (${this.state.checkedMiddle.length}) CFOLIO ITEM`,
+              l: `TRANSFER (${this.state.checkedMiddle.length}) C-FOLIO ITEM`,
               e: true,
             }
         : { l: 'NOTHING SELECTED', e: false }

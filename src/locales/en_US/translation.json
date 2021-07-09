@@ -62,11 +62,11 @@
   },
   "page3": {
     "welcome-wolves": "WELCOME TO THE WOLFPACK",
-    "newCrypto-wolves": "NEW LEVEL{Q} WOLF CRYPTOFOLIOS FOR HOLDING STAKING & RAIDING",
+    "newCrypto-wolves": "NEW LEVEL{Q} WOLF C-FOLIOS FOR HOLDING STAKING & RAIDING",
     "welcome-bois": "WELCOME TO THE BOIS",
-    "newCrypto-bois": "NEW LEVEL{Q} BOIS CRYPTOFOLIOS FOR STABLE COIN LENDING",
+    "newCrypto-bois": "NEW LEVEL{Q} BOIS C-FOLIOS FOR STABLE COIN LENDING",
     "welcome-myPack": "WELCOME TO MY PACK",
-    "newCrypto-myPack": "BOIS, WOLVES AND CFOLIO ITEMS IN MY WALLET"
+    "newCrypto-myPack": "BOIS, WOLVES AND C-FOLIO ITEMS IN MY WALLET"
   },
   "page4": {
     "welcome-wolves": "$t(page3.welcome-wolves)",

@@ -2,9 +2,9 @@
   {
     "type": "lpInvestment",
     "token": "WOWS/ETH LP",
-    "title": " WELCOME TO THE WOWS/WETH STAKERS NFTs",
-    "shortDescription": "UNIV2 WOWS/WETH STAKING INVESTMENT NFTs",
-    "description": "This is a staker investment NFT and allows to stake WOWS/WETH on the tradefloor with the rest of the pack. You can sell this investment NFT with or without its added value at any point currently on any third party platform, and on ours when this is launched.",
+    "title": " WELCOME TO THE WOWS/ETH STAKE I-NFTs",
+    "shortDescription": "UNI-V2 WOWS/ETH STAKE I-NFTs",
+    "description": "This \"STAKE I-NFT\" allows to stake WOWS/ETH on the tradefloor with the rest of the pack. You can sell this investment NFT with or without its added value at any point currently on any third party platform, and on ours when this is launched.",
     "constraints": "wolves",
     "cards": [
       {
@@ -60,9 +60,9 @@
   {
     "type": "yearnInvestment",
     "token": "yCrv",
-    "title": " WELCOME TO THE YEARN CRV POOL NFTs",
-    "shortDescription": "YEARN NFTs FOR YOUR LENDING FOR DAI / USDT / USDC / TUSD",
-    "description": "This is a Yearn stablecoin investment NFT and it allows you to invest stable coin with your fellow business Bois. You can sell this investment NFT with or without its added value at any point currently on any third party platform, and on ours when this is launched.",
+    "title": " WELCOME TO THE YEARN CRV POOL I-NFTs",
+    "shortDescription": "YEARN I-NFTs FOR YOUR LENDING FOR DAI / USDT / USDC / TUSD",
+    "description": "This \"YEARN I-NFT\" allows you to invest DAI, USDT, USDC and TUSD stable coins for lending with your fellow business Bois. You can sell this investment NFT with or without its added value at any point currently on any third party platform, and on ours when this is launched.",
     "constraints": "bois",
     "cards": [
       {
