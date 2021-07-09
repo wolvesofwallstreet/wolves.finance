@@ -38,11 +38,13 @@
   background-image: var(--url);
   background-size: cover;
   margin-bottom: 10px;
+  opacity: 0.5;
 }
 
 .image_slide.active {
   border: 2px solid var(--wolves-white);
   transform: scale(0.94);
+  opacity: 1;
 }
 
 /* Arrow*/
