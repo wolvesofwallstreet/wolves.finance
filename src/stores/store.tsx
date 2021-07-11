@@ -451,6 +451,10 @@ class Store {
       import('locales/en_US/cFolioItems.json').then((content) => {
         this.assets.cfolioItems = content.default as CFOLIO_ITEMS[];
         emitter.emit(ASSETS_STATE, { status: 'loaded' } as AssetStateresult);
+        dispatcher.dispatch({
+          type: ASSETS_STATE,
+          content: { filter: ['cards'] },
+        } as Payload);
       });
     });
   }
@@ -708,10 +712,12 @@ class Store {
           networkName: this.networkName,
         } as ConnectResult);
       }
-      dispatcher.dispatch({
-        type: ASSETS_STATE,
-        content: { filter: ['cards'] },
-      } as Payload);
+      if (this.assets.cfolioItems.length > 0) {
+        dispatcher.dispatch({
+          type: ASSETS_STATE,
+          content: { filter: ['cards'] },
+        } as Payload);
+      }
       this._setupEvents();
     } catch (e) {
       console.log(e);

@@ -216,8 +216,8 @@ contract SFTEvaluator is ISFTEvaluator {
     (uint64 time, uint8 level) =
       _sftHolder.getTokenData(tokenId.toSftTokenId());
 
-    uint8 update = (level & 3) == 0 && time <= upgradeTime ? 1 : 0;
+    uint32 update = (level & 3) <= 1 && time <= upgradeTime ? 125e3 : 0;
 
-    return (rates[(level & 3)], rates[(level & 3) + update]);
+    return (rates[(level & 3)], rates[(level & 3)] + update);
   }
 }

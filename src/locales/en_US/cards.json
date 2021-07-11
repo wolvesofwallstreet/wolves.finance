@@ -9,6 +9,7 @@
       "price": 2.5,
       "autoUpgrade": "2 MONTHS",
       "profitReward": 25,
+      "upgradeReward": 37.5,
       "header": "1/{Q} RARITY - 25% BASE PROWESS",
       "cards": [
         {
@@ -59,8 +60,9 @@
       "type": "bois",
       "quantity": 0,
       "price": 4.5,
-      "autoUpgrade": "",
+      "autoUpgrade": "2 MONTHS",
       "profitReward": 50,
+      "upgradeReward": 62.5,
       "header": "1/{Q} RARITY - 50% BASE PROWESS",
       "cards": [
         {
@@ -69,7 +71,7 @@
           "minted": 0,
           "name": "BRYANT BARKLEY",
           "motto": "NEVER DRINK THE KOOL-AID",
-          "description": "This Brooklyn born business bois manages a tight team of ten. Bryant has formulated an intense growth and development plan. He takes no shit, is the typical strong and silent type but watch your P’s & Q’s around him as the smallest mistake will make him growl in anger.",
+          "description": "This Brooklyn born business boi manages a tight team of ten. Bryant has formulated an intense growth and development plan. He takes no shit, is the typical strong and silent type but watch your P’s & Q’s around him as the smallest mistake will make him growl in anger.",
           "type": "movie",
           "url": "https://4travelers.de/wolves_assets/cards/bois/level2/BRYANT-{res}.mp4"
         },
@@ -113,6 +115,7 @@
       "price": 0,
       "autoUpgrade": "",
       "profitReward": 75,
+      "upgradeReward": 75,
       "header": "1/{Q} RARITY - 75% BASE PROFIT REWARD",
       "cards": []
     },
@@ -124,6 +127,7 @@
       "price": 0,
       "autoUpgrade": "",
       "profitReward": 100,
+      "upgradeReward": 100,
       "header": "1/{Q} RARITY - 100% BASE PROFIT REWARD",
       "cards": []
     },
@@ -135,6 +139,7 @@
       "price": 2.5,
       "autoUpgrade": "2 MONTHS",
       "profitReward": 25,
+      "upgradeReward": 37.5,
       "header": "1/{Q} RARITY - 25% BASE PROWESS",
       "cards": [
         {
@@ -185,8 +190,9 @@
       "type": "wolves",
       "quantity": 0,
       "price": 4.5,
-      "autoUpgrade": "",
+      "autoUpgrade": "2 MONTHS",
       "profitReward": 50,
+      "upgradeReward": 62.5,
       "header": "1/{Q} RARITY - 50% BASE PROWESS",
       "cards": [
         {
@@ -239,6 +245,7 @@
       "price": 0,
       "autoUpgrade": "",
       "profitReward": 75,
+      "upgradeReward": 75,
       "header": "1/{Q} RARITY - 75% BASE PROWESS",
       "cards": []
     },
@@ -250,6 +257,7 @@
       "price": 0,
       "autoUpgrade": "",
       "profitReward": 100,
+      "upgradeReward": 100,
       "header": "1/{Q} RARITY - 100% BASE PROWESS",
       "cards": []
     }

@@ -339,7 +339,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
                 {this.cfolioItems?.shortDescription}
               </h2>
               <h3 className="tk-grotesk-lightbold font-14">
-                {'PICK YOUR HIGHEST LEVEL WORK TO STAKE '}
+                PICK YOUR HIGHEST LEVEL C-FOLIO TO INVEST WITH
               </h3>
             </div>
 

@@ -482,11 +482,13 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         if (profitReward === (currentLevel as CARD_LEVEL).profitReward) {
           autoUpgrade =
             60 * 86400 + currentRender.sft?.mintTimestamp - Date.now() / 1000;
+          const upgradeReward = (currentLevel as CARD_LEVEL).upgradeReward;
           autoUpgradeText = txPending
             ? t('page4.txPending')
             : autoUpgrade <= 0
-            ? 'UPGRADE TO 50% PROWESS NOW'
-            : 'UPGRADE TO 50% PROWESS IN ' + remainingFromSecs(autoUpgrade);
+            ? `UPGRADE TO ${upgradeReward} PROWESS NOW`
+            : `UPGRADE TO ${upgradeReward} PROWESS IN ` +
+              remainingFromSecs(autoUpgrade);
         } else {
           autoUpgrade = undefined;
         }
