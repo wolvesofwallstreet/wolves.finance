@@ -26,12 +26,6 @@ const ADDRESS_BOOK_TRADE_FLOOR_PROXY_KEY =
 // Contract ABIs
 const TRADE_FLOOR_ABI = `${__dirname}/../src/abi/contracts/src/token/TradeFloor.sol/TradeFloor.json`;
 
-// TODO: Trade floor will use {id} mechamism eventually
-const METADATA_URI =
-  'https://4travelers.de/wolves_assets/tradefloor/rinkeby/metadata/';
-const CONTRACT_METADATA_URI =
-  'https://4travelers.de/wolves_assets/tradefloor/rinkeby/metadata/contract.json';
-
 // Path to address files
 const CONFIG_ADDRESSES = `${__dirname}/../src/config/addresses.json`;
 const GENERATED_ADDRESSES = `${__dirname}/../src/config/generated-addresses.json`;
@@ -100,6 +94,10 @@ const func = async function (hardhat_re) {
 
   const configAddresses = (!IGNORE_ADDRESSES && configNetworks[chainId]) || {};
   const generatedAddresses = generatedNetworks[chainId] || {};
+
+  // TODO: Trade floor will use {id} mechamism eventually
+  const METADATA_URI = `https://4travelers.de/wolves_assets/tradefloor/${hardhat_re.network.name}/metadata/`;
+  const CONTRACT_METADATA_URI = `https://4travelers.de/wolves_assets/tradefloor/${hardhat_re.network.name}/metadata/contract.json`;
 
   // Load ABIs
   const tradeFloorAbi = JSON.parse(fs.readFileSync(TRADE_FLOOR_ABI));
