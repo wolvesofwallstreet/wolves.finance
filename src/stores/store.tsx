@@ -453,7 +453,7 @@ class Store {
         emitter.emit(ASSETS_STATE, { status: 'loaded' } as AssetStateresult);
         dispatcher.dispatch({
           type: ASSETS_STATE,
-          content: { filter: ['cards'] },
+          content: { filter: ['cards', 'tokens'] },
         } as Payload);
       });
     });
