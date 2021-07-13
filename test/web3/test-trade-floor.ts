@@ -125,7 +125,7 @@ describe('Trade Floor', function () {
   let cryptofolioAddressWolf: string;
 
   // Test parameters
-  const level1Price = '3000000000000000000';
+  const level1Price = '4500000000000000000';
   const defaultCFolioType = 0;
   const levelBoi = 1;
   const cardIdBoi = 2;
