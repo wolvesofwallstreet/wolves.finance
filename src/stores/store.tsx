@@ -305,11 +305,14 @@ class Store {
     userSFT: [],
     cards: { levelNames: [], cards: [], myPackLevelDescriptions: [] },
     cfolioItems: [],
-    rewardInfo: new Array(2).fill({
-      total: 0,
+    rewardInfo: Array.from({ length: 2 }, () => ({
+      total: ethers.BigNumber.from(0),
       rewardDuration: 0,
-      rewardPerDuration: 0,
-    }),
+      rewardPerDuration: ethers.BigNumber.from(0),
+      priceWOWS: 0,
+      priceToken: 0,
+      apr: 0,
+    })),
   } as ASSETS;
 
   constructor() {
@@ -1104,7 +1107,7 @@ class Store {
           sfts.map((sft) => sft.tokenId)
         );
         let readIndex = 0;
-        const ri = this.assets.rewardInfo[0];
+        const ri = this.assets.rewardInfo[i];
         ri.total = readUint256(result, readIndex++);
         ri.rewardDuration = readUint256(result, readIndex++).toNumber();
         ri.rewardPerDuration = readUint256(result, readIndex++);
@@ -1274,28 +1277,31 @@ class Store {
       // TotalSupply of the WOWS/WETH pool
       const wowsWethTotalSupply = await this.lpContractRO.totalSupply();
 
-      const rewardInfo = this.assets.rewardInfo[0];
+      for (let i = 0; i < 2; ++i) {
+        const rewardInfo = this.assets.rewardInfo[i];
 
-      rewardInfo.priceWOWS = this.fromWei(wowsPrice);
-      rewardInfo.priceToken = this.fromWei(
-        poolPrice.mul(e18).div(wowsWethTotalSupply)
-      );
-
-      if (rewardInfo.rewardDuration) {
-        // Staked share
-        const stakedPrice = poolPrice
-          .mul(ethers.BigNumber.from(rewardInfo.total))
-          .div(wowsWethTotalSupply);
-
-        // yearly emission
-        const emmission = wowsPrice.mul(
-          rewardInfo.rewardPerDuration
-            .mul(ethers.BigNumber.from(SECONDS_PER_YEAR))
-            .div(ethers.BigNumber.from(rewardInfo.rewardDuration).mul(e18))
+        rewardInfo.priceWOWS = this.fromWei(wowsPrice);
+        rewardInfo.priceToken = this.fromWei(
+          poolPrice.mul(e18).div(wowsWethTotalSupply)
         );
 
-        const apr = stakedPrice > 0 ? emmission.div(stakedPrice).toNumber() : 0;
-        rewardInfo.apr = apr * 100;
+        if (rewardInfo.rewardDuration) {
+          // Staked share
+          const stakedPrice = poolPrice
+            .mul(ethers.BigNumber.from(rewardInfo.total))
+            .div(wowsWethTotalSupply);
+
+          // yearly emission
+          const emmission = wowsPrice.mul(
+            rewardInfo.rewardPerDuration
+              .mul(ethers.BigNumber.from(SECONDS_PER_YEAR))
+              .div(ethers.BigNumber.from(rewardInfo.rewardDuration).mul(e18))
+          );
+
+          const apr =
+            stakedPrice > 0 ? emmission.div(stakedPrice).toNumber() : 0;
+          rewardInfo.apr = apr * 100;
+        }
       }
     }
   }

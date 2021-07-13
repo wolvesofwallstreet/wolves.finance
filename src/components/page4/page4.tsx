@@ -494,8 +494,10 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         }
       }
       locked = currentRender.sft?.locked ?? false;
-      if (profitReward && currentLevel && currentLevel.type === 'wolves') {
-        const rewardInfo = StoreClasses.store.getAssets().rewardInfo[0];
+      if (profitReward && currentLevel) {
+        const rewardIndex = currentLevel.type === 'wolves' ? 0 : 1;
+        const rewardInfo =
+          StoreClasses.store.getAssets().rewardInfo[rewardIndex];
         if (rewardInfo.apr) {
           apr = (rewardInfo.apr * profitReward) / 100;
           apy = StoreClasses.store.aprToApy(apr);
