@@ -163,7 +163,7 @@ describe('LP NFTs', function () {
   let cryptofolioContractWolf: ethers.Contract;
 
   // Test parameters
-  const level1Price = '3000000000000000000';
+  const level1Price = '4500000000000000000';
   const defaultCFolioType = 0;
   const lpBalance = ethers.BigNumber.from('12000000000000000000'); // 12 UNI-V2 LP tokens
   const levelBoi = 1;

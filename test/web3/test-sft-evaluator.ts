@@ -146,7 +146,7 @@ describe('SFT evaluator', function () {
   let cryptofolioAddressBoi: string;
 
   // Test parameters
-  const level0Price = '1000000000000000000';
+  const level0Price = '2500000000000000000';
   const defaultCFolioType = 0;
   const levelBoi = 0;
   const cardIdBoi = 2;

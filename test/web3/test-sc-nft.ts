@@ -229,7 +229,7 @@ describe('SC NFTs', function () {
   let cryptofolioContractWolf: ethers.Contract;
 
   // Test parameters
-  const level1Price = '3000000000000000000';
+  const level1Price = '4500000000000000000';
   const defaultCFolioType = 0;
   const daiBalance = ethers.BigNumber.from('1000000000000000000'); // 1 DAI
   const usdcBalance = ethers.BigNumber.from('1000000'); // 1 USDC

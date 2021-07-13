@@ -166,7 +166,7 @@ describe('SFT minter', function () {
   let tradeFloorProxyInstance: ethers.Contract;
 
   // Test parameters
-  const level1Price = '3000000000000000000';
+  const level1Price = '4500000000000000000';
   const defaultCFolioType = 0;
   const levelBoi = 1;
   const cardIdBoi = 2;

@@ -624,10 +624,10 @@ describe('SFT contracts', function () {
     // Test parameters
     const levels = [0, 1, 4, 5];
     const referencePrices = [
-      '1000000000000000000',
-      '3000000000000000000',
-      '1000000000000000000',
-      '3000000000000000000',
+      '2500000000000000000',
+      '4500000000000000000',
+      '2500000000000000000',
+      '4500000000000000000',
     ];
 
     // Check initial prices
@@ -683,7 +683,7 @@ describe('SFT contracts', function () {
     const level = 1;
     const cardId = 2;
     const wowsTokenId = ethers.BigNumber.from('0x01020000');
-    const level1Price = '3000000000000000000';
+    const level1Price = '4500000000000000000';
     const cFolioType = 0;
 
     // Approve SFT minter spending WOWS
