@@ -461,7 +461,8 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       autoUpgradeText,
       apr,
       apy,
-      investment;
+      investment,
+      share;
     let locked = false;
     if (currentRender?.cfi && currentCard) {
       quantity = (currentCard as CFOLIO_ITEM).maxMintable;
@@ -501,6 +502,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         if (rewardInfo.apr) {
           apr = (rewardInfo.apr * profitReward) / 100;
           apy = StoreClasses.store.aprToApy(apr);
+          share = currentRender.sft?.rewardShare.toFixed(2);
         }
       }
     }
@@ -583,7 +585,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                   </h3>
                   <h3>
                     {t('page.investment')}:{' '}
-                    {sftChild.assets[assetIndex].toFixed(4)}{' '}
+                    {sftChild.assets[assetIndex].toFixed(6)}{' '}
                     {cfolios[sftChild.levelId].token}
                   </h3>
                 </>
@@ -742,6 +744,13 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                         <li>
                           <h3 className="no-margin">
                             {t('page4.aprapy', { apr, apy })}
+                          </h3>
+                        </li>
+                      )}
+                      {share && (
+                        <li>
+                          <h3 className="no-margin">
+                            {t('page4.share', { share })}
                           </h3>
                         </li>
                       )}

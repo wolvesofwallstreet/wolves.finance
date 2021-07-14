@@ -22,6 +22,8 @@
   color: white;
   margin: 0 10px;
   white-space: nowrap;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
 }
 
 .navbar-collapse a:hover {
@@ -54,14 +56,16 @@
   padding: 8px;
 }
 
-.dp-conn-form {
-  margin-left: auto;
-  margin-right: 20px;
+.dp-conn-container {
+  margin: 8px auto;
+  min-width: 140px;
+  color: white;
+  font-size: 12px;
 }
 
 .dp-conn-btn {
-  padding: 7px 1.2vw;
-  margin: 8px 0px 8px 0px;
+  padding: 6px;
+  margin: 8px 0px 0px 0px;
   font-size: 15px;
 
   line-height: 1.1;
@@ -73,6 +77,8 @@
   .navbar-collapse a,
   .navbar-collapse span {
     margin: 2px 8px;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
     /* font-size: 12px; */
   }
   .navbar-collapse a,
@@ -92,10 +98,6 @@
   .logo {
     width: 250px;
   }
-}
-
-.dp-conn-form {
-  margin: 8px auto;
 }
 
 .navbar-dark .navbar-brand {

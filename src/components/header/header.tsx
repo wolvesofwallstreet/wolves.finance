@@ -13,8 +13,12 @@ import { TFunction, withTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
 import logo from '../../assets/wolves_sft_logo.svg';
-import { CONNECTION_CHANGED } from '../../stores/constants';
-import { ConnectResult, StoreClasses } from '../../stores/store';
+import { ASSETS_STATE, CONNECTION_CHANGED } from '../../stores/constants';
+import {
+  AssetStateresult,
+  ConnectResult,
+  StoreClasses,
+} from '../../stores/store';
 
 interface HEADER_PROPS {
   location: Location;
@@ -24,6 +28,7 @@ interface HEADER_PROPS {
 interface HEADER_STATE {
   address: string;
   networkName: string;
+  wowsPrice?: number;
 }
 
 type DropDownItem = {
@@ -49,19 +54,30 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
 
     this.handleSubmit = this.handleSubmit.bind(this);
     this.onConnectionChanged = this.onConnectionChanged.bind(this);
+    this.onAssetsState = this.onAssetsState.bind(this);
     this.renderDropDown = this.renderDropDown.bind(this);
   }
 
   componentDidMount(): void {
     this.emitter.on(CONNECTION_CHANGED, this.onConnectionChanged);
+    this.emitter.on(ASSETS_STATE, this.onAssetsState);
   }
 
   componentWillUnmount(): void {
+    this.emitter.off(ASSETS_STATE, this.onAssetsState);
     this.emitter.off(CONNECTION_CHANGED, this.onConnectionChanged);
   }
 
   onConnectionChanged(params: ConnectResult): void {
     if (params.type === 'prod') this.setState(params);
+  }
+
+  onAssetsState(status: AssetStateresult): void {
+    if (status.status === 'rewards') {
+      this.setState({
+        wowsPrice: StoreClasses.store.getAssets().rewardInfo[0].priceWOWS,
+      });
+    }
   }
 
   handleSubmit(event: React.FormEvent<HTMLFormElement>): void {
@@ -221,13 +237,20 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
           })}
         </Navbar.Collapse>
 
-        <Form className="dp-conn-form" onSubmit={this.handleSubmit} inline>
-          <input
-            className="wolves-btn dp-conn-btn"
-            type="submit"
-            value={shortAddress}
-          />
-        </Form>
+        <div className="dp-conn-container">
+          <Form onSubmit={this.handleSubmit}>
+            <input
+              className="wolves-btn dp-conn-btn"
+              type="submit"
+              value={shortAddress}
+            />
+          </Form>
+          {this.state.wowsPrice && (
+            <span className="dp-conn-price">
+              1 WOWS = {this.state.wowsPrice.toFixed(2)} DAI
+            </span>
+          )}
+        </div>
       </Navbar>
     );
   }

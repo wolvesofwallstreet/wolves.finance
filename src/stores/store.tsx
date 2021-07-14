@@ -8,6 +8,7 @@
 
 import WalletConnectProvider from '@walletconnect/web3-provider';
 import ERC20Abi from 'abi/contracts/0xerc1155/interfaces/IERC20.sol/IERC20.json';
+import CurveYDepositAbi from 'abi/contracts/interfaces/curve/CurveDepositInterface.sol/ICurveFiDepositY.json';
 import UniV2PairAbi from 'abi/contracts/interfaces/uniswap/IUniswapV2Pair.sol/IUniswapV2Pair.json';
 import CFolioItemHandlerAbi from 'abi/contracts/src/cfolio/interfaces/ICFolioItemHandler.sol/ICFolioItemHandler.json';
 import SftEvaluatorAbi from 'abi/contracts/src/cfolio/SFTEvaluator.sol/SFTEvaluator.json';
@@ -102,6 +103,7 @@ type ChainAddresses = {
   usdcToken: string;
   usdtToken: string;
   curveYToken: string;
+  curveYDeposit: string;
 };
 interface IIndexable {
   [key: number]: ChainAddresses;
@@ -236,6 +238,7 @@ class Store {
   tradeFloorContractRO: ethers.Contract | null = null;
   lpContractRO: ethers.Contract | null = null;
   uniDaiWethPairContractRO: ethers.Contract | null = null;
+  curveYDepositContractRO: ethers.Contract | null = null;
 
   cfolioFarmLpAddress = '';
   cfolioFarmScAddress = '';
@@ -631,7 +634,7 @@ class Store {
       this.eventBlockNumber = blockNumber;
       this.dispatchQueue.forEach((payload) => dispatcher.dispatch(payload));
       this.dispatchQueue = [];
-      if (this.lastAprTime + 60000 < Date.now()) {
+      if (this.lastAprTime + 300000 < Date.now()) {
         this.lastAprTime = Date.now();
         this._updatePoolAPR();
       }
@@ -774,11 +777,18 @@ class Store {
       this.cfolioFarmLpAddress = chainAddresses.cfolioFarmLP;
       this.cfolioFarmScAddress = chainAddresses.cfolioFarmSC;
 
-      // Temporary because of missing route in stakefarm
       if (chainAddresses.uniDaiWeth !== '') {
         this.uniDaiWethPairContractRO = new ethers.Contract(
           chainAddresses.uniDaiWeth,
           UniV2PairAbi,
+          provider
+        );
+      }
+
+      if (chainAddresses.curveYDeposit !== '') {
+        this.curveYDepositContractRO = new ethers.Contract(
+          chainAddresses.curveYDeposit,
+          CurveYDepositAbi,
           provider
         );
       }
@@ -1109,10 +1119,12 @@ class Store {
         let readIndex = 0;
         const ri = this.assets.rewardInfo[i];
         ri.total = readUint256(result, readIndex++);
+        const total = this.fromWei(ri.total);
         ri.rewardDuration = readUint256(result, readIndex++).toNumber();
         ri.rewardPerDuration = readUint256(result, readIndex++);
         sfts.forEach((sft) => {
-          sft.rewardShare = this.fromWei(readUint256(result, readIndex++));
+          sft.rewardShare =
+            (this.fromWei(readUint256(result, readIndex++)) * 100) / total;
           sft.rewardEarned = this.fromWei(readUint256(result, readIndex++));
         });
       }
@@ -1253,7 +1265,11 @@ class Store {
   };
 
   async _updatePoolAPR() {
-    if (this.uniDaiWethPairContractRO && this.lpContractRO) {
+    if (
+      this.uniDaiWethPairContractRO &&
+      this.lpContractRO &&
+      this.curveYDepositContractRO
+    ) {
       const e18 = ethers.BigNumber.from('10').pow(18);
 
       const daiWethReserves = await this.uniDaiWethPairContractRO.getReserves();
@@ -1268,29 +1284,46 @@ class Store {
         .mul(wethPrice)
         .div(wowsWethReserves.reserve1);
 
-      // Total price of pool
-      const poolPrice = wowsWethReserves.reserve0
-        .mul(wethPrice)
-        .add(wowsWethReserves.reserve1.mul(wowsPrice))
-        .div(e18);
-
-      // TotalSupply of the WOWS/WETH pool
-      const wowsWethTotalSupply = await this.lpContractRO.totalSupply();
-
       for (let i = 0; i < 2; ++i) {
         const rewardInfo = this.assets.rewardInfo[i];
 
         rewardInfo.priceWOWS = this.fromWei(wowsPrice);
-        rewardInfo.priceToken = this.fromWei(
-          poolPrice.mul(e18).div(wowsWethTotalSupply)
-        );
 
-        if (rewardInfo.rewardDuration) {
+        let stakedPrice;
+        if (i === 0) {
+          // TotalSupply of the WOWS/WETH pool
+          const wowsWethTotalSupply = await this.lpContractRO.totalSupply();
+
+          // Total price of pool
+          const poolPrice = wowsWethReserves.reserve0
+            .mul(wethPrice)
+            .add(wowsWethReserves.reserve1.mul(wowsPrice))
+            .div(e18);
+
+          rewardInfo.priceToken = this.fromWei(
+            poolPrice.mul(e18).div(wowsWethTotalSupply)
+          );
+
           // Staked share
-          const stakedPrice = poolPrice
+          stakedPrice = poolPrice
             .mul(ethers.BigNumber.from(rewardInfo.total))
             .div(wowsWethTotalSupply);
+        } else {
+          // Get the DAI price of one yCrv token
+          const priceToken =
+            await this.curveYDepositContractRO.calc_withdraw_one_coin(
+              this.toWei(1),
+              0
+            );
+          rewardInfo.priceToken = this.fromWei(priceToken);
 
+          // Staked share
+          stakedPrice = priceToken
+            .mul(ethers.BigNumber.from(rewardInfo.total))
+            .div(e18);
+        }
+
+        if (rewardInfo.rewardDuration) {
           // yearly emission
           const emmission = wowsPrice.mul(
             rewardInfo.rewardPerDuration
@@ -1298,8 +1331,9 @@ class Store {
               .div(ethers.BigNumber.from(rewardInfo.rewardDuration).mul(e18))
           );
 
-          const apr =
-            stakedPrice > 0 ? emmission.div(stakedPrice).toNumber() : 0;
+          const apr = stakedPrice.gt(0)
+            ? emmission.div(stakedPrice).toNumber()
+            : 0;
           rewardInfo.apr = apr * 100;
         }
       }
