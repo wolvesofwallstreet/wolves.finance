@@ -248,7 +248,7 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
           </Form>
           {this.state.wowsPrice !== undefined && (
             <span className="dp-conn-price">
-              1 WOWS &asymp; ${this.state.wowsPrice.toFixed(2)}
+              1 WOWS &asymp; ${this.state.wowsPrice.toFixed(0)}
             </span>
           )}
         </div>
