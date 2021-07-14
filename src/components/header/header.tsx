@@ -74,8 +74,9 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
 
   onAssetsState(status: AssetStateresult): void {
     if (status.status === 'rewards') {
+      const wowsPrice = StoreClasses.store.getAssets().rewardInfo[0].priceWOWS;
       this.setState({
-        wowsPrice: StoreClasses.store.getAssets().rewardInfo[0].priceWOWS,
+        wowsPrice: wowsPrice > 0 ? wowsPrice : undefined,
       });
     }
   }
@@ -245,9 +246,9 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
               value={shortAddress}
             />
           </Form>
-          {this.state.wowsPrice && (
+          {this.state.wowsPrice !== undefined && (
             <span className="dp-conn-price">
-              1 WOWS = {this.state.wowsPrice.toFixed(2)} DAI
+              1 WOWS &asymp; ${this.state.wowsPrice.toFixed(2)}
             </span>
           )}
         </div>
