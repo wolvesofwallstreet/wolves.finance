@@ -174,6 +174,12 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
       ethRoute[0] = router.WETH();
       ethRoute[1] = rewardToken;
 
+      // Disable high-impact Slither detector "arbitrary-send" here. Slither
+      // recommends that programmers "Ensure that an arbitrary user cannot
+      // withdraw unauthorized funds." We accomplish this by using access
+      // control to prevent unauthorized modification of the destination.
+      //
+      // slither-disable-next-line arbitrary-send
       uint256[] memory amounts =
         router.swapExactETHForTokens{ value: amountETH }(
           0,
