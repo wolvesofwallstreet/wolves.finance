@@ -431,7 +431,9 @@ contract Crowdsale is Context, ReentrancyGuard, ERC20Recovery {
 
     // Transfer all tokens from this contract to _wallet
     uint256 tokenInContract = token.balanceOf(address(this));
-    if (tokenInContract > 0) token.transfer(_wallet, tokenInContract);
+    if (tokenInContract > 0) {
+      require(token.transfer(_wallet, tokenInContract), 'CS: Xfer failed');
+    }
 
     // Finally whitelist uniV2 LP pool on token contract
     token.enableUniV2Pair(true);
@@ -505,7 +507,7 @@ contract Crowdsale is Context, ReentrancyGuard, ERC20Recovery {
     internal
   {
     require(token.mint(address(this), _tokenAmount), 'minting failed');
-    token.transfer(_beneficiary, _tokenAmount);
+    require(token.transfer(_beneficiary, _tokenAmount), 'CS: Xfer failed');
   }
 
   /**
@@ -585,7 +587,10 @@ contract Crowdsale is Context, ReentrancyGuard, ERC20Recovery {
 
     // Send remaining WOWS token to team wallet
     if (amountToken < tokenBalance)
-      token.transfer(remainingReceiver, tokenBalance.sub(amountToken));
+      require(
+        token.transfer(remainingReceiver, tokenBalance.sub(amountToken)),
+        'CS: Xfer failed'
+      );
 
     return liquidity;
   }

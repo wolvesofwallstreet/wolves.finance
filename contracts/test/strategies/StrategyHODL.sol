@@ -98,7 +98,7 @@ contract StrategyHODL is IStrategy, Context {
     address vault = _controller.vaults(address(this));
     require(vault != address(0), '!vault'); // Additional protection so we don't burn the funds
 
-    _want.transfer(vault, amount);
+    require(_want.transfer(vault, amount), 'HODL: Xfer failed');
   }
 
   function skim() external override {}
@@ -115,7 +115,7 @@ contract StrategyHODL is IStrategy, Context {
 
     uint256 balance = _want.balanceOf(address(this));
 
-    _want.transfer(vault, balance);
+    require(_want.transfer(vault, balance), 'HODL: Xfer failed');
 
     return balance;
   }

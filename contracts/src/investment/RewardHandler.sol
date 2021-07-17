@@ -134,7 +134,10 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
     // Transfer WOWS to the new rewardHandler
     uint256 amountRewards = rewardToken.balanceOf(address(this));
     if (amountRewards > 0)
-      rewardToken.transfer(newRewardHandler, amountRewards);
+      require(
+        rewardToken.transfer(newRewardHandler, amountRewards),
+        'RH: Xfer failed'
+      );
 
     // Destroy contract
     if (destroy) selfdestruct(payable(newRewardHandler));
@@ -263,7 +266,10 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
       }
 
       // Now send rewards to the user
-      rewardToken.transfer(recipient, recipientAmount);
+      require(
+        rewardToken.transfer(recipient, recipientAmount),
+        'RH: Xfer failed'
+      );
     }
   }
 
@@ -319,17 +325,26 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
         rewardToken.mint(address(this), distributeAmount.sub(balance));
 
       // Distribute the fee
-      rewardToken.transfer(
-        teamWallet,
-        distributeAmount.mul(FEE_TO_TEAM).div(1e6)
+      require(
+        rewardToken.transfer(
+          teamWallet,
+          distributeAmount.mul(FEE_TO_TEAM).div(1e6)
+        ),
+        'RH: Xfer failed'
       );
-      rewardToken.transfer(
-        marketingWallet,
-        distributeAmount.mul(FEE_TO_MARKETING).div(1e6)
+      require(
+        rewardToken.transfer(
+          marketingWallet,
+          distributeAmount.mul(FEE_TO_MARKETING).div(1e6)
+        ),
+        'RH: Xfer failed'
       );
-      rewardToken.transfer(
-        booster,
-        distributeAmount.mul(FEE_TO_BOOSTER).div(1e6)
+      require(
+        rewardToken.transfer(
+          booster,
+          distributeAmount.mul(FEE_TO_BOOSTER).div(1e6)
+        ),
+        'RH: Xfer failed'
       );
     }
     return rewardToken;
