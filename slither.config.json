@@ -6,7 +6,7 @@
   "exclude_informational": true,
   "exclude_optimization": true,
   "exclude_dependencies": false,
-  "filter_paths": "@openzeppelin,bytecode,depends",
+  "filter_paths": "@openzeppelin,base64-sol,bytecode,depends",
   "solc": "tools/bin/solc-0.7.6",
   "solc_disable_warnings": true
 }
