@@ -344,7 +344,7 @@ const func = async function (hardhat_re) {
     const CFI_HANDLERS = new Array(8)
       .fill(generatedAddresses.cfolioItemHandlerLPProxy, 0, 4)
       .fill(generatedAddresses.cfolioItemHandlerSCProxy, 4, 8);
-    const CFI_MAXMINT = new Array(8).fill('100');
+    const CFI_MAXMINT = new Array(8).fill('1000');
     const CFI_PRICES = new Array(8).fill('500000000000000000'); // 0.5 WOWS
     await catchUnknownSigner(
       execute(
