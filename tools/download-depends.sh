@@ -27,7 +27,7 @@ set -o nounset
 #
 
 # When this changes, update the version in slither.config.json
-SOLC_VERSION="0.7.4"
+SOLC_VERSION="0.7.6"
 
 SOLC_URL="https://github.com/ethereum/solidity/releases/download/v${SOLC_VERSION}/solc-static-linux"
 

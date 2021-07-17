@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT AND Apache-2.0
-pragma solidity 0.7.4;
+pragma solidity 0.7.6;
 
 /**
  * Utility library of inline functions on addresses
