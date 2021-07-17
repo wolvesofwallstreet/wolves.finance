@@ -23,10 +23,10 @@
   "scripts": {
     "audit": "audit-ci --moderate --package-manager yarn --allowlist postcss lodash underscore --report-type summary",
     "build": "react-scripts build",
-    "clean": "rimraf artifacts build cache contracts/bytecode contracts/depends depends deployments node_modules src/abi",
+    "clean": "rimraf artifacts build cache contracts/bytecode contracts/depends depends deployments node_modules src/abi tools/bin tools/repos",
     "compile": "hardhat compile",
     "create-metadata": "cd metadata && node create_metadata.ts",
-    "depends": "bash tools/build-depends.sh",
+    "depends": "bash tools/download-depends.sh && bash tools/build-depends.sh",
     "deploy": "gh-pages -b master -r https://github.com/wolvesofwallstreet/wolvesofwallstreet.github.io.git -d build",
     "format": "prettier --write . && eslint --fix .",
     "goerli:deploy": "hardhat --network goerli deploy",

@@ -100,6 +100,14 @@ jobs:
             tools/repos/curve-contracts
           key: restore-curve-${{ hashFiles('tools/depends/chain/curve-contracts/**') }}
 
+      - name: Restore downloaded dependencies
+        id: restore-downloads
+        uses: actions/cache@v2
+        with:
+          path: |
+            tools/bin
+          key: restore-downloads-${{ hashFiles('tools/download-depends.sh') }}
+
       - name: yarn install
         if: steps.restore-node.outputs.cache-hit != 'true'
         run: yarn install
