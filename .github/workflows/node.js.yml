@@ -69,9 +69,31 @@ jobs:
             depends
           key: restore-contracts-${{ hashFiles('tools/build-depends.sh', 'tools/depends/chain/**') }}
 
-      - name: Restore Curve build files
+      - name: Restore Vyper compilers
+        id: restore-vyper
         if: steps.restore-contracts.outputs.cache-hit != 'true'
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.vvm
+          key: restore-vyper-${{ hashFiles('tools/depends/chain/curve-contracts/**') }}
+          restore-keys: |
+            restore-vyper-
+
+      - name: Restore Solidity compilers for Vyper
+        id: restore-solcx
+        if: steps.restore-contracts.outputs.cache-hit != 'true'
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.solcx
+          key: restore-solcx-${{ hashFiles('tools/depends/chain/curve-contracts/**') }}
+          restore-keys: |
+            restore-solcx-
+
+      - name: Restore Curve build files
         id: restore-curve
+        if: steps.restore-contracts.outputs.cache-hit != 'true'
         uses: actions/cache@v2
         with:
           path: |
