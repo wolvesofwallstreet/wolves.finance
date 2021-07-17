@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0
 // rinkeby: 0x139C0D4ce21Bb5d1376fc56a1f01057259f28205
 
+pragma solidity >=0.7.0 <0.8.0;
+
 interface Stable {
   function mint(address account, uint256 amount) external;
 }
