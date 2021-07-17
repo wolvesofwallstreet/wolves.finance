@@ -80,8 +80,9 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
    */
   constructor(IAddressRegistry addressRegistry) {
     // Initialize access
-    address marketingWallet =
-      addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
+    address marketingWallet = addressRegistry.getRegistryEntry(
+      AddressBook.MARKETING_WALLET
+    );
     _setupRole(DEFAULT_ADMIN_ROLE, marketingWallet);
 
     // Initialize state
@@ -162,14 +163,14 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
     // Validate access
     require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admins');
 
-    address rewardToken =
-      _addressRegistry.getRegistryEntry(AddressBook.WOWS_TOKEN);
+    address rewardToken = _addressRegistry.getRegistryEntry(
+      AddressBook.WOWS_TOKEN
+    );
 
     // Get the UniV2 Router
-    IUniswapV2Router02 router =
-      IUniswapV2Router02(
-        _addressRegistry.getRegistryEntry(AddressBook.UNISWAP_V2_ROUTER02)
-      );
+    IUniswapV2Router02 router = IUniswapV2Router02(
+      _addressRegistry.getRegistryEntry(AddressBook.UNISWAP_V2_ROUTER02)
+    );
 
     // Check for ETH swap (no route given)
     if (route.length == 0) {
@@ -187,14 +188,15 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
       // control to prevent unauthorized modification of the destination.
       //
       // slither-disable-next-line arbitrary-send
-      uint256[] memory amounts =
-        router.swapExactETHForTokens{ value: amountETH }(
-          0,
-          ethRoute,
-          address(this),
-          // solhint-disable-next-line not-rely-on-time
-          block.timestamp + ONE_HOUR
-        );
+      uint256[] memory amounts = router.swapExactETHForTokens{
+        value: amountETH
+      }(
+        0,
+        ethRoute,
+        address(this),
+        // solhint-disable-next-line not-rely-on-time
+        block.timestamp + ONE_HOUR
+      );
 
       // Update state
       _distributeAmount = _distributeAmount.add(amounts[1]);
@@ -210,15 +212,14 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
       uint256 amountToken = IERC20(route[0]).balanceOf(address(this));
       require(amountToken > 0, 'Insufficient amount');
 
-      uint256[] memory amounts =
-        router.swapExactTokensForTokens(
-          amountToken,
-          0,
-          route,
-          address(this),
-          // solhint-disable-next-line not-rely-on-time
-          block.timestamp + ONE_HOUR
-        );
+      uint256[] memory amounts = router.swapExactTokensForTokens(
+        amountToken,
+        0,
+        route,
+        address(this),
+        // solhint-disable-next-line not-rely-on-time
+        block.timestamp + ONE_HOUR
+      );
 
       // Update state
       _distributeAmount = _distributeAmount.add(amounts[route.length - 1]);
@@ -251,10 +252,9 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
     // If amount is zero there's nothing to do
     if (amount == 0) return;
 
-    IERC20WowsMintable rewardToken =
-      IERC20WowsMintable(
-        _addressRegistry.getRegistryEntry(AddressBook.WOWS_TOKEN)
-      );
+    IERC20WowsMintable rewardToken = IERC20WowsMintable(
+      _addressRegistry.getRegistryEntry(AddressBook.WOWS_TOKEN)
+    );
 
     // Calculate absolute fee
     uint256 absFee = amount.mul(fee).div(1e6);
@@ -271,10 +271,9 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
 
       // Mint to this contract
       if (balance < recipientAmount) {
-        uint256 mintAmount =
-          recipientAmount > _minimalMintAmount
-            ? recipientAmount
-            : _minimalMintAmount;
+        uint256 mintAmount = recipientAmount > _minimalMintAmount
+          ? recipientAmount
+          : _minimalMintAmount;
         rewardToken.mint(address(this), mintAmount);
       }
 
@@ -309,19 +308,21 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
    * @return The WOWS token address
    */
   function _distribute() internal returns (IERC20WowsMintable) {
-    IERC20WowsMintable rewardToken =
-      IERC20WowsMintable(
-        _addressRegistry.getRegistryEntry(AddressBook.WOWS_TOKEN)
-      );
+    IERC20WowsMintable rewardToken = IERC20WowsMintable(
+      _addressRegistry.getRegistryEntry(AddressBook.WOWS_TOKEN)
+    );
 
     if (_distributeAmount > 0) {
       // Load addresses
-      address marketingWallet =
-        _addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
-      address teamWallet =
-        _addressRegistry.getRegistryEntry(AddressBook.TEAM_WALLET);
-      address booster =
-        _addressRegistry.getRegistryEntry(AddressBook.WOWS_BOOSTER);
+      address marketingWallet = _addressRegistry.getRegistryEntry(
+        AddressBook.MARKETING_WALLET
+      );
+      address teamWallet = _addressRegistry.getRegistryEntry(
+        AddressBook.TEAM_WALLET
+      );
+      address booster = _addressRegistry.getRegistryEntry(
+        AddressBook.WOWS_BOOSTER
+      );
 
       // Load state
       uint256 distributeAmount = _distributeAmount;

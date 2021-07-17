@@ -127,14 +127,9 @@ contract ERC1155 is IERC1155, ERC165 {
   ) internal {
     // Check if recipient is contract
     if (_to.isContract()) {
-      bytes4 retval =
-        IERC1155TokenReceiver(_to).onERC1155Received{ gas: _gasLimit }(
-          msg.sender,
-          _from,
-          _id,
-          _amount,
-          _data
-        );
+      bytes4 retval = IERC1155TokenReceiver(_to).onERC1155Received{
+        gas: _gasLimit
+      }(msg.sender, _from, _id, _amount, _data);
       require(
         retval == ERC1155_RECEIVED_VALUE,
         'ERC1155#_callonERC1155Received: INVALID_ON_RECEIVE_MESSAGE'
@@ -189,14 +184,9 @@ contract ERC1155 is IERC1155, ERC165 {
   ) internal {
     // Pass data if recipient is contract
     if (_to.isContract()) {
-      bytes4 retval =
-        IERC1155TokenReceiver(_to).onERC1155BatchReceived{ gas: _gasLimit }(
-          msg.sender,
-          _from,
-          _ids,
-          _amounts,
-          _data
-        );
+      bytes4 retval = IERC1155TokenReceiver(_to).onERC1155BatchReceived{
+        gas: _gasLimit
+      }(msg.sender, _from, _ids, _amounts, _data);
       require(
         retval == ERC1155_BATCH_RECEIVED_VALUE,
         'ERC1155#_callonERC1155BatchReceived: INVALID_ON_RECEIVE_MESSAGE'

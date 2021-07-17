@@ -80,7 +80,7 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
   // Modifiers
   //////////////////////////////////////////////////////////////////////////////
 
-  modifier onlyController {
+  modifier onlyController() {
     require(_msgSender() == address(controller), 'not controller');
     _;
   }
@@ -172,14 +172,13 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
     override
     returns (uint256[5] memory)
   {
-    uint256[5] memory result =
-      [
-        _totalSupply,
-        _balances[account],
-        rewardsDuration,
-        rewardRate.mul(rewardsDuration),
-        earned(account)
-      ];
+    uint256[5] memory result = [
+      _totalSupply,
+      _balances[account],
+      rewardsDuration,
+      rewardRate.mul(rewardsDuration),
+      earned(account)
+    ];
     return result;
   }
 

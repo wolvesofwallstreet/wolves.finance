@@ -96,8 +96,10 @@ contract WOWSCryptofolio is IWOWSCryptofolio, Context, ERC1155Holder {
       }
 
       // Load state
-      uint256[] memory balances =
-        IERC1155(tradefloor).balanceOfBatch(accounts, itemIds);
+      uint256[] memory balances = IERC1155(tradefloor).balanceOfBatch(
+        accounts,
+        itemIds
+      );
 
       // Calculate return value
       for (uint256 i = 0; i < itemIds.length; ++i) {
@@ -160,8 +162,10 @@ contract WOWSCryptofolio is IWOWSCryptofolio, Context, ERC1155Holder {
         }
 
         // Load state
-        uint256[] memory balances =
-          tradefloor.balanceOfBatch(accounts, itemIds);
+        uint256[] memory balances = tradefloor.balanceOfBatch(
+          accounts,
+          itemIds
+        );
 
         // Update state
         tradefloor.burnBatch(address(this), itemIds, balances);

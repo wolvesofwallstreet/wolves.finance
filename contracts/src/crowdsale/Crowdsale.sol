@@ -126,7 +126,7 @@ contract Crowdsale is Context, ReentrancyGuard, ERC20Recovery {
   /**
    * @dev Reverts if not in crowdsale time range.
    */
-  modifier onlyWhileOpen {
+  modifier onlyWhileOpen() {
     require(isOpen(), 'not open');
     _;
   }
@@ -173,29 +173,29 @@ contract Crowdsale is Context, ReentrancyGuard, ERC20Recovery {
     require(_closingTime > _openingTime, 'open > close');
 
     // Reverts if address is invalid
-    IUniswapV2Router02 _uniV2Router =
-      IUniswapV2Router02(
-        _addressRegistry.getRegistryEntry(AddressBook.UNISWAP_V2_ROUTER02)
-      );
+    IUniswapV2Router02 _uniV2Router = IUniswapV2Router02(
+      _addressRegistry.getRegistryEntry(AddressBook.UNISWAP_V2_ROUTER02)
+    );
     uniV2Router = _uniV2Router;
 
     // Get our liquidity pair
-    address _uniV2Pair =
-      IUniswapV2Factory(_uniV2Router.factory()).getPair(
-        address(_token),
-        _uniV2Router.WETH()
-      );
+    address _uniV2Pair = IUniswapV2Factory(_uniV2Router.factory()).getPair(
+      address(_token),
+      _uniV2Router.WETH()
+    );
     require(_uniV2Pair != address(0), 'invalid pair');
     uniV2Pair = IERC20(_uniV2Pair);
 
     // Reverts if address is invalid
-    address _marketingWallet =
-      _addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
+    address _marketingWallet = _addressRegistry.getRegistryEntry(
+      AddressBook.MARKETING_WALLET
+    );
     _wallet = payable(_marketingWallet);
 
     // Reverts if address is invalid
-    address _stakeFarm =
-      _addressRegistry.getRegistryEntry(AddressBook.WETH_WOWS_STAKE_FARM);
+    address _stakeFarm = _addressRegistry.getRegistryEntry(
+      AddressBook.WETH_WOWS_STAKE_FARM
+    );
     stakeFarm = IStakeFarm(_stakeFarm);
 
     rate = _rate;
@@ -278,8 +278,9 @@ contract Crowdsale is Context, ReentrancyGuard, ERC20Recovery {
       uint256 userTokenAmount
     )
   {
-    uint256 tokenAmount =
-      beneficiary == address(0) ? 0 : token.balanceOf(beneficiary);
+    uint256 tokenAmount = beneficiary == address(0)
+      ? 0
+      : token.balanceOf(beneficiary);
     uint256 ethInvest = _walletInvest[beneficiary];
 
     return (
@@ -334,8 +335,9 @@ contract Crowdsale is Context, ReentrancyGuard, ERC20Recovery {
     uint256 weiAmount = msg.value;
 
     // The ETH amount we buy WOWS token for
-    uint256 buyAmount =
-      weiAmount.mul(tokenForLp).div(rate.mul(ethForLp).add(tokenForLp));
+    uint256 buyAmount = weiAmount.mul(tokenForLp).div(
+      rate.mul(ethForLp).add(tokenForLp)
+    );
 
     // The ETH amount we invest for liquidity (ETH + WOLF)
     uint256 investAmount = weiAmount.sub(buyAmount);
@@ -393,8 +395,12 @@ contract Crowdsale is Context, ReentrancyGuard, ERC20Recovery {
     token.safeTransferFrom(_msgSender(), address(this), tokenAmount);
 
     // Step 1: add liquidity
-    uint256 lpToken =
-      _addLiquidity(address(this), beneficiary, weiAmount, tokenAmount);
+    uint256 lpToken = _addLiquidity(
+      address(this),
+      beneficiary,
+      weiAmount,
+      tokenAmount
+    );
 
     // Step 2: we now own the liquidity tokens, stake them
     uniV2Pair.approve(address(stakeFarm), lpToken);
@@ -525,8 +531,12 @@ contract Crowdsale is Context, ReentrancyGuard, ERC20Recovery {
     require(token.mint(address(this), tokenAmount), 'minting failed');
 
     // Step 1: add liquidity
-    uint256 lpToken =
-      _addLiquidity(address(this), beneficiary, ethAmount, tokenAmount);
+    uint256 lpToken = _addLiquidity(
+      address(this),
+      beneficiary,
+      ethAmount,
+      tokenAmount
+    );
 
     // Step 2: we now own the liquidity tokens, stake them
     // Allow stakeFarm to own our tokens
@@ -566,16 +576,16 @@ contract Crowdsale is Context, ReentrancyGuard, ERC20Recovery {
     // Add Liquidity, receiver of pool tokens is _wallet
     token.approve(address(uniV2Router), tokenBalance);
 
-    (uint256 amountToken, uint256 amountETH, uint256 liquidity) =
-      uniV2Router.addLiquidityETH{ value: ethBalance }(
-        address(token),
-        tokenBalance,
-        tokenBalance.mul(90).div(100),
-        ethBalance.mul(90).div(100),
-        tokenOwner,
-        // solhint-disable-next-line not-rely-on-time
-        block.timestamp + 86400
-      );
+    (uint256 amountToken, uint256 amountETH, uint256 liquidity) = uniV2Router
+      .addLiquidityETH{ value: ethBalance }(
+      address(token),
+      tokenBalance,
+      tokenBalance.mul(90).div(100),
+      ethBalance.mul(90).div(100),
+      tokenOwner,
+      // solhint-disable-next-line not-rely-on-time
+      block.timestamp + 86400
+    );
 
     emit LiquidityAdded(tokenOwner, amountToken, amountETH, liquidity);
 

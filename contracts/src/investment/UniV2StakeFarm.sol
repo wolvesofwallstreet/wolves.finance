@@ -143,20 +143,19 @@ contract UniV2StakeFarm is
 
   function getUIData(address _user) external view returns (uint256[9] memory) {
     (uint112 reserve0, uint112 reserve1, uint256 price) = _getTokenUiData();
-    uint256[9] memory result =
-      [
-        // Pool
-        stakingToken.totalSupply(),
-        (uint256(reserve0)),
-        (uint256(reserve1)),
-        price,
-        // Stake
-        _totalSupply,
-        _balances[_user],
-        rewardsDuration,
-        rewardRate.mul(rewardsDuration),
-        earned(_user)
-      ];
+    uint256[9] memory result = [
+      // Pool
+      stakingToken.totalSupply(),
+      (uint256(reserve0)),
+      (uint256(reserve1)),
+      price,
+      // Stake
+      _totalSupply,
+      _balances[_user],
+      rewardsDuration,
+      rewardRate.mul(rewardsDuration),
+      earned(_user)
+    ];
     return result;
   }
 
@@ -343,8 +342,9 @@ contract UniV2StakeFarm is
     )
   {
     (uint112 reserve0, uint112 reserve1, ) = stakingToken.getReserves();
-    (uint112 reserve0R, uint112 reserve1R, ) =
-      address(route) != address(0) ? route.getReserves() : (1, 1, 0);
+    (uint112 reserve0R, uint112 reserve1R, ) = address(route) != address(0)
+      ? route.getReserves()
+      : (1, 1, 0);
 
     uint112 swap;
 
@@ -367,7 +367,7 @@ contract UniV2StakeFarm is
 
   /* ========== MODIFIERS ========== */
 
-  modifier onlyController {
+  modifier onlyController() {
     require(_msgSender() == address(controller), 'not controller');
     _;
   }

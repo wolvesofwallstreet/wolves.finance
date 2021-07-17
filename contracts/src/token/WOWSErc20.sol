@@ -84,8 +84,9 @@ contract WowsToken is IERC20WowsMintable, ERC20Capped, AccessControl {
      *   2.) 1800 token for marketing (influencer / design ...)
      */
     // reverts if address is invalid
-    address marketingWallet =
-      _addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
+    address marketingWallet = _addressRegistry.getRegistryEntry(
+      AddressBook.MARKETING_WALLET
+    );
     _mint(marketingWallet, 3600 * 1e18);
 
     /*
@@ -94,25 +95,24 @@ contract WowsToken is IERC20WowsMintable, ERC20Capped, AccessControl {
      *   1.) 500 tokens * 15 month = 7500 team rewards
      */
     // reverts if address is invalid
-    address teamWallet =
-      _addressRegistry.getRegistryEntry(AddressBook.TEAM_WALLET);
+    address teamWallet = _addressRegistry.getRegistryEntry(
+      AddressBook.TEAM_WALLET
+    );
     _mint(teamWallet, 7500 * 1e18);
 
     // Multi-sig marketing wallet gets admin rights
     _setupRole(DEFAULT_ADMIN_ROLE, marketingWallet);
 
     // Reverts if address is invalid
-    IUniswapV2Router02 _uniV2Router =
-      IUniswapV2Router02(
-        _addressRegistry.getRegistryEntry(AddressBook.UNISWAP_V2_ROUTER02)
-      );
+    IUniswapV2Router02 _uniV2Router = IUniswapV2Router02(
+      _addressRegistry.getRegistryEntry(AddressBook.UNISWAP_V2_ROUTER02)
+    );
 
     // Create the UniV2 liquidity pool
-    address _uniV2Pair =
-      IUniswapV2Factory(_uniV2Router.factory()).createPair(
-        address(this),
-        _uniV2Router.WETH()
-      );
+    address _uniV2Pair = IUniswapV2Factory(_uniV2Router.factory()).createPair(
+      address(this),
+      _uniV2Router.WETH()
+    );
     uniV2Pair = _uniV2Pair;
 
     // Retrieve the code hash of UniV2 pair which is same for all other univ2 pairs

@@ -123,22 +123,25 @@ contract SFTEvaluator is ISFTEvaluator {
     uint256 sftTokenId = tokenId.toSftTokenId();
 
     // Load state
-    (uint32 untimed, uint32 timed) =
-      // solhint-disable-next-line not-rely-on-time
-      _baseRates(sftTokenId, uint64(block.timestamp - 60 days));
+    (
+      uint32 untimed,
+      uint32 timed // solhint-disable-next-line not-rely-on-time
+    ) = _baseRates(sftTokenId, uint64(block.timestamp - 60 days));
 
     // First implementation, check timed auto upgrade only
     if (untimed != timed) {
       // Update state
       _rewardRates[sftTokenId] = timed;
 
-      IWOWSCryptofolio cFolio =
-        IWOWSCryptofolio(_sftHolder.tokenIdToAddress(sftTokenId));
+      IWOWSCryptofolio cFolio = IWOWSCryptofolio(
+        _sftHolder.tokenIdToAddress(sftTokenId)
+      );
       require(address(cFolio) != address(0), 'SFTE: invalid tokenId');
 
       // Run through all cfolioItems of main tradefloor
-      (uint256[] memory cFolioItems, uint256 length) =
-        cFolio.getCryptofolio(_tradeFloor);
+      (uint256[] memory cFolioItems, uint256 length) = cFolio.getCryptofolio(
+        _tradeFloor
+      );
       if (length > 0) {
         // Bound loop to 100 c-folio items to fit in sensible gas limits
         require(length <= 100, 'SFTE: Too many items');
@@ -148,11 +151,9 @@ contract SFTEvaluator is ISFTEvaluator {
 
         for (uint256 i = 0; i < length; ++i) {
           // Secondary c-folio items have one tradefloor which is the handler
-          address handler =
-            IWOWSCryptofolio(
-              _sftHolder.tokenIdToAddress(cFolioItems[i].toSftTokenId())
-            )
-              ._tradefloors(0);
+          address handler = IWOWSCryptofolio(
+            _sftHolder.tokenIdToAddress(cFolioItems[i].toSftTokenId())
+          )._tradefloors(0);
           require(
             address(handler) != address(0),
             'SFTE: invalid cfolioItemHandler'
@@ -209,12 +210,17 @@ contract SFTEvaluator is ISFTEvaluator {
     view
     returns (uint32 untimed, uint32 timed)
   {
-    uint32[4] memory rates =
-      [uint32(25e4), uint32(50e4), uint32(75e4), uint32(1e6)];
+    uint32[4] memory rates = [
+      uint32(25e4),
+      uint32(50e4),
+      uint32(75e4),
+      uint32(1e6)
+    ];
 
     // Load state
-    (uint64 time, uint8 level) =
-      _sftHolder.getTokenData(tokenId.toSftTokenId());
+    (uint64 time, uint8 level) = _sftHolder.getTokenData(
+      tokenId.toSftTokenId()
+    );
 
     uint32 update = (level & 3) <= 1 && time <= upgradeTime ? 125e3 : 0;
 

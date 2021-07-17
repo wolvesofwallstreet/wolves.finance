@@ -109,7 +109,7 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
   // Modifiers
   //////////////////////////////////////////////////////////////////////////////
 
-  modifier onlyTradeFloor {
+  modifier onlyTradeFloor() {
     require(_msgSender() == address(tradeFloor), 'TFCLP: only TF');
     _;
   }
@@ -370,8 +370,10 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
   ) external override {
     // Validate parameters
     require(amounts.length == 5, 'Need DAI/USDC/USDT/TUSD/yCRV');
-    (address baseCFolio, address itemCFolio) =
-      _verifyAssetAccess(baseTokenId, tokenId);
+    (address baseCFolio, address itemCFolio) = _verifyAssetAccess(
+      baseTokenId,
+      tokenId
+    );
 
     // Keep track of how many Y pool tokens were received
     uint256 beforeBalance = curveYToken.balanceOf(address(this));
@@ -450,16 +452,19 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
   ) external override {
     // Validate parameters
     require(amounts.length == 5, 'Need DAI/USDC/USDT/TUSD/yCRV');
-    (address baseCFolio, address itemCFolio) =
-      _verifyAssetAccess(baseTokenId, tokenId);
+    (address baseCFolio, address itemCFolio) = _verifyAssetAccess(
+      baseTokenId,
+      tokenId
+    );
 
     // Validate parameters
     uint256 yPoolAmount = amounts[4];
     require(yPoolAmount > 0, 'yCRV amount is 0');
 
     // Get single coin and amount
-    (int128 stableCoinIndex, uint256 stableCoinAmount) =
-      _getStableCoinInfo(amounts);
+    (int128 stableCoinIndex, uint256 stableCoinAmount) = _getStableCoinInfo(
+      amounts
+    );
 
     // Keep track of how many Y pool tokens were sent
     uint256 balanceBefore = curveYToken.balanceOf(address(this));
@@ -473,10 +478,12 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
         true
       );
 
-      address underlyingCoin =
-        curveYDeposit.underlying_coins(int128(stableCoinIndex));
-      uint256 underlyingCoinAmount =
-        IERC20(underlyingCoin).balanceOf(address(this));
+      address underlyingCoin = curveYDeposit.underlying_coins(
+        int128(stableCoinIndex)
+      );
+      uint256 underlyingCoinAmount = IERC20(underlyingCoin).balanceOf(
+        address(this)
+      );
 
       // Transfer stablecoins back to the sender
       IERC20(underlyingCoin).safeTransfer(_msgSender(), underlyingCoinAmount);
@@ -676,8 +683,8 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
    */
   function _updateRewards(address cfolio, uint32 rate) private {
     // Get c-folio items of this base cFolio
-    (uint256[] memory tokenIds, uint256 length) =
-      IWOWSCryptofolio(cfolio).getCryptofolio(tradeFloor);
+    (uint256[] memory tokenIds, uint256 length) = IWOWSCryptofolio(cfolio)
+      .getCryptofolio(tradeFloor);
 
     // Marginal increase in gas per item is around 25K. Bounding items to 100
     // fits in sensible gas limits.
@@ -686,8 +693,9 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
     // Calculate new reward amount
     uint256 newRewardAmount = 0;
     for (uint256 i = 0; i < length; ++i) {
-      address secondaryCFolio =
-        sftHolder.tokenIdToAddress(tokenIds[i].toSftTokenId());
+      address secondaryCFolio = sftHolder.tokenIdToAddress(
+        tokenIds[i].toSftTokenId()
+      );
       require(secondaryCFolio != address(0), 'CFIH: Invalid secondary cFolio');
 
       if (IWOWSCryptofolio(secondaryCFolio)._tradefloors(0) == address(this))
@@ -735,8 +743,9 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
     require(cfolioItemTokenId.isCFolioCard(), 'CFHI: Not CFolioCard');
 
     // Verify that the tokenId is one of ours
-    address cFolio =
-      sftHolder.tokenIdToAddress(cfolioItemTokenId.toSftTokenId());
+    address cFolio = sftHolder.tokenIdToAddress(
+      cfolioItemTokenId.toSftTokenId()
+    );
     require(cFolio != address(0), 'CFIH: Invalid cFolioTokenId');
     require(
       IWOWSCryptofolio(cFolio)._tradefloors(0) == address(this),

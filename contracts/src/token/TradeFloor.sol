@@ -175,8 +175,10 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     OpenSeaProxyRegistry openSeaProxyRegistry
   ) {
     // Initialize {AccessControl}
-    address marketingWallet =
-      _getAddressRegistryAddress(addressRegistry, AddressBook.MARKETING_WALLET);
+    address marketingWallet = _getAddressRegistryAddress(
+      addressRegistry,
+      AddressBook.MARKETING_WALLET
+    );
     _setupRole(DEFAULT_ADMIN_ROLE, marketingWallet);
 
     // Immutable, visible for all contexts
@@ -207,11 +209,10 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     require(_feeRecipient == address(0), 'already initialized');
 
     // Initialize {AccessControl}
-    address marketingWallet =
-      _getAddressRegistryAddress(
-        _addressRegistry,
-        AddressBook.MARKETING_WALLET
-      );
+    address marketingWallet = _getAddressRegistryAddress(
+      _addressRegistry,
+      AddressBook.MARKETING_WALLET
+    );
     _setupRole(DEFAULT_ADMIN_ROLE, marketingWallet);
 
     // Initialize {ERC1155Metadata}
@@ -225,8 +226,10 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     _fee = 1000; // 10%
 
     // Rarible: Need a real wallet for setting up storefront
-    address deployer =
-      _getAddressRegistryAddress(_addressRegistry, AddressBook.DEPLOYER);
+    address deployer = _getAddressRegistryAddress(
+      _addressRegistry,
+      AddressBook.DEPLOYER
+    );
 
     // This event initializes Rarible storefront
     emit CreateERC1155_v1(deployer, name, symbol);
@@ -332,8 +335,9 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   {
     if (!_tradingRestricted && address(_openSeaProxyRegistry) != address(0)) {
       // Whitelist OpenSea proxy contract for easy trading.
-      OpenSeaProxyRegistry proxyRegistry =
-        OpenSeaProxyRegistry(_openSeaProxyRegistry);
+      OpenSeaProxyRegistry proxyRegistry = OpenSeaProxyRegistry(
+        _openSeaProxyRegistry
+      );
       if (proxyRegistry.proxies(account) == operator) {
         return true;
       }
@@ -712,15 +716,15 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
         _addressToTokenId(from).isBaseCard() &&
         _addressToTokenId(to) == uint256(-1)
       ) {
-        IWOWSSftMinter minter =
-          IWOWSSftMinter(
-            _getAddressRegistryAddress(_addressRegistry, AddressBook.SFT_MINTER)
-          );
+        IWOWSSftMinter minter = IWOWSSftMinter(
+          _getAddressRegistryAddress(_addressRegistry, AddressBook.SFT_MINTER)
+        );
         for (uint256 i = 0; i < tokenIds.length; i++) {
           uint256 tokenId = tokenIds[i];
           if (tokenId.isCFolioCard()) {
-            uint256 tokenIdNew =
-              minter.tradeFloorTokenId(tokenId.toSftTokenId());
+            uint256 tokenIdNew = minter.tradeFloorTokenId(
+              tokenId.toSftTokenId()
+            );
             if (tokenIdNew != tokenId) {
               _burn(to, tokenId, 1);
               _mintAndEmit(to, tokenIdNew);
@@ -757,10 +761,9 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
       require(sftRecipient != address(0), 'TF: invalid recipient');
     } else sftRecipient = from;
 
-    IWOWSSftMinter minter =
-      IWOWSSftMinter(
-        _getAddressRegistryAddress(_addressRegistry, AddressBook.SFT_MINTER)
-      );
+    IWOWSSftMinter minter = IWOWSSftMinter(
+      _getAddressRegistryAddress(_addressRegistry, AddressBook.SFT_MINTER)
+    );
 
     // Update state
     uint256[] memory mintedTokenIds = new uint256[](tokenIds.length);

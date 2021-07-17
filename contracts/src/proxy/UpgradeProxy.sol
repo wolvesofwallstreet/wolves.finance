@@ -52,8 +52,9 @@ contract UpgradeProxy is Context, UpgradeableProxy {
       _ADMIN_SLOT == bytes32(uint256(keccak256('eip1967.proxy.admin')) - 1)
     );
     // Initialize {AccessControl}
-    address marketingWallet =
-      addressRegistry_.getRegistryEntry(AddressBook.MARKETING_WALLET);
+    address marketingWallet = addressRegistry_.getRegistryEntry(
+      AddressBook.MARKETING_WALLET
+    );
     _setAdmin(marketingWallet);
   }
 

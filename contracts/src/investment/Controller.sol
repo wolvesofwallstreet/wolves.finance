@@ -72,7 +72,7 @@ contract Controller is IController, Context, Ownable {
   // Modifiers
   //////////////////////////////////////////////////////////////////////////////
 
-  modifier onlyWorker {
+  modifier onlyWorker() {
     require(_msgSender() == worker, 'not worker');
     _;
   }
@@ -99,8 +99,9 @@ contract Controller is IController, Context, Ownable {
     previousController = _previousController;
 
     // Initialize {Ownable}
-    address _marketingWallet =
-      _addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
+    address _marketingWallet = _addressRegistry.getRegistryEntry(
+      AddressBook.MARKETING_WALLET
+    );
     transferOwnership(_marketingWallet);
   }
 
@@ -228,8 +229,9 @@ contract Controller is IController, Context, Ownable {
     // We have a new farm
     else {
       // If we have one with same name, deactivate old one
-      bytes32 farmName =
-        keccak256(abi.encodePacked(IFarm(_farmAddress).farmName()));
+      bytes32 farmName = keccak256(
+        abi.encodePacked(IFarm(_farmAddress).farmName())
+      );
       address searchAddress = farmHead;
       while (
         searchAddress != address(0) &&
