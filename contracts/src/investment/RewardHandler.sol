@@ -140,7 +140,15 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
       );
 
     // Destroy contract
-    if (destroy) selfdestruct(payable(newRewardHandler));
+    if (destroy) {
+      // Disable high-impact Slither detector "suicidal" here. Slither explains
+      // that "RewardHandler.terminate() allows anyone to destruct the
+      // contract", which is not the case due to validatation of the sender
+      // having the {AccessControl-DEFAULT_ADMIN_ROLE} role.
+      //
+      // slither-disable-next-line suicidal
+      selfdestruct(payable(newRewardHandler));
+    }
   }
 
   /**
