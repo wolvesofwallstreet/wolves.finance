@@ -32,8 +32,10 @@ jobs:
         include:
           - os: ubuntu-18.04
             node-version: 14
+            python-version: 3.6
           - os: ubuntu-20.04
             node-version: 16
+            python-version: 3.9
 
     # Steps represent a sequence of tasks that will be executed as part of the
     # job
@@ -119,11 +121,19 @@ jobs:
         if: steps.restore-contracts.outputs.cache-hit != 'true'
         run: yarn depends
 
-      - name: yarn lint
-        run: yarn lint
-
       - name: yarn compile
         run: yarn compile
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Python dependencies
+        run: pip3 install -r requirements.txt
+
+      - name: yarn lint
+        run: yarn lint
 
       - name: yarn hardhat:deploy
         run: yarn hardhat:deploy
