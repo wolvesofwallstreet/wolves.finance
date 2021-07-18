@@ -450,9 +450,6 @@ class Store {
     import('locales/en_US/cards.json').then((content) => {
       this.assets.cards.levelNames = content.default.levelNames;
       this.assets.cards.cards = content.default.levels as CARD_LEVEL[];
-      // Temporary remove NOLE and WARG
-      this.assets.cards.cards[1].cards.splice(3, 1);
-      this.assets.cards.cards[5].cards.splice(3, 1);
       // Load CFolioItems
       import('locales/en_US/cFolioItems.json').then((content) => {
         this.assets.cfolioItems = content.default as CFOLIO_ITEMS[];
@@ -961,20 +958,12 @@ class Store {
   _getUserSft = async (payloadContent: PayloadContent | undefined) => {
     if (this.address === '' || !this.sftMintContractRO) return;
 
-    const filterSpecialCards = (data: ethers.BigNumber[]) =>
-      data.filter(
-        (n) =>
-          n.mask(128).gt(Store.BASE_CARD_MAX) ||
-          (n.mask(128).toNumber() >> 16 !== 0x0103 &&
-            n.mask(128).toNumber() >> 16 !== 0x0503)
-      );
-
     try {
       const result: [ethers.BigNumber[], ethers.BigNumber[]] =
         await this.sftMintContractRO.getTokenIds(this.address);
 
-      const mergeList = filterSpecialCards(result[0]);
-      mergeList.push(...filterSpecialCards(result[1]));
+      const mergeList = result[0];
+      mergeList.push(...result[1]);
 
       const newUserSFT: SFT[] = mergeList
         .filter((n) => n.mask(128).lte(Store.BASE_CARD_MAX))
