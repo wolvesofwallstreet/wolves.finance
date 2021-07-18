@@ -23,6 +23,7 @@ import '../token/TestERC20Mintable.sol';
  */
 contract StrategyHODL is IStrategy, Context {
   using SafeERC20 for IERC20;
+  using SafeERC20 for TestERC20Mintable;
   using SafeMath for uint256;
 
   //////////////////////////////////////////////////////////////////////////////
