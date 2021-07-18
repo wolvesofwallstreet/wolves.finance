@@ -134,10 +134,21 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
     // Transfer WOWS to the new rewardHandler
     uint256 amountRewards = rewardToken.balanceOf(address(this));
     if (amountRewards > 0)
-      rewardToken.transfer(newRewardHandler, amountRewards);
+      require(
+        rewardToken.transfer(newRewardHandler, amountRewards),
+        'RH: Xfer failed'
+      );
 
     // Destroy contract
-    if (destroy) selfdestruct(payable(newRewardHandler));
+    if (destroy) {
+      // Disable high-impact Slither detector "suicidal" here. Slither explains
+      // that "RewardHandler.terminate() allows anyone to destruct the
+      // contract", which is not the case due to validatation of the sender
+      // having the {AccessControl-DEFAULT_ADMIN_ROLE} role.
+      //
+      // slither-disable-next-line suicidal
+      selfdestruct(payable(newRewardHandler));
+    }
   }
 
   /**
@@ -171,6 +182,12 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
       ethRoute[0] = router.WETH();
       ethRoute[1] = rewardToken;
 
+      // Disable high-impact Slither detector "arbitrary-send" here. Slither
+      // recommends that programmers "Ensure that an arbitrary user cannot
+      // withdraw unauthorized funds." We accomplish this by using access
+      // control to prevent unauthorized modification of the destination.
+      //
+      // slither-disable-next-line arbitrary-send
       uint256[] memory amounts =
         router.swapExactETHForTokens{ value: amountETH }(
           0,
@@ -263,7 +280,10 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
       }
 
       // Now send rewards to the user
-      rewardToken.transfer(recipient, recipientAmount);
+      require(
+        rewardToken.transfer(recipient, recipientAmount),
+        'RH: Xfer failed'
+      );
     }
   }
 
@@ -319,17 +339,26 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
         rewardToken.mint(address(this), distributeAmount.sub(balance));
 
       // Distribute the fee
-      rewardToken.transfer(
-        teamWallet,
-        distributeAmount.mul(FEE_TO_TEAM).div(1e6)
+      require(
+        rewardToken.transfer(
+          teamWallet,
+          distributeAmount.mul(FEE_TO_TEAM).div(1e6)
+        ),
+        'RH: Xfer failed'
       );
-      rewardToken.transfer(
-        marketingWallet,
-        distributeAmount.mul(FEE_TO_MARKETING).div(1e6)
+      require(
+        rewardToken.transfer(
+          marketingWallet,
+          distributeAmount.mul(FEE_TO_MARKETING).div(1e6)
+        ),
+        'RH: Xfer failed'
       );
-      rewardToken.transfer(
-        booster,
-        distributeAmount.mul(FEE_TO_BOOSTER).div(1e6)
+      require(
+        rewardToken.transfer(
+          booster,
+          distributeAmount.mul(FEE_TO_BOOSTER).div(1e6)
+        ),
+        'RH: Xfer failed'
       );
     }
     return rewardToken;

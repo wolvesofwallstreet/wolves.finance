@@ -218,6 +218,12 @@ contract WOWSSftMinter is Context, Ownable {
    */
   function destructContract() external onlyOwner {
     emit Destruct();
+
+    // Disable high-impact Slither detector "suicidal" here. Slither explains
+    // that "WOWSSftMinter.destructContract() allows anyone to destruct the
+    // contract", which is not the case due to the {Ownable-onlyOwner} modifier.
+    //
+    // slither-disable-next-line suicidal
     selfdestruct(msg.sender);
   }
 
