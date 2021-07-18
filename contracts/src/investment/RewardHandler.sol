@@ -10,6 +10,7 @@ pragma solidity >=0.7.0 <0.8.0;
 
 import '@openzeppelin/contracts/access/AccessControl.sol';
 import '@openzeppelin/contracts/math/SafeMath.sol';
+import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import '@openzeppelin/contracts/utils/Context.sol';
 
 import '../../interfaces/uniswap/IUniswapV2Router02.sol';
@@ -20,6 +21,7 @@ import '../../src/utils/interfaces/IAddressRegistry.sol';
 
 contract RewardHandler is Context, AccessControl, IRewardHandler {
   using SafeMath for uint256;
+  using SafeERC20 for IERC20WowsMintable;
 
   //////////////////////////////////////////////////////////////////////////////
   // Roles
@@ -134,10 +136,7 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
     // Transfer WOWS to the new rewardHandler
     uint256 amountRewards = rewardToken.balanceOf(address(this));
     if (amountRewards > 0)
-      require(
-        rewardToken.transfer(newRewardHandler, amountRewards),
-        'RH: Xfer failed'
-      );
+      rewardToken.safeTransfer(newRewardHandler, amountRewards);
 
     // Destroy contract
     if (destroy) {
@@ -280,10 +279,7 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
       }
 
       // Now send rewards to the user
-      require(
-        rewardToken.transfer(recipient, recipientAmount),
-        'RH: Xfer failed'
-      );
+      rewardToken.safeTransfer(recipient, recipientAmount);
     }
   }
 
@@ -339,26 +335,17 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
         rewardToken.mint(address(this), distributeAmount.sub(balance));
 
       // Distribute the fee
-      require(
-        rewardToken.transfer(
-          teamWallet,
-          distributeAmount.mul(FEE_TO_TEAM).div(1e6)
-        ),
-        'RH: Xfer failed'
+      rewardToken.safeTransfer(
+        teamWallet,
+        distributeAmount.mul(FEE_TO_TEAM).div(1e6)
       );
-      require(
-        rewardToken.transfer(
-          marketingWallet,
-          distributeAmount.mul(FEE_TO_MARKETING).div(1e6)
-        ),
-        'RH: Xfer failed'
+      rewardToken.safeTransfer(
+        marketingWallet,
+        distributeAmount.mul(FEE_TO_MARKETING).div(1e6)
       );
-      require(
-        rewardToken.transfer(
-          booster,
-          distributeAmount.mul(FEE_TO_BOOSTER).div(1e6)
-        ),
-        'RH: Xfer failed'
+      rewardToken.safeTransfer(
+        booster,
+        distributeAmount.mul(FEE_TO_BOOSTER).div(1e6)
       );
     }
     return rewardToken;
