@@ -45,7 +45,7 @@ contract StrategyHODL is IStrategy, Context {
   /**
    * @dev Underlying token wanted by this strategy
    */
-  TestERC20Mintable private immutable _want;
+  TestERC20Mintable private immutable _wantedToken;
 
   //////////////////////////////////////////////////////////////////////////////
   // Initialization
@@ -58,7 +58,7 @@ contract StrategyHODL is IStrategy, Context {
 
     // Initialize state
     _controller = IController(controller);
-    _want = TestERC20Mintable(want);
+    _wantedToken = TestERC20Mintable(want);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -66,7 +66,7 @@ contract StrategyHODL is IStrategy, Context {
   //////////////////////////////////////////////////////////////////////////////
 
   function want() external view override returns (address) {
-    return address(_want);
+    return address(_wantedToken);
   }
 
   function deposit() external override {}
@@ -79,9 +79,12 @@ contract StrategyHODL is IStrategy, Context {
     require(_msgSender() == address(_controller), '!controller');
 
     // Validate parameters
-    require(asset != address(_want), '!want');
+    require(asset != address(_wantedToken), '!want');
 
+    // Load state
     uint256 balance = IERC20(asset).balanceOf(address(this));
+
+    // Update state
     IERC20(asset).safeTransfer(address(_controller), balance);
   }
 
@@ -93,13 +96,15 @@ contract StrategyHODL is IStrategy, Context {
     require(_msgSender() == address(_controller), '!controller');
 
     // Validate parameters
-    uint256 balance = _want.balanceOf(address(this));
+    uint256 balance = _wantedToken.balanceOf(address(this));
     require(amount <= balance, 'amount > balance');
 
+    // Load state
     address vault = _controller.vaults(address(this));
     require(vault != address(0), '!vault'); // Additional protection so we don't burn the funds
 
-    _want.safeTransfer(vault, amount);
+    // Update state
+    _wantedToken.safeTransfer(vault, amount);
   }
 
   function skim() external override {}
@@ -111,18 +116,20 @@ contract StrategyHODL is IStrategy, Context {
     // Validate access
     require(_msgSender() == address(_controller), '!controller');
 
+    // Load state
     address vault = _controller.vaults(address(this));
     require(vault != address(0), '!vault'); // Additional protection so we don't burn the funds
 
-    uint256 balance = _want.balanceOf(address(this));
+    uint256 balance = _wantedToken.balanceOf(address(this));
 
-    _want.safeTransfer(vault, balance);
+    // Update state
+    _wantedToken.safeTransfer(vault, balance);
 
     return balance;
   }
 
   function balanceOf() public view override returns (uint256) {
-    return _want.balanceOf(address(this));
+    return _wantedToken.balanceOf(address(this));
   }
 
   function withdrawalFee() external view override returns (uint256) {

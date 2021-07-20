@@ -11,8 +11,8 @@ pragma solidity >=0.6.0 <0.8.0;
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 
 /**
- * @dev Extension of {ERC20} that allows anyone to mint tokens to arbitrary
- * accounts.
+ * @dev Extension of OpenZeppelin's {ERC20} that allows anyone to mint tokens
+ * to arbitrary accounts.
  *
  * FOR TESTING ONLY.
  */
