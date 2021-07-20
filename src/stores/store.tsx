@@ -962,7 +962,7 @@ class Store {
       const result: [ethers.BigNumber[], ethers.BigNumber[]] =
         await this.sftMintContractRO.getTokenIds(this.address);
 
-      const mergeList = result[0];
+      const mergeList = result[0].map((t) => t);
       mergeList.push(...result[1]);
 
       const newUserSFT: SFT[] = mergeList
