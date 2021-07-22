@@ -1269,9 +1269,9 @@ class Store {
 
       const wowsWethReserves = await this.lpContractRO.getReserves();
       // Price of 1 WOWS
-      const wowsPrice = wowsWethReserves.reserve0
+      const wowsPrice = wowsWethReserves.reserve1
         .mul(wethPrice)
-        .div(wowsWethReserves.reserve1);
+        .div(wowsWethReserves.reserve0);
 
       for (let i = 0; i < 2; ++i) {
         const rewardInfo = this.assets.rewardInfo[i];
