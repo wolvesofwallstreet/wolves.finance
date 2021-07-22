@@ -208,7 +208,7 @@ describe('SFT evaluator', function () {
   }
 
   before(async function () {
-    this.timeout(60 * 1000);
+    this.timeout(120 * 1000);
 
     // Get the Signers
     [signer, marketingWallet] = await hardhat.ethers.getSigners();
@@ -225,7 +225,7 @@ describe('SFT evaluator', function () {
   });
 
   it('should attach the trade floor proxy', async function () {
-    this.timeout(60 * 1000);
+    this.timeout(120 * 1000);
 
     const { tradeFloorContract, tradeFloorProxyContract } = contracts;
 
@@ -236,7 +236,7 @@ describe('SFT evaluator', function () {
   });
 
   it('should attach the sftEvaluator proxy', async function () {
-    this.timeout(60 * 1000);
+    this.timeout(120 * 1000);
 
     const { sftEvaluatorContract, sftEvaluatorProxyContract } = contracts;
 
@@ -251,7 +251,7 @@ describe('SFT evaluator', function () {
   //////////////////////////////////////////////////////////////////////////////
 
   it('should approve spending WOWS', async function () {
-    this.timeout(60 * 1000);
+    this.timeout(120 * 1000);
 
     const { tokenContract, sftMinterContract } = contracts;
 
@@ -279,7 +279,7 @@ describe('SFT evaluator', function () {
   //////////////////////////////////////////////////////////////////////////////
 
   it('should mint boi SFT', async function () {
-    this.timeout(60 * 1000);
+    this.timeout(120 * 1000);
 
     const { sftMinterContract } = contracts;
 
@@ -298,7 +298,7 @@ describe('SFT evaluator', function () {
   });
 
   it(`should mint ${cfolioItemTokenIds.length} unlocked CFolioItems (into wallet)`, async function () {
-    this.timeout(60 * 1000);
+    this.timeout(120 * 1000);
 
     const options = {
       gasLimit: ethers.BigNumber.from('2000000'), // 2M
@@ -323,7 +323,7 @@ describe('SFT evaluator', function () {
   it(`should check wallet for ${
     cfolioItemTokenIds.length + 1
   } SFTs`, async function () {
-    this.timeout(60 * 1000);
+    this.timeout(120 * 1000);
 
     const { sftHolderContract } = contracts;
 
@@ -339,7 +339,7 @@ describe('SFT evaluator', function () {
   });
 
   it('should get address of clone contract', async function () {
-    this.timeout(60 * 1000);
+    this.timeout(120 * 1000);
 
     const { sftHolderContract } = contracts;
 
@@ -356,7 +356,7 @@ describe('SFT evaluator', function () {
   //////////////////////////////////////////////////////////////////////////////
 
   it('should test admin address', async function () {
-    this.timeout(60 * 1000);
+    this.timeout(120 * 1000);
 
     const { sftEvaluatorProxyContract } = contracts;
 
@@ -367,7 +367,7 @@ describe('SFT evaluator', function () {
   });
 
   it('should test reward rate of unminted SFT', async function () {
-    this.timeout(60 * 1000);
+    this.timeout(120 * 1000);
 
     const { sftEvaluatorProxyContract } = contracts;
 
@@ -377,7 +377,7 @@ describe('SFT evaluator', function () {
   });
 
   it('should test reward rate of minted Boi SFT', async function () {
-    this.timeout(60 * 1000);
+    this.timeout(120 * 1000);
 
     const { sftEvaluatorProxyContract } = contracts;
 
@@ -390,7 +390,7 @@ describe('SFT evaluator', function () {
   });
 
   it('should test CFolioItem type of invalid token', async function () {
-    this.timeout(60 * 1000);
+    this.timeout(120 * 1000);
 
     const { sftEvaluatorProxyContract } = contracts;
 
@@ -399,7 +399,7 @@ describe('SFT evaluator', function () {
   });
 
   it('should test CFolioItem type of valid token', async function () {
-    this.timeout(60 * 1000);
+    this.timeout(120 * 1000);
 
     const { sftEvaluatorProxyContract } = contracts;
 
@@ -410,7 +410,7 @@ describe('SFT evaluator', function () {
   });
 
   it('should fail to set reward rate of CFolioItem', async function () {
-    this.timeout(60 * 1000);
+    this.timeout(120 * 1000);
 
     const { sftEvaluatorProxyContract } = contracts;
 
@@ -422,7 +422,7 @@ describe('SFT evaluator', function () {
   });
 
   it('should revert if reward rate is unchanged', async function () {
-    this.timeout(60 * 1000);
+    this.timeout(120 * 1000);
 
     const { sftEvaluatorProxyContract } = contracts;
 
@@ -431,7 +431,7 @@ describe('SFT evaluator', function () {
   });
 
   it('should set the reward rate (no effect)', async function () {
-    this.timeout(60 * 1000);
+    this.timeout(120 * 1000);
 
     const { sftEvaluatorProxyContract } = contracts;
 
@@ -461,7 +461,7 @@ describe('SFT evaluator', function () {
   });
 
   it('should set the reward rate (after level upgrade)', async function () {
-    this.timeout(60 * 1000);
+    this.timeout(120 * 1000);
 
     const { sftEvaluatorProxyContract } = contracts;
 
@@ -486,7 +486,7 @@ describe('SFT evaluator', function () {
   });
 
   it(`should lock ${cfolioItemTokenIds.length} CFolioItems in trade floor`, async function () {
-    this.timeout(60 * 1000);
+    this.timeout(120 * 1000);
 
     const { sftHolderContract, tradeFloorProxyContract } = contracts;
 
@@ -510,7 +510,7 @@ describe('SFT evaluator', function () {
   });
 
   it('should get CFolioItem trade floor token IDs', async function () {
-    this.timeout(60 * 1000);
+    this.timeout(120 * 1000);
 
     // Check cryptofolio and the LP NFT should appear
     const tokenIds = await tradeFloorProxyInstance.getTokenIds(
@@ -524,7 +524,7 @@ describe('SFT evaluator', function () {
   });
 
   it('should check wallet for trade floor NFTs', async function () {
-    this.timeout(60 * 1000);
+    this.timeout(120 * 1000);
 
     // Item in the trade floor contract should belong to the wallet
     const balance = await tradeFloorProxyInstance.balanceOfBatch(
@@ -538,7 +538,7 @@ describe('SFT evaluator', function () {
   });
 
   it('should transfer one locked NFT into the boi card', async function () {
-    this.timeout(60 * 1000);
+    this.timeout(120 * 1000);
 
     // Transfer locked cryptofolio item NFT
     const tx = tradeFloorProxyInstance.safeTransferFrom(
@@ -552,7 +552,7 @@ describe('SFT evaluator', function () {
   });
 
   it('should set the reward rate (one item)', async function () {
-    this.timeout(60 * 1000);
+    this.timeout(120 * 1000);
 
     const { sftEvaluatorProxyContract } = contracts;
 
@@ -578,7 +578,7 @@ describe('SFT evaluator', function () {
   });
 
   it('should transfer one more locked NFT into the boi card', async function () {
-    this.timeout(60 * 1000);
+    this.timeout(120 * 1000);
 
     // Transfer locked cryptofolio item NFT
     const tx = tradeFloorProxyInstance.safeTransferFrom(
@@ -592,7 +592,7 @@ describe('SFT evaluator', function () {
   });
 
   it('should set the reward rate (two items)', async function () {
-    this.timeout(60 * 1000);
+    this.timeout(120 * 1000);
 
     const { sftEvaluatorProxyContract } = contracts;
 
@@ -618,7 +618,7 @@ describe('SFT evaluator', function () {
   });
 
   it('should transfer up to 100 locked NFTs into the boi card', async function () {
-    this.timeout(60 * 1000);
+    this.timeout(120 * 1000);
 
     // Transfer locked cryptofolio item NFTs
     let tx = tradeFloorProxyInstance.safeBatchTransferFrom(
@@ -642,7 +642,7 @@ describe('SFT evaluator', function () {
   });
 
   it(`should set the reward rate (100 items)`, async function () {
-    this.timeout(60 * 1000);
+    this.timeout(120 * 1000);
 
     const { sftEvaluatorProxyContract } = contracts;
 
@@ -668,7 +668,7 @@ describe('SFT evaluator', function () {
   });
 
   it('should fail to transfer 101st NFT into boi card', async function () {
-    this.timeout(60 * 1000);
+    this.timeout(120 * 1000);
 
     // Transfer locked cryptofolio item NFTs
     const tx = tradeFloorProxyInstance.safeTransferFrom(
