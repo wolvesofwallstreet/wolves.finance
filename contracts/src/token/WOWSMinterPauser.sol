@@ -68,7 +68,7 @@ contract WOWSMinterPauser is
    */
   function pause(bool active) public {
     // Validate access
-    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'pauser role required');
+    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admin');
 
     if (_pauseActive != active) {
       // Update state
@@ -108,7 +108,7 @@ contract WOWSMinterPauser is
     bytes memory data
   ) public virtual {
     // Validate access
-    require(hasRole(MINTER_ROLE, _msgSender()), 'minter role required');
+    require(hasRole(MINTER_ROLE, _msgSender()), 'Only minter');
 
     // Validate parameters
     require(to != address(0), "Can't mint to zero address");
@@ -127,7 +127,7 @@ contract WOWSMinterPauser is
     bytes calldata data
   ) public virtual {
     // Validate access
-    require(hasRole(MINTER_ROLE, _msgSender()), 'minter role required');
+    require(hasRole(MINTER_ROLE, _msgSender()), 'Only minter');
 
     // Validate parameters
     require(to != address(0), "Can't mint to zero address");

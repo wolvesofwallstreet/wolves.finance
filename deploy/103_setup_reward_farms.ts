@@ -542,4 +542,4 @@ const func = async function (hardhat_re) {
 };
 
 module.exports = func;
-module.exports.tags = ['RewardFarmSetup'];
+module.exports.tags = ['RewardFarmsSetup'];
