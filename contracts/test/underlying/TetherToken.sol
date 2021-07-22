@@ -8,13 +8,12 @@
 
 pragma solidity >=0.6.0 <0.8.0;
 
-import '../token/TestERC20Mintable.sol';
+import '../token/TestTetherMintable.sol';
 
 // Mainnet address: 0xdac17f958d2ee523a2206206994597c13d831ec7
 // Yearn vault address: 0x83f798e925BcD4017Eb265844FDDAbb448f1707D
-contract TetherToken is TestERC20Mintable {
-  constructor() ERC20('Funny Tether USD', 'USDT') {
-    // Initialize {ERC20}
-    _setupDecimals(6);
-  }
+contract TetherToken is TestTetherMintable {
+  constructor()
+    TestTetherMintable(100000000000, 'Funny Tether USD', 'USDT', 6)
+  {}
 }

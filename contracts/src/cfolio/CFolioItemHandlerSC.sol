@@ -13,6 +13,7 @@ import '@openzeppelin/contracts/utils/Context.sol';
 import '../../0xerc1155/interfaces/IERC1155.sol';
 import '../../0xerc1155/interfaces/IERC1155TokenReceiver.sol';
 import '../../0xerc1155/interfaces/IERC20.sol';
+import '../../0xerc1155/utils/SafeERC20.sol';
 import '../../0xerc1155/utils/SafeMath.sol';
 import '../../interfaces/curve/CurveDepositInterface.sol';
 
@@ -43,6 +44,7 @@ import './interfaces/ISFTEvaluator.sol';
 contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
   using SafeMath for uint256;
   using TokenIds for uint256;
+  using SafeERC20 for IERC20;
 
   //////////////////////////////////////////////////////////////////////////////
   // Routing
@@ -172,7 +174,7 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
     // Approve stablecoin spending
     for (uint256 i = 0; i < 4; ++i) {
       address underlyingCoin = curveYDeposit.underlying_coins(int128(i));
-      IERC20(underlyingCoin).approve(address(curveYDeposit), uint256(-1));
+      IERC20(underlyingCoin).safeApprove(address(curveYDeposit), uint256(-1));
     }
 
     // Approve yCRV spending
@@ -301,7 +303,11 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
       for (uint256 i = 0; i < 4; ++i) {
         address underlyingCoin = curveYDeposit.underlying_coins(int128(i));
 
-        IERC20(underlyingCoin).transferFrom(payer, address(this), amounts[i]);
+        IERC20(underlyingCoin).safeTransferFrom(
+          payer,
+          address(this),
+          amounts[i]
+        );
 
         uint256 stableAmount = IERC20(underlyingCoin).balanceOf(address(this));
 
@@ -376,7 +382,7 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
     for (uint256 i = 0; i < 4; ++i) {
       address underlyingCoin = curveYDeposit.underlying_coins(int128(i));
 
-      IERC20(underlyingCoin).transferFrom(
+      IERC20(underlyingCoin).safeTransferFrom(
         _msgSender(),
         address(this),
         amounts[i]
@@ -473,7 +479,7 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
         IERC20(underlyingCoin).balanceOf(address(this));
 
       // Transfer stablecoins back to the sender
-      IERC20(underlyingCoin).transfer(_msgSender(), underlyingCoinAmount);
+      IERC20(underlyingCoin).safeTransfer(_msgSender(), underlyingCoinAmount);
     } else {
       // No stablecoins were passed, sender is withdrawing Y pool tokens directly
       // Transfer Y pool tokens back to the sender
