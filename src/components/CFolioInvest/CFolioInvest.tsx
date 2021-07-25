@@ -14,7 +14,7 @@ import { Modal } from 'react-bootstrap';
 import { TFunction, withTranslation } from 'react-i18next';
 import { Link, RouteComponentProps } from 'react-router-dom';
 
-import CoverLogo from '../../assets/COVER_LOGO_SMALL.png';
+//import CoverLogo from '../../assets/COVER_LOGO_SMALL.png';
 import WalletLogo from '../../assets/openwallet_low.png';
 import { ASSETS_STATE } from '../../stores/constants';
 import {
@@ -487,7 +487,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
                     <YearnQuad {...controlAttr} />
                   )}
                 </div>
-                <div className="d-flex p_relative mt-1">
+                {/*<div className="d-flex p_relative mt-1">
                   <img id="cover-image" src={CoverLogo} alt="COVER" />
                   <span id="cover-inner">
                     <a
@@ -499,7 +499,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
                       <u>GET COVER INSURANCE FOR YOUR INVESTMENT</u>
                     </a>
                   </span>
-                </div>
+                  </div>*/}
               </div>
             </div>
           </div>
