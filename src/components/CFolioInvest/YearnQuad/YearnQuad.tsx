@@ -248,7 +248,7 @@ function YearnQuad({
       <button
         className={'wolves-btn white-border mt-2'}
         onClick={handleBuy}
-        disabled={!buttonText.e}
+        disabled={true/*!buttonText.e*/}
       >
         {buttonText.l}
       </button>
