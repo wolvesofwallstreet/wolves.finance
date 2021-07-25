@@ -1659,7 +1659,7 @@ class Store {
       }
 
       const investWeiAmounts: ethers.BigNumber[] = [];
-      await this._investmentApproval(
+      const { additionalGas } = await this._investmentApproval(
         CFOLIO_ITEM_BUY,
         cfolioType,
         false,
@@ -1688,12 +1688,25 @@ class Store {
         }
       }
 
+      let options = {};
+      if (additionalGas) {
+        const gasEstimation: ethers.BigNumber =
+          await sftMintContract.estimateGas.mintCFolioItemSFT(
+            this.address,
+            cfolioType,
+            sftTokenId,
+            investWeiAmounts
+          );
+        options = { gasLimit: gasEstimation.toNumber() + additionalGas };
+      }
+
       const tx: ethers.ContractTransaction =
-        await sftMintContract?.mintCFolioItemSFT(
+        await sftMintContract.mintCFolioItemSFT(
           this.address,
           cfolioType,
           sftTokenId,
-          investWeiAmounts
+          investWeiAmounts,
+          options
         );
       emitter.emit(CFOLIO_ITEM_BUY, {
         status: 'tx',
@@ -1736,7 +1749,7 @@ class Store {
       }
 
       const investWeiAmounts: ethers.BigNumber[] = [];
-      const cfihContract = await this._investmentApproval(
+      const { additionalGas, cfihContract } = await this._investmentApproval(
         CFOLIO_ITEM_DEPOSIT,
         cfolioType,
         true,
@@ -1744,10 +1757,22 @@ class Store {
         investWeiAmounts
       );
 
+      let options = {};
+      if (additionalGas) {
+        const gasEstimation: ethers.BigNumber =
+          await cfihContract.estimateGas.deposit(
+            sftTokenId,
+            cfolioTokenId,
+            investWeiAmounts
+          );
+        options = { gasLimit: gasEstimation.toNumber() + additionalGas };
+      }
+
       const tx = await cfihContract.deposit(
         sftTokenId,
         cfolioTokenId,
-        investWeiAmounts
+        investWeiAmounts,
+        options
       );
       emitter.emit(CFOLIO_ITEM_DEPOSIT, {
         status: 'tx',
@@ -1803,6 +1828,7 @@ class Store {
 
     const approvalContracts: (ethers.Contract | undefined)[] = [];
     let oneSet = false;
+    let oneStableSet = false;
 
     for (const index in investAmount) {
       if (investAmount[index] > 0) {
@@ -1828,6 +1854,9 @@ class Store {
         }
         investWeiAmounts.push(investWeiAmount);
         approvalContracts.push(approvalContract);
+
+        if (cfihContract === this.cfihScContract && index !== '4')
+          oneStableSet = true;
         oneSet = true;
       } else {
         investWeiAmounts.push(ethers.BigNumber.from(0));
@@ -1859,7 +1888,7 @@ class Store {
         }
       }
     }
-    return cfihContract;
+    return { additionalGas: oneStableSet ? 400000 : 0, cfihContract };
   };
 
   _doCFolioItemWithdraw = async (payloadContent: PayloadContentCFolioItem) => {
@@ -1916,6 +1945,7 @@ class Store {
       }
 
       const withdrawWeiAmounts: ethers.BigNumber[] = [];
+      let oneStableSet = false;
       for (const index in investAmount) {
         const balance = this.assets.balances[balances[index]];
         let withdrawWeiAmount = this.toWei(
@@ -1934,13 +1964,32 @@ class Store {
           // Try to invest dust, too
           withdrawWeiAmount = cfolioAmounts[index];
         }
+        if (
+          cfihContract === this.cfihScContract &&
+          withdrawWeiAmount.gt(0) &&
+          index !== '4'
+        )
+          oneStableSet = true;
+
         withdrawWeiAmounts.push(withdrawWeiAmount);
+      }
+
+      let options = {};
+      if (oneStableSet) {
+        const gasEstimation: ethers.BigNumber =
+          await cfihContract.estimateGas.withdraw(
+            sftTokenId,
+            cfolioTokenId,
+            withdrawWeiAmounts
+          );
+        options = { gasLimit: gasEstimation.toNumber() + 400000 };
       }
 
       const tx = await cfihContract.withdraw(
         sftTokenId,
         cfolioTokenId,
-        withdrawWeiAmounts
+        withdrawWeiAmounts,
+        options
       );
       emitter.emit(CFOLIO_ITEM_WITHDRAW, {
         status: 'tx',
