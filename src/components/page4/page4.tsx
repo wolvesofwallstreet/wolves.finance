@@ -396,7 +396,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       !currentCard ||
       !currentRender ||
       !currentLevel ||
-      (type === 'myPack' &&
+      (type !== 'myPack' &&
         (currentCard as CARD).minted >= (currentLevel as CARD_LEVEL).quantity);
 
     const levelId = currentRender?.cfi
@@ -406,7 +406,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     const getButtonText = (s: string): string =>
       !isWalletConnected
         ? t('header.connectWallet').toString()
-        : noQuantity && currentRender?.tokenId === undefined
+        : noQuantity
         ? t('page4.noQuantity').toString()
         : txPending
         ? t('page4.txPending')
