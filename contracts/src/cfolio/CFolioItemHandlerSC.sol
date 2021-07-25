@@ -336,11 +336,12 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
 
       // Validate state
       uint256 afterBalance = curveYToken.balanceOf(address(this));
-      require(afterBalance > beforeBalance, 'No liquidity added');
 
       // Record assets in Farm contract. They don't earn rewards.
       // addAsset must only be called from Investment CFolios
-      cfolioFarm.addAssets(cFolio, afterBalance.sub(beforeBalance));
+      // This call is allowed without any investment.
+      if (afterBalance > beforeBalance)
+        cfolioFarm.addAssets(cFolio, afterBalance.sub(beforeBalance));
     }
 
     // Transfer a dummy NFT token to cFolio so we get informed if the cFolio
