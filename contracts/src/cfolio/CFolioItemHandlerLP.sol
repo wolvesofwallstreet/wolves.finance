@@ -250,9 +250,8 @@ contract CFolioItemHandlerLP is ICFolioItemHandler, Context {
     require(cFolio != address(0), 'Invalid sftTokenId');
 
     // Verify that this function is called the first time
-    try IWOWSCryptofolio(cFolio)._tradefloors(0) returns (address) {
-      revert('CFIH: TradeFloor not empty');
-    } catch {}
+    (, uint256 length) = IWOWSCryptofolio(cFolio).getCryptofolio(address(this));
+    require(length == 0, 'CFIH: TradeFloor not empty');
 
     if (amounts.length > 0 && amounts[0] > 0) {
       // Transfer LP token to this contract

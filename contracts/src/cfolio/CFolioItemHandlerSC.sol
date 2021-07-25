@@ -289,9 +289,8 @@ contract CFolioItemHandlerSC is ICFolioItemHandler, Context {
     );
 
     // Verify that this function is called the first time
-    try IWOWSCryptofolio(cFolio)._tradefloors(0) returns (address) {
-      revert('CFIH: TradeFloor not empty');
-    } catch {}
+    (, uint256 length) = IWOWSCryptofolio(cFolio).getCryptofolio(address(this));
+    require(length == 0, 'CFIH: TradeFloor not empty');
 
     // Keep track of how many Y pool tokens were received
     uint256 beforeBalance = curveYToken.balanceOf(address(this));

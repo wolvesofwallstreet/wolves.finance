@@ -1865,8 +1865,9 @@ class Store {
     }
 
     if (requireOneSet && !oneSet) throw new Error('ERC20 address missing');
+    if (!oneSet) investWeiAmounts.length = 0;
 
-    for (const index in investAmount) {
+    for (const index in investWeiAmounts) {
       if (approvalContracts[index] !== undefined) {
         const allowance = await approvalContracts[index]?.allowance(
           this.address,
