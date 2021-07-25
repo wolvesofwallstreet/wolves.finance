@@ -406,7 +406,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     const getButtonText = (s: string): string =>
       !isWalletConnected
         ? t('header.connectWallet').toString()
-        : noQuantity
+        : noQuantity && currentRender?.tokenId === undefined
         ? t('page4.noQuantity').toString()
         : txPending
         ? t('page4.txPending')
