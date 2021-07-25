@@ -1285,8 +1285,8 @@ class Store {
 
           // Total price of pool
           const poolPrice = wowsWethReserves.reserve0
-            .mul(wethPrice)
-            .add(wowsWethReserves.reserve1.mul(wowsPrice))
+            .mul(wowsPrice)
+            .add(wowsWethReserves.reserve1.mul(wethPrice))
             .div(e18);
 
           rewardInfo.priceToken = this.fromWei(
@@ -1321,9 +1321,9 @@ class Store {
           );
 
           const apr = stakedPrice.gt(0)
-            ? emmission.div(stakedPrice).toNumber()
+            ? emmission.mul(100).div(stakedPrice).toNumber()
             : 0;
-          rewardInfo.apr = apr * 100;
+          rewardInfo.apr = apr;
         }
       }
     }
