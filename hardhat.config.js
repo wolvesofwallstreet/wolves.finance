@@ -32,9 +32,13 @@ const config = {
     },
     marketingWallet: {
       default: 1,
+      rinkeby: env.RINKEBY_GNOSIS_MARKETING_WALLET_ADDRESS,
+      mainnet: env.MAINNET_GNOSIS_MARKETING_WALLET_ADDRESS,
     },
     teamWallet: {
       default: 2,
+      rinkeby: env.RINKEBY_GNOSIS_TEAM_WALLET_ADDRESS,
+      mainnet: env.MAINNET_GNOSIS_TEAM_WALLET_ADDRESS,
     },
     testUser: {
       default: 3,
@@ -44,6 +48,23 @@ const config = {
     compilers: [
       {
         version: '0.7.4',
+        settings: {
+          evmVersion: 'berlin',
+          optimizer: {
+            enabled: true,
+            runs: 1000,
+            details: {
+              yul: true,
+              deduplicate: true,
+              cse: true,
+              constantOptimizer: true,
+            },
+          },
+        },
+      },
+      {
+        // Required by Yearn
+        version: '0.6.12',
         settings: {
           evmVersion: 'berlin',
           optimizer: {
@@ -65,7 +86,7 @@ const config = {
           evmVersion: 'berlin',
           optimizer: {
             enabled: true,
-            runs: 1000000,
+            runs: 1000,
             details: {
               yul: true,
               deduplicate: true,
@@ -150,6 +171,10 @@ const config = {
     },
     ropsten: {
       url: `https://ropsten.infura.io/v3/${env.INFURA_API_KEY}`,
+      accounts: TESTNET_ACCOUNTS,
+    },
+    mainnet: {
+      url: `https://mainnet.infura.io/v3/${env.INFURA_API_KEY}`,
       accounts: TESTNET_ACCOUNTS,
     },
   },

@@ -12,3 +12,191 @@
   text-align: center;
   min-height: 100vh;
 }
+
+html,
+body {
+  /*overflow: overlay;*/
+}
+
+.no-margin {
+  margin: 0;
+}
+
+.single-line {
+  line-height: 1em;
+}
+
+.ellipsis {
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wolves-color-orange {
+  color: var(--wolves-orange);
+}
+
+hr.wolves {
+  border-top: var(--wolves-orange) 1px solid;
+  margin: 4px 0;
+  align-self: stretch;
+}
+
+span a {
+  color: white;
+}
+
+span.left {
+  text-align: end;
+}
+
+span a:hover {
+  text-decoration: none;
+  color: var(--wolves-orange) !important;
+}
+
+.disabled-link {
+  color: var(--wolves-orange);
+}
+
+.c-pointer {
+  cursor: pointer;
+}
+
+.bg-blue-transparent-light {
+  background-color: rgba(4, 29, 52, 0.2) !important;
+}
+
+.bg-blue-transparent {
+  background-color: rgba(4, 29, 52, 0.44) !important;
+}
+
+.bg-blue-transparent-dark {
+  background-color: rgba(4, 29, 52, 0.8) !important;
+}
+
+.bg-orange-transparent {
+  background-color: var(--wolves-orange-transparent) !important;
+}
+
+.bg-orange {
+  background-color: var(--wolves-orange);
+}
+
+.t-left {
+  text-align: left;
+}
+
+.text-white {
+  color: var(--wolves-white);
+}
+
+.text-gray {
+  color: gray !important;
+}
+
+.line-break-enable {
+  white-space: pre-line;
+}
+
+.center-container {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.w-80 {
+  width: 80%;
+}
+
+.vw-80 {
+  width: 80vw;
+}
+
+.w-90-safe {
+  width: 90%;
+  max-width: calc(100% - 50px);
+}
+
+.vw-90-safe {
+  width: 90vw;
+  max-width: calc(100% - 50px);
+}
+
+.opaque {
+  opacity: 1;
+}
+
+.responsive-img {
+  width: 100%;
+}
+
+.border-white-thin {
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.p_relative {
+  position: relative;
+}
+
+.border_thin_t {
+  border-top: 1px solid var(--wolves-orange-light);
+}
+
+.border_thin_b {
+  border-bottom: 1px solid var(--wolves-orange-light);
+}
+
+/* --- START ARROWS */
+/* Src http://apps.eky.hk/css-triangle-generator/ */
+.arrow_up,
+.arrow_down,
+.arrow_left,
+.arrow_right {
+  width: 0;
+  height: 0;
+  border-style: solid;
+  background-color: transparent;
+  border-color: transparent;
+}
+
+.arrow_down {
+  border-width: 15px 25px 0 25px;
+  border-top-color: var(--wolves-orange-light);
+}
+
+.arrow_left {
+  border-width: 20px 15px 20px 0;
+  border-right-color: var(--wolves-orange-light);
+}
+
+.arrow_right {
+  border-width: 20px 0 20px 15px;
+  border-left-color: var(--wolves-orange-light);
+}
+
+.arrow_left:hover {
+  border-right-color: var(--wolves-orange);
+}
+
+.arrow_right:hover {
+  border-left-color: var(--wolves-orange);
+}
+
+/* --- ARROWS END*/
+
+.link {
+  text-decoration: none !important;
+  color: var(--wolves-white);
+  user-select: none;
+}
+
+.noselect {
+  -webkit-touch-callout: none; /* iOS Safari */
+  -webkit-user-select: none; /* Safari */
+  -khtml-user-select: none; /* Konqueror HTML */
+  -moz-user-select: none; /* Old versions of Firefox */
+  -ms-user-select: none; /* Internet Explorer/Edge */
+  user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome, Edge, Opera and Firefox */
+}

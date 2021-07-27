@@ -30,12 +30,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-16.04
-            node-version: 14
           - os: ubuntu-18.04
             node-version: 14
+            python-version: 3.6
           - os: ubuntu-20.04
-            node-version: 14
+            node-version: 16
+            python-version: 3.9
 
     # Steps represent a sequence of tasks that will be executed as part of the
     # job
@@ -59,33 +59,81 @@ jobs:
         with:
           path: |
             node_modules
-          key: npm-install-${{ matrix.os }}-${{ matrix.node-version }}-${{ hashFiles('package.json', 'yarn.lock') }}
+          key: npm-install-${{ matrix.os }}-${{ matrix.node-version }}-${{ hashFiles('package.json', 'yarn.lock', 'tools/patch-depends.sh', 'tools/depends/npm/**') }}
 
       - name: Restore smart contract dependencies
         id: restore-contracts
         uses: actions/cache@v2
         with:
           path: |
+            contracts/bytecode
             contracts/depends
             depends
-          key: restore-contracts-${{ hashFiles('tools/Makefile', 'tools/*.mk', 'tools/depends/native/**') }}
+          key: restore-contracts-${{ hashFiles('tools/build-depends.sh', 'tools/depends/chain/**') }}
+
+      - name: Restore Vyper compilers
+        id: restore-vyper
+        if: steps.restore-contracts.outputs.cache-hit != 'true'
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.vvm
+          key: restore-vyper-${{ hashFiles('tools/depends/chain/curve-contracts/**') }}
+          restore-keys: |
+            restore-vyper-
+
+      - name: Restore Solidity compilers for Vyper
+        id: restore-solcx
+        if: steps.restore-contracts.outputs.cache-hit != 'true'
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.solcx
+          key: restore-solcx-${{ hashFiles('tools/depends/chain/curve-contracts/**') }}
+          restore-keys: |
+            restore-solcx-
+
+      - name: Restore Curve build files
+        id: restore-curve
+        if: steps.restore-contracts.outputs.cache-hit != 'true'
+        uses: actions/cache@v2
+        with:
+          path: |
+            tools/repos/curve-contracts
+          key: restore-curve-${{ hashFiles('tools/depends/chain/curve-contracts/**') }}
+
+      - name: Restore downloaded dependencies
+        id: restore-downloads
+        uses: actions/cache@v2
+        with:
+          path: |
+            tools/bin
+          key: restore-downloads-${{ hashFiles('tools/download-depends.sh') }}
 
       - name: yarn install
         if: steps.restore-node.outputs.cache-hit != 'true'
         run: yarn install
 
-      - name: yarn run audit
-        run: yarn run audit
+      - name: yarn audit-ci
+        run: yarn audit-ci
 
       - name: Build smart contract dependencies
         if: steps.restore-contracts.outputs.cache-hit != 'true'
         run: yarn depends
 
-      - name: yarn lint
-        run: yarn lint
-
       - name: yarn compile
         run: yarn compile
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Python dependencies
+        run: pip3 install -r requirements.txt
+
+      - name: yarn lint
+        run: yarn lint
 
       - name: yarn hardhat:deploy
         run: yarn hardhat:deploy

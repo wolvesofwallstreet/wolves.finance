@@ -1,0 +1,97 @@
+/*
+ * Copyright (C) 2020-2021 The Wolfpack
+ * This file is part of wolves.finance - https://github.com/wolvesofwallstreet/wolves.finance
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * See LICENSE.txt for more information.
+ */
+
+#cfisft-section-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  width: 85%;
+}
+
+#cfisft-section-header a {
+  color: white;
+}
+
+#cfisft-content-container {
+  margin-top: 15px;
+  margin-bottom: 50px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  width: 85%;
+}
+
+#cfisft-content-image {
+  display: flex;
+  align-items: baseline;
+  max-width: 500px;
+  flex-basis: 50%;
+  position: relative;
+}
+
+#cfisft-content-image-inner {
+  border: grey 1px solid;
+  background-image: url('../../assets/loading_animated.gif');
+  background-size: cover;
+  width: 100%;
+}
+
+.cfisft-content-small-image {
+  position: absolute;
+  width: 34%;
+  right: -20px;
+  top: 28px;
+}
+
+.cfisft-content-text {
+  display: flex;
+  flex-basis: 48%;
+  min-width: calc(98% - 512px);
+  flex-direction: column;
+  justify-content: space-between;
+  text-align: left;
+}
+#cfisft-section-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  width: 85%;
+}
+
+#cfisft-section-header a {
+  color: white;
+}
+
+.cfisft-line-w-80 {
+  max-width: 950px !important;
+}
+
+.cfisft-card-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.cfisft-card {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: flex-start;
+  margin: 15px;
+  flex-basis: 21%;
+}
+
+.cfisft-card .card-media {
+  width: 300px;
+  min-height: 300px;
+  margin-bottom: 4px;
+  border: grey 1px solid;
+  background-image: url(../../assets/loading_animated.gif);
+  background-size: 300px 300px;
+}

@@ -34,7 +34,11 @@ code {
 }
 
 :root {
-  --wolves-blue-dk: #032042;
+  --wolves-white: #fff;
+  --wolves-black: #0a1016;
+  --wolves-blue-dk: #152738;
   --wolves-orange: #cc8a6d;
+  --wolves-orange-light: rgba(221, 159, 133, 0.94);
+  --wolves-orange-transparent: rgba(204, 138, 109, 0.43);
   --primary-color: #032042;
 }

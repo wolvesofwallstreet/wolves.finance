@@ -1,0 +1,43 @@
+/*
+ * Copyright (C) 2020 wolves.finance developers
+ * This file is part of wolves.finance - https://github.com/peak3d/wolves.finance
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * See the file LICENSES/README.md for more information.
+ */
+
+.wolve_btn,
+.wolve_btn:link,
+.wolve_btn:visited {
+  cursor: pointer;
+  transition: all 0.1s ease-in-out;
+}
+
+.wolve_btn:hover {
+  transform: translateY(-1px);
+}
+
+.wolve_btn:active {
+  outline: none;
+  transform: translateY(0px);
+}
+
+.wolve_btn:disabled,
+.wolve_btn:disabled:hover {
+  background-color: rgb(170, 118, 96);
+  transform: none;
+  cursor: not-allowed;
+}
+
+._btn,
+._btn:link,
+._btn:visited {
+  cursor: pointer;
+  transition: transform 0.1s ease-in-out;
+}
+._btn_effect:hover {
+  transform: translateY(-1px);
+}
+._btn_effect:active {
+  transform: translateY(0px);
+}

@@ -13,4 +13,13 @@
 /tools
 
 # File for controlling the import order of Hardhat and plugins
-/src/web3/hardhat.ts
+/test/utils/hardhat.ts
+
+# Metadata generator
+/metadata/generated
+
+# Files from auditors
+/audits
+
+# Playground
+/playground

@@ -1,0 +1,149 @@
+/*
+ * Copyright (C) 2020-2021 The Wolfpack
+ * This file is part of wolves.finance - https://github.com/wolvesofwallstreet/wolves.finance
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * See LICENSE.txt for more information.
+ */
+#page4-section-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  width: 85%;
+}
+
+#page4-section-header .c-pointer {
+  color: white;
+  cursor: pointer;
+}
+
+#page4-section-header .disabled-link {
+  color: var(--wolves-orange);
+}
+
+#page4-section-header .c-pointer:hover {
+  color: var(--wolves-orange);
+}
+
+#page4-content-container {
+  margin-top: 15px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  width: 85%;
+}
+
+#page4-content-image {
+  display: flex;
+  align-items: baseline;
+  max-width: 500px;
+  flex-basis: 50%;
+}
+
+#page4-content-image-inner {
+  border: grey 1px solid;
+  background-image: url(../../assets/loading_animated.gif);
+  background-size: cover;
+  width: 100%;
+  position: relative;
+}
+
+#page4-content-image-inner::before {
+  content: '';
+  float: left;
+  height: 0px;
+  padding-top: 100%;
+}
+
+#page4-content-image-inner::after {
+  content: '';
+  height: auto;
+  padding-top: 0px;
+  clear: both;
+}
+
+#page4-content-image-inner > .monochrome {
+  -webkit-filter: grayscale(100%);
+  filter: grayscale(100%);
+}
+
+#page4-content-image-inner-info {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+  padding: 81% 8px 8px 8px;
+  visibility: hidden;
+  z-index: 12;
+  background-color: rgba(72, 67, 67, 0.9);
+}
+
+#page4-content-image-inner-info h3 {
+  margin: 0px;
+}
+
+#cfi-image.selectable:hover {
+  cursor: pointer;
+}
+
+#page4-content-image-inner .card-visual {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+#page4-content-image-inner .locked {
+  width: 64px;
+  height: 64px;
+  background-image: url(../../assets/padlock_filter.png);
+  background-size: cover;
+  z-index: 10;
+  position: absolute;
+  top: 4px;
+  left: 4px;
+}
+
+#page4-content-text {
+  display: flex;
+  flex-basis: 48%;
+  min-width: calc(98% - 512px);
+  flex-direction: column;
+  justify-content: space-between;
+  text-align: left;
+}
+
+.rarity-box {
+  list-style: none;
+  padding: 0px;
+  margin-top: 16px;
+}
+.rarity-box h2 {
+  line-height: 1;
+}
+.content-margin {
+  margin: 0 8px;
+}
+
+.back-level-container {
+  margin-top: 16px;
+}
+
+.back-level-container .c-pointer:hover {
+  color: var(--wolves-orange);
+}
+
+@media all and (max-width: 800px) {
+  #page4-content-container {
+    justify-content: center;
+  }
+
+  #page4-content-image {
+    flex-basis: 100%;
+  }
+
+  #page4-content-text {
+    margin-top: 16px;
+    flex-basis: 100%;
+  }
+}

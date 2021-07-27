@@ -21,11 +21,12 @@
     "semifungible"
   ],
   "scripts": {
-    "audit": "audit-ci --moderate --package-manager yarn",
+    "audit": "audit-ci --moderate --package-manager yarn --allowlist postcss lodash underscore --report-type summary",
     "build": "react-scripts build",
-    "clean": "rimraf artifacts build cache contracts/depends depends deployments node_modules src/abi",
+    "clean": "rimraf artifacts build cache contracts/bytecode contracts/depends depends deployments node_modules src/abi tools/bin tools/repos",
     "compile": "hardhat compile",
-    "depends": "make -C tools clean && make -C tools -j 4",
+    "create-metadata": "cd metadata && node create_metadata.ts",
+    "depends": "bash tools/download-depends.sh && bash tools/build-depends.sh",
     "deploy": "gh-pages -b master -r https://github.com/wolvesofwallstreet/wolvesofwallstreet.github.io.git -d build",
     "format": "prettier --write . && eslint --fix .",
     "goerli:deploy": "hardhat --network goerli deploy",
@@ -38,10 +39,14 @@
     "kovan:verify": "hardhat --network kovan etherscan-verify --solc-input",
     "lint": "yarn lint-chain && yarn lint-app",
     "lint-app": "prettier --check . && eslint .",
-    "lint-chain": "solhint 'contracts/interfaces/**/*.sol' 'contracts/src/**/*.sol' --max-warnings 0",
+    "lint-chain": "solhint 'contracts/interfaces/**/*.sol' 'contracts/src/**/*.sol' 'contracts/test/**/*.sol' --max-warnings 0 && slither .",
     "local-node": "hardhat node --network hardhat",
     "local:deploy": "hardhat --network localhost deploy",
     "local:export": "hardhat --network localhost export",
+    "mainnet:deploy": "hardhat --network mainnet deploy --tags Token,TokenSetup,SFT,SFTSetup,TradeFloor,TradeFloorSetup,RewardFarms,RewardFarmsSetup",
+    "mainnet:export": "hardhat --network mainnet export --tags Token,TokenSetup,SFT,SFTSetup,TradeFloor,TradeFloorSetup,RewardFarms,RewardFarmsSetup",
+    "mainnet:verify": "hardhat --network mainnet etherscan-verify",
+    "postinstall": "bash tools/patch-depends.sh",
     "rinkeby:deploy": "hardhat --network rinkeby deploy",
     "rinkeby:export": "hardhat --network rinkeby export",
     "rinkeby:verify": "hardhat --network rinkeby etherscan-verify --solc-input",
@@ -51,7 +56,7 @@
     "start": "react-scripts start",
     "test": "yarn test-chain && yarn test-app",
     "test-app": "react-scripts test --passWithNoTests",
-    "test-chain": "ts-mocha --recursive --extension ts --require esm || ([ $? -eq 139 ] && echo 'Segfault')"
+    "test-chain": "ts-mocha --recursive --extension ts --require esm --require isomorphic-fetch || ([ $? -eq 139 ] && echo 'Segfault')"
   },
   "dependencies": {
     "@testing-library/jest-dom": "^5.11.4",
@@ -78,13 +83,14 @@
     "react-router-dom": "^5.2.0",
     "react-scripts": "^4.0.2",
     "react-toastify": "^7.0.3",
+    "walletlink": "^2.0.3",
     "web-vitals": "^0.2.4",
     "web3modal": "^1.9.2"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.1",
     "@nomiclabs/hardhat-etherscan": "^2.1.0",
-    "@openzeppelin/contracts": "^3.3.0",
+    "@openzeppelin/contracts": "^3.4.1",
     "@types/async": "^3.2.5",
     "@types/chai": "^4.2.14",
     "@types/flux": "^3.1.9",
@@ -105,6 +111,7 @@
     "hardhat-abi-exporter": "^2.0.8",
     "hardhat-deploy": "git+https://github.com/juztamau5/hardhat-deploy.git#0.7.0-beta.44",
     "hardhat-deploy-ethers": "^0.3.0-beta.7",
+    "isomorphic-fetch": "^3.0.0",
     "mocha": "^8.2.1",
     "prettier": "^2.2.1",
     "prettier-plugin-pkg": "^0.8.0",
@@ -115,9 +122,6 @@
     "ts-mocha": "^8.0.0",
     "ts-node": "^9.0.0",
     "typescript": "^4.1.2"
-  },
-  "resolutions": {
-    "immer": "8.0.1"
   },
   "browserslist": {
     "production": [

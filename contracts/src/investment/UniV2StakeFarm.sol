@@ -12,14 +12,24 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import '@openzeppelin/contracts/math/SafeMath.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
+import '@openzeppelin/contracts/utils/Context.sol';
 import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
+
+import '../utils/ERC20Recovery.sol';
 
 import './interfaces/IController.sol';
 import './interfaces/IFarm.sol';
 import './interfaces/IStakeFarm.sol';
 import '../../interfaces/uniswap/IUniswapV2Pair.sol';
 
-contract UniV2StakeFarm is IFarm, IStakeFarm, Ownable, ReentrancyGuard {
+contract UniV2StakeFarm is
+  IFarm,
+  IStakeFarm,
+  Context,
+  Ownable,
+  ReentrancyGuard,
+  ERC20Recovery
+{
   using SafeMath for uint256;
   using SafeERC20 for IERC20;
 
@@ -35,9 +45,6 @@ contract UniV2StakeFarm is IFarm, IStakeFarm, Ownable, ReentrancyGuard {
 
   mapping(address => uint256) public userRewardPerTokenPaid;
   mapping(address => uint256) public rewards;
-  // TODO: Remove next 2 lines after dapp launch (special reward condition)
-  mapping(address => uint256) private firstStakeTime;
-  uint256 private constant ETH_LIMIT = 2e17;
 
   uint256 private _totalSupply;
   mapping(address => uint256) private _balances;
@@ -47,7 +54,7 @@ contract UniV2StakeFarm is IFarm, IStakeFarm, Ownable, ReentrancyGuard {
   // Uniswap route to get price for token 0 in pair
   IUniswapV2Pair public immutable route;
   // The address of the controller
-  IController public controller;
+  IController public override controller;
   // The direction of the uniswap pairs
   uint8 public pairDirection;
 
@@ -159,82 +166,66 @@ contract UniV2StakeFarm is IFarm, IStakeFarm, Ownable, ReentrancyGuard {
     external
     override
     nonReentrant
-    updateReward(msg.sender)
+    updateReward(_msgSender())
   {
     require(amount > 0, 'Cannot stake 0');
 
-    /*(uint256 fee) = */
     controller.onDeposit(amount);
 
     _totalSupply = _totalSupply.add(amount);
-    _balances[msg.sender] = _balances[msg.sender].add(amount);
+    _balances[_msgSender()] = _balances[_msgSender()].add(amount);
     IERC20(address(stakingToken)).safeTransferFrom(
-      msg.sender,
+      _msgSender(),
       address(this),
       amount
     );
 
-    // TODO: Remove after launch
-    if (
-      firstStakeTime[msg.sender] == 0 &&
-      _ethAmount(_balances[msg.sender]) >= ETH_LIMIT
-      // solhint-disable-next-line not-rely-on-time
-    ) firstStakeTime[msg.sender] = block.timestamp;
-
-    emit Staked(msg.sender, amount);
+    emit Staked(_msgSender(), amount);
   }
 
   function unstake(uint256 amount)
     public
     override
     nonReentrant
-    updateReward(msg.sender)
+    updateReward(_msgSender())
   {
     require(amount > 0, 'Cannot withdraw 0');
 
-    /*(uint256 fee) = */
     controller.onWithdraw(amount);
 
     _totalSupply = _totalSupply.sub(amount);
-    _balances[msg.sender] = _balances[msg.sender].sub(amount);
-    IERC20(address(stakingToken)).safeTransfer(msg.sender, amount);
+    _balances[_msgSender()] = _balances[_msgSender()].sub(amount);
+    IERC20(address(stakingToken)).safeTransfer(_msgSender(), amount);
 
-    // TODO: Remove after launch
-    if (
-      firstStakeTime[msg.sender] > 0 &&
-      (_balances[msg.sender] == 0 ||
-        _ethAmount(_balances[msg.sender]) < ETH_LIMIT)
-    ) firstStakeTime[msg.sender] = 0;
-
-    emit Unstaked(msg.sender, amount);
+    emit Unstaked(_msgSender(), amount);
   }
 
   function transfer(address recipient, uint256 amount)
     external
     override
-    updateReward(msg.sender)
+    updateReward(_msgSender())
     updateReward(recipient)
   {
     require(recipient != address(0), 'invalid address');
     require(amount > 0, 'zero amount');
 
-    _balances[msg.sender] = _balances[msg.sender].sub(amount);
+    _balances[_msgSender()] = _balances[_msgSender()].sub(amount);
     _balances[recipient] = _balances[recipient].add(amount);
-    emit Transfered(msg.sender, recipient, amount);
+    emit Transfered(_msgSender(), recipient, amount);
   }
 
-  function getReward() public override nonReentrant updateReward(msg.sender) {
-    uint256 reward = rewards[msg.sender];
+  function getReward() public override nonReentrant updateReward(_msgSender()) {
+    uint256 reward = rewards[_msgSender()];
     if (reward > 0) {
-      rewards[msg.sender] = 0;
+      rewards[_msgSender()] = 0;
       availableRewards = availableRewards.sub(reward);
-      controller.payOutRewards(msg.sender, reward);
-      emit RewardPaid(msg.sender, reward);
+      controller.payOutRewards(_msgSender(), reward);
+      emit RewardPaid(_msgSender(), reward);
     }
   }
 
   function exit() external override {
-    unstake(_balances[msg.sender]);
+    unstake(_balances[_msgSender()]);
     getReward();
   }
 
@@ -302,8 +293,9 @@ contract UniV2StakeFarm is IFarm, IStakeFarm, Ownable, ReentrancyGuard {
       tokenAddress != address(stakingToken),
       'pool tokens not recoverable'
     );
-    IERC20(tokenAddress).safeTransfer(owner(), tokenAmount);
-    emit Recovered(tokenAddress, tokenAmount);
+
+    // Call ancestor
+    _recoverERC20(owner(), tokenAddress, tokenAmount);
   }
 
   function setRewardsDuration(uint256 _rewardsDuration)
@@ -319,6 +311,13 @@ contract UniV2StakeFarm is IFarm, IStakeFarm, Ownable, ReentrancyGuard {
     rewardsDuration = _rewardsDuration;
     emit RewardsDurationUpdated(rewardsDuration);
   }
+
+  // Not yet implemented
+  function recoverERC20(
+    address,
+    address,
+    uint256
+  ) public {}
 
   /* ========== PRIVATE ========== */
 
@@ -391,6 +390,5 @@ contract UniV2StakeFarm is IFarm, IStakeFarm, Ownable, ReentrancyGuard {
   event Transfered(address indexed from, address indexed to, uint256 amount);
   event RewardPaid(address indexed user, uint256 reward);
   event RewardsDurationUpdated(uint256 newDuration);
-  event Recovered(address token, uint256 amount);
   event ControllerChanged(address newController);
 }

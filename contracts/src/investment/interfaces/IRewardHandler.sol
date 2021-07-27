@@ -12,15 +12,38 @@ interface IRewardHandler {
   /**
    * @dev Transfer reward and distribute the fee
    *
-   * _to values are in 1e6 factor notation.
+   * This is the new implementation of distribute() which uses internal fees
+   * defined in the {RewardHandler} contract.
+   *
+   * @param recipient The recipient of the reward
+   * @param amount The amount of WOWS to transfer to the recipient
+   * @param fee The reward fee in 1e6 factor notation
+   */
+
+  function distribute2(
+    address recipient,
+    uint256 amount,
+    uint32 fee
+  ) external;
+
+  /**
+   * @dev Transfer reward and distribute the fee
+   *
+   * This is the current implementation, needed for backward compatibility.
+   *
+   * Current ERC1155Minter and Controller call this function, later
+   * reward handler clients should call the the new one with internal
+   * fees specified in this contract.
+   *
+   * uint32 values are in 1e6 factor notation.
    */
   function distribute(
-    address _recipient,
-    uint256 _amount,
-    uint32 _fee,
-    uint32 _toTeam,
-    uint32 _toMarketing,
-    uint32 _toBooster,
-    uint32 _toRewardPool
+    address recipient,
+    uint256 amount,
+    uint32 fee,
+    uint32 toTeam,
+    uint32 toMarketing,
+    uint32 toBooster,
+    uint32 toRewardPool
   ) external;
 }

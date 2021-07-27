@@ -140,12 +140,13 @@ class Stake extends Component<STAKEPROPS, STAKESTATE> {
     return (
       <div className="stake-main tk-grotesk-lightbold">
         <div className="stake-container">
-          <h1>{t('stake.welcome')}</h1>
           <StakeInfo />
+          <h1>{t('stake.welcome')}</h1>
+
           <div className="stake-control">
-            <img className="stake-logo stake-opaque" src={logo} alt="logo" />
+            <img className="stake-logo opaque" src={logo} alt="logo" />
             <span className="stake-line" />
-            <div className="stake-input-container stake-opaque">
+            <div className="stake-input-container opaque">
               <input
                 type="text"
                 autoComplete="off"
@@ -169,7 +170,7 @@ class Stake extends Component<STAKEPROPS, STAKESTATE> {
               <div className="stake-input-currency">WOWS/ETH LP</div>
             </div>
             <input
-              className="stake-btn stake-top-margin"
+              className="wolves-btn stake-btn stake-top-margin"
               type="button"
               value={getButtonText(t('stake.stake').toString())}
               disabled={!inputValid || !connected}
@@ -178,7 +179,7 @@ class Stake extends Component<STAKEPROPS, STAKESTATE> {
             <div className="stake-btn-container">
               <div className="stake-btn-grow stake-top-margin">
                 <input
-                  className="stake-btn"
+                  className="wolves-btn stake-btn"
                   type="button"
                   value={getButtonText(t('stake.claim').toString())}
                   disabled={!connected}
@@ -187,7 +188,7 @@ class Stake extends Component<STAKEPROPS, STAKESTATE> {
               </div>
               <div className="stake-btn-grow stake-top-margin">
                 <input
-                  className="stake-btn"
+                  className="wolves-btn stake-btn"
                   type="button"
                   value={getButtonText(t('stake.exit').toString())}
                   disabled={!connected}
@@ -199,7 +200,7 @@ class Stake extends Component<STAKEPROPS, STAKESTATE> {
                   target="_blank"
                   rel="noreferrer"
                   href={
-                    'https://app.uniswap.org/#/add/ETH/' +
+                    'https://app.uniswap.org/#/add/v2/ETH/' +
                     StoreClasses.store._getTokenContractAddress()
                   }
                 >

@@ -20,7 +20,17 @@ import {
 import logo from '../../assets/wolves-token_99.png';
 import {
   ADDRESS_COPIED,
+  CFOLIO_ITEM_BUY,
+  CFOLIO_ITEM_DEPOSIT,
+  CFOLIO_ITEM_LOCK_TRANSFER,
+  CFOLIO_ITEM_WITHDRAW,
   CONNECTION_CHANGED,
+  REVOKE_APPROVAL,
+  SFT_BUY,
+  SFT_CLAIM,
+  SFT_LOCK,
+  SFT_UNLOCK,
+  SFT_UPGRADE,
   STAKE_ADD,
   STAKE_CLAIM,
   STAKE_EXIT,
@@ -61,9 +71,29 @@ class WolfToast extends Component<TOASTPROPS, TOASTSTATE> {
     StoreClasses.emitter.on(STAKE_ADD, this.onTransaction);
     StoreClasses.emitter.on(STAKE_CLAIM, this.onTransaction);
     StoreClasses.emitter.on(STAKE_EXIT, this.onTransaction);
+    StoreClasses.emitter.on(SFT_BUY, this.onTransaction);
+    StoreClasses.emitter.on(SFT_CLAIM, this.onTransaction);
+    StoreClasses.emitter.on(SFT_LOCK, this.onTransaction);
+    StoreClasses.emitter.on(SFT_UNLOCK, this.onTransaction);
+    StoreClasses.emitter.on(SFT_UPGRADE, this.onTransaction);
+    StoreClasses.emitter.on(CFOLIO_ITEM_BUY, this.onTransaction);
+    StoreClasses.emitter.on(CFOLIO_ITEM_DEPOSIT, this.onTransaction);
+    StoreClasses.emitter.on(CFOLIO_ITEM_WITHDRAW, this.onTransaction);
+    StoreClasses.emitter.on(CFOLIO_ITEM_LOCK_TRANSFER, this.onTransaction);
+    StoreClasses.emitter.on(REVOKE_APPROVAL, this.onTransaction);
   }
 
   componentWillUnmount(): void {
+    StoreClasses.emitter.off(REVOKE_APPROVAL, this.onTransaction);
+    StoreClasses.emitter.off(CFOLIO_ITEM_LOCK_TRANSFER, this.onTransaction);
+    StoreClasses.emitter.off(CFOLIO_ITEM_WITHDRAW, this.onTransaction);
+    StoreClasses.emitter.off(CFOLIO_ITEM_DEPOSIT, this.onTransaction);
+    StoreClasses.emitter.off(CFOLIO_ITEM_BUY, this.onTransaction);
+    StoreClasses.emitter.off(SFT_UPGRADE, this.onTransaction);
+    StoreClasses.emitter.off(SFT_UNLOCK, this.onTransaction);
+    StoreClasses.emitter.off(SFT_LOCK, this.onTransaction);
+    StoreClasses.emitter.off(SFT_CLAIM, this.onTransaction);
+    StoreClasses.emitter.off(SFT_BUY, this.onTransaction);
     StoreClasses.emitter.off(STAKE_EXIT, this.onTransaction);
     StoreClasses.emitter.off(STAKE_CLAIM, this.onTransaction);
     StoreClasses.emitter.off(STAKE_ADD, this.onTransaction);

@@ -1,0 +1,4 @@
+# A patched Slither is needed due to incorrect detections when analyzing our
+# code. Some bugs are being reported upstream.
+git+git://github.com/wolvesofwallstreet/crytic-compile.git@wows-fixes#egg=crytic_compile
+git+git://github.com/wolvesofwallstreet/slither.git@wows-fixes#egg=slither_analyzer

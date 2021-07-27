@@ -18,9 +18,10 @@ import '../../interfaces/uniswap/IUniswapV2Factory.sol';
 import '../../interfaces/uniswap/IUniswapV2Router02.sol';
 
 import '../investment/interfaces/IStakeFarm.sol';
-import '../token/interfaces/IERC20WolfMintable.sol';
-import '../utils/AddressBook.sol';
+import '../token/interfaces/IERC20WowsMintable.sol';
 import '../utils/interfaces/IAddressRegistry.sol';
+import '../utils/AddressBook.sol';
+import '../utils/ERC20Recovery.sol';
 
 /**
  * @title Crowdsale
@@ -38,13 +39,13 @@ import '../utils/interfaces/IAddressRegistry.sol';
  * crowdsales. Override the methods to add functionality. Consider using 'super'
  * where appropriate to concatenate behavior.
  */
-contract Crowdsale is Context, ReentrancyGuard, AddressBook {
+contract Crowdsale is Context, ReentrancyGuard, ERC20Recovery {
   using SafeMath for uint256;
   using SafeERC20 for IERC20;
-  using SafeERC20 for IERC20WolfMintable;
+  using SafeERC20 for IERC20WowsMintable;
 
   // The token being sold
-  IERC20WolfMintable public token;
+  IERC20WowsMintable public token;
 
   // Address where funds are collected
   address payable private _wallet;
@@ -152,7 +153,7 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
   constructor(
     IAddressRegistry _addressRegistry,
     uint256 _rate,
-    IERC20WolfMintable _token,
+    IERC20WowsMintable _token,
     uint256 _cap,
     uint256 _investMin,
     uint256 _walletCap,
@@ -174,7 +175,7 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
     // Reverts if address is invalid
     IUniswapV2Router02 _uniV2Router =
       IUniswapV2Router02(
-        _addressRegistry.getRegistryEntry(UNISWAP_V2_ROUTER02)
+        _addressRegistry.getRegistryEntry(AddressBook.UNISWAP_V2_ROUTER02)
       );
     uniV2Router = _uniV2Router;
 
@@ -189,12 +190,12 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
 
     // Reverts if address is invalid
     address _marketingWallet =
-      _addressRegistry.getRegistryEntry(MARKETING_WALLET);
+      _addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
     _wallet = payable(_marketingWallet);
 
     // Reverts if address is invalid
     address _stakeFarm =
-      _addressRegistry.getRegistryEntry(WETH_WOWS_STAKE_FARM);
+      _addressRegistry.getRegistryEntry(AddressBook.WETH_WOWS_STAKE_FARM);
     stakeFarm = IStakeFarm(_stakeFarm);
 
     rate = _rate;
@@ -430,7 +431,7 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
 
     // Transfer all tokens from this contract to _wallet
     uint256 tokenInContract = token.balanceOf(address(this));
-    if (tokenInContract > 0) token.transfer(_wallet, tokenInContract);
+    if (tokenInContract > 0) token.safeTransfer(_wallet, tokenInContract);
 
     // Finally whitelist uniV2 LP pool on token contract
     token.enableUniV2Pair(true);
@@ -445,7 +446,8 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
     // Cannot recover the staking token or the rewards token
     require(tokenAddress != address(token), 'native tokens unrecoverable');
 
-    IERC20(tokenAddress).safeTransfer(_wallet, tokenAmount);
+    // Call ancestor
+    _recoverERC20(_wallet, tokenAddress, tokenAmount);
   }
 
   /**
@@ -503,7 +505,7 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
     internal
   {
     require(token.mint(address(this), _tokenAmount), 'minting failed');
-    token.transfer(_beneficiary, _tokenAmount);
+    token.safeTransfer(_beneficiary, _tokenAmount);
   }
 
   /**
@@ -583,7 +585,7 @@ contract Crowdsale is Context, ReentrancyGuard, AddressBook {
 
     // Send remaining WOWS token to team wallet
     if (amountToken < tokenBalance)
-      token.transfer(remainingReceiver, tokenBalance.sub(amountToken));
+      token.safeTransfer(remainingReceiver, tokenBalance.sub(amountToken));
 
     return liquidity;
   }

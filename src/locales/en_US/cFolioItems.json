@@ -1,0 +1,118 @@
+[
+  {
+    "type": "lpInvestment",
+    "token": "WOWS/ETH LP",
+    "title": " WELCOME TO THE WOWS/ETH STAKE I-NFTs",
+    "shortDescription": "UNI-V2 WOWS/ETH STAKE I-NFTs",
+    "description": "This \"STAKE I-NFT\" allows to stake WOWS/ETH on the tradefloor with the rest of the pack. You can sell this investment NFT with or without its added value at any point currently on any third party platform, and on ours when this is launched.",
+    "constraints": "wolves",
+    "cards": [
+      {
+        "id": "0x00",
+        "chainRef": 0,
+        "price": 0.5,
+        "minted": 0,
+        "maxMintable": 0,
+        "name": "UNSTOPPABLE",
+        "motto": "YOU CAN WATCH, MOCK OR BLOCK BUT YOU CAN NEVER STOP.",
+        "description": "This wild crypto market is only for the brave. Let them think you're crazy as they stand on the sidelines judging. We all know in reality it's always the players like you in the game who win.",
+        "type": "image",
+        "url": "https://meta.wows.finance/wolves_assets/cfolio/images/00-{res}.jpg"
+      },
+      {
+        "id": "0x01",
+        "chainRef": 1,
+        "price": 0.5,
+        "minted": 0,
+        "maxMintable": 0,
+        "name": "THE RISK REWARD",
+        "motto": "RISK KEEPS US YOUNG.",
+        "description": "Risk trading is what keeps us alive. Risk makes us feel. Risk is always good if managed wisely.",
+        "type": "image",
+        "url": "https://meta.wows.finance/wolves_assets/cfolio/images/01-{res}.jpg"
+      },
+      {
+        "id": "0x02",
+        "chainRef": 2,
+        "price": 0.5,
+        "minted": 0,
+        "maxMintable": 0,
+        "name": "YOU HAVE SEEN",
+        "motto": "NO-ONE IS PAYING ATTENTION EXCEPT YOU AND US.",
+        "description": "The impending doom of the traditional financial system is nearing. You're smart and investing in the right places with De-Fi, bullet proofing your future. You'll laugh when the collapse comes.",
+        "type": "image",
+        "url": "https://meta.wows.finance/wolves_assets/cfolio/images/02-{res}.jpg"
+      },
+      {
+        "id": "0x03",
+        "chainRef": 3,
+        "price": 0.5,
+        "minted": 0,
+        "maxMintable": 0,
+        "name": "DON'T FOLLOW FUGAZI",
+        "motto": "MONEY IS FUGAZI BUT THE CODE IS REAL.",
+        "description": "They say that crypto isn't real. Let them believe it. The truth is that money is fake. The code that builds crypto is real, transparent and no-one can mess with it.",
+        "type": "image",
+        "url": "https://meta.wows.finance/wolves_assets/cfolio/images/03-{res}.jpg"
+      }
+    ]
+  },
+  {
+    "type": "yearnInvestment",
+    "token": "yCrv",
+    "title": " WELCOME TO THE YEARN CRV POOL I-NFTs",
+    "shortDescription": "YEARN I-NFTs FOR YOUR LENDING FOR DAI / USDT / USDC / TUSD",
+    "description": "This \"YEARN I-NFT\" allows you to invest DAI, USDT, USDC and TUSD stable coins for lending with your fellow business Bois. You can sell this investment NFT with or without its added value at any point currently on any third party platform, and on ours when this is launched.",
+    "constraints": "bois",
+    "cards": [
+      {
+        "id": "0x10",
+        "chainRef": 16,
+        "price": 0.5,
+        "minted": 0,
+        "maxMintable": 0,
+        "name": "HODL FOREVER",
+        "motto": "YOUR FAVOURITE HODLING TIME IS FOREVER.",
+        "description": "Long term investment is the smartest. By playing the long game, you win immeasurably.",
+        "type": "image",
+        "url": "https://meta.wows.finance/wolves_assets/cfolio/images/10-{res}.jpg"
+      },
+      {
+        "id": "0x11",
+        "chainRef": 17,
+        "price": 0.5,
+        "minted": 0,
+        "maxMintable": 0,
+        "name": "A POWERSHIFT",
+        "motto": "DECENTRALIZATION TAKES THE POWER FROM CENTRAL BANKS TO YOU.",
+        "description": "Yield more and take your power back from traditional financial institutions who stick you for low interest rates. Watch your investments grow in crypto. Measured risk, slow and steady wins the race.",
+        "type": "image",
+        "url": "https://meta.wows.finance/wolves_assets/cfolio/images/11-{res}.jpg"
+      },
+      {
+        "id": "0x12",
+        "chainRef": 18,
+        "price": 0.5,
+        "minted": 0,
+        "maxMintable": 0,
+        "name": "I BELIEVE",
+        "motto": "THE PEOPLE WHO ARE CRAZY ENOUGH TO THINK THEY CAN CHANGE THE WORLD ARE THE ONES THAT DO.",
+        "description": "Steve Jobs, one of the greatest Bois that lived embodies the spirit of change that crypto represents. We are the crazy ones who are changing the world, one investment at a time.",
+        "type": "image",
+        "url": "https://meta.wows.finance/wolves_assets/cfolio/images/12-{res}.jpg"
+      },
+      {
+        "id": "0x13",
+        "chainRef": 19,
+        "price": 0.5,
+        "minted": 0,
+        "maxMintable": 0,
+        "name": "IGNORANCE IS NO EXCUSE",
+        "motto": "DIVERSIFICATION IS A PROTECTION AGAINST IGNORANCE.",
+        "description": "Sound investment advice from the Oracle of Omaha. You know how to make those clever investments from your diligent research and killer strategies.",
+        "type": "image",
+        "url": "https://meta.wows.finance/wolves_assets/cfolio/images/13-{res}.jpg"
+      }
+    ]
+  }
+]

@@ -1,0 +1,44 @@
+/*
+ * Copyright (C) 2020-2021 The Wolfpack
+ * This file is part of wolves.finance - https://github.com/wolvesofwallstreet/wolves.finance
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * See the file LICENSES/README.md for more information.
+ */
+
+.asset-input-container {
+  position: relative;
+  color: white;
+  font-size: 16px;
+}
+
+.asset-input {
+  color: inherit;
+  margin-right: 5px;
+  height: 32px;
+  width: 100%;
+  padding: 0px 135px 0px 5px;
+  vertical-align: bottom;
+  background-color: var(--wolves-orange-transparent);
+  border: 1px solid hsla(0, 0%, 100%, 0.25);
+  outline: none;
+}
+
+.asset-input-currency {
+  vertical-align: middle;
+  position: absolute;
+  top: 4px;
+  right: 4px;
+}
+
+.asset-input-max {
+  position: absolute;
+  cursor: pointer;
+  font-size: 10px;
+  border: white 1px solid;
+  border-radius: 4px;
+  vertical-align: inherit;
+  padding: 2px;
+  top: 6px;
+  left: 4px;
+}

@@ -8,9 +8,16 @@
 
 pragma solidity >=0.6.0 <0.8.0;
 
+import './IController.sol';
+
 interface IFarm {
   /**
-   * @dev Return a unique farm name
+   * @dev Return the farm's controller
+   */
+  function controller() external view returns (IController);
+
+  /**
+   * @dev Return a unique, case-sensitive farm name
    */
   function farmName() external view returns (string memory);
 

@@ -10,19 +10,21 @@ In the project directory, you can run:
 
 Installs the Javascript dependencies of the project.
 
-### `yarn audit`
+### `yarn audit-ci`
 
-Audits installed Javascript dependencies for vulnerabilities.\
-Use `yarn run audit` when running on CI infrastructure.
+Audits installed Javascript dependencies for vulnerabilities.
 
-### `yarn depends TEST=0`
+### `yarn depends`
 
 Invokes the dependency build system and installs built depends.
-Omit `TEST=0` to also run the test cases for depends.
 
 ### `yarn compile`
 
 Compiles the smart contracts. Required for test cases.
+
+### `yarn create-metadata`
+
+Creates metadata files from src/locales/[lang]/cards.json files.
 
 ### `yarn start`
 
@@ -63,7 +65,10 @@ Launches a local Ethereum VM for testing.
 
 ### `yarn hardhat:deploy`
 
-Performs a test deployment on a temporary network. This causes `addresses.json` to be generated.
+Performs a test deployment on a temporary network. This causes `generated-addresses.json` to be generated.
+
+By default addresses found in `src/config/addresses.json` are used and not deployed.
+You can override this behaviour by setting the env var `IGNORE_ADDRESSES=1`
 
 Contracts can be deployed on the following networks:
 
@@ -72,6 +77,28 @@ Contracts can be deployed on the following networks:
 - `yarn ropsten:deploy`
 - `yarn kovan:deploy`
 - `yarn goerli:deploy`
+- `yarn mainnet:deploy`
+
+You can also specify tags with `yarn hardhat:deploy --tags <tags>`.
+The following tags are available:
+
+- `TokenDepends` - the dependencies needed for the token
+- `InvestmentDepends` - the dependencies needed for investment
+- `SetupInvestmentDepends` - transactions to setup the investment dependency contracts
+- `Token` - the ERC-20 token and presale launch contracts
+- `TokenSetup` - transactions to setup the token contracts
+- `SFT` - the WOWS SFT contract and minter
+- `SFTSetup` - additional steps for setting up SFT contracts
+- `TradeFloor` - contracts for the Trade Floor
+- `TradeFloorSetup` - additional steps for the Trade Floor
+- `RewardFarms` - contracts for the reward farms
+- `RewardFarmsSetup` - additional steps for the reward farms
+
+Separate multiple tags with a comma, e.g.:
+
+```
+yarn hardhat:deploy --tags TokenDepends,Token,TokenSetup,SFT,SFTSetup,TradeFloor,TradeFloorSetup
+```
 
 ### `yarn <network>:verify`
 
@@ -83,6 +110,7 @@ Contracts can be verified on the following networks:
 - `yarn ropsten:verify`
 - `yarn kovan:verify`
 - `yarn goerli:verify`
+- `yarn mainnet:verify`
 
 ### `yarn clean`
 
@@ -94,6 +122,8 @@ Deployment scripts are executed by Hardhat in lexicographic order. Number
 prefixes are used to control deployment order, with the following ranges
 defined here:
 
-- 000-099: Dependency contracts
+- 000-099: Dependencies for testing
 - 100: Token contract
-- 101-199: Dapp contracts
+- 101: SFT contract
+- 102: Trade floor contracts
+- 103-199: Dapp contracts

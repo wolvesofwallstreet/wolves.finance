@@ -14,7 +14,7 @@ import chai from 'chai';
 import { solidity } from 'ethereum-waffle';
 import { ethers } from 'ethers';
 
-import { hardhat } from '../../src/web3/hardhat';
+import { hardhat } from '../utils/hardhat';
 
 chai.use(solidity);
 
@@ -30,7 +30,7 @@ describe('Token contract', function () {
   let teamWalletAddress: string;
 
   before(async function () {
-    this.timeout(10 * 1000);
+    this.timeout(60 * 1000);
 
     // Get the Signers
     [owner] = await hardhat.ethers.getSigners();
@@ -41,12 +41,12 @@ describe('Token contract', function () {
   });
 
   beforeEach(async function () {
-    this.timeout(15 * 1000);
+    this.timeout(60 * 1000);
 
     await hardhat.deployments.fixture();
   });
 
-  it('should assign the total supply of tokens to the team', async function () {
+  it('should assign the initial supply of tokens to the team', async function () {
     // Desired balances upon minting
     const MARKETING_BALANCE = ethers.BigNumber.from('3600000000000000000000'); // 3600 WOWS
     const TEAM_BALANCE = ethers.BigNumber.from('7500000000000000000000'); // 7500 WOWS
@@ -57,14 +57,10 @@ describe('Token contract', function () {
     const marketingBalance = await tokenContract.balanceOf(
       marketingWalletAddress
     );
-    console.log(
-      `Marketing wallet ${marketingWalletAddress} has ${marketingBalance} tokens`
-    );
     chai.expect(marketingBalance).to.equal(MARKETING_BALANCE);
 
     // Test team balance
     const teamBalance = await tokenContract.balanceOf(teamWalletAddress);
-    console.log(`Team wallet ${teamWalletAddress} has ${teamBalance} tokens`);
     chai.expect(teamBalance).to.equal(TEAM_BALANCE);
   });
 });

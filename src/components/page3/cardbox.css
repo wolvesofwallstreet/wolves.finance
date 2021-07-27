@@ -1,0 +1,72 @@
+/*
+ * Copyright (C) 2020-2021 The Wolfpack
+ * This file is part of wolves.finance - https://github.com/wolvesofwallstreet/wolves.finance
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * See LICENSE.txt for more information.
+ */
+
+.card-container {
+  min-width: 300px;
+  min-height: 380px;
+  margin: 15px;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: flex-start;
+  flex-basis: 21%;
+}
+
+.wrapper {
+  max-width: 100%;
+  align-items: center;
+  display: grid;
+}
+
+.card-container .card-visual {
+  width: 300px;
+  min-height: 300px;
+  margin-bottom: 4px;
+  border: grey 1px solid;
+  background-image: url(../../assets/loading_animated.gif);
+  background-size: 300px 300px;
+}
+
+.card-container .locked {
+  width: 64px;
+  height: 64px;
+  background-image: url(../../assets/padlock_filter.png);
+  background-size: cover;
+  z-index: 10;
+  position: absolute;
+  top: 4px;
+  left: 4px;
+}
+
+#cfi-image {
+  position: absolute;
+  top: 0px;
+  right: 6px;
+  box-shadow: 0px 0px 8px white;
+  border: 1px solid gray;
+}
+
+#triangle-up {
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 6px solid white;
+  margin: 5px auto 10px auto;
+}
+
+.line-h {
+  line-height: 24px;
+}
+
+.card-container .progress {
+  display: block;
+  height: 1px;
+  width: 0%;
+  background-color: whitesmoke;
+}

@@ -1,0 +1,218 @@
+/*
+ * Copyright (C) 2020-2021 The Wolfpack
+ * This file is part of wolves.finance - https://github.com/wolvesofwallstreet/wolves.finance
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ * See the file LICENSES/README.md for more information.
+ */
+
+.image_slide_container {
+  width: 100%;
+  min-height: 160px;
+  text-align: left;
+  overflow: hidden;
+}
+
+.image_slide_track {
+  position: relative;
+  display: inline-flex;
+}
+
+.image_slide_track.trans {
+  transition: all 0.2s ease-in-out;
+}
+
+.image_slide_track div {
+  /*padding: 12px 10px;*/
+  transition: transform 0.2s ease-in-out;
+}
+
+.image_slide {
+  position: relative;
+  min-height: 130px;
+  height: 100%;
+  transform: scale(0.75);
+  border: 1px solid lightgray;
+
+  --url: url(../../assets/loading_animated_small.gif);
+  background-image: var(--url);
+  background-size: cover;
+  margin-bottom: 10px;
+  opacity: 0.5;
+}
+
+.image_slide.active {
+  border: 2px solid var(--wolves-white);
+  transform: scale(0.94);
+  opacity: 1;
+}
+
+/* Arrow*/
+.slide__arrow {
+  position: absolute;
+  display: block;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  padding: 0;
+  color: transparent;
+  z-index: 3;
+  cursor: pointer;
+  background-color: transparent;
+  border-style: solid;
+  border-color: transparent;
+  border-width: 10px 10px 10px 10px;
+}
+
+.slide__arrow--left {
+  border-right-width: 10px;
+  border-right-color: var(--wolves-orange-light);
+  --left: 0;
+  left: var(--left);
+}
+
+.slide__arrow--right {
+  border-left-width: 10px;
+  border-left-color: var(--wolves-orange-light);
+  --right: 0;
+  right: var(--right);
+}
+
+/* arrow state's */
+.slide__arrow:focus {
+  outline: none;
+}
+
+.slide__arrow:hover {
+  border-color: transparent;
+  background-color: transparent;
+}
+
+.slide__arrow--left:hover {
+  border-right-color: var(--wolves-orange);
+}
+
+.slide__arrow--right:hover {
+  border-left-color: var(--wolves-orange);
+}
+
+.slide_count {
+  width: 27px;
+  height: 27px;
+  line-height: 27px;
+  text-align: center;
+  border-radius: 50%;
+  background-color: #ffb89f;
+  color: var(--wolves-blue-dk);
+  z-index: 10;
+  position: absolute;
+  font-weight: bold;
+  font-size: 13px;
+  top: 7px;
+  right: 6%;
+}
+
+.slide_locked {
+  width: 40px;
+  height: 40px;
+  background-image: url(../../assets/padlock_filter.png);
+  background-size: cover;
+  z-index: 10;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+}
+
+.slide_tooltip_wrapper {
+  display: none;
+  width: 123%;
+  position: absolute;
+  z-index: 11;
+  background-color: var(--wolves-orange-light);
+  border: 1px solid white;
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+  top: 7px;
+  transform: translateX(-10%);
+}
+
+.image_slide .slide_count:hover + .slide_tooltip_wrapper,
+.image_slide .slide_tooltip_wrapper:hover {
+  display: block;
+}
+
+.slide_tooltip_content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  color: var(--wolves-blue-dk);
+}
+
+.slide_tooltip_content p,
+.slide_tooltip_content a {
+  transform: scale(0.85);
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  font-size: 13px;
+  font-weight: bold;
+  white-space: nowrap;
+  line-height: 110%;
+}
+
+.slide_tooltip_content p.disabled {
+  color: gray;
+}
+
+.image_slider_tid {
+  display: inline-block;
+  position: absolute;
+  bottom: 5%;
+  transition: bottom 0.2s ease-in-out;
+  text-align: center;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.active + .image_slider_tid {
+  bottom: -2%;
+}
+
+/* Utility class's */
+.min-height-190 {
+  min-height: 195px;
+}
+
+.center_triangle_up::before {
+  content: ' ';
+  position: absolute;
+  top: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  background-color: transparent;
+  border-color: transparent;
+  border-width: 10px 20px 0 20px;
+  border-top-color: var(--wolves-orange-light);
+  transform: translateX(-20px);
+}
+
+.center_triangle_down::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  background-color: transparent;
+  border-color: transparent;
+  border-width: 0 20px 10px 20px;
+  border-bottom-color: var(--wolves-orange-light);
+  transform: translateX(-20px);
+}
+
+.center_triangle_down.rotate-180::after {
+  transform: translateX(-20px) rotate(180deg);
+}
