@@ -77,14 +77,14 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
    * @param previousAmount The amount before updating the reward
    * @param newAmount The amount after updating the reward
    */
-  event LPRewardUpdated(uint256 previousAmount, uint256 newAmount);
+  event RewardUpdated(uint256 previousAmount, uint256 newAmount);
 
   /**
    * @dev Emitted when a new minter is set by the admin
    *
    * @param minter The new minter
    */
-  event NewLPMinter(address minter);
+  event NewMinter(address minter);
 
   /**
    * @dev Emitted when the contract is destructed
@@ -138,7 +138,7 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
 
     // The SFT minter
     sftMinter = addressRegistry.getRegistryEntry(AddressBook.SFT_MINTER);
-    emit NewLPMinter(sftMinter);
+    emit NewMinter(sftMinter);
 
     // SFT evaluator
     sftEvaluator = ISFTEvaluator(
@@ -233,7 +233,7 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
    *
    * Note: We place a dummy ERC1155 token with ID 0 into the CFolioItem's
    * c-folio. The reason is that we want to know if a c-folio item gets burned,
-   * as burning an empty c-folio will result in no transfers. This prevents LP
+   * as burning an empty c-folio will result in no transfers. This prevents
    * tokens from becoming inaccessible.
    *
    * Refer to the Minimal ERC1155 section below to learn which functions are
@@ -452,7 +452,7 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
     sftMinter = newMinter;
 
     // Dispatch event
-    emit NewLPMinter(newMinter);
+    emit NewMinter(newMinter);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -498,7 +498,7 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
 
   /**
    * @dev Run through all cFolioItems collected in cFolio and select the amount
-   * of LP tokens. Update cfolioFarm.
+   * of tokens. Update cfolioFarm.
    */
   function _updateRewards(
     IWOWSERC1155 sfth,
@@ -536,13 +536,13 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
       cfolioFarm.addShares(cfolio, newRewardAmount.sub(exitingRewardAmount));
 
       // Dispatch event
-      emit LPRewardUpdated(exitingRewardAmount, newRewardAmount);
+      emit RewardUpdated(exitingRewardAmount, newRewardAmount);
     } else if (newRewardAmount < exitingRewardAmount) {
       // Update state
       cfolioFarm.removeShares(cfolio, exitingRewardAmount.sub(newRewardAmount));
 
       // Dispatch event
-      emit LPRewardUpdated(exitingRewardAmount, newRewardAmount);
+      emit RewardUpdated(exitingRewardAmount, newRewardAmount);
     }
   }
 
