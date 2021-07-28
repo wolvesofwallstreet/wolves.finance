@@ -98,7 +98,12 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
   //////////////////////////////////////////////////////////////////////////////
 
   modifier onlyTradeFloor() {
-    require(_msgSender() == address(tradeFloor), 'TFCLP: only TF');
+    require(_msgSender() == address(tradeFloor), 'CFHI: Only TF');
+    _;
+  }
+
+  modifier onlyAdmin() {
+    require(_msgSender() == admin, 'CFIH: Only admin');
     _;
   }
 
@@ -107,13 +112,13 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev Constructs the CFolioItemHandlerLP
+   * @dev Constructs the CFolioItemHandlerFarm
    *
    * We gather all current addresses from address registry into immutable vars.
    * If one of the relevant addresses changes, the contract has to be updated.
    * There is little state here, user state is completely handled in CFolioFarm.
    */
-  constructor(IAddressRegistry addressRegistry) {
+  constructor(IAddressRegistry addressRegistry, bytes32 rewardFarmKey) {
     // TradeFloor
     tradeFloor = addressRegistry.getRegistryEntry(
       AddressBook.TRADE_FLOOR_PROXY
@@ -140,9 +145,9 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
       addressRegistry.getRegistryEntry(AddressBook.SFT_EVALUATOR_PROXY)
     );
 
-    // WOWS reward farm
+    // WOWS rewards
     cfolioFarm = ICFolioFarmOwnable(
-      addressRegistry.getRegistryEntry(AddressBook.WOLVES_REWARDS)
+      addressRegistry.getRegistryEntry(rewardFarmKey)
     );
   }
 
@@ -424,23 +429,22 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
   /**
    * @dev Destruct implementation contract
    */
-  function selfDestruct() external {
-    // Validate access
-    require(_msgSender() == admin, 'CFIH: Only admin');
-
+  function selfDestruct() external onlyAdmin {
     // Dispatch event
     CFolioItemHandlerDestructed(address(this));
 
+    // Disable high-impact Slither detector "suicidal" here. Slither explains
+    // that "CFolioItemHandlerFarm.selfDestruct() allows anyone to destruct the
+    // contract", which is not the case due to the onlyAdmin modifier.
+    //
+    // slither-disable-next-line suicidal
     selfdestruct(payable(admin));
   }
 
   /**
    * @dev Set a new SFT minter
    */
-  function setMinter(address newMinter) external {
-    // Validate access
-    require(_msgSender() == admin, 'CFIH: Only admin');
-
+  function setMinter(address newMinter) external onlyAdmin {
     // Validate parameters
     require(newMinter != address(0), 'CFIH: Invalid');
 

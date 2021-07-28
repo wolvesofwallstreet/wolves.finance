@@ -32,7 +32,7 @@ const ADDRESS_BOOK_SFT_MINTER_KEY =
   ethers.utils.formatBytes32String('SFT_MINTER');
 
 // Contract ABIs
-const SFT_HOLDER_ABI = `${__dirname}/../src/abi/contracts/src/token/WOWSERC1155.sol/WOWSERC1155.json`;
+const SFT_HOLDER_ABI = `${__dirname}/../src/abi/contracts/src/token/WOWSErc1155.sol/WOWSERC1155.json`;
 
 // ERC-1155 metadata URI
 const METADATA_URI = 'https://meta.wows.finance/wolves_assets/metadata/';

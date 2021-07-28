@@ -678,6 +678,6 @@ describe('SFT evaluator', function () {
       1,
       []
     );
-    await chai.expect(tx).to.be.revertedWith('CFIHSC: Too many items');
+    await chai.expect(tx).to.be.revertedWith('CFIH: Too many items');
   });
 });

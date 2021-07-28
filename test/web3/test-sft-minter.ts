@@ -611,7 +611,7 @@ describe('SFT minter', function () {
     chai.expect(balance).to.equal(lpBalance);
   });
 
-  it('should allow 0 price mint', async function () {
+  it('should allow empty price mint', async function () {
     this.timeout(60 * 1000);
 
     const { sftMinterContract } = contracts;
@@ -624,7 +624,7 @@ describe('SFT minter', function () {
       ethers.BigNumber.from(
         '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
       ),
-      [0]
+      []
     );
 
     // Log gas cost

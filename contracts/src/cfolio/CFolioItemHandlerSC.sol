@@ -45,7 +45,7 @@ contract CFolioItemHandlerSC is CFolioItemHandlerFarm {
    * There is little state here, user state is completely handled in CFolioFarm.
    */
   constructor(IAddressRegistry addressRegistry)
-    CFolioItemHandlerFarm(addressRegistry)
+    CFolioItemHandlerFarm(addressRegistry, AddressBook.BOIS_REWARDS)
   {
     // The Y pool deposit contract
     curveYDeposit = ICurveFiDepositY(
@@ -116,7 +116,7 @@ contract CFolioItemHandlerSC is CFolioItemHandlerFarm {
     uint256 yPoolAmount = amounts[4];
 
     if (yPoolAmount > 0) {
-      curveYToken.transferFrom(payer, address(this), yPoolAmount);
+      curveYToken.safeTransferFrom(payer, address(this), yPoolAmount);
     }
 
     // Validate state
@@ -187,7 +187,7 @@ contract CFolioItemHandlerSC is CFolioItemHandlerFarm {
     } else {
       // No stablecoins were passed, sender is withdrawing Y pool tokens directly
       // Transfer Y pool tokens back to the sender
-      curveYToken.transfer(_msgSender(), yPoolAmount);
+      curveYToken.safeTransfer(_msgSender(), yPoolAmount);
     }
 
     // Valiate state

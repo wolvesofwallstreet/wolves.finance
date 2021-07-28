@@ -37,7 +37,7 @@ contract CFolioItemHandlerLP is CFolioItemHandlerFarm {
    * There is little state here, user state is completely handled in CFolioFarm.
    */
   constructor(IAddressRegistry addressRegistry)
-    CFolioItemHandlerFarm(addressRegistry)
+    CFolioItemHandlerFarm(addressRegistry, AddressBook.WOLVES_REWARDS)
   {
     // The ERC-20 token we stake
     stakingToken = IERC20(
@@ -60,6 +60,9 @@ contract CFolioItemHandlerLP is CFolioItemHandlerFarm {
     // Validate parameters
     require(amounts.length == 1 && amounts[0] > 0, 'CFIHLP: invalid amount');
     // Transfer LP token to this contract
+    // Disable high-impact Slither detector "unchecked-transfer" here
+    // because we know that our stakingToken reverts
+    // slither-disable-next-line unchecked-transfer
     stakingToken.transferFrom(payer, address(this), amounts[0]);
 
     // Record assets in the Farm contract. They don't earn rewards.
@@ -82,6 +85,9 @@ contract CFolioItemHandlerLP is CFolioItemHandlerFarm {
     cfolioFarm.removeAssets(itemCFolio, amounts[0]);
 
     // Transfer LP token from this contract
+    // Disable high-impact Slither detector "unchecked-transfer" here
+    // because we know that our stakingToken reverts
+    // slither-disable-next-line unchecked-transfer
     stakingToken.transfer(_msgSender(), amounts[0]);
   }
 
@@ -94,7 +100,7 @@ contract CFolioItemHandlerLP is CFolioItemHandlerFarm {
     override
   {
     (, uint8 level) = sfth.getTokenData(baseSftTokenId);
-    require((LEVEL2WOLF & (uint256(1) << level)) > 0, 'CFIH: Wolves only');
+    require((LEVEL2WOLF & (uint256(1) << level)) > 0, 'CFIHLP: Wolves only');
   }
 
   /**

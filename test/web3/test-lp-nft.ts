@@ -464,7 +464,7 @@ describe('LP NFTs', function () {
       wowsTokenIdBoi,
       []
     );
-    await chai.expect(tx).to.be.revertedWith('CFIH: Wolves only');
+    await chai.expect(tx).to.be.revertedWith('CFIHLP: Wolves only');
 
     // Boi cryptofolio should be in its original state
     const [tokenIds, idsLength] = await cryptofolioContractBoi.getCryptofolio(
@@ -1104,7 +1104,7 @@ describe('LP NFTs', function () {
       cfolioItemTokenId,
       1
     );
-    await chai.expect(tx).to.be.revertedWith('CFIH: not empty');
+    await chai.expect(tx).to.be.revertedWith('CFIH: Not empty');
   });
 
   it('should withdraw everything from CFIHLP', async function () {

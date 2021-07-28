@@ -26,7 +26,7 @@ import { hardhat } from '../utils/hardhat';
 chai.use(solidity);
 
 // ERC-1155 metadata URI
-const METADATA_URI = 'https://4travelers.de/wolves_assets/metadata/';
+const METADATA_URI = 'https://meta.wows.finance/wolves_assets/metadata/';
 
 // Path to generated address registry file
 const GENERATED_ADDRESSES = `${__dirname}/../../src/config/generated-addresses.json`;

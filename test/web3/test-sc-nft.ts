@@ -600,7 +600,7 @@ describe('SC NFTs', function () {
       wowsTokenIdWolf,
       []
     );
-    await chai.expect(tx).to.be.revertedWith('CFIH: Bois only');
+    await chai.expect(tx).to.be.revertedWith('CFIHSC: Bois only');
 
     // Wolf cryptofolio should be in its original state
     const [tokenIds, idsLength] = await cryptofolioContractWolf.getCryptofolio(
@@ -1382,7 +1382,7 @@ describe('SC NFTs', function () {
       cfolioItemTokenId,
       1
     );
-    await chai.expect(tx).to.be.revertedWith('CFIH: not empty');
+    await chai.expect(tx).to.be.revertedWith('CFIH: Not empty');
   });
 
   it('should get the remaining yCRV balance in CFIHSC', async function () {
