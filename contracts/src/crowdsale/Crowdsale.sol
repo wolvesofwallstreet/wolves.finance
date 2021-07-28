@@ -447,7 +447,7 @@ contract Crowdsale is Context, ReentrancyGuard, ERC20Recovery {
    * @dev Added to support recovering LP Rewards from other systems to be distributed to holders
    */
   function recoverERC20(address tokenAddress, uint256 tokenAmount) external {
-    require(msg.sender == _wallet, 'restricted to wallet');
+    require(_msgSender() == _wallet, 'restricted to wallet');
     require(hasClosed(), 'not closed');
     // Cannot recover the staking token or the rewards token
     require(tokenAddress != address(token), 'native tokens unrecoverable');
@@ -461,7 +461,7 @@ contract Crowdsale is Context, ReentrancyGuard, ERC20Recovery {
    * to either shorten or enlarge the presale period
    */
   function setClosingTime(uint256 newClosingTime) external {
-    require(msg.sender == _wallet, 'restricted to wallet');
+    require(_msgSender() == _wallet, 'restricted to wallet');
     require(newClosingTime > openingTime, 'close < open');
 
     closingTime = newClosingTime;

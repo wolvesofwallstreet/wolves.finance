@@ -117,7 +117,7 @@ contract WOWSCryptofolio is IWOWSCryptofolio, Context, ERC1155Holder {
    */
   function setOwner(address newOwner) external override {
     // Access control
-    require(msg.sender == address(_deployer), 'CF: Only deployer');
+    require(_msgSender() == address(_deployer), 'CF: Only deployer');
 
     // Update state
     for (uint256 i = 0; i < _tradefloors.length; ++i) {

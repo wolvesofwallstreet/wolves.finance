@@ -224,7 +224,7 @@ contract WOWSSftMinter is Context, Ownable {
     // contract", which is not the case due to the {Ownable-onlyOwner} modifier.
     //
     // slither-disable-next-line suicidal
-    selfdestruct(msg.sender);
+    selfdestruct(_msgSender());
   }
 
   /**

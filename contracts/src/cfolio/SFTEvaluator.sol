@@ -8,6 +8,8 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
+import '@openzeppelin/contracts/utils/Context.sol';
+
 import '../token/interfaces/IWOWSCryptofolio.sol';
 import '../token/interfaces/IWOWSERC1155.sol';
 import '../utils/AddressBook.sol';
@@ -17,7 +19,7 @@ import '../utils/TokenIds.sol';
 import './interfaces/ISFTEvaluator.sol';
 import './interfaces/ICFolioItemHandler.sol';
 
-contract SFTEvaluator is ISFTEvaluator {
+contract SFTEvaluator is ISFTEvaluator, Context {
   using TokenIds for uint256;
 
   //////////////////////////////////////////////////////////////////////////////
@@ -186,7 +188,7 @@ contract SFTEvaluator is ISFTEvaluator {
   {
     require(tokenId.isCFolioCard(), 'Invalid tokenId');
     require(
-      msg.sender == _addressRegistry.getRegistryEntry(AddressBook.SFT_MINTER),
+      _msgSender() == _addressRegistry.getRegistryEntry(AddressBook.SFT_MINTER),
       'SFTE: Minter only'
     );
 
