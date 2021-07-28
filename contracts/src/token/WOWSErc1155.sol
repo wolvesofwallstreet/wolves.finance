@@ -95,6 +95,18 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
     string memory baseMetadataURI,
     string memory contractMetadataURI
   ) {
+    initialize(owner, cryptofolio, baseMetadataURI, contractMetadataURI);
+  }
+
+  function initialize(
+    address owner,
+    address cryptofolio,
+    string memory baseMetadataURI,
+    string memory contractMetadataURI
+  ) public {
+    // Check for one time initialization
+    require(_cryptofolio == address(0), 'Already initialized');
+
     // Initialize {AccessControl}
     _setupRole(DEFAULT_ADMIN_ROLE, owner);
 

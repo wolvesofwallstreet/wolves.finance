@@ -17,22 +17,30 @@ require('hardhat-deploy-ethers');
 // TODO: Fully qualified contract names
 const ADDRESS_REGISTRY_CONTRACT = 'AddressRegistry';
 const SFT_HOLDER_CONTRACT = 'WOWSERC1155';
+const SFT_HOLDER_PROXY_CONTRACT = 'WOWSERC1155Proxy';
+const UPGRADE_PROXY_CONTRACT = 'UpgradeProxy';
 const SFT_CRYPTOFOLIO = 'WOWSCryptofolio';
 const SFT_MINTER_CONTRACT = 'WOWSSftMinter';
 
 const ADDRESS_BOOK_SFT_HOLDER_KEY =
   ethers.utils.formatBytes32String('SFT_HOLDER');
 
+const ADDRESS_BOOK_SFT_HOLDER_PROXY_KEY =
+  ethers.utils.formatBytes32String('SFT_HOLDER_PROXY');
+
 const ADDRESS_BOOK_SFT_MINTER_KEY =
   ethers.utils.formatBytes32String('SFT_MINTER');
 
+// Contract ABIs
+const SFT_HOLDER_ABI = `${__dirname}/../src/abi/contracts/src/token/WOWSERC1155.sol/WOWSERC1155.json`;
+
 // ERC-1155 metadata URI
-const METADATA_URI = 'https://4travelers.de/wolves_assets/metadata/';
+const METADATA_URI = 'https://meta.wows.finance/wolves_assets/metadata/';
 
 // Filename for contract metadata, will be prefixed with METADATA_URI
 // TODO: replace mainnet_contract.json with something from config!!!
 const CONTRACT_METADATA_NAME =
-  'https://4travelers.de/wolves_assets/metadata/mainnet_contract.json';
+  'https://meta.wows.finance/wolves_assets/metadata/mainnet_contract.json';
 
 // Path to address files
 const CONFIG_ADDRESSES = `${__dirname}/../src/config/addresses.json`;
@@ -86,7 +94,7 @@ async function setRegistryKey(deployer, execute, registryInstance, key, value) {
 const sft_func = async function (hardhat_re) {
   const { deployments, getNamedAccounts } = hardhat_re;
 
-  const { execute, deploy } = deployments;
+  const { execute, get, deploy } = deployments;
   const { deployer, marketingWallet } = await getNamedAccounts();
 
   // Get chain ID
@@ -100,6 +108,9 @@ const sft_func = async function (hardhat_re) {
     fs.readFileSync(GENERATED_ADDRESSES).toString()
   );
 
+  // Load ABIs
+  const sftHolderAbi = JSON.parse(fs.readFileSync(SFT_HOLDER_ABI));
+
   const configAddresses = (!IGNORE_ADDRESSES && configNetworks[chainId]) || {};
   const generatedAddresses = generatedNetworks[chainId] || {};
 
@@ -112,6 +123,7 @@ const sft_func = async function (hardhat_re) {
   const ADDRESS_REGISTRY_INSTANCE = await hardhat_re.ethers.getContract(
     ADDRESS_REGISTRY_CONTRACT
   );
+  const ADDRESS_REGISTRY_ADDRESS = generatedAddresses.addressRegistry;
 
   //////////////////////////////////////////////////////////////////////////////
   //
@@ -172,6 +184,65 @@ const sft_func = async function (hardhat_re) {
     ADDRESS_REGISTRY_INSTANCE,
     ADDRESS_BOOK_SFT_HOLDER_KEY,
     SFT_HOLDER_ADDRESS
+  );
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // Create initialization calldata
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  const sftHolderInterface = new ethers.utils.Interface(sftHolderAbi);
+  const proxyCallData = sftHolderInterface.encodeFunctionData('initialize', [
+    marketingWallet,
+    SFT_CRYPTOFOLIO_ADDRESS,
+    METADATA_URI,
+    CONTRACT_METADATA_NAME,
+  ]);
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // Deploy SFTHolder proxy
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  if (configAddresses.sftHolderProxy) {
+    log_step(`Using SFTHolder proxy: ${configAddresses.sftHolderProxy}`);
+    generatedAddresses.sftHolderProxy = configAddresses.sftHolderProxy;
+  } else {
+    log_step('Deploying SFTHolder proxy');
+
+    let sftHolderProxyReceipt = undefined;
+    try {
+      sftHolderProxyReceipt = await get(SFT_HOLDER_PROXY_CONTRACT);
+
+      if (!sftHolderProxyReceipt.address) {
+        throw new Error('No address');
+      }
+
+      console.log(
+        'INFO: Proxy upgrade required! Initialization: ',
+        proxyCallData
+      );
+    } catch (err) {
+      sftHolderProxyReceipt = await deploy(SFT_HOLDER_PROXY_CONTRACT, {
+        contract: UPGRADE_PROXY_CONTRACT,
+        from: deployer,
+        args: [ADDRESS_REGISTRY_ADDRESS, SFT_HOLDER_ADDRESS, proxyCallData],
+        log: true,
+        deterministicDeployment: true,
+      });
+    }
+
+    generatedAddresses.sftHolderProxy = sftHolderProxyReceipt.address;
+  }
+
+  await setRegistryKey(
+    deployer,
+    execute,
+    ADDRESS_REGISTRY_INSTANCE,
+    ADDRESS_BOOK_SFT_HOLDER_PROXY_KEY,
+    generatedAddresses.sftHolderProxy
   );
 
   //////////////////////////////////////////////////////////////////////////////
