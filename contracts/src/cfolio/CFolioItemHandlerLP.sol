@@ -15,7 +15,7 @@ import './CFolioItemHandlerFarm.sol';
 /**
  * @dev CFolioItemHandlerLP manages CFolioItems, minted in the SFT contract.
  *
- * See CFolioItemHandlerFarm.sol
+ * See {CFolioItemHandlerFarm}.
  */
 contract CFolioItemHandlerLP is CFolioItemHandlerFarm {
   //////////////////////////////////////////////////////////////////////////////
@@ -46,11 +46,11 @@ contract CFolioItemHandlerLP is CFolioItemHandlerFarm {
   }
 
   //////////////////////////////////////////////////////////////////////////////
-  // Implementation of CFolioItemHandlerFarm
+  // Implementation of {CFolioItemHandlerFarm}
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev Deposit amounts
+   * @dev See {CFolioItemHandlerFarm-_deposit}.
    */
   function _deposit(
     address itemCFolio,
@@ -66,12 +66,13 @@ contract CFolioItemHandlerLP is CFolioItemHandlerFarm {
     stakingToken.transferFrom(payer, address(this), amounts[0]);
 
     // Record assets in the Farm contract. They don't earn rewards.
-    // addAssets must only be called from Investment CFolios
+    //
+    // NOTE: {addAssets} must only be called from investment CFolios.
     cfolioFarm.addAssets(itemCFolio, amounts[0]);
   }
 
   /**
-   * @dev Withdraw amounts
+   * @dev See {CFolioItemHandlerFarm-_withdraw}.
    */
   function _withdraw(address itemCFolio, uint256[] calldata amounts)
     internal
@@ -81,12 +82,15 @@ contract CFolioItemHandlerLP is CFolioItemHandlerFarm {
     require(amounts.length == 1 && amounts[0] > 0, 'CFIHLP: invalid amount');
 
     // Record assets in Farm contract. They don't earn rewards.
-    // removeAsset must only be called from Investment CFolios
+    //
+    // NOTE: {removeAssets} must only be called from Investment CFolios.
     cfolioFarm.removeAssets(itemCFolio, amounts[0]);
 
-    // Transfer LP token from this contract
+    // Transfer LP token from this contract.
+    //
     // Disable high-impact Slither detector "unchecked-transfer" here
-    // because we know that our stakingToken reverts
+    // because we know that our stakingToken reverts.
+    //
     // slither-disable-next-line unchecked-transfer
     stakingToken.transfer(_msgSender(), amounts[0]);
   }
@@ -100,8 +104,13 @@ contract CFolioItemHandlerLP is CFolioItemHandlerFarm {
     override
   {
     (, uint8 level) = sfth.getTokenData(baseSftTokenId);
+
     require((LEVEL2WOLF & (uint256(1) << level)) > 0, 'CFIHLP: Wolves only');
   }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Implementation of {ICFolioItemHandler} via {CFolioItemHandlerFarm}
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
    * @dev See {ICFolioItemHandler-getAmounts}

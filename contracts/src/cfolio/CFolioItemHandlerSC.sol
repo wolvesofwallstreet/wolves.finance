@@ -17,7 +17,7 @@ import './CFolioItemHandlerFarm.sol';
 /**
  * @dev CFolioItemHandlerSC manages CFolioItems, minted in the SFT contract.
  *
- * See CFolioItemHandlerFarm.sol
+ * See {CFolioItemHandlerFarm}.
  */
 contract CFolioItemHandlerSC is CFolioItemHandlerFarm {
   using SafeMath for uint256;
@@ -58,10 +58,6 @@ contract CFolioItemHandlerSC is CFolioItemHandlerFarm {
     );
   }
 
-  //////////////////////////////////////////////////////////////////////////////
-  // Implementation of CFolioItemHandlerFarm
-  //////////////////////////////////////////////////////////////////////////////
-
   /**
    * @dev One time contract initializer
    */
@@ -76,6 +72,13 @@ contract CFolioItemHandlerSC is CFolioItemHandlerFarm {
     curveYToken.approve(address(curveYDeposit), uint256(-1));
   }
 
+  //////////////////////////////////////////////////////////////////////////////
+  // Implementation of {CFolioItemHandlerFarm}
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * @dev See {CFolioItemHandlerFarm-_deposit}.
+   */
   function _deposit(
     address itemCFolio,
     address payer,
@@ -87,8 +90,11 @@ contract CFolioItemHandlerSC is CFolioItemHandlerFarm {
     // Keep track of how many Y pool tokens were received
     uint256 beforeBalance = curveYToken.balanceOf(address(this));
 
+    // Keep track of amounts
     uint256[4] memory stableAmounts;
     uint256 totalStableAmount;
+
+    // Update state
     for (uint256 i = 0; i < 4; ++i) {
       address underlyingCoin = curveYDeposit.underlying_coins(int128(i));
 
@@ -115,6 +121,7 @@ contract CFolioItemHandlerSC is CFolioItemHandlerFarm {
     // Handle Y pool
     uint256 yPoolAmount = amounts[4];
 
+    // Update state
     if (yPoolAmount > 0) {
       curveYToken.safeTransferFrom(payer, address(this), yPoolAmount);
     }
@@ -124,8 +131,9 @@ contract CFolioItemHandlerSC is CFolioItemHandlerFarm {
     require(afterBalance > beforeBalance, 'CFIFSC: No investment');
 
     // Record assets in Farm contract. They don't earn rewards.
-    // addAsset must only be called from Investment CFolios
-    // This call is allowed without any investment.
+    //
+    // NOTE: {addAssets} must only be called from Investment CFolios. This
+    // call is allowed without any investment.
     cfolioFarm.addAssets(itemCFolio, afterBalance.sub(beforeBalance));
   }
 
@@ -166,6 +174,7 @@ contract CFolioItemHandlerSC is CFolioItemHandlerFarm {
     // Keep track of how many Y pool tokens were sent
     uint256 balanceBefore = curveYToken.balanceOf(address(this));
 
+    // Update state
     if (stableCoinIndex != -1) {
       // Call to external contract
       curveYDeposit.remove_liquidity_one_coin(
@@ -195,12 +204,13 @@ contract CFolioItemHandlerSC is CFolioItemHandlerFarm {
     require(balanceAfter < balanceBefore, 'Nothing withdrawn');
 
     // Record assets in Farm contract. They don't earn rewards.
-    // removeAsset must only be called from Investment CFolios
+    //
+    // NOTE: {removeAssets} must only be called from Investment CFolios.
     cfolioFarm.removeAssets(itemCFolio, balanceBefore.sub(balanceAfter));
   }
 
   /**
-   * @dev Verify if target base SFT is allowed
+   * @dev See {CFolioItemHandlerFarm-_verifyTransferTarget}
    */
   function _verifyTransferTarget(IWOWSERC1155 sfth, uint256 baseSftTokenId)
     internal
@@ -210,6 +220,10 @@ contract CFolioItemHandlerSC is CFolioItemHandlerFarm {
     (, uint8 level) = sfth.getTokenData(baseSftTokenId);
     require((LEVEL2BOIS & (uint256(1) << level)) > 0, 'CFIHSC: Bois only');
   }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Implementation of {ICFolioItemHandler} via {CFolioItemHandlerFarm}
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
    * @dev See {ICFolioItemHandler-getAmounts}
@@ -241,6 +255,10 @@ contract CFolioItemHandlerSC is CFolioItemHandlerFarm {
 
     return result;
   }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Implementation details
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
    * @dev Get single coin and amount

@@ -64,6 +64,7 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
 
   // The SFT contract needed to check if the address is a c-folio
   IWOWSERC1155 public immutable sftHolder;
+
   // The new SFT Proxy contract needed to check if the address is a c-folio
   IWOWSERC1155 public immutable sftHolderProxy;
 
@@ -371,12 +372,14 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
 
     // Get basic data once
     uiData = cfolioFarm.getUIData(address(0));
+
     // total / rewardDuration / rewardPerDuration
     result = abi.encodePacked(uiData[0], uiData[2], uiData[3]);
 
     if (tokenIds.length > 0) {
-      // evaluate sftHolder only once
+      // Evaluate sftHolder only once
       (IWOWSERC1155 sfth, ) = _tokenIdToAddress(tokenIds[0]);
+
       // Iterate through all tokenIds and collect reward info
       for (uint256 i = 0; i < tokenIds.length; ++i) {
         uint256 sftTokenId = tokenIds[i].toSftTokenId();
@@ -396,7 +399,7 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
   }
 
   //////////////////////////////////////////////////////////////////////////////
-  // Overrides
+  // Internal interface
   //////////////////////////////////////////////////////////////////////////////
 
   /**
@@ -427,7 +430,7 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev Destruct implementation contract
+   * @dev Destruct implementation
    */
   function selfDestruct() external onlyAdmin {
     // Dispatch event
@@ -552,10 +555,10 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
    * @param baseTokenId Base card tokenId or uint(-1)
    * @param cfolioItemTokenId CFolioItem tokenId handled by this contract
    *
-   * A tokenId is "unlocked", if msg.sender is the owner of a tokenId in SFT
+   * A tokenId is "unlocked" if msg.sender is the owner of a tokenId in SFT
    * contract. If baseTokenId is uint(-1), cfolioItemTokenId has to be be
    * unlocked, otherwise baseTokenId has to be unlocked and the locked
-   * cfolioItemTokenId inside its cfolio.
+   * cfolioItemTokenId has to be inside its c-folio.
    */
   function _verifyAssetAccess(uint256 baseTokenId, uint256 cfolioItemTokenId)
     private
@@ -582,7 +585,7 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
     address baseCFolio = address(0);
 
     if (baseTokenId != uint256(-1)) {
-      // Verify it's a cfolio base card
+      // Verify it's a c-folio base card
       require(baseTokenId.isBaseCard(), 'CFHI: Not baseCard');
       baseCFolio = sfth.tokenIdToAddress(baseTokenId.toSftTokenId());
       require(baseCFolio != address(0), 'CFIH: Invalid baseCFolioTokenId');
@@ -612,6 +615,9 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
     return (sfth, baseCFolio, cFolio);
   }
 
+  /**
+   * @dev Converts an SFT's token ID to its address for holding tokens
+   */
   function _tokenIdToAddress(uint256 sftTokenId)
     internal
     view
@@ -622,6 +628,9 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
     return (sftHolder, sftHolder.tokenIdToAddress(sftTokenId));
   }
 
+  /**
+   * @dev Converts an SFT address for holding tokens to the token ID of the SFT
+   */
   function _addressToTokenId(address sft)
     internal
     view
