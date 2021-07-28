@@ -17,10 +17,12 @@ require('hardhat-deploy-ethers');
 // TODO: Fully qualified contract names
 const ADDRESS_REGISTRY_CONTRACT = 'AddressRegistry';
 const SFT_HOLDER_CONTRACT = 'WOWSERC1155';
-const SFT_HOLDER_PROXY_CONTRACT = 'WOWSERC1155Proxy';
 const UPGRADE_PROXY_CONTRACT = 'UpgradeProxy';
 const SFT_CRYPTOFOLIO = 'WOWSCryptofolio';
 const SFT_MINTER_CONTRACT = 'WOWSSftMinter';
+
+// Deployed contract aliases
+const SFT_HOLDER_PROXY_CONTRACT = 'WOWSERC1155Proxy';
 
 const ADDRESS_BOOK_SFT_HOLDER_KEY =
   ethers.utils.formatBytes32String('SFT_HOLDER');
