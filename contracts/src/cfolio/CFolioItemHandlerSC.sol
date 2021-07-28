@@ -218,6 +218,7 @@ contract CFolioItemHandlerSC is CFolioItemHandlerFarm {
     override
   {
     (, uint8 level) = sfth.getTokenData(baseSftTokenId);
+
     require((LEVEL2BOIS & (uint256(1) << level)) > 0, 'CFIHSC: Bois only');
   }
 

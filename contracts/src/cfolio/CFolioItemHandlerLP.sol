@@ -122,7 +122,9 @@ contract CFolioItemHandlerLP is CFolioItemHandlerFarm {
     returns (uint256[] memory)
   {
     uint256[] memory result = new uint256[](1);
+
     result[0] = cfolioFarm.balanceOf(cfolioItem);
+
     return result;
   }
 }

@@ -624,7 +624,11 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
     returns (IWOWSERC1155, address)
   {
     address cFolio = sftHolderProxy.tokenIdToAddress(sftTokenId);
-    if (cFolio != address(0)) return (sftHolderProxy, cFolio);
+
+    if (cFolio != address(0)) {
+      return (sftHolderProxy, cFolio);
+    }
+
     return (sftHolder, sftHolder.tokenIdToAddress(sftTokenId));
   }
 
@@ -637,7 +641,11 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
     returns (IWOWSERC1155, uint256)
   {
     uint256 sftTokenId = sftHolderProxy.addressToTokenId(sft);
-    if (sftTokenId != uint256(-1)) return (sftHolderProxy, sftTokenId);
+
+    if (sftTokenId != uint256(-1)) {
+      return (sftHolderProxy, sftTokenId);
+    }
+
     return (sftHolder, sftHolder.addressToTokenId(sft));
   }
 }
