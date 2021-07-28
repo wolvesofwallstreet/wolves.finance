@@ -8,11 +8,11 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
-import './CFolioItemHandlerFarm.sol';
-
 import '../../0xerc1155/interfaces/IERC20.sol';
 import '../../0xerc1155/utils/SafeERC20.sol';
 import '../../interfaces/curve/CurveDepositInterface.sol';
+
+import './CFolioItemHandlerFarm.sol';
 
 /**
  * @dev CFolioItemHandlerSC manages CFolioItems, minted in the SFT contract.

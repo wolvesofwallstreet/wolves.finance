@@ -8,9 +8,9 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
-import './CFolioItemHandlerFarm.sol';
-
 import '../../0xerc1155/interfaces/IERC20.sol';
+
+import './CFolioItemHandlerFarm.sol';
 
 /**
  * @dev CFolioItemHandlerLP manages CFolioItems, minted in the SFT contract.
