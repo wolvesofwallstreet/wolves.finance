@@ -32,8 +32,8 @@ contract SFTEvaluator is ISFTEvaluator {
   // The SFT contract we need for level
   IWOWSERC1155 private immutable _sftHolder;
 
-  // The main tradefloor contract
-  address private immutable _tradeFloor;
+  // The cfolioitem bridge contract
+  address private immutable _cfiBridge;
 
   // The AddressRegistry to validate WOWSMinter calls
   IAddressRegistry private immutable _addressRegistry;
@@ -65,9 +65,9 @@ contract SFTEvaluator is ISFTEvaluator {
     // Admin
     admin = addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
 
-    // TradeFloor
-    _tradeFloor = addressRegistry.getRegistryEntry(
-      AddressBook.TRADE_FLOOR_PROXY
+    // CFolioItemBridge
+    _cfiBridge = addressRegistry.getRegistryEntry(
+      AddressBook.CFOLIOITEM_BRIDGE_PROXY
     );
 
     _addressRegistry = addressRegistry;
@@ -138,9 +138,9 @@ contract SFTEvaluator is ISFTEvaluator {
       );
       require(address(cFolio) != address(0), 'SFTE: invalid tokenId');
 
-      // Run through all cfolioItems of main tradefloor
+      // Run through all cfolioItems of cfiBridge
       (uint256[] memory cFolioItems, uint256 length) = cFolio.getCryptofolio(
-        _tradeFloor
+        _cfiBridge
       );
       if (length > 0) {
         // Bound loop to 100 c-folio items to fit in sensible gas limits
