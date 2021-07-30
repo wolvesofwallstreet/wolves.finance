@@ -18,6 +18,10 @@ const SFT_HOLDER_CONTRACT = 'WOWSERC1155';
 const SFT_MINTER_CONTRACT = 'WOWSSftMinter';
 const TRADE_FLOOR_PROXY_CONTRACT = 'TradeFloorProxy';
 
+// keccak-256("eip1967.proxy.implementation") - 1
+const UPGRADE_PROXY_IMPLEMENTATION_SLOT =
+  '0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc';
+
 // Path to generated addresses file
 const GENERATED_ADDRESSES = `${__dirname}/../src/config/generated-addresses.json`;
 
@@ -29,7 +33,7 @@ function log_step(step_string) {
 async function getProxyImplementation(hre, contractAddress) {
   const data = await hre.ethers.provider.getStorageAt(
     contractAddress,
-    '0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc'
+    UPGRADE_PROXY_IMPLEMENTATION_SLOT
   );
   return hre.ethers.utils.getAddress(
     hre.ethers.BigNumber.from(data).toHexString()
@@ -71,14 +75,14 @@ const func = async function (hardhat_re) {
   log_step('Marketing wallet calls for SFT testing');
 
   //
-  // 1.) Call WowsERC1155.sol::grantRole(TRADEFLOOR_ROLE, TradeFloorProxy)
+  // 1.) Call WowsERC1155.sol::revokeRole(TRADEFLOOR_ROLE, TradeFloorProxy)
   //
 
   if (
-    !(await SFT_HOLDER_INSTANCE.hasRole(
+    await SFT_HOLDER_INSTANCE.hasRole(
       await SFT_HOLDER_INSTANCE.TRADEFLOOR_ROLE(),
       generatedAddresses.tradeFloorProxy
-    ))
+    )
   ) {
     await catchUnknownSigner(
       execute(
@@ -87,7 +91,7 @@ const func = async function (hardhat_re) {
           from: marketingWallet,
           log: true,
         },
-        'grantRole',
+        'revokeRole',
         await SFT_HOLDER_INSTANCE.TRADEFLOOR_ROLE(),
         generatedAddresses.tradeFloorProxy
       )

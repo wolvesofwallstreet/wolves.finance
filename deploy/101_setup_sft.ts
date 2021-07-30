@@ -15,9 +15,14 @@ require('hardhat-deploy');
 require('hardhat-deploy-ethers');
 
 // TODO: Fully qualified contract names
+const CFOLIOITEM_BRIDGE_PROXY_CONTRACT = 'CFolioItemBridgeProxy';
 const SFT_HOLDER_CONTRACT = 'WOWSERC1155';
 const SFT_MINTER_CONTRACT = 'WOWSSftMinter';
 const REWARD_HANDLER_CONTRACT = 'RewardHandler';
+
+// keccak-256("eip1967.proxy.implementation") - 1
+const UPGRADE_PROXY_IMPLEMENTATION_SLOT =
+  '0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc';
 
 // Path to generated addresses file
 const GENERATED_ADDRESSES = `${__dirname}/../src/config/generated-addresses.json`;
@@ -25,6 +30,16 @@ const GENERATED_ADDRESSES = `${__dirname}/../src/config/generated-addresses.json
 // Helper function
 function log_step(step_string) {
   console.log(`\n==> ${step_string}\n`);
+}
+
+async function getProxyImplementation(hre, contractAddress) {
+  const data = await hre.ethers.provider.getStorageAt(
+    contractAddress,
+    UPGRADE_PROXY_IMPLEMENTATION_SLOT
+  );
+  return hre.ethers.utils.getAddress(
+    hre.ethers.BigNumber.from(data).toHexString()
+  );
 }
 
 /**
@@ -153,6 +168,52 @@ const func = async function (hardhat_re) {
         'grantRole',
         await SFT_HOLDER_INSTANCE.MINTER_ROLE(),
         generatedAddresses.sftMinter
+      )
+    );
+  }
+
+  //
+  // 5.) Call WowsERC1155.sol::grantRole(TRADEFLOOR_ROLE, CFolioItemBridgeProxy)
+  //
+
+  if (
+    !(await SFT_HOLDER_INSTANCE.hasRole(
+      await SFT_HOLDER_INSTANCE.TRADEFLOOR_ROLE(),
+      generatedAddresses.cfiBridgeProxy
+    ))
+  ) {
+    await catchUnknownSigner(
+      execute(
+        SFT_HOLDER_CONTRACT,
+        {
+          from: marketingWallet,
+          log: true,
+        },
+        'grantRole',
+        await SFT_HOLDER_INSTANCE.TRADEFLOOR_ROLE(),
+        generatedAddresses.cfiBridgeProxy
+      )
+    );
+  }
+
+  //
+  // 6.) Check if we have to upgrade the cfiBridge implementation
+  //
+  if (
+    (await getProxyImplementation(
+      hardhat_re,
+      generatedAddresses.cfiBridgeProxy
+    )) !== generatedAddresses.cfiBridge
+  ) {
+    await catchUnknownSigner(
+      execute(
+        CFOLIOITEM_BRIDGE_PROXY_CONTRACT,
+        {
+          from: marketingWallet,
+          log: true,
+        },
+        'upgradeTo',
+        generatedAddresses.cfiBridge
       )
     );
   }
