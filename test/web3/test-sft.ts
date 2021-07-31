@@ -15,6 +15,7 @@ import { solidity } from 'ethereum-waffle';
 import { ethers } from 'ethers';
 import fs from 'fs';
 
+import CFolioItemBridgeAbi from '../../src/abi/contracts/src/cfolio/CFolioItemBridge.sol/CFolioItemBridge.json';
 import WOWSSftMinterAbi from '../../src/abi/contracts/src/crowdsale/WOWSSftMinter.sol/WOWSSftMinter.json';
 import RewardHandlerAbi from '../../src/abi/contracts/src/investment/RewardHandler.sol/RewardHandler.json';
 import UpgradeProxyAbi from '../../src/abi/contracts/src/proxy/UpgradeProxy.sol/UpgradeProxy.json';
@@ -92,6 +93,16 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
     UpgradeProxyAbi,
     marketingWallet
   );
+  const cfiBridgeContract = new ethers.Contract(
+    addresses.cfiBridge,
+    CFolioItemBridgeAbi,
+    marketingWallet
+  );
+  const cfiBridgeProxyContract = new ethers.Contract(
+    addresses.cfiBridgeProxy,
+    UpgradeProxyAbi,
+    marketingWallet
+  );
 
   return {
     tokenContract,
@@ -100,6 +111,8 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
     sftMinterContract,
     tradeFloorContract,
     tradeFloorProxyContract,
+    cfiBridgeContract,
+    cfiBridgeProxyContract,
   };
 });
 
@@ -126,6 +139,8 @@ describe('SFT contracts', function () {
       sftMinterContract,
       tradeFloorContract,
       tradeFloorProxyContract,
+      cfiBridgeContract,
+      cfiBridgeProxyContract,
     } = await setupTest();
 
     const DEFAULT_ADMIN_ROLE = await sftHolderContract.DEFAULT_ADMIN_ROLE();
@@ -201,6 +216,18 @@ describe('SFT contracts', function () {
     chai.expect(
       await sftHolderContract.hasRole(OPERATOR_ROLE, tradeFloorContract.address)
     ).to.be.false;
+    chai.expect(
+      await sftHolderContract.hasRole(MINTER_ROLE, cfiBridgeContract.address)
+    ).to.be.false;
+    chai.expect(
+      await sftHolderContract.hasRole(
+        TRADEFLOOR_ROLE,
+        cfiBridgeContract.address
+      )
+    ).to.be.false;
+    chai.expect(
+      await sftHolderContract.hasRole(OPERATOR_ROLE, tradeFloorContract.address)
+    ).to.be.false;
 
     // Test trade floor proxy contract
     chai.expect(
@@ -220,16 +247,41 @@ describe('SFT contracts', function () {
         TRADEFLOOR_ROLE,
         tradeFloorProxyContract.address
       )
-    ).to.be.true;
+    ).to.be.false;
     chai.expect(
       await sftHolderContract.hasRole(
         OPERATOR_ROLE,
         tradeFloorProxyContract.address
       )
     ).to.be.false;
+    // Test cfolioItem bridge proxy contract
+    chai.expect(
+      await sftHolderContract.hasRole(
+        DEFAULT_ADMIN_ROLE,
+        cfiBridgeProxyContract.address
+      )
+    ).to.be.false;
+    chai.expect(
+      await sftHolderContract.hasRole(
+        MINTER_ROLE,
+        cfiBridgeProxyContract.address
+      )
+    ).to.be.false;
+    chai.expect(
+      await sftHolderContract.hasRole(
+        TRADEFLOOR_ROLE,
+        cfiBridgeProxyContract.address
+      )
+    ).to.be.true;
+    chai.expect(
+      await sftHolderContract.hasRole(
+        OPERATOR_ROLE,
+        cfiBridgeProxyContract.address
+      )
+    ).to.be.false;
   });
 
-  it('should have a trade floor', async function () {
+  it('should not have trade floor as a trade floor', async function () {
     this.timeout(60 * 1000);
 
     const { sftHolderContract, tradeFloorContract, tradeFloorProxyContract } =
@@ -242,6 +294,23 @@ describe('SFT contracts', function () {
     chai.expect(isTradeFloor).to.be.false;
     isTradeFloor = await sftHolderContract.isTradeFloor(
       tradeFloorProxyContract.address
+    );
+    chai.expect(isTradeFloor).to.be.false;
+  });
+
+  it('should have cfiBridge as a trade floor', async function () {
+    this.timeout(60 * 1000);
+
+    const { sftHolderContract, cfiBridgeContract, cfiBridgeProxyContract } =
+      await setupTest();
+
+    // Check that the SFT knows the trade floor
+    let isTradeFloor = await sftHolderContract.isTradeFloor(
+      cfiBridgeContract.address
+    );
+    chai.expect(isTradeFloor).to.be.false;
+    isTradeFloor = await sftHolderContract.isTradeFloor(
+      cfiBridgeProxyContract.address
     );
     chai.expect(isTradeFloor).to.be.true;
   });
