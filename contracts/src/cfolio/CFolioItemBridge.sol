@@ -36,6 +36,9 @@ contract CFolioItemBridge is ICFolioItemBridge, ERC1155Holder {
   //////////////////////////////////////////////////////////////////////////////
 
   // SFT contract
+  IAddressRegistry private immutable _addressRegistry;
+
+  // SFT contract
   IWOWSERC1155 private immutable _sftHolder;
 
   //////////////////////////////////////////////////////////////////////////////
@@ -86,6 +89,8 @@ contract CFolioItemBridge is ICFolioItemBridge, ERC1155Holder {
    *
    */
   constructor(IAddressRegistry addressRegistry) {
+    _addressRegistry = addressRegistry;
+
     // The SFTHolder contract
     _sftHolder = IWOWSERC1155(
       addressRegistry.getRegistryEntry(AddressBook.SFT_HOLDER)
@@ -120,7 +125,7 @@ contract CFolioItemBridge is ICFolioItemBridge, ERC1155Holder {
       require(_owners[tokenIds[i]] == from, 'CFIB: Not owner');
       _owners[tokenIds[i]] = to;
     }
-    _onTransfer(from, to, tokenIds, amounts);
+    _onTransfer(address(this), from, to, tokenIds, amounts);
   }
 
   /**
@@ -144,7 +149,7 @@ contract CFolioItemBridge is ICFolioItemBridge, ERC1155Holder {
       require(_owners[tokenIds[i]] == from, 'CFIB: Not owner');
       _owners[tokenIds[i]] = address(0);
     }
-    _onTransfer(from, address(0), tokenIds, amounts);
+    _onTransfer(address(this), from, address(0), tokenIds, amounts);
   }
 
   /**
@@ -224,7 +229,7 @@ contract CFolioItemBridge is ICFolioItemBridge, ERC1155Holder {
     tokenIds[0] = tokenId;
     uint256[] memory amounts = new uint256[](1);
     amounts[0] = amount;
-    _onTokensReceived(tokenIds, amounts, data);
+    _onTokensReceived(operator, tokenIds, amounts, data);
 
     // Call ancestor
     return super.onERC1155Received(operator, from, tokenId, amount, data);
@@ -241,7 +246,7 @@ contract CFolioItemBridge is ICFolioItemBridge, ERC1155Holder {
     bytes calldata data
   ) public override returns (bytes4) {
     // Handle tokens
-    _onTokensReceived(tokenIds, amounts, data);
+    _onTokensReceived(operator, tokenIds, amounts, data);
 
     // Call ancestor
     return
@@ -253,6 +258,7 @@ contract CFolioItemBridge is ICFolioItemBridge, ERC1155Holder {
   //////////////////////////////////////////////////////////////////////////////
 
   function _onTransfer(
+    address operator,
     address from,
     address to,
     uint256[] memory tokenIds,
@@ -316,15 +322,21 @@ contract CFolioItemBridge is ICFolioItemBridge, ERC1155Holder {
       require(retval == ERC1155_BATCH_RECEIVED_VALUE, 'CFIB: CallOn failed');
     }
 
-    // Handle CFolioItem transfers
-    for (uint256 i = 0; i < numUniqueCFolioHandlers; ++i) {
-      ICFolioItemHandler(uniqueCFolioHandlers[i]).onCFolioItemsTransferedFrom(
-        from,
-        to,
-        tokenIds,
-        cFolioHandlers
-      );
-    }
+    // Handle CFolioItem transfers only if we are not migrating
+    // Migration takes place if we are called from tradeFloor.
+    // Remove the following condition if everything is migrated
+    if (
+      operator !=
+      _addressRegistry.getRegistryEntry(AddressBook.TRADE_FLOOR_PROXY)
+    )
+      for (uint256 i = 0; i < numUniqueCFolioHandlers; ++i) {
+        ICFolioItemHandler(uniqueCFolioHandlers[i]).onCFolioItemsTransferedFrom(
+            from,
+            to,
+            tokenIds,
+            cFolioHandlers
+          );
+      }
 
     emit BridgeTransfer(msg.sender, from, to, tokenIds, amounts);
   }
@@ -333,6 +345,7 @@ contract CFolioItemBridge is ICFolioItemBridge, ERC1155Holder {
    * @dev SFT token arrived, provide an NFT
    */
   function _onTokensReceived(
+    address operator,
     uint256[] memory tokenIds,
     uint256[] memory amounts,
     bytes memory data
@@ -356,7 +369,7 @@ contract CFolioItemBridge is ICFolioItemBridge, ERC1155Holder {
       require(_owners[tokenId] == address(0), 'CFIB: already minted');
       _owners[tokenId] = sftRecipient;
     }
-    _onTransfer(address(0), sftRecipient, tokenIds, amounts);
+    _onTransfer(operator, address(0), sftRecipient, tokenIds, amounts);
   }
 
   /**
