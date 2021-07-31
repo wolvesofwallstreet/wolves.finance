@@ -120,7 +120,7 @@ const func = async function (hardhat_re) {
   log_step('Marketing wallet calls for reward farms');
 
   //
-  // 4.) TradeFloor::grantRole(TRADEFLOOR_ROLE, CFIHLP)
+  // 1.) SFTHolder::grantRole(TRADEFLOOR_ROLE, CFIHLP)
   //
 
   if (
@@ -148,7 +148,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 5.) CFolioFarm.sol::transferOwnership(CFolioItemHandlerLP)
+  // 2.) CFolioFarm.sol::transferOwnership(CFolioItemHandlerLP)
   //
 
   if (
@@ -173,7 +173,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 6.) TradeFloor::grantRole(TRADEFLOOR_ROLE, CFIHSC)
+  // 3.) SFTHolder::grantRole(TRADEFLOOR_ROLE, CFIHSC)
   //
 
   if (
@@ -201,7 +201,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 7.) CFolioFarm.sol::transferOwnership(CFolioItemHandlerSC)
+  // 4.) CFolioFarm.sol::transferOwnership(CFolioItemHandlerSC)
   //
 
   if (
@@ -226,7 +226,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 8.) Controller.sol::registerFarm()
+  // 5.) Controller.sol::registerFarm()
   //
   //   Parameters:
   //     * farmAddress         The CFolioFarmLP address
@@ -273,7 +273,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 9.) Controller.sol::registerFarm()
+  // 6.) Controller.sol::registerFarm()
   //
   //   Parameters:
   //     * farmAddress         The CFolioFarmSC address
@@ -320,7 +320,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 10.) Call WOWSSftMinter.sol::setCFolioSpec(types, handlers, maxMint, prices)
+  // 7.) Call WOWSSftMinter.sol::setCFolioSpec(types, handlers, maxMint, prices)
   //
 
   const cfolioSpec = await SFT_MINTER_INSTANCE.getCFolioSpec([0, 16]);
@@ -388,7 +388,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 11.) Call WowsSFTMinter.sol::setSFTEvaluator(sftEvaluatorProxy)
+  // 8.) Call WowsSFTMinter.sol::setSFTEvaluator(sftEvaluatorProxy)
   //
 
   if (
@@ -413,7 +413,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 11.) Check if we have to upgrade the sftEvaluator implementation
+  // 9.) Check if we have to upgrade the sftEvaluator implementation
   //
   if (
     (await getProxyImplementation(
@@ -439,7 +439,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 12.) Set the SFTMinter in CFIHLP contract if required
+  // 10.) Set the SFTMinter in CFIHLP contract if required
   //
   if (
     (await CFOLIO_ITEM_HANDLER_LP_INSTANCE.sftMinter()) !==
@@ -464,7 +464,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 13.) Check if we have to upgrade the cfolioItemHandlerLP implementation
+  // 11.) Check if we have to upgrade the cfolioItemHandlerLP implementation
   //
   if (
     (await getProxyImplementation(
@@ -490,7 +490,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 14.) Set the SFTMinter in CFIHSCP contract if required
+  // 12.) Set the SFTMinter in CFIHSCP contract if required
   //
   if (
     (await CFOLIO_ITEM_HANDLER_SC_INSTANCE.sftMinter()) !==
@@ -515,7 +515,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 15.) Check if we have to upgrade the cfolioItemHandlerSC implementation
+  // 13.) Check if we have to upgrade the cfolioItemHandlerSC implementation
   //
   if (
     (await getProxyImplementation(

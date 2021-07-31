@@ -24,8 +24,11 @@ const REWARD_HANDLER_CONTRACT = 'RewardHandler';
 const UPGRADE_PROXY_IMPLEMENTATION_SLOT =
   '0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc';
 
+// Path to configured addresses file
+const CONFIG_ADDRESSES = `${__dirname}/../src/config/addresses.json`;
 // Path to generated addresses file
 const GENERATED_ADDRESSES = `${__dirname}/../src/config/generated-addresses.json`;
+const IGNORE_ADDRESSES = process.env.IGNORE_ADDRESSES !== undefined;
 
 // Helper function
 function log_step(step_string) {
@@ -58,7 +61,12 @@ const func = async function (hardhat_re) {
   const generatedNetworks = JSON.parse(
     fs.readFileSync(GENERATED_ADDRESSES).toString()
   );
+  const configNetworks = JSON.parse(
+    fs.readFileSync(CONFIG_ADDRESSES).toString()
+  );
+
   const generatedAddresses = generatedNetworks[chainId] || {};
+  const configAddresses = (!IGNORE_ADDRESSES && configNetworks[chainId]) || {};
 
   // Load deployed contract instances
   const REWARD_HANDLER_INSTANCE = await hardhat_re.ethers.getContract(
@@ -80,7 +88,33 @@ const func = async function (hardhat_re) {
   log_step('Marketing wallet calls for SFT');
 
   //
-  // 1.) WowsToken:: grantRole (REWARD_ROLE, WOWSSftMinter.sol)
+  // 1.) WowsToken:: revokeRole (REWARD_ROLE, WOWSSftMinterUpdate)
+  //
+
+  if (
+    configAddresses.sftMinterUpdate &&
+    configAddresses.sftMinterUpdate !== generatedAddresses.sftMinter &&
+    (await REWARD_HANDLER_INSTANCE.hasRole(
+      await REWARD_HANDLER_INSTANCE.REWARD_ROLE(),
+      configAddresses.sftMinterUpdate
+    ))
+  ) {
+    await catchUnknownSigner(
+      execute(
+        REWARD_HANDLER_CONTRACT,
+        {
+          from: marketingWallet,
+          log: true,
+        },
+        'revokeRole',
+        await REWARD_HANDLER_INSTANCE.REWARD_ROLE(),
+        configAddresses.sftMinterUpdate
+      )
+    );
+  }
+
+  //
+  // 2.) WowsToken:: grantRole (REWARD_ROLE, WOWSSftMinter.sol)
   //
 
   if (
@@ -104,7 +138,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 2.) Call WOWSSftMinter.sol::setPrices()
+  // 3.) Call WOWSSftMinter.sol::setPrices()
   //
 
   if ((await SFT_MINTER_INSTANCE._pricePerLevel(0)).isZero()) {
@@ -128,7 +162,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 3.) Call WowsSFTMinter.sol::setRewardHandler(rewardHandler)
+  // 4.) Call WowsSFTMinter.sol::setRewardHandler(rewardHandler)
   //
 
   if (
@@ -149,7 +183,33 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 4.) Call WowsERC1155.sol::grantRole(MINTER_ROLE, WOWSSftMinter.sol)
+  // 5.) Call WowsERC1155.sol::revokeRole(MINTER_ROLE, WOWSSftMinterUpdate)
+  //
+
+  if (
+    configAddresses.sftMinterUpdate &&
+    configAddresses.sftMinterUpdate !== generatedAddresses.sftMinter &&
+    (await SFT_HOLDER_INSTANCE.hasRole(
+      await SFT_HOLDER_INSTANCE.MINTER_ROLE(),
+      configAddresses.sftMinterUpdate
+    ))
+  ) {
+    await catchUnknownSigner(
+      execute(
+        SFT_HOLDER_CONTRACT,
+        {
+          from: marketingWallet,
+          log: true,
+        },
+        'revokeRole',
+        await SFT_HOLDER_INSTANCE.MINTER_ROLE(),
+        configAddresses.sftMinterUpdate
+      )
+    );
+  }
+
+  //
+  // 6.) Call WowsERC1155.sol::grantRole(MINTER_ROLE, WOWSSftMinter.sol)
   //
 
   if (
@@ -173,7 +233,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 5.) Call WowsERC1155.sol::grantRole(TRADEFLOOR_ROLE, CFolioItemBridgeProxy)
+  // 6.) Call WowsERC1155.sol::grantRole(TRADEFLOOR_ROLE, CFolioItemBridgeProxy)
   //
 
   if (
@@ -197,7 +257,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 6.) Check if we have to upgrade the cfiBridge implementation
+  // 7.) Check if we have to upgrade the cfiBridge implementation
   //
   if (
     (await getProxyImplementation(

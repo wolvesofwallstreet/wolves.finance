@@ -19,12 +19,13 @@ const transferTopic =
   ethers.utils.id('TransferSingle(address,address,address,uint256,uint256)');
 const transferBatchTopic= '0x4a39dc06d4c0dbc64b70af90fd698a233a518aa5d07e595d983b8c0526c8f7fb';
 
-
-const deployBlock = 8740436;
+const deployBlockFrom = 8251437;
+const deployBlockTo = 8740436;
 
 var filter = {
   address: sftAddress,
-  fromBlock: deployBlock,
+  fromBlock: deployBlockFrom,
+  toBlock: deployBlockTo,
   topics: [
     transferTopic,
     null,
@@ -45,8 +46,9 @@ callPromise
         const cFolio = await sftContract.tokenIdToAddress(tokenId);
         const attachedContract = cryptoContract.attach(cFolio);
         const result = await attachedContract.getCryptofolio(tfAddress);
-        if (result.idsLength.gt(0))
-          baseSfts.push(cFolio);
+        if (result.idsLength.gt(0)) {
+          baseSfts.push(tokenId.toHexString());
+        }
       }
     }
     console.log(baseSfts.join('","'));
