@@ -17,7 +17,7 @@ import { RouteComponentProps } from 'react-router-dom';
 import WalletLogo from '../../assets/openwallet_low.png';
 import {
   ASSETS_STATE,
-  CFOLIO_ITEM_LOCK_TRANSFER,
+  CFOLIO_ITEM_UNLOCK_TRANSFER,
 } from '../../stores/constants';
 import {
   AssetStateresult,
@@ -82,12 +82,12 @@ class CFolioManager extends React.Component<PROPS, STATE> {
 
   componentDidMount() {
     StoreClasses.emitter.on(ASSETS_STATE, this.onAssetsState);
-    StoreClasses.emitter.on(CFOLIO_ITEM_LOCK_TRANSFER, this.onTransfer);
+    StoreClasses.emitter.on(CFOLIO_ITEM_UNLOCK_TRANSFER, this.onTransfer);
     this._updateImages();
   }
 
   componentWillUnmount() {
-    StoreClasses.emitter.off(CFOLIO_ITEM_LOCK_TRANSFER, this.onTransfer);
+    StoreClasses.emitter.off(CFOLIO_ITEM_UNLOCK_TRANSFER, this.onTransfer);
     StoreClasses.emitter.off(ASSETS_STATE, this.onAssetsState);
   }
 
@@ -271,48 +271,47 @@ class CFolioManager extends React.Component<PROPS, STATE> {
     const request: PayloadContentCFolioItemLT = {
       src: this.state.sliderImagesTop[this.sliderIndex[0]].sft.tokenId,
       dst: this.state.sliderImagesBottom[this.sliderIndex[2]].sft.tokenId,
-      lockCFIs: [],
+      lockedCFIs: [],
       transferCFIs: [],
     };
     this.state.checkedMiddle.forEach((n) => {
       if (this.state.sliderImagesMiddle[n].locked)
-        request.transferCFIs.push(
+        request.lockedCFIs.push(
           this.state.sliderImagesMiddle[n].tokenId ?? BIGNUMBER_MAX
         );
       else
-        request.lockCFIs.push(
+        request.transferCFIs.push(
           this.state.sliderImagesMiddle[n].tokenId ?? BIGNUMBER_MAX
         );
     });
     this.setState({ txPending: true });
     StoreClasses.dispatcher.dispatch({
-      type: CFOLIO_ITEM_LOCK_TRANSFER,
+      type: CFOLIO_ITEM_UNLOCK_TRANSFER,
       content: request,
     });
   }
 
   render() {
-    let unLockedCount = 0;
+    let lockedCount = 0;
     this.state.checkedMiddle.forEach(
-      (n) => (unLockedCount += this.state.sliderImagesMiddle[n].locked ? 0 : 1)
+      (n) => (lockedCount += this.state.sliderImagesMiddle[n].locked ? 1 : 0)
     );
+    const majority = this.state.checkedMiddle.length > 1 ? 's' : '';
     const buttonState = this.state.txPending
       ? { l: 'TRANSACTION PENDING', e: false }
       : this.state.sliderImagesTop.length > 0
       ? this.state.checkedMiddle.length > 0
-        ? unLockedCount > 0
+        ? lockedCount > 0
           ? {
-              l: `LOCK (${unLockedCount}) AND TRANSFER (${this.state.checkedMiddle.length}) C-FOLIO ITEM`,
+              l: `UNLOCK (${lockedCount}) AND TRANSFER (${this.state.checkedMiddle.length}) I-NFT${majority}`,
               e: true,
             }
           : {
-              l: `TRANSFER (${this.state.checkedMiddle.length}) C-FOLIO ITEM`,
+              l: `TRANSFER (${this.state.checkedMiddle.length}) I-NFT${majority}`,
               e: true,
             }
         : { l: 'NOTHING SELECTED', e: false }
       : { l: 'ACCOUNT NOT INITIALIZED', e: false };
-    if (buttonState.e && this.state.checkedMiddle.length > 1)
-      buttonState.l += 'S';
 
     return (
       <>

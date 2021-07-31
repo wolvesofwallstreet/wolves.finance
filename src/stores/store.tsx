@@ -10,6 +10,7 @@ import WalletConnectProvider from '@walletconnect/web3-provider';
 import ERC20Abi from 'abi/contracts/0xerc1155/interfaces/IERC20.sol/IERC20.json';
 import CurveYDepositAbi from 'abi/contracts/interfaces/curve/CurveDepositInterface.sol/ICurveFiDepositY.json';
 import UniV2PairAbi from 'abi/contracts/interfaces/uniswap/IUniswapV2Pair.sol/IUniswapV2Pair.json';
+import CFolioItemBridgeAbi from 'abi/contracts/src/cfolio/CFolioItemBridge.sol/CFolioItemBridge.json';
 import CFolioItemHandlerAbi from 'abi/contracts/src/cfolio/interfaces/ICFolioItemHandler.sol/ICFolioItemHandler.json';
 import SftEvaluatorAbi from 'abi/contracts/src/cfolio/SFTEvaluator.sol/SFTEvaluator.json';
 import SFTMinterAbi from 'abi/contracts/src/crowdsale/WOWSSftMinter.sol/WOWSSftMinter.json';
@@ -37,7 +38,7 @@ import {
   ASSETS_STATE,
   CFOLIO_ITEM_BUY,
   CFOLIO_ITEM_DEPOSIT,
-  CFOLIO_ITEM_LOCK_TRANSFER,
+  CFOLIO_ITEM_UNLOCK_TRANSFER,
   CFOLIO_ITEM_WITHDRAW,
   CONNECTION_CHANGED,
   NEW_BLOCK,
@@ -77,7 +78,7 @@ type PayloadContentCFolioItem = {
 export type PayloadContentCFolioItemLT = {
   src: ethers.BigNumber;
   dst: ethers.BigNumber;
-  lockCFIs: ethers.BigNumber[];
+  lockedCFIs: ethers.BigNumber[];
   transferCFIs: ethers.BigNumber[];
 };
 
@@ -96,6 +97,7 @@ type ChainAddresses = {
   cfolioFarmLP: string;
   cfolioItemHandlerLPProxy: string;
   cfolioFarmSC: string;
+  cfiBridgeProxy: string;
   cfolioItemHandlerSCProxy: string;
   uniDaiWeth: string;
   daiToken: string;
@@ -223,22 +225,23 @@ const readUint256 = (s: string, i: number) =>
 class Store {
   web3Modal: Web3Modal;
   /* Provider */
-  ethersProvider: ethers.providers.JsonRpcProvider | null = null;
-  eventProvider: ethers.providers.WebSocketProvider | null = null;
+  ethersProvider?: ethers.providers.JsonRpcProvider;
+  eventProvider?: ethers.providers.WebSocketProvider;
   ethersSigner?: ethers.Signer;
   /* Contracts */
-  tokenContract: ethers.Contract | null = null;
-  cfihLpContract: ethers.Contract | null = null;
-  cfihScContract: ethers.Contract | null = null;
-  sftEvaluatorContract: ethers.Contract | null = null;
+  tokenContract?: ethers.Contract;
+  cfihLpContract?: ethers.Contract;
+  cfihScContract?: ethers.Contract;
+  sftEvaluatorContract?: ethers.Contract;
 
-  sftHolderContractRO: ethers.Contract | null = null;
-  sftMintContractRO: ethers.Contract | null = null;
-  stakeContractRO: ethers.Contract | null = null;
-  tradeFloorContractRO: ethers.Contract | null = null;
-  lpContractRO: ethers.Contract | null = null;
-  uniDaiWethPairContractRO: ethers.Contract | null = null;
-  curveYDepositContractRO: ethers.Contract | null = null;
+  sftHolderContractRO?: ethers.Contract;
+  sftMintContractRO?: ethers.Contract;
+  stakeContractRO?: ethers.Contract;
+  tradeFloorContractRO?: ethers.Contract;
+  lpContractRO?: ethers.Contract;
+  cfiBridgeContractRO?: ethers.Contract;
+  uniDaiWethPairContractRO?: ethers.Contract;
+  curveYDepositContractRO?: ethers.Contract;
 
   cfolioFarmLpAddress = '';
   cfolioFarmScAddress = '';
@@ -257,6 +260,7 @@ class Store {
   tokenContractAddress = Store.nullAddress;
   eventBlockNumber = 0;
   lastAprTime = 0;
+  eventsSuspended = false;
 
   dispatchQueue: Payload[] = [];
 
@@ -384,8 +388,8 @@ class Store {
             _payload.content as PayloadContentCFolioItem
           );
           break;
-        case CFOLIO_ITEM_LOCK_TRANSFER:
-          this._doCFolioItemLockAndTransfer(
+        case CFOLIO_ITEM_UNLOCK_TRANSFER:
+          this._doCFolioItemUnlockAndTransfer(
             _payload.content as PayloadContentCFolioItemLT
           );
           break;
@@ -478,7 +482,7 @@ class Store {
 
   connect = async () => {
     try {
-      if (this.ethersProvider !== null) {
+      if (this.ethersProvider) {
         await this.disconnect(false);
       }
 
@@ -548,7 +552,7 @@ class Store {
     });
 
     provider.on('networkChanged', async () => {
-      if (this.ethersProvider !== null) {
+      if (this.ethersProvider) {
         const network = await this.ethersProvider.getNetwork();
         if (network.chainId !== this.chainId) await this.connect();
       }
@@ -559,11 +563,11 @@ class Store {
     if (this.ethersProvider) {
       localStorage.removeItem('walletconnect');
       this.ethersProvider.removeAllListeners();
-      this.tokenContract = null;
-      this.ethersProvider = null;
-      this.cfihLpContract = null;
-      this.cfihScContract = null;
-      this.sftEvaluatorContract = null;
+      this.tokenContract = undefined;
+      this.ethersProvider = undefined;
+      this.cfihLpContract = undefined;
+      this.cfihScContract = undefined;
+      this.sftEvaluatorContract = undefined;
       this.ethersSigner = undefined;
     }
     this.address = '';
@@ -574,32 +578,34 @@ class Store {
   };
 
   close = async () => {
-    this.stakeContractRO = null;
+    this.stakeContractRO = undefined;
     this.sftHolderContractRO?.removeAllListeners();
-    this.sftHolderContractRO = null;
-    this.sftMintContractRO = null;
+    this.sftHolderContractRO = undefined;
+    this.sftMintContractRO = undefined;
     this.tradeFloorContractRO?.removeAllListeners();
-    this.tradeFloorContractRO = null;
-    this.lpContractRO = null;
+    this.tradeFloorContractRO = undefined;
+    this.cfiBridgeContractRO?.removeAllListeners();
+    this.cfiBridgeContractRO = undefined;
+    this.lpContractRO = undefined;
     await this.disconnect(false);
     if (this.eventProvider) {
       this.eventProvider?.removeAllListeners();
       this.eventProvider._websocket.onclose = null;
       await this.eventProvider?.destroy();
-      this.eventProvider = null;
+      this.eventProvider = undefined;
     }
   };
 
   isConnected = () => {
-    return this.ethersProvider !== null;
+    return this.ethersProvider !== undefined;
   };
 
   isEventConnected = () => {
-    return this.eventProvider !== null;
+    return this.eventProvider !== undefined;
   };
 
   _addDQ = async (block: number, payload: Payload) => {
-    if (block > this.eventBlockNumber) {
+    if (this.eventsSuspended || block > this.eventBlockNumber) {
       if (
         !this.dispatchQueue.find(
           (elem) => JSON.stringify(elem) === JSON.stringify(payload)
@@ -611,42 +617,63 @@ class Store {
     }
   };
 
+  _resolveDQ = () => {
+    this.dispatchQueue.forEach((payload) => dispatcher.dispatch(payload));
+    this.dispatchQueue = [];
+    if (this.lastAprTime + 300000 < Date.now()) {
+      this.lastAprTime = Date.now();
+      this._updatePoolAPR();
+    }
+    this.eventsSuspended = false;
+  };
+
   _setupEvents(): boolean {
     this.eventProvider?.removeAllListeners();
     this.sftHolderContractRO?.removeAllListeners();
     this.tradeFloorContractRO?.removeAllListeners();
+    this.cfiBridgeContractRO?.removeAllListeners();
 
-    const handleTransfer = (from: string, to: string) => {
-      const filter = ['cards'];
-      if (from === this.address || to === this.address) {
+    const handleTransfer = (
+      operator: string,
+      from: string,
+      to: string,
+      cards: boolean
+    ) => {
+      const filter = [];
+      if (cards && from === Store.nullAddress) filter.push('cards');
+      if (
+        operator === this.address ||
+        from === this.address ||
+        to === this.address
+      ) {
         filter.push('tokens');
       }
-      console.log('TransferEvent: ', filter);
-      this._addDQ(0, { type: ASSETS_STATE, content: { filter } } as Payload);
+      if (filter.length > 0) {
+        console.log('TransferEvent: ', filter);
+        this._addDQ(0, { type: ASSETS_STATE, content: { filter } } as Payload);
+      }
     };
 
     // Our Block ticker
     this.eventProvider?.on('block', (blockNumber) => {
       emitter.emit(NEW_BLOCK, { blockNumber });
       this.eventBlockNumber = blockNumber;
-      this.dispatchQueue.forEach((payload) => dispatcher.dispatch(payload));
-      this.dispatchQueue = [];
-      if (this.lastAprTime + 300000 < Date.now()) {
-        this.lastAprTime = Date.now();
-        this._updatePoolAPR();
-      }
+      if (!this.eventsSuspended) this._resolveDQ();
     });
     this.sftHolderContractRO?.on('TransferSingle', (operator, from, to) =>
-      handleTransfer(from, to)
+      handleTransfer(operator, from, to, true)
     );
     this.sftHolderContractRO?.on('TransferBatch', (operator, from, to) =>
-      handleTransfer(from, to)
+      handleTransfer(operator, from, to, true)
     );
     this.tradeFloorContractRO?.on('TransferSingle', (operator, from, to) =>
-      handleTransfer(from, to)
+      handleTransfer(operator, from, to, false)
     );
     this.tradeFloorContractRO?.on('TransferBatch', (operator, from, to) =>
-      handleTransfer(from, to)
+      handleTransfer(operator, from, to, false)
+    );
+    this.cfiBridgeContractRO?.on('BridgeTransfer', (operator, from, to) =>
+      handleTransfer(operator, from, to, false)
     );
     this.lpContractRO?.on('Transfer', (from, to) => {
       if (from === this.address || to === this.address) {
@@ -725,7 +752,7 @@ class Store {
     } catch (e) {
       console.log(e);
       if (this.eventProvider) {
-        this.eventProvider = null;
+        this.eventProvider = undefined;
       }
     }
   };
@@ -763,13 +790,16 @@ class Store {
         SFTMinterAbi,
         provider
       );
-      if (chainAddresses.tradeFloorProxy !== '') {
-        this.tradeFloorContractRO = new ethers.Contract(
-          chainAddresses.tradeFloorProxy,
-          TradeFloorAbi,
-          provider
-        );
-      }
+      this.tradeFloorContractRO = new ethers.Contract(
+        chainAddresses.tradeFloorProxy,
+        TradeFloorAbi,
+        provider
+      );
+      this.cfiBridgeContractRO = new ethers.Contract(
+        chainAddresses.cfiBridgeProxy,
+        CFolioItemBridgeAbi,
+        provider
+      );
 
       this.cfolioFarmLpAddress = chainAddresses.cfolioFarmLP;
       this.cfolioFarmScAddress = chainAddresses.cfolioFarmSC;
@@ -1048,7 +1078,7 @@ class Store {
               levelId: -1,
               cardId: -1,
               locked:
-                destinationId !== 0 ||
+                destinationId === 0 &&
                 result[1].find((b) => b.eq(childId)) !== undefined,
               type: readUint256(result2, readIndex++).toNumber(),
               assets: [],
@@ -1813,7 +1843,7 @@ class Store {
       throw new Error('Unsupported cfolioType');
     }
 
-    let cfihContract: ethers.Contract | null, balances: string[];
+    let cfihContract, balances;
     if (cfiLevel.type === 'lpInvestment') {
       cfihContract = this.cfihLpContract;
       balances = ['WETH/WOWS LP'];
@@ -1920,7 +1950,7 @@ class Store {
         throw new Error('Unsupported cfolioType');
       }
 
-      let cfihContract: ethers.Contract | null, balances: string[];
+      let cfihContract, balances;
       if (cfiLevel.type === 'lpInvestment') {
         cfihContract = this.cfihLpContract;
         balances = ['WETH/WOWS LP'];
@@ -2017,15 +2047,17 @@ class Store {
     }
   };
 
-  _doCFolioItemLockAndTransfer = async (
+  _doCFolioItemUnlockAndTransfer = async (
     payloadContent: PayloadContentCFolioItemLT
   ) => {
-    const { src, dst, lockCFIs, transferCFIs } = payloadContent;
+    const { src, dst, lockedCFIs, transferCFIs } = payloadContent;
+    this.eventsSuspended = true;
 
     try {
       if (
         !this.sftHolderContractRO ||
         !this.tradeFloorContractRO ||
+        !this.cfiBridgeContractRO ||
         !this.ethersSigner
       ) {
         throw new Error('Contract not initialized');
@@ -2043,37 +2075,31 @@ class Store {
         }
       }
 
-      let txBlockNumber = 0;
-      if (lockCFIs.length > 0) {
+      if (lockedCFIs.length > 0) {
         if (src !== BIGNUMBER_MAX) {
-          throw new Error('Lock only from Wallet');
+          throw new Error('Unlock only from Wallet');
         }
-        const sftHolderContract = this.sftHolderContractRO.connect(
+        const tradeFloorContract = this.tradeFloorContractRO.connect(
           this.ethersSigner
         );
-        const tx = await sftHolderContract.safeBatchTransferFrom(
+        const tx = await tradeFloorContract.burnBatch(
           this.address,
-          this.tradeFloorContractRO.address,
-          lockCFIs,
-          new Array(lockCFIs.length).fill(1),
-          dstAddress
+          lockedCFIs,
+          new Array(lockedCFIs.length).fill(1)
         );
-        emitter.emit(CFOLIO_ITEM_LOCK_TRANSFER, {
+        emitter.emit(CFOLIO_ITEM_UNLOCK_TRANSFER, {
           status: 'tx',
           tx: tx?.hash,
         } as StatusResult);
 
         await tx?.wait();
-        if (transferCFIs.length === 0) {
-          txBlockNumber = tx?.blockNumber ?? 0;
-          emitter.emit(CFOLIO_ITEM_LOCK_TRANSFER, {
-            status: 'success',
-            tx: tx?.hash,
-          } as StatusResult);
-        }
+
+        // CFIs are now in users wallet -> push them to cfiBridge
+        transferCFIs.push(...lockedCFIs.map((id) => id.mask(128)));
       }
       if (transferCFIs.length > 0) {
         // CFI's has to be in TF contract!
+        let tx;
         let srcAddress = this.address;
         if (src !== BIGNUMBER_MAX) {
           srcAddress = this.sftHolderContractRO.tokenIdToAddress(src);
@@ -2081,42 +2107,63 @@ class Store {
             throw new Error('Cannot get cfolio address');
           }
         }
-        const tradeFloorContract = this.tradeFloorContractRO.connect(
-          this.ethersSigner
-        );
-        const tx = await tradeFloorContract.safeBatchTransferFrom(
-          srcAddress,
-          dstAddress,
-          transferCFIs,
-          new Array(transferCFIs.length).fill(1),
-          []
-        );
-        emitter.emit(CFOLIO_ITEM_LOCK_TRANSFER, {
+        if (src !== BIGNUMBER_MAX) {
+          const cfiBridgeContract = this.cfiBridgeContractRO.connect(
+            this.ethersSigner
+          );
+          if (dst !== BIGNUMBER_MAX) {
+            // cfolio -> cfolio transfer
+            tx = await cfiBridgeContract.safeBatchTransferFrom(
+              srcAddress,
+              dstAddress,
+              transferCFIs,
+              new Array(transferCFIs.length).fill(1),
+              []
+            );
+          } else {
+            // cfolio -> wallet burn
+            tx = await cfiBridgeContract.burnBatch(
+              srcAddress,
+              transferCFIs,
+              new Array(transferCFIs.length).fill(1)
+            );
+          }
+        } else {
+          // wallet -> cfolio transfer
+          const sftContract = this.sftHolderContractRO.connect(
+            this.ethersSigner
+          );
+          tx = await sftContract.safeBatchTransferFrom(
+            srcAddress,
+            this.cfiBridgeContractRO.address,
+            transferCFIs,
+            new Array(transferCFIs.length).fill(1),
+            dstAddress
+          );
+        }
+        emitter.emit(CFOLIO_ITEM_UNLOCK_TRANSFER, {
           status: 'tx',
-          tx: tx?.hash,
+          tx: tx.hash,
         } as StatusResult);
 
-        await tx?.wait();
-        txBlockNumber = tx?.blockNumber ?? 0;
-        emitter.emit(CFOLIO_ITEM_LOCK_TRANSFER, {
-          status: 'success',
-          tx: tx?.hash,
-        } as StatusResult);
-      }
-      // If we transfer from SFT to SFT, events are not catched
-      if (!src.eq(BIGNUMBER_MAX) && !dst.eq(BIGNUMBER_MAX)) {
-        this._addDQ(txBlockNumber, {
-          type: ASSETS_STATE,
-          content: { filter: ['tokens'] },
-        } as Payload);
+        this.ethersProvider?.once(
+          tx.hash,
+          (receipt: ethers.providers.TransactionReceipt) => {
+            emitter.emit(CFOLIO_ITEM_UNLOCK_TRANSFER, {
+              status: 'success',
+              tx: receipt.transactionHash,
+            } as StatusResult);
+          }
+        );
       }
     } catch (e) {
       console.log(e);
-      emitter.emit(CFOLIO_ITEM_LOCK_TRANSFER, {
+      emitter.emit(CFOLIO_ITEM_UNLOCK_TRANSFER, {
         status: 'error',
         errorMessage: e.error ? e.error.message : e.message,
       } as StatusResult);
     }
+    this._resolveDQ();
   };
 
   _doSftClaim = async (payloadContent: PayloadContent) => {
