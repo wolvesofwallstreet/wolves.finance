@@ -35,14 +35,14 @@ contract SFTEvaluator is ISFTEvaluator {
   // The cfolioitem bridge contract
   address private immutable _cfiBridge;
 
-  // The AddressRegistry to validate WOWSMinter calls
-  IAddressRegistry private immutable _addressRegistry;
-
   // Current reward weight of a baseCard
   mapping(uint256 => uint256) private _rewardRates;
 
   // cfolioType of cfolioItem
   mapping(uint256 => uint256) private _cfolioItemTypes;
+
+  // sftMinter
+  address public sftMinter;
 
   //////////////////////////////////////////////////////////////////////////////
   // Events
@@ -69,8 +69,6 @@ contract SFTEvaluator is ISFTEvaluator {
     _cfiBridge = addressRegistry.getRegistryEntry(
       AddressBook.CFOLIOITEM_BRIDGE_PROXY
     );
-
-    _addressRegistry = addressRegistry;
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -178,6 +176,19 @@ contract SFTEvaluator is ISFTEvaluator {
   }
 
   /**
+   * @dev Set SFT minter, admin only.
+   *
+   * @param newMinter The new SFTMinter implementation
+   */
+  function setMinter(address newMinter) external {
+    // Access control
+    require(msg.sender == admin, 'SFTE: Forbidden');
+
+    // Set state
+    sftMinter = newMinter;
+  }
+
+  /**
    * @dev See {ISFTEvaluator-setCFolioType}.
    */
   function setCFolioItemType(uint256 tokenId, uint256 cfolioItemType)
@@ -185,10 +196,7 @@ contract SFTEvaluator is ISFTEvaluator {
     override
   {
     require(tokenId.isCFolioCard(), 'Invalid tokenId');
-    require(
-      msg.sender == _addressRegistry.getRegistryEntry(AddressBook.SFT_MINTER),
-      'SFTE: Minter only'
-    );
+    require(msg.sender == sftMinter, 'SFTE: Minter only');
 
     _cfolioItemTypes[tokenId] = cfolioItemType;
 
