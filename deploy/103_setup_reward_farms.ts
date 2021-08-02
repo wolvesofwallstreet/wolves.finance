@@ -472,8 +472,9 @@ const func = async function (hardhat_re) {
   //
   // 11.) Check if we have to upgrade the cfolioItemHandlerLP implementation
   //
+  let oldImplAddress;
   if (
-    (await getProxyImplementation(
+    (oldImplAddress = await getProxyImplementation(
       hardhat_re,
       generatedAddresses.cfolioItemHandlerLPProxy
     )) !== generatedAddresses.cfolioItemHandlerLP
@@ -489,6 +490,19 @@ const func = async function (hardhat_re) {
         },
         'upgradeTo',
         generatedAddresses.cfolioItemHandlerLP
+      )
+    );
+
+    // destruct the old implemenation contract
+    await catchUnknownSigner(
+      execute(
+        CFOLIO_ITEM_HANDLER_LP_CONTRACT,
+        {
+          from: marketingWallet,
+          to: oldImplAddress,
+          log: true,
+        },
+        'selfDestruct'
       )
     );
   } else {
@@ -524,7 +538,7 @@ const func = async function (hardhat_re) {
   // 13.) Check if we have to upgrade the cfolioItemHandlerSC implementation
   //
   if (
-    (await getProxyImplementation(
+    (oldImplAddress = await getProxyImplementation(
       hardhat_re,
       generatedAddresses.cfolioItemHandlerSCProxy
     )) !== generatedAddresses.cfolioItemHandlerSC
@@ -540,6 +554,19 @@ const func = async function (hardhat_re) {
         },
         'upgradeTo',
         generatedAddresses.cfolioItemHandlerSC
+      )
+    );
+
+    // destruct the old implemenation contract
+    await catchUnknownSigner(
+      execute(
+        CFOLIO_ITEM_HANDLER_SC_CONTRACT,
+        {
+          from: marketingWallet,
+          to: oldImplAddress,
+          log: true,
+        },
+        'selfDestruct'
       )
     );
   } else {
