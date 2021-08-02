@@ -14,25 +14,24 @@ import '../../0xerc1155/tokens/ERC1155/ERC1155Holder.sol';
 
 import './interfaces/IERC1155BurnMintable.sol';
 import './interfaces/IWOWSCryptofolio.sol';
-import './interfaces/IWOWSERC1155.sol';
 
 contract WOWSCryptofolio is IWOWSCryptofolio, Context, ERC1155Holder {
   //////////////////////////////////////////////////////////////////////////////
   // State
   //////////////////////////////////////////////////////////////////////////////
 
-  // List of all known tradefloors
-  address[] public override _tradefloors;
-
   // Our NFT token parent
-  IWOWSERC1155 private _deployer;
+  IERC1155BurnMintable private _sftContract;
 
   // The owner of the NFT token parent
-  address private _owner;
+  address private handlerOrOwner;
 
   // Mapping of cryptofolio items (trade floor to token ID) owned by this
   // cryptofolio
-  mapping(address => uint256[]) private _cryptofolios;
+  uint256[] private _cryptofolios;
+
+  // Signs if this is a cryptofolio (not I-NFT)
+  bool private _isCryptofolio;
 
   //////////////////////////////////////////////////////////////////////////////
   // Events
@@ -41,17 +40,19 @@ contract WOWSCryptofolio is IWOWSCryptofolio, Context, ERC1155Holder {
   /**
    * @dev Triggered if an SFT receives new tokens from operator
    *
-   * @param sft The contract address of the tokens
-   * @param operator The user that sent the tokens to the cryptofolio
    * @param tokenIds The IDs being transferred
    * @param amounts The amounts being transferred
    */
-  event CryptoFolioAdded(
-    address indexed sft,
-    address indexed operator,
-    uint256[] tokenIds,
-    uint256[] amounts
-  );
+  event CryptoFolioAdded(uint256[] tokenIds, uint256[] amounts);
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Modifier
+  //////////////////////////////////////////////////////////////////////////////
+
+  modifier onlySftContract(address adr) {
+    require(adr == address(_sftContract), 'CF: Only deployer');
+    _;
+  }
 
   //////////////////////////////////////////////////////////////////////////////
   // Initialization
@@ -60,12 +61,13 @@ contract WOWSCryptofolio is IWOWSCryptofolio, Context, ERC1155Holder {
   /**
    * @dev See {IWOWSCryptofolio-initialize}.
    */
-  function initialize() external override {
+  function initialize(bool isCryptofolio) external override {
     // Validate state
-    require(address(_deployer) == address(0), 'CF: Already initialized');
+    require(address(_sftContract) == address(0), 'CF: Already initialized');
 
     // Update state
-    _deployer = IWOWSERC1155(_msgSender());
+    _sftContract = IERC1155BurnMintable(_msgSender());
+    _isCryptofolio = isCryptofolio;
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -73,110 +75,59 @@ contract WOWSCryptofolio is IWOWSCryptofolio, Context, ERC1155Holder {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev See {IWOWSCryptofolio-getCryptofolio}.
+   * @dev See {IWOWSCryptofolio-getHandler}.
    */
-  function getCryptofolio(address tradefloor)
-    external
-    view
-    override
-    returns (uint256[] memory tokenIds, uint256 idsLength)
-  {
-    // Load state
-    uint256[] storage itemIds = _cryptofolios[tradefloor];
+  function getHandler() external view override returns (address) {
+    // Access control
+    require(!_isCryptofolio, 'CF: Forbidden');
 
-    // Allocate return values
-    uint256[] memory result = new uint256[](itemIds.length);
-    uint256 newLength = 0;
-
-    if (itemIds.length > 0) {
-      // All tokens belong to this contract
-      address[] memory accounts = new address[](itemIds.length);
-      for (uint256 i = 0; i < itemIds.length; ++i) {
-        accounts[i] = address(this);
-      }
-
-      // Load state
-      uint256[] memory balances = IERC1155(tradefloor).balanceOfBatch(
-        accounts,
-        itemIds
-      );
-
-      // Calculate return value
-      for (uint256 i = 0; i < itemIds.length; ++i) {
-        if (balances[i] > 0) {
-          result[newLength++] = itemIds[i];
-        }
-      }
-    }
-
-    return (result, newLength);
+    return handlerOrOwner;
   }
 
   /**
    * @dev See {IWOWSCryptofolio-setOwner}.
    */
-  function setOwner(address newOwner) external override {
+  function setOwner(address newOwner)
+    external
+    override
+    onlySftContract(_msgSender())
+  {
     // Access control
-    require(_msgSender() == address(_deployer), 'CF: Only deployer');
+    require(_isCryptofolio, 'CF: Forbidden');
 
-    // Update state
-    for (uint256 i = 0; i < _tradefloors.length; ++i) {
-      if (_owner != address(0))
-        IERC1155(_tradefloors[i]).setApprovalForAll(_owner, false);
-      if (newOwner != address(0))
-        IERC1155(_tradefloors[i]).setApprovalForAll(newOwner, true);
-    }
-    _owner = newOwner;
+    if (handlerOrOwner != address(0))
+      _sftContract.setApprovalForAll(handlerOrOwner, false);
+    if (newOwner != address(0)) _sftContract.setApprovalForAll(newOwner, true);
+    handlerOrOwner = newOwner;
+  }
+
+  /**
+   * @dev See {IWOWSCryptofolio-setHandler}.
+   */
+  function setHandler(address newHandler)
+    external
+    override
+    onlySftContract(_msgSender())
+  {
+    // Access control
+    require(!_isCryptofolio, 'CF: Forbidden');
+
+    handlerOrOwner = newHandler;
   }
 
   /**
    * @dev See {IWOWSCryptofolio-setApprovalForAll}.
    */
-  function setApprovalForAll(address operator, bool allow) external override {
+  function setSftApproval(address operator, bool allow) external override {
     // Access control
-    require(_msgSender() == _owner, 'CF: Only owner');
+    require(_msgSender() == handlerOrOwner, 'CF: Only owner');
 
     // Update state
-    for (uint256 i = 0; i < _tradefloors.length; ++i) {
-      IERC1155(_tradefloors[i]).setApprovalForAll(operator, allow);
+    if (_isCryptofolio) {
+      _sftContract.setApprovalForAll(operator, allow);
+    } else {
+      // TODO get a list of ERC1155 and ERC20 tokens to approve
     }
-  }
-
-  /**
-   * @dev See {IWOWSCryptofolio-burn}.
-   */
-  function burn() external override {
-    // Access control
-    require(_msgSender() == address(_deployer), 'CF: Only deployer');
-
-    for (uint256 i = 0; i < _tradefloors.length; ++i) {
-      // Load state
-      IERC1155BurnMintable tradefloor = IERC1155BurnMintable(_tradefloors[i]);
-      uint256[] storage itemIds = _cryptofolios[address(tradefloor)];
-
-      if (itemIds.length > 0) {
-        // All tokens belong to this contract
-        address[] memory accounts = new address[](itemIds.length);
-        for (uint256 j = 0; j < itemIds.length; ++j) {
-          accounts[j] = address(this);
-        }
-
-        // Load state
-        uint256[] memory balances = tradefloor.balanceOfBatch(
-          accounts,
-          itemIds
-        );
-
-        // Update state
-        tradefloor.burnBatch(address(this), itemIds, balances);
-      }
-
-      // Update state
-      delete _cryptofolios[address(tradefloor)];
-    }
-
-    // Update state
-    delete _tradefloors;
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -191,17 +142,8 @@ contract WOWSCryptofolio is IWOWSCryptofolio, Context, ERC1155Holder {
     address from,
     uint256 tokenId,
     uint256 amount,
-    bytes memory data
-  ) public override returns (bytes4) {
-    // Parameters
-    uint256[] memory tokenIds = new uint256[](1);
-    tokenIds[0] = tokenId;
-    uint256[] memory amounts = new uint256[](1);
-    amounts[0] = amount;
-
-    // Update state
-    _onTokensReceived(tokenIds, amounts);
-
+    bytes calldata data
+  ) public override onlySftContract(operator) returns (bytes4) {
     // Call ancestor
     return super.onERC1155Received(operator, from, tokenId, amount, data);
   }
@@ -212,66 +154,13 @@ contract WOWSCryptofolio is IWOWSCryptofolio, Context, ERC1155Holder {
   function onERC1155BatchReceived(
     address operator,
     address from,
-    uint256[] memory tokenIds,
-    uint256[] memory amounts,
-    bytes memory data
-  ) public override returns (bytes4) {
+    uint256[] calldata tokenIds,
+    uint256[] calldata amounts,
+    bytes calldata data
+  ) public override onlySftContract(operator) returns (bytes4) {
     // Update state
-    _onTokensReceived(tokenIds, amounts);
-
     // Call ancestor
     return
       super.onERC1155BatchReceived(operator, from, tokenIds, amounts, data);
-  }
-
-  //////////////////////////////////////////////////////////////////////////////
-  // Internal functionality
-  //////////////////////////////////////////////////////////////////////////////
-
-  /**
-   * @dev Update our collection of tradeable cryptofolio items
-   *
-   * This function is only allowed to be called from one of our pseudo
-   * TokenReceiver contracts.
-   */
-  function _onTokensReceived(
-    uint256[] memory tokenIds,
-    uint256[] memory amounts
-  ) internal {
-    address tradefloor = _msgSender();
-
-    // Access control
-    require(_deployer.isTradeFloor(tradefloor), 'CF: Only tradefloor');
-
-    // Validate parameters
-    require(tokenIds.length == amounts.length, 'CF: Input lengths differ');
-
-    // Load state
-    uint256[] storage currentIds = _cryptofolios[tradefloor];
-
-    // Update state
-    if (currentIds.length == 0) {
-      IERC1155(tradefloor).setApprovalForAll(_owner, true);
-      _tradefloors.push(tradefloor);
-    }
-
-    // Update state
-    for (uint256 iIds = 0; iIds < tokenIds.length; ++iIds) {
-      if (amounts[iIds] > 0) {
-        uint256 tokenId = tokenIds[iIds];
-
-        // Search tokenId
-        uint256 i = 0;
-        for (; i < currentIds.length && currentIds[i] != tokenId; ++i) i;
-
-        // If token was not found, insert it
-        if (i == currentIds.length) {
-          currentIds.push(tokenId);
-        }
-      }
-    }
-
-    // Log state change
-    emit CryptoFolioAdded(address(this), tradefloor, tokenIds, amounts);
   }
 }

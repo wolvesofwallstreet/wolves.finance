@@ -34,17 +34,14 @@ contract SFTEvaluator is ISFTEvaluator, Context {
   // The SFT contract we need for level
   IWOWSERC1155 private immutable _sftHolder;
 
-  // The main tradefloor contract
-  address private immutable _tradeFloor;
-
-  // The AddressRegistry to validate WOWSMinter calls
-  IAddressRegistry private immutable _addressRegistry;
-
   // Current reward weight of a baseCard
   mapping(uint256 => uint256) private _rewardRates;
 
   // cfolioType of cfolioItem
   mapping(uint256 => uint256) private _cfolioItemTypes;
+
+  // The SFTMinter contract we need for access right
+  address public sftMinter;
 
   //////////////////////////////////////////////////////////////////////////////
   // Events
@@ -67,12 +64,8 @@ contract SFTEvaluator is ISFTEvaluator, Context {
     // Admin
     admin = addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
 
-    // TradeFloor
-    _tradeFloor = addressRegistry.getRegistryEntry(
-      AddressBook.TRADE_FLOOR_PROXY
-    );
-
-    _addressRegistry = addressRegistry;
+    // Minter
+    sftMinter = addressRegistry.getRegistryEntry(AddressBook.SFT_MINTER);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -84,7 +77,7 @@ contract SFTEvaluator is ISFTEvaluator, Context {
    */
   function rewardRate(uint256 tokenId) external view override returns (uint32) {
     // Validate parameters
-    require(tokenId.isBaseCard(), 'Invalid tokenId');
+    require(tokenId.isBaseCard(), 'SFTE: Invalid tokenId');
 
     uint256 sftTokenId = tokenId.toSftTokenId();
 
@@ -105,10 +98,19 @@ contract SFTEvaluator is ISFTEvaluator, Context {
     returns (uint256)
   {
     // Validate parameters
-    require(tokenId.isCFolioCard(), 'Invalid tokenId');
+    require(tokenId.isCFolioCard(), 'SFTE: Invalid tokenId');
 
     // Load state
     return _cfolioItemTypes[tokenId.toSftTokenId()];
+  }
+
+  /**
+   * @dev Set a new SFTMinter implementation.
+   */
+  function setMinter(address newMinter) external {
+    require(_msgSender() == admin, 'SFTE: Forbidden');
+
+    sftMinter = newMinter;
   }
 
   /**
@@ -119,7 +121,7 @@ contract SFTEvaluator is ISFTEvaluator, Context {
     override
   {
     // Validate parameters
-    require(tokenId.isBaseCard(), 'Invalid tokenId');
+    require(tokenId.isBaseCard(), 'SFTE: Invalid tokenId');
 
     // We allow upgrades of locked and unlocked SFTs
     uint256 sftTokenId = tokenId.toSftTokenId();
@@ -135,15 +137,12 @@ contract SFTEvaluator is ISFTEvaluator, Context {
       // Update state
       _rewardRates[sftTokenId] = timed;
 
-      IWOWSCryptofolio cFolio = IWOWSCryptofolio(
-        _sftHolder.tokenIdToAddress(sftTokenId)
-      );
-      require(address(cFolio) != address(0), 'SFTE: invalid tokenId');
+      address cFolio = _sftHolder.tokenIdToAddress(sftTokenId);
+      require(cFolio != address(0), 'SFTE: invalid tokenId');
 
-      // Run through all cfolioItems of main tradefloor
-      (uint256[] memory cFolioItems, uint256 length) = cFolio.getCryptofolio(
-        _tradeFloor
-      );
+      // Run through all cfolioItems
+      uint256[] memory cFolioItems = _sftHolder.getTokenIds(cFolio);
+      uint256 length = cFolioItems.length;
       if (length > 0) {
         // Bound loop to 100 c-folio items to fit in sensible gas limits
         require(length <= 100, 'SFTE: Too many items');
@@ -154,8 +153,8 @@ contract SFTEvaluator is ISFTEvaluator, Context {
         for (uint256 i = 0; i < length; ++i) {
           // Secondary c-folio items have one tradefloor which is the handler
           address handler = IWOWSCryptofolio(
-            _sftHolder.tokenIdToAddress(cFolioItems[i].toSftTokenId())
-          )._tradefloors(0);
+            _sftHolder.tokenIdToAddress(cFolioItems[i])
+          ).getHandler();
           require(
             address(handler) != address(0),
             'SFTE: invalid cfolioItemHandler'
@@ -187,10 +186,7 @@ contract SFTEvaluator is ISFTEvaluator, Context {
     override
   {
     require(tokenId.isCFolioCard(), 'Invalid tokenId');
-    require(
-      _msgSender() == _addressRegistry.getRegistryEntry(AddressBook.SFT_MINTER),
-      'SFTE: Minter only'
-    );
+    require(_msgSender() == sftMinter, 'SFTE: Minter only');
 
     _cfolioItemTypes[tokenId] = cfolioItemType;
 

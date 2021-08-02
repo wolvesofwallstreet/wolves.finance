@@ -22,19 +22,6 @@ interface ICFolioItemHandler is ICFolioItemCallback {
    */
   function sftUpgrade(uint256 tokenId, uint32 newRate) external;
 
-  /**
-   * @dev Called from SFTMinter after an Investment SFT is minted
-   *
-   * @param payer The approved address to get investment from
-   * @param sftTokenId The sftTokenId whose c-folio is the owner of investment
-   * @param amounts The amounts of invested assets
-   */
-  function setupCFolio(
-    address payer,
-    uint256 sftTokenId,
-    uint256[] calldata amounts
-  ) external;
-
   //////////////////////////////////////////////////////////////////////////////
   // Asset access
   //////////////////////////////////////////////////////////////////////////////

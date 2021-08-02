@@ -45,9 +45,4 @@ interface ICFolioItemCallback {
     external
     view
     returns (bytes memory);
-
-  /**
-   * @dev get custom uri for tokenId
-   */
-  function uri(uint256 tokenId) external view returns (string memory);
 }

@@ -212,12 +212,12 @@ contract CFolioItemHandlerSC is CFolioItemHandlerFarm {
   /**
    * @dev See {CFolioItemHandlerFarm-_verifyTransferTarget}
    */
-  function _verifyTransferTarget(IWOWSERC1155 sfth, uint256 baseSftTokenId)
+  function _verifyTransferTarget(uint256 baseSftTokenId)
     internal
     view
     override
   {
-    (, uint8 level) = sfth.getTokenData(baseSftTokenId);
+    (, uint8 level) = sftHolder.getTokenData(baseSftTokenId);
 
     require((LEVEL2BOIS & (uint256(1) << level)) > 0, 'CFIHSC: Bois only');
   }
