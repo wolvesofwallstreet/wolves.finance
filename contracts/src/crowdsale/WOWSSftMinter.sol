@@ -8,10 +8,10 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
-import '@openzeppelin/contracts/access/Ownable.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
-import '@openzeppelin/contracts/utils/Context.sol';
+import '../../0xerc1155/access/AccessControl.sol';
+import '../../0xerc1155/interfaces/IERC20.sol';
+import '../../0xerc1155/utils/SafeERC20.sol';
+import '../../0xerc1155/utils/Context.sol';
 
 import '../cfolio/interfaces/ICFolioItemHandler.sol';
 import '../cfolio/interfaces/ISFTEvaluator.sol';
@@ -25,7 +25,7 @@ import '../utils/AddressBook.sol';
 import '../utils/interfaces/IAddressRegistry.sol';
 import '../utils/TokenIds.sol';
 
-contract WOWSSftMinter is Context, Ownable {
+contract WOWSSftMinter is Context, AccessControl {
   using TokenIds for uint256;
   using SafeERC20 for IERC20;
 
@@ -97,6 +97,15 @@ contract WOWSSftMinter is Context, Ownable {
   event Destruct();
 
   //////////////////////////////////////////////////////////////////////////////
+  // Modifier
+  //////////////////////////////////////////////////////////////////////////////
+
+  modifier onlyAdmin() {
+    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()));
+    _;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
   // Constructor
   //////////////////////////////////////////////////////////////////////////////
 
@@ -106,9 +115,9 @@ contract WOWSSftMinter is Context, Ownable {
    * @param addressRegistry provides all immutables
    */
   constructor(IAddressRegistry addressRegistry) {
-    // Initialize {Ownable}
-    // We need to set it so we can call selfDestruct
-    transferOwnership(
+    // Access control (need admin for selfDestruct)
+    _setupRole(
+      DEFAULT_ADMIN_ROLE,
       addressRegistry.getRegistryEntry(AddressBook.ADMIN_ACCOUNT)
     );
 
@@ -116,6 +125,7 @@ contract WOWSSftMinter is Context, Ownable {
     _wowsToken = IERC20(
       addressRegistry.getRegistryEntry(AddressBook.WOWS_TOKEN)
     );
+
     _sftContract = IWOWSERC1155(
       addressRegistry.getRegistryEntry(AddressBook.SFT_HOLDER_PROXY)
     );
@@ -126,9 +136,11 @@ contract WOWSSftMinter is Context, Ownable {
     require(address(rewardHandler) == address(0), 'WM: Already initialized');
 
     // Initialize state
-    transferOwnership(
+    _setupRole(
+      DEFAULT_ADMIN_ROLE,
       addressRegistry.getRegistryEntry(AddressBook.ADMIN_ACCOUNT)
     );
+
     rewardHandler = IRewardHandler(
       addressRegistry.getRegistryEntry(AddressBook.REWARD_HANDLER)
     );
@@ -145,7 +157,7 @@ contract WOWSSftMinter is Context, Ownable {
     uint16[] calldata levels,
     uint16[] calldata caps,
     uint256[] calldata prices
-  ) external onlyOwner {
+  ) external onlyAdmin {
     // Validate parameters
     require(levels.length == prices.length, 'WM: Length mismatch');
 
@@ -163,7 +175,7 @@ contract WOWSSftMinter is Context, Ownable {
    */
   function setRewardHandler(IRewardHandler newRewardHandler)
     external
-    onlyOwner
+    onlyAdmin
   {
     // Validate parameters
     require(address(newRewardHandler) != address(0), 'WM: Invalid RH');
@@ -175,7 +187,7 @@ contract WOWSSftMinter is Context, Ownable {
   /**
    * @dev Set Trade Floor
    */
-  function setTradeFloor(address tradeFloor_) external onlyOwner {
+  function setTradeFloor(address tradeFloor_) external onlyAdmin {
     // Validate parameters
     require(tradeFloor_ != address(0), 'WM: Invalid TF');
 
@@ -186,7 +198,7 @@ contract WOWSSftMinter is Context, Ownable {
   /**
    * @dev Set SFT evaluator
    */
-  function setSFTEvaluator(ISFTEvaluator sftEvaluator_) external onlyOwner {
+  function setSFTEvaluator(ISFTEvaluator sftEvaluator_) external onlyAdmin {
     // Validate parameters
     require(address(sftEvaluator_) != address(0), 'WM: Invalid SFTE');
 
@@ -202,7 +214,7 @@ contract WOWSSftMinter is Context, Ownable {
     address[] calldata handlers,
     uint128[] calldata maxMint,
     uint256[] calldata prices
-  ) external onlyOwner {
+  ) external onlyAdmin {
     // Validate parameters
     require(
       cFolioTypes.length == handlers.length &&
@@ -232,7 +244,7 @@ contract WOWSSftMinter is Context, Ownable {
   /**
    * @dev upgrades state from an existing WOWSSFTMinter
    */
-  function destructContract() external onlyOwner {
+  function destructContract() external onlyAdmin {
     emit Destruct();
 
     // Disable high-impact Slither detector "suicidal" here. Slither explains

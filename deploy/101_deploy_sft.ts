@@ -95,7 +95,7 @@ async function setRegistryKey(deployer, execute, registryInstance, key, value) {
 const sft_func = async function (hardhat_re) {
   const { deployments, getNamedAccounts } = hardhat_re;
 
-  const { execute, get, deploy } = deployments;
+  const { execute, deploy, get } = deployments;
   const { deployer, marketingWallet } = await getNamedAccounts();
 
   // Get chain ID
@@ -189,8 +189,7 @@ const sft_func = async function (hardhat_re) {
 
     const sftHolderInterface = new ethers.utils.Interface(sftHolderAbi);
     const proxyCallData = sftHolderInterface.encodeFunctionData('initialize', [
-      marketingWallet,
-      SFT_CRYPTOFOLIO_ADDRESS,
+      ADDRESS_REGISTRY_ADDRESS,
       METADATA_URI,
       METADATA_URI,
       METADATA_URI,
@@ -275,9 +274,13 @@ const sft_func = async function (hardhat_re) {
       sftMinterProxyReceipt = await deploy(SFT_MINTER_PROXY_CONTRACT, {
         contract: UPGRADE_PROXY_CONTRACT,
         from: deployer,
-        args: [ADDRESS_REGISTRY_ADDRESS, proxyCallData],
+        args: [
+          ADDRESS_REGISTRY_ADDRESS,
+          generatedAddresses.sftMinter,
+          proxyCallData,
+        ],
         log: true,
-        deterministicDeployment: ADDRESS_BOOK_SFT_MINTER_PROXY_KEY,
+        deterministicDeployment: true,
       });
     }
 
