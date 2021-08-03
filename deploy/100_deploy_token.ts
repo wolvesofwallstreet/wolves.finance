@@ -33,6 +33,8 @@ const ADDRESS_BOOK_TEAM_WALLET_KEY =
   ethers.utils.formatBytes32String('TEAM_WALLET');
 const ADDRESS_BOOK_MARKETING_WALLET_KEY =
   ethers.utils.formatBytes32String('MARKETING_WALLET');
+const ADDRESS_BOOK_ADMIN_ACCOUNT_KEY =
+  ethers.utils.formatBytes32String('ADMIN_ACCOUNT');
 const ADDRESS_BOOK_UNISWAP_V2_ROUTER02_KEY = ethers.utils.formatBytes32String(
   'UNISWAP_V2_ROUTER02'
 );
@@ -204,6 +206,13 @@ const func = async function (hardhat_re) {
     ADDRESS_REGISTRY_INSTANCE,
     ADDRESS_BOOK_TEAM_WALLET_KEY,
     teamWallet
+  );
+  await setRegistryKey(
+    deployer,
+    execute,
+    ADDRESS_REGISTRY_INSTANCE,
+    ADDRESS_BOOK_ADMIN_ACCOUNT_KEY,
+    marketingWallet
   );
   await setRegistryKey(
     deployer,

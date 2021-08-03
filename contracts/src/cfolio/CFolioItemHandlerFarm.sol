@@ -113,11 +113,11 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
    */
   constructor(IAddressRegistry addressRegistry, bytes32 rewardFarmKey) {
     // Admin
-    admin = addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
+    admin = addressRegistry.getRegistryEntry(AddressBook.ADMIN_ACCOUNT);
 
     // The SFT holder
     sftHolder = IWOWSERC1155(
-      addressRegistry.getRegistryEntry(AddressBook.SFT_HOLDER)
+      addressRegistry.getRegistryEntry(AddressBook.SFT_HOLDER_PROXY)
     );
 
     // The SFT minter

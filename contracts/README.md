@@ -15,7 +15,7 @@ Steps to setup the WOWS environment.
 4.) deploy WOWSErc20.sol\
 -> parameter:\
 
-> \- IAddressFactory address\ <- must contain DEPLOYER, UNISWAP_V2_ROUTER02, MARKETING_WALLET, TEAM_WALLET and WOWS_TOKEN keys, (AddressBook.sol)\
+> \- IAddressFactory address\ <- must contain DEPLOYER, UNISWAP_V2_ROUTER02, ADMIN_ACCOUNT, TEAM_WALLET and WOWS_TOKEN keys, (AddressBook.sol)\
 
 5.) deploy RewardHandler.sol\
 -> parameter:\

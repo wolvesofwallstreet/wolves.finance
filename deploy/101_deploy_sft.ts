@@ -23,18 +23,17 @@ const SFT_MINTER_CONTRACT = 'WOWSSftMinter';
 
 // Deployed contract aliases
 const SFT_HOLDER_PROXY_CONTRACT = 'WOWSERC1155Proxy';
-
-const ADDRESS_BOOK_SFT_HOLDER_KEY =
-  ethers.utils.formatBytes32String('SFT_HOLDER');
+const SFT_MINTER_PROXY_CONTRACT = 'WOWSSftMinterProxy';
 
 const ADDRESS_BOOK_SFT_HOLDER_PROXY_KEY =
   ethers.utils.formatBytes32String('SFT_HOLDER_PROXY');
 
-const ADDRESS_BOOK_SFT_MINTER_KEY =
-  ethers.utils.formatBytes32String('SFT_MINTER');
+const ADDRESS_BOOK_SFT_MINTER_PROXY_KEY =
+  ethers.utils.formatBytes32String('SFT_MINTER_PROXY');
 
 // Contract ABIs
 const SFT_HOLDER_ABI = `${__dirname}/../src/abi/contracts/src/token/WOWSErc1155.sol/WOWSERC1155.json`;
+const SFT_MINTER_ABI = `${__dirname}/../src/abi/contracts/src/crowdsale/WOWSSftMinter.sol/WOWSSftMinter.json`;
 
 // ERC-1155 metadata URI
 const METADATA_URI = 'https://meta.wows.finance/wolves_assets/metadata/';
@@ -112,6 +111,7 @@ const sft_func = async function (hardhat_re) {
 
   // Load ABIs
   const sftHolderAbi = JSON.parse(fs.readFileSync(SFT_HOLDER_ABI));
+  const sftMinterAbi = JSON.parse(fs.readFileSync(SFT_MINTER_ABI));
 
   const configAddresses = (!IGNORE_ADDRESSES && configNetworks[chainId]) || {};
   const generatedAddresses = generatedNetworks[chainId] || {};
@@ -165,12 +165,7 @@ const sft_func = async function (hardhat_re) {
 
     const sftHolderReceipt = await deploy(SFT_HOLDER_CONTRACT, {
       from: deployer,
-      args: [
-        marketingWallet,
-        SFT_CRYPTOFOLIO_ADDRESS,
-        METADATA_URI,
-        CONTRACT_METADATA_NAME,
-      ],
+      args: [marketingWallet, SFT_CRYPTOFOLIO_ADDRESS],
       log: true,
       deterministicDeployment: true,
     });
@@ -179,28 +174,6 @@ const sft_func = async function (hardhat_re) {
   }
 
   const SFT_HOLDER_ADDRESS = generatedAddresses.sftHolder;
-
-  await setRegistryKey(
-    deployer,
-    execute,
-    ADDRESS_REGISTRY_INSTANCE,
-    ADDRESS_BOOK_SFT_HOLDER_KEY,
-    SFT_HOLDER_ADDRESS
-  );
-
-  //////////////////////////////////////////////////////////////////////////////
-  //
-  // Create initialization calldata
-  //
-  //////////////////////////////////////////////////////////////////////////////
-
-  const sftHolderInterface = new ethers.utils.Interface(sftHolderAbi);
-  const proxyCallData = sftHolderInterface.encodeFunctionData('initialize', [
-    marketingWallet,
-    SFT_CRYPTOFOLIO_ADDRESS,
-    METADATA_URI,
-    CONTRACT_METADATA_NAME,
-  ]);
 
   //////////////////////////////////////////////////////////////////////////////
   //
@@ -214,6 +187,16 @@ const sft_func = async function (hardhat_re) {
   } else {
     log_step('Deploying SFTHolder proxy');
 
+    const sftHolderInterface = new ethers.utils.Interface(sftHolderAbi);
+    const proxyCallData = sftHolderInterface.encodeFunctionData('initialize', [
+      marketingWallet,
+      SFT_CRYPTOFOLIO_ADDRESS,
+      METADATA_URI,
+      METADATA_URI,
+      METADATA_URI,
+      CONTRACT_METADATA_NAME,
+    ]);
+
     let sftHolderProxyReceipt = undefined;
     try {
       sftHolderProxyReceipt = await get(SFT_HOLDER_PROXY_CONTRACT);
@@ -221,11 +204,6 @@ const sft_func = async function (hardhat_re) {
       if (!sftHolderProxyReceipt.address) {
         throw new Error('No address');
       }
-
-      console.log(
-        'INFO: Proxy upgrade required! Initialization: ',
-        proxyCallData
-      );
     } catch (err) {
       sftHolderProxyReceipt = await deploy(SFT_HOLDER_PROXY_CONTRACT, {
         contract: UPGRADE_PROXY_CONTRACT,
@@ -261,12 +239,7 @@ const sft_func = async function (hardhat_re) {
 
     const sftMinterReceipt = await deploy(SFT_MINTER_CONTRACT, {
       from: deployer,
-      args: [
-        marketingWallet,
-        generatedAddresses.token,
-        generatedAddresses.rewardHandler,
-        SFT_HOLDER_ADDRESS,
-      ],
+      args: [ADDRESS_REGISTRY_ADDRESS],
       log: true,
       deterministicDeployment: true,
     });
@@ -274,12 +247,49 @@ const sft_func = async function (hardhat_re) {
     generatedAddresses.sftMinter = sftMinterReceipt.address;
   }
 
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // Deploy SFTMinter proxy
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  if (configAddresses.sftMinterProxy) {
+    log_step(`Using SFTMinter proxy: ${configAddresses.sftMinterProxy}`);
+    generatedAddresses.sftMinterProxy = configAddresses.sftMinterProxy;
+  } else {
+    log_step('Deploying SFTMinter proxy');
+
+    const sftMinterInterface = new ethers.utils.Interface(sftMinterAbi);
+    const proxyCallData = sftMinterInterface.encodeFunctionData('initialize', [
+      ADDRESS_REGISTRY_ADDRESS,
+    ]);
+
+    let sftMinterProxyReceipt = undefined;
+    try {
+      sftMinterProxyReceipt = await get(SFT_MINTER_PROXY_CONTRACT);
+
+      if (!sftMinterProxyReceipt.address) {
+        throw new Error('No address');
+      }
+    } catch (err) {
+      sftMinterProxyReceipt = await deploy(SFT_MINTER_PROXY_CONTRACT, {
+        contract: UPGRADE_PROXY_CONTRACT,
+        from: deployer,
+        args: [ADDRESS_REGISTRY_ADDRESS, proxyCallData],
+        log: true,
+        deterministicDeployment: ADDRESS_BOOK_SFT_MINTER_PROXY_KEY,
+      });
+    }
+
+    generatedAddresses.sftMinterProxy = sftMinterProxyReceipt.address;
+  }
+
   await setRegistryKey(
     deployer,
     execute,
     ADDRESS_REGISTRY_INSTANCE,
-    ADDRESS_BOOK_SFT_MINTER_KEY,
-    generatedAddresses.sftMinter
+    ADDRESS_BOOK_SFT_MINTER_PROXY_KEY,
+    generatedAddresses.sftMinterProxy
   );
 
   //////////////////////////////////////////////////////////////////////////////

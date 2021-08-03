@@ -172,15 +172,14 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     OpenSeaProxyRegistry openSeaProxyRegistry
   ) {
     // Initialize {AccessControl}
-    address marketingWallet = _getAddressRegistryAddress(
-      addressRegistry,
-      AddressBook.MARKETING_WALLET
+    _setupRole(
+      DEFAULT_ADMIN_ROLE,
+      _getAddressRegistryAddress(addressRegistry, AddressBook.ADMIN_ACCOUNT)
     );
-    _setupRole(DEFAULT_ADMIN_ROLE, marketingWallet);
 
     // Immutable, visible for all contexts
     _sftHolder = IWOWSERC1155(
-      _getAddressRegistryAddress(addressRegistry, AddressBook.SFT_HOLDER)
+      _getAddressRegistryAddress(addressRegistry, AddressBook.SFT_HOLDER_PROXY)
     );
 
     // Immutable, visible for all contexts
@@ -213,7 +212,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     // Initialize {AccessControl}
     address marketingWallet = _getAddressRegistryAddress(
       addressRegistry,
-      AddressBook.MARKETING_WALLET
+      AddressBook.ADMIN_ACCOUNT
     );
     _setupRole(DEFAULT_ADMIN_ROLE, marketingWallet);
 

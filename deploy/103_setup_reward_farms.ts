@@ -16,26 +16,26 @@ require('hardhat-deploy-ethers');
 // TODO: Fully qualified contract names
 const SFT_HOLDER_CONTRACT = 'WOWSERC1155';
 const SFT_MINTER_CONTRACT = 'WOWSSftMinter';
-const SFT_MINTER_UPDATE_CONTRACT = 'WOWSSftMinterUpdate';
 const CFOLIO_ITEM_HANDLER_LP_CONTRACT = 'CFolioItemHandlerLP';
 const CFOLIO_ITEM_HANDLER_LP_PROXY_CONTRACT = 'CFolioItemHandlerLPProxy';
 const CFOLIO_ITEM_HANDLER_SC_CONTRACT = 'CFolioItemHandlerSC';
 const CFOLIO_ITEM_HANDLER_SC_PROXY_CONTRACT = 'CFolioItemHandlerSCProxy';
 const CONTROLLER_CONTRACT = 'Controller';
 const SFT_EVALUATOR_PROXY_CONTRACT = 'SFTEvaluatorProxy';
-const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 // Deployed aliases
 const CFOLIO_FARM_LP_CONTRACT = 'CFolioFarmLP';
 const CFOLIO_FARM_SC_CONTRACT = 'CFolioFarmSC';
 
+// keccak-256("eip1967.proxy.implementation") - 1
+const UPGRADE_PROXY_IMPLEMENTATION_SLOT =
+  '0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc';
+
 // Contract ABI paths
 const CFOLIO_FARM_ABI = `${__dirname}/../src/abi/contracts/src/investment/CFolioFarm.sol/CFolioFarm.json`;
 
 // Path to generated addresses file
-const CONFIG_ADDRESSES = `${__dirname}/../src/config/addresses.json`;
 const GENERATED_ADDRESSES = `${__dirname}/../src/config/generated-addresses.json`;
-const IGNORE_ADDRESSES = process.env.IGNORE_ADDRESSES !== undefined;
 
 // Helper function
 function log_step(step_string) {
@@ -45,7 +45,7 @@ function log_step(step_string) {
 async function getProxyImplementation(hre, contractAddress) {
   const data = await hre.ethers.provider.getStorageAt(
     contractAddress,
-    '0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc'
+    UPGRADE_PROXY_IMPLEMENTATION_SLOT
   );
   return hre.ethers.utils.getAddress(
     hre.ethers.BigNumber.from(data).toHexString()
@@ -65,13 +65,9 @@ const func = async function (hardhat_re) {
   const chainId = await hardhat_re.getChainId();
 
   // Load contract addresses
-  const configNetworks = JSON.parse(
-    fs.readFileSync(CONFIG_ADDRESSES).toString()
-  );
   const generatedNetworks = JSON.parse(
     fs.readFileSync(GENERATED_ADDRESSES).toString()
   );
-  const configAddresses = (!IGNORE_ADDRESSES && configNetworks[chainId]) || {};
   const generatedAddresses = generatedNetworks[chainId] || {};
 
   // Deployment instances
@@ -79,7 +75,8 @@ const func = async function (hardhat_re) {
     SFT_HOLDER_CONTRACT
   );
   const SFT_MINTER_INSTANCE = await hardhat_re.ethers.getContract(
-    SFT_MINTER_CONTRACT
+    SFT_MINTER_CONTRACT,
+    generatedAddresses.sftMinterProxy
   );
   // CFOLIO_ITEM_HANDLER_LP on CFOLIO_ITEM_HANDLER_LP_PROXY address
   const CFOLIO_ITEM_HANDLER_LP_INSTANCE = await hardhat_re.ethers.getContractAt(
@@ -351,38 +348,16 @@ const func = async function (hardhat_re) {
         SFT_MINTER_CONTRACT,
         {
           from: marketingWallet,
+          to: generatedAddresses.sftMinterProxy,
           log: true,
         },
         'setCFolioSpec',
         CFI_TYPES,
         CFI_HANDLERS,
         CFI_MAXMINT,
-        CFI_PRICES,
-        configAddresses.sftMinterUpdate || NULL_ADDRESS
+        CFI_PRICES
       )
     );
-
-    // Assumption: SFTMinter is newly deployed, lets upgrade
-    if (
-      configAddresses.sftMinterUpdate &&
-      configAddresses.sftMinterUpdate !== generatedAddresses.sftMinter
-    ) {
-      console.log('Upgrading WOWSSftMinter');
-
-      // Old contracts don't have destructContract
-      await catchUnknownSigner(
-        execute(
-          SFT_MINTER_UPDATE_CONTRACT,
-          {
-            from: marketingWallet,
-            log: true,
-          },
-          'destructContract'
-        )
-      );
-    } else {
-      console.log('Not upgrading WOWSSftMinter');
-    }
   } else {
     console.log('C-folio specs already set for WOWSSftMinter');
   }
@@ -402,6 +377,7 @@ const func = async function (hardhat_re) {
         SFT_MINTER_CONTRACT,
         {
           from: marketingWallet,
+          to: generatedAddresses.sftMinterProxy,
           log: true,
         },
         'setSFTEvaluator',
@@ -466,8 +442,9 @@ const func = async function (hardhat_re) {
   //
   // 13.) Check if we have to upgrade the cfolioItemHandlerLP implementation
   //
+  let oldImplAddress;
   if (
-    (await getProxyImplementation(
+    (oldImplAddress = await getProxyImplementation(
       hardhat_re,
       generatedAddresses.cfolioItemHandlerLPProxy
     )) !== generatedAddresses.cfolioItemHandlerLP
@@ -483,6 +460,19 @@ const func = async function (hardhat_re) {
         },
         'upgradeTo',
         generatedAddresses.cfolioItemHandlerLP
+      )
+    );
+
+    // destruct the old implemenation contract
+    await catchUnknownSigner(
+      execute(
+        CFOLIO_ITEM_HANDLER_LP_CONTRACT,
+        {
+          from: marketingWallet,
+          to: oldImplAddress,
+          log: true,
+        },
+        'selfDestruct'
       )
     );
   } else {
@@ -518,7 +508,7 @@ const func = async function (hardhat_re) {
   // 15.) Check if we have to upgrade the cfolioItemHandlerSC implementation
   //
   if (
-    (await getProxyImplementation(
+    (oldImplAddress = await getProxyImplementation(
       hardhat_re,
       generatedAddresses.cfolioItemHandlerSCProxy
     )) !== generatedAddresses.cfolioItemHandlerSC
@@ -534,6 +524,19 @@ const func = async function (hardhat_re) {
         },
         'upgradeTo',
         generatedAddresses.cfolioItemHandlerSC
+      )
+    );
+
+    // destruct the old implemenation contract
+    await catchUnknownSigner(
+      execute(
+        CFOLIO_ITEM_HANDLER_SC_CONTRACT,
+        {
+          from: marketingWallet,
+          to: oldImplAddress,
+          log: true,
+        },
+        'selfDestruct'
       )
     );
   } else {

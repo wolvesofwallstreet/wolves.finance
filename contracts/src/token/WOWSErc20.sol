@@ -84,10 +84,10 @@ contract WowsToken is IERC20WowsMintable, ERC20Capped, AccessControl {
      *   2.) 1800 token for marketing (influencer / design ...)
      */
     // reverts if address is invalid
-    address marketingWallet = _addressRegistry.getRegistryEntry(
-      AddressBook.MARKETING_WALLET
+    _mint(
+      _addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET),
+      3600 * 1e18
     );
-    _mint(marketingWallet, 3600 * 1e18);
 
     /*
      * Mint 7500 token into teams wallet
@@ -101,7 +101,10 @@ contract WowsToken is IERC20WowsMintable, ERC20Capped, AccessControl {
     _mint(teamWallet, 7500 * 1e18);
 
     // Multi-sig marketing wallet gets admin rights
-    _setupRole(DEFAULT_ADMIN_ROLE, marketingWallet);
+    _setupRole(
+      DEFAULT_ADMIN_ROLE,
+      _addressRegistry.getRegistryEntry(AddressBook.ADMIN_ACCOUNT)
+    );
 
     // Reverts if address is invalid
     IUniswapV2Router02 _uniV2Router = IUniswapV2Router02(

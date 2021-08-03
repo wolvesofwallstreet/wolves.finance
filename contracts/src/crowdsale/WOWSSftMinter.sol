@@ -20,6 +20,9 @@ import '../token/interfaces/IERC1155BurnMintable.sol';
 import '../token/interfaces/ITradeFloor.sol';
 import '../token/interfaces/IWOWSCryptofolio.sol';
 import '../token/interfaces/IWOWSERC1155.sol';
+
+import '../utils/AddressBook.sol';
+import '../utils/interfaces/IAddressRegistry.sol';
 import '../utils/TokenIds.sol';
 
 contract WOWSSftMinter is Context, Ownable {
@@ -100,30 +103,35 @@ contract WOWSSftMinter is Context, Ownable {
   /**
    * @dev Contruct WOWSSftMinter
    *
-   * @param owner Owner of this contract
-   * @param wowsToken The WOWS ERC-20 token contract
-   * @param rewardHandler_ Handler which distributes
-   * @param sftContract Cryptofolio SFT source
+   * @param addressRegistry provides all immutables
    */
-  constructor(
-    address owner,
-    IERC20 wowsToken,
-    IRewardHandler rewardHandler_,
-    IWOWSERC1155 sftContract
-  ) {
-    // Validate parameters
-    require(owner != address(0), 'WM: OW 0 address');
-    require(address(wowsToken) != address(0), 'WM: WT 0 address');
-    require(address(rewardHandler_) != address(0), 'WM: RH 0 address');
-    require(address(sftContract) != address(0), 'WM: SFT 0 address');
-
+  constructor(IAddressRegistry addressRegistry) {
     // Initialize {Ownable}
-    transferOwnership(owner);
+    // We need to set it so we can call selfDestruct
+    transferOwnership(
+      addressRegistry.getRegistryEntry(AddressBook.ADMIN_ACCOUNT)
+    );
+
+    // Set immutable addresses
+    _wowsToken = IERC20(
+      addressRegistry.getRegistryEntry(AddressBook.WOWS_TOKEN)
+    );
+    _sftContract = IWOWSERC1155(
+      addressRegistry.getRegistryEntry(AddressBook.SFT_HOLDER_PROXY)
+    );
+  }
+
+  function initialize(IAddressRegistry addressRegistry) external {
+    // Check for single entry
+    require(address(rewardHandler) == address(0), 'WM: Already initialized');
 
     // Initialize state
-    _sftContract = sftContract;
-    _wowsToken = wowsToken;
-    rewardHandler = rewardHandler_;
+    transferOwnership(
+      addressRegistry.getRegistryEntry(AddressBook.ADMIN_ACCOUNT)
+    );
+    rewardHandler = IRewardHandler(
+      addressRegistry.getRegistryEntry(AddressBook.REWARD_HANDLER)
+    );
   }
 
   //////////////////////////////////////////////////////////////////////////////

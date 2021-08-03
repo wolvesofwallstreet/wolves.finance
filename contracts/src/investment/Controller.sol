@@ -99,10 +99,9 @@ contract Controller is IController, Context, Ownable {
     previousController = _previousController;
 
     // Initialize {Ownable}
-    address _marketingWallet = _addressRegistry.getRegistryEntry(
-      AddressBook.MARKETING_WALLET
+    transferOwnership(
+      _addressRegistry.getRegistryEntry(AddressBook.ADMIN_ACCOUNT)
     );
-    transferOwnership(_marketingWallet);
   }
 
   //////////////////////////////////////////////////////////////////////////////

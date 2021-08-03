@@ -80,10 +80,10 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
    */
   constructor(IAddressRegistry addressRegistry) {
     // Initialize access
-    address marketingWallet = addressRegistry.getRegistryEntry(
-      AddressBook.MARKETING_WALLET
+    _setupRole(
+      DEFAULT_ADMIN_ROLE,
+      addressRegistry.getRegistryEntry(AddressBook.ADMIN_ACCOUNT)
     );
-    _setupRole(DEFAULT_ADMIN_ROLE, marketingWallet);
 
     // Initialize state
     _addressRegistry = addressRegistry;

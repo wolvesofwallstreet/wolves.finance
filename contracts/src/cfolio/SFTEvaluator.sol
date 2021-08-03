@@ -58,11 +58,11 @@ contract SFTEvaluator is ISFTEvaluator, Context {
   constructor(IAddressRegistry addressRegistry) {
     // The SFT holder
     _sftHolder = IWOWSERC1155(
-      addressRegistry.getRegistryEntry(AddressBook.SFT_HOLDER)
+      addressRegistry.getRegistryEntry(AddressBook.SFT_HOLDER_PROXY)
     );
 
     // Admin
-    admin = addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
+    admin = addressRegistry.getRegistryEntry(AddressBook.ADMIN_ACCOUNT);
 
     // Minter
     sftMinter = addressRegistry.getRegistryEntry(AddressBook.SFT_MINTER);
