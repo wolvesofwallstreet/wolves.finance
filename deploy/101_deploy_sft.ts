@@ -18,13 +18,19 @@ require('hardhat-deploy-ethers');
 const ADDRESS_REGISTRY_CONTRACT = 'AddressRegistry';
 const SFT_HOLDER_CONTRACT = 'WOWSERC1155';
 const SFT_CRYPTOFOLIO = 'WOWSCryptofolio';
+const CFOLIOITEM_BRIDGE_CONTRACT = 'CFolioItemBridge';
+const CFOLIOITEM_BRIDGE_PROXY_CONTRACT = 'CFolioItemBridgeProxy';
 const SFT_MINTER_CONTRACT = 'WOWSSftMinter';
+const UPGRADE_PROXY_CONTRACT = 'UpgradeProxy';
 
 const ADDRESS_BOOK_SFT_HOLDER_KEY =
   ethers.utils.formatBytes32String('SFT_HOLDER');
 
 const ADDRESS_BOOK_SFT_MINTER_KEY =
   ethers.utils.formatBytes32String('SFT_MINTER');
+
+const ADDRESS_BOOK_CFOLIOITEM_BRIDGE_PROXY_KEY =
+  ethers.utils.formatBytes32String('CFOLIOITEM_BRIDGE_PROXY');
 
 // ERC-1155 metadata URI
 const METADATA_URI = 'https://4travelers.de/wolves_assets/metadata/';
@@ -86,7 +92,7 @@ async function setRegistryKey(deployer, execute, registryInstance, key, value) {
 const sft_func = async function (hardhat_re) {
   const { deployments, getNamedAccounts } = hardhat_re;
 
-  const { execute, deploy } = deployments;
+  const { execute, deploy, get } = deployments;
   const { deployer, marketingWallet } = await getNamedAccounts();
 
   // Get chain ID
@@ -112,6 +118,7 @@ const sft_func = async function (hardhat_re) {
   const ADDRESS_REGISTRY_INSTANCE = await hardhat_re.ethers.getContract(
     ADDRESS_REGISTRY_CONTRACT
   );
+  const ADDRESS_REGISTRY_ADDRESS = generatedAddresses.addressRegistry;
 
   //////////////////////////////////////////////////////////////////////////////
   //
@@ -176,6 +183,72 @@ const sft_func = async function (hardhat_re) {
 
   //////////////////////////////////////////////////////////////////////////////
   //
+  // Deploy CFolioItemBridge
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  if (configAddresses.cfiBridge) {
+    log_step(`Using CFolioItemBridge contract: ${configAddresses.cfiBridge}`);
+    generatedAddresses.cfiBridge = configAddresses.cfiBridge;
+  } else {
+    log_step('Deploying CFolioItemBridge contract');
+
+    const cfiBridgeReceipt = await deploy(CFOLIOITEM_BRIDGE_CONTRACT, {
+      from: deployer,
+      args: [ADDRESS_REGISTRY_ADDRESS],
+      log: true,
+      deterministicDeployment: true,
+    });
+
+    generatedAddresses.cfiBridge = cfiBridgeReceipt.address;
+  }
+
+  const CFOLIOITEM_BRIDGE_ADDRESS = generatedAddresses.cfiBridge;
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // Deploy CFolioItemBridge proxy
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  if (configAddresses.cfiBridgeProxy) {
+    log_step(`Using CFolioItemBridge proxy: ${configAddresses.cfiBridgeProxy}`);
+    generatedAddresses.cfiBridgeProxy = configAddresses.cfiBridgeProxy;
+  } else {
+    log_step('Deploying CFolioItemBridge proxy');
+
+    let cfiBridgeProxyReceipt = undefined;
+    try {
+      cfiBridgeProxyReceipt = await get(CFOLIOITEM_BRIDGE_PROXY_CONTRACT);
+
+      if (!cfiBridgeProxyReceipt.address) {
+        throw new Error('No address');
+      }
+    } catch (err) {
+      cfiBridgeProxyReceipt = await deploy(CFOLIOITEM_BRIDGE_PROXY_CONTRACT, {
+        contract: UPGRADE_PROXY_CONTRACT,
+        from: deployer,
+        args: [ADDRESS_REGISTRY_ADDRESS, CFOLIOITEM_BRIDGE_ADDRESS, []],
+        log: true,
+        deterministicDeployment: true,
+      });
+    }
+
+    generatedAddresses.cfiBridgeProxy = cfiBridgeProxyReceipt.address;
+  }
+
+  const CFOLIOITEM_BRIDGE_PROXY_ADDRESS = generatedAddresses.cfiBridgeProxy;
+
+  await setRegistryKey(
+    deployer,
+    execute,
+    ADDRESS_REGISTRY_INSTANCE,
+    ADDRESS_BOOK_CFOLIOITEM_BRIDGE_PROXY_KEY,
+    CFOLIOITEM_BRIDGE_PROXY_ADDRESS
+  );
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
   // Deploy SFT minter
   //
   //////////////////////////////////////////////////////////////////////////////
@@ -193,6 +266,7 @@ const sft_func = async function (hardhat_re) {
         generatedAddresses.token,
         generatedAddresses.rewardHandler,
         SFT_HOLDER_ADDRESS,
+        CFOLIOITEM_BRIDGE_PROXY_ADDRESS,
       ],
       log: true,
       deterministicDeployment: true,

@@ -47,6 +47,9 @@ contract WOWSSftMinter is Context, Ownable {
   // The ERC1155 contract we are minting from
   IWOWSERC1155 private immutable _sftContract;
 
+  // The cfolioItem wrapper bridge
+  address private immutable _cfiBridge;
+
   // WOWS token contract
   IERC20 private immutable _wowsToken;
 
@@ -99,13 +102,15 @@ contract WOWSSftMinter is Context, Ownable {
     address owner,
     IERC20 wowsToken,
     IRewardHandler rewardHandler_,
-    IWOWSERC1155 sftContract
+    IWOWSERC1155 sftContract,
+    address cfiBridge
   ) {
     // Validate parameters
     require(owner != address(0), 'O: 0 address');
     require(address(wowsToken) != address(0), 'WT: 0 address');
     require(address(rewardHandler_) != address(0), 'RH: 0 address');
     require(address(sftContract) != address(0), 'SFT: 0 address');
+    require(cfiBridge != address(0), 'CFIB: 0 address');
 
     // Initialize {Ownable}
     transferOwnership(owner);
@@ -113,6 +118,7 @@ contract WOWSSftMinter is Context, Ownable {
     // Initialize state
     _sftContract = sftContract;
     _wowsToken = wowsToken;
+    _cfiBridge = cfiBridge;
     rewardHandler = rewardHandler_;
   }
 
@@ -311,7 +317,6 @@ contract WOWSSftMinter is Context, Ownable {
   ) external {
     // Validate state
     require(!_setupCFolio, 'Already setting up');
-    require(tradeFloor != address(0), 'TF not set');
     require(address(sftEvaluator) != address(0), 'SFTE not set');
 
     // Validate parameters
@@ -361,7 +366,7 @@ contract WOWSSftMinter is Context, Ownable {
       // Lock the SFT into the TradeFloor contract
       IERC1155BurnMintable(address(_sftContract)).safeTransferFrom(
         address(this),
-        tradeFloor,
+        address(_cfiBridge),
         tokenId,
         1,
         abi.encodePacked(sftCFolio)
@@ -450,50 +455,6 @@ contract WOWSSftMinter is Context, Ownable {
   }
 
   /**
-   * @dev See {IWOWSSftMinter-tradeFloorTokenId}.
-   */
-  function tradeFloorTokenId(uint256 sftTokenId)
-    external
-    view
-    returns (uint256)
-  {
-    bytes memory hashData;
-    uint256[] memory tokenIds;
-    uint256 tokenIdsLength;
-    if (sftTokenId.isBaseCard()) {
-      // It's a base card, calculate hash using all cfolioItems
-      address cfolio = _sftContract.tokenIdToAddress(sftTokenId);
-      require(cfolio != address(0), 'WSM: src token invalid');
-      (tokenIds, tokenIdsLength) = IWOWSCryptofolio(cfolio).getCryptofolio(
-        address(this)
-      );
-      hashData = abi.encodePacked(address(this), sftTokenId);
-    } else {
-      // It's a cfolioItem itself, only calculate underlying value
-      tokenIds = new uint256[](1);
-      tokenIds[0] = sftTokenId;
-      tokenIdsLength = 1;
-    }
-
-    // Run through all cfolioItems and add let their single CFolioItemHandler
-    // append hashable data
-    for (uint256 i = 0; i < tokenIdsLength; ++i) {
-      address cfolio = _sftContract.tokenIdToAddress(
-        tokenIds[i].toSftTokenId()
-      );
-      require(cfolio != address(0), 'WSM: item token invalid');
-
-      address handler = IWOWSCryptofolio(cfolio)._tradefloors(0);
-      require(handler != address(0), 'WSM: item handler invalid');
-
-      hashData = ICFolioItemCallback(handler).appendHash(cfolio, hashData);
-    }
-
-    uint256 hashNum = uint256(keccak256(hashData));
-    return (hashNum ^ (hashNum << 128)).maskHash() | sftTokenId;
-  }
-
-  /**
    * @dev Get all tokenIds from SFT and TF contract owned by account.
    */
   function getTokenIds(address account)
@@ -530,7 +491,7 @@ contract WOWSSftMinter is Context, Ownable {
         address cfolio = _sftContract.tokenIdToAddress(sftTokenId);
         if (address(cfolio) != address(0)) {
           (cFolioItems, cfolioLength) = IWOWSCryptofolio(cfolio).getCryptofolio(
-            tradeFloor
+            _cfiBridge
           );
         } else {
           cFolioItems = oneCFolioItem;

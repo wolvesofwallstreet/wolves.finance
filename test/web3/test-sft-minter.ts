@@ -624,7 +624,7 @@ describe('SFT minter', function () {
       ethers.BigNumber.from(
         '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
       ),
-      [0]
+      []
     );
 
     // Log gas cost

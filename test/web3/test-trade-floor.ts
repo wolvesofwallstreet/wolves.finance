@@ -525,6 +525,6 @@ describe('Trade Floor', function () {
       1,
       []
     );
-    await chai.expect(tx).to.be.revertedWith('TF: SFT -> CFolio not allowed');
+    await chai.expect(tx).to.be.revertedWith('CF: Only tradefloor');
   });
 });

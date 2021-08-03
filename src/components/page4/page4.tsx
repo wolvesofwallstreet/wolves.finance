@@ -184,11 +184,13 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       if (
         curTokenId &&
         tokenIds.length &&
-        tokenIds[0].cfolioItems.find((cfi) => cfi.tokenId.eq(curTokenId))
+        tokenIds[0].cfolioItems.find((cfi) =>
+          cfi.tokenId.mask(128).eq(curTokenId.mask(128))
+        )
       ) {
         // loop through cfolio items and create renderlist
         tokenIds[0].cfolioItems.forEach((cfi) => {
-          if (curTokenId && cfi.tokenId.eq(curTokenId))
+          if (curTokenId && cfi.tokenId.mask(128).eq(curTokenId.mask(128)))
             currentIndex = this.renderList.length;
           this.renderList.push({
             cfi,

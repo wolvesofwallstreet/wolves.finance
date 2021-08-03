@@ -11,7 +11,6 @@ pragma solidity >=0.7.0 <0.8.0;
 import '../../0xerc1155/interfaces/IERC20.sol';
 import '../../0xerc1155/tokens/ERC1155/ERC1155Holder.sol';
 
-import '../crowdsale/interfaces/IWOWSSftMinter.sol';
 import '../token/interfaces/IWOWSCryptofolio.sol';
 import '../token/interfaces/IWOWSERC1155.sol';
 import '../utils/AddressBook.sol';
@@ -101,11 +100,11 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   }
   mapping(address => Owned) private _owned;
 
-  // The registry to get the required addreeses from
-  IAddressRegistry private immutable _addressRegistry;
-
   // Our SFT contract, needed to check for locked transfers
   IWOWSERC1155 private immutable _sftHolder;
+
+  // Our CFolioItemBridge contract, needed to get hashed tokenId
+  address private immutable _cfiBridge;
 
   // Restrict approvals to OPERATOR_ROLE members
   bool private _tradingRestricted;
@@ -128,6 +127,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   // OpenSea per-account proxy registry. Used to whitelist Approvals and save
   // GAS.
   OpenSeaProxyRegistry private immutable _openSeaProxyRegistry;
+  address private immutable _deployer;
 
   // OpenSea events
   event OwnershipTransferred(
@@ -182,15 +182,24 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     _setupRole(DEFAULT_ADMIN_ROLE, marketingWallet);
 
     // Immutable, visible for all contexts
-    _addressRegistry = addressRegistry;
-
-    // Immutable, visible for all contexts
     _sftHolder = IWOWSERC1155(
       _getAddressRegistryAddress(addressRegistry, AddressBook.SFT_HOLDER)
     );
 
     // Immutable, visible for all contexts
+    _cfiBridge = _getAddressRegistryAddress(
+      addressRegistry,
+      AddressBook.CFOLIOITEM_BRIDGE_PROXY
+    );
+
+    // Immutable, visible for all contexts
     _openSeaProxyRegistry = openSeaProxyRegistry;
+
+    // Immutable, visible for all contexts
+    _deployer = _getAddressRegistryAddress(
+      addressRegistry,
+      AddressBook.DEPLOYER
+    );
 
     // Pause this instance
     _pause(true);
@@ -202,15 +211,17 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
    * @param tokenUriPrefix The ERC-1155 metadata URI Prefix
    * @param contractUri The contract metadata URI
    */
-  function initialize(string memory tokenUriPrefix, string memory contractUri)
-    public
-  {
+  function initialize(
+    IAddressRegistry addressRegistry,
+    string memory tokenUriPrefix,
+    string memory contractUri
+  ) public {
     // Validate state
     require(_feeRecipient == address(0), 'already initialized');
 
     // Initialize {AccessControl}
     address marketingWallet = _getAddressRegistryAddress(
-      _addressRegistry,
+      addressRegistry,
       AddressBook.MARKETING_WALLET
     );
     _setupRole(DEFAULT_ADMIN_ROLE, marketingWallet);
@@ -220,22 +231,16 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     _setContractMetadataURI(contractUri);
 
     _feeRecipient = _getAddressRegistryAddress(
-      _addressRegistry,
+      addressRegistry,
       AddressBook.REWARD_HANDLER
     );
     _fee = 1000; // 10%
 
-    // Rarible: Need a real wallet for setting up storefront
-    address deployer = _getAddressRegistryAddress(
-      _addressRegistry,
-      AddressBook.DEPLOYER
-    );
-
     // This event initializes Rarible storefront
-    emit CreateERC1155_v1(deployer, name, symbol);
+    emit CreateERC1155_v1(_deployer, name, symbol);
 
     // OpenSea enable storefront editing
-    emit OwnershipTransferred(address(0), deployer);
+    emit OwnershipTransferred(address(0), _deployer);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -348,61 +353,6 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   }
 
   //////////////////////////////////////////////////////////////////////////////
-  // Implementation of {ERC1155} via {WOWSMinterPauser}
-  //////////////////////////////////////////////////////////////////////////////
-
-  /**
-   * @dev See {ERC1155-_beforeTokenTransfer}
-   *
-   * @notice Overrideable hook for single transfers
-   */
-  function _beforeTokenTransfer(
-    address operator,
-    address from,
-    address to,
-    uint256 tokenId,
-    uint256 amount,
-    bytes memory data
-  ) internal override {
-    // Validate parameters
-    // Note: `from` must not be checked because in locked state owner is this
-    // contract
-    require(_validTarget(to), 'destination locked');
-
-    // Call ancestor
-    super._beforeTokenTransfer(operator, from, to, tokenId, amount, data);
-  }
-
-  /**
-   * @dev See {ERC1155-_beforeBatchTokenTransfer}
-   *
-   * @notice Overrideable hook for batch transfers
-   */
-  function _beforeBatchTokenTransfer(
-    address operator,
-    address from,
-    address to,
-    uint256[] memory tokenIds,
-    uint256[] memory amounts,
-    bytes memory data
-  ) internal override {
-    // Validate parameters
-    // Note: `from` must not be checked because in locked state owner is this
-    // contract.
-    require(_validTarget(to), 'destination locked');
-
-    // Call ancestor
-    super._beforeBatchTokenTransfer(
-      operator,
-      from,
-      to,
-      tokenIds,
-      amounts,
-      data
-    );
-  }
-
-  //////////////////////////////////////////////////////////////////////////////
   // Implementation of {IERC1155MetadataURI} via {WOWSMinterPauser}
   //////////////////////////////////////////////////////////////////////////////
 
@@ -414,17 +364,6 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   function uri(uint256 tokenId) public view override returns (string memory) {
     // Validate state
     require(_tokenInfos[tokenId].minted, 'Not minted');
-
-    // Test if cfolioItemHandler provides the URI
-    if (tokenId.isCFolioCard()) {
-      address cfolio = _sftHolder.tokenIdToAddress(tokenId.toSftTokenId());
-      require(cfolio != address(0), 'Invalid');
-      address handler = IWOWSCryptofolio(cfolio)._tradefloors(0);
-      require(handler != address(0), 'Invalid');
-      string memory result = ICFolioItemCallback(handler).uri(tokenId);
-      if (bytes(result).length > 0) return result;
-    }
-
     // Load state
     return _uri(tokenId, 0);
   }
@@ -579,6 +518,40 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     emit RestrictionUpdated(restrict);
   }
 
+  /**
+   * @dev Move all TF CFolioItems inside CFolios to CFolioItemBridge
+   */
+  function migrate(uint256[] calldata tokenIds) external onlyAdmins {
+    uint256 length = tokenIds.length;
+    uint256[] memory cfiTokenIds;
+    uint256 cfiLength;
+    address cfolio;
+
+    for (uint256 i = 0; i < length; ++i) {
+      if (tokenIds[i].isBaseCard()) {
+        cfolio = _sftHolder.tokenIdToAddress(tokenIds[i]);
+        require(cfolio != address(0), 'Invalid');
+        (cfiTokenIds, cfiLength) = IWOWSCryptofolio(cfolio).getCryptofolio(
+          address(this)
+        );
+        for (uint256 j = 0; j < cfiLength; ++j) {
+          // Burn CFI (which transfers sft)
+          _burn(cfolio, cfiTokenIds[j], 1);
+          _relinkOwner(cfolio, address(0), cfiTokenIds[j], uint256(-1));
+
+          // Transfer the SFT cFolio (currently owned by us) to cfiBridge
+          WOWSMinterPauser(address(_sftHolder)).safeTransferFrom(
+            address(this),
+            _cfiBridge,
+            cfiTokenIds[j].toSftTokenId(),
+            1,
+            abi.encodePacked(cfolio)
+          );
+        }
+      }
+    }
+  }
+
   //////////////////////////////////////////////////////////////////////////////
   // OpenSea compatibility
   //////////////////////////////////////////////////////////////////////////////
@@ -588,7 +561,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   }
 
   function owner() public view returns (address) {
-    return _addressRegistry.getRegistryEntry(AddressBook.DEPLOYER);
+    return _deployer;
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -641,37 +614,19 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     address to,
     uint256[] memory tokenIds
   ) private {
+    // Before all NFTs are migrated, users could have cfolioItems from this
+    // contract in cfolio. Because burning is not recorded in cfih's anymore,
+    // we have to disallow it. Next line can be removed after migration.
+    require(
+      from == address(0) || _sftHolder.addressToTokenId(from) == uint256(-1),
+      'TF: Forbidden'
+    );
+
     // Count SFT tokenIds
     uint256 length = tokenIds.length;
-    uint256 numBaseSft = 0;
-    uint256 numUniqueCFolioHandlers = 0;
-    address[] memory uniqueCFolioHandlers = new address[](length);
-    address[] memory cFolioHandlers = new address[](length);
-
-    // Invoke callbacks / count SFTs
-    for (uint256 i = 0; i < tokenIds.length; i++) {
-      uint256 tokenId = tokenIds[i];
-      // Unstake SFT on burn
-      if (tokenId.isBaseCard()) {
-        ++numBaseSft;
-      } else {
-        // CFolio SFTs always have one tradefloor / 1 CFolio dummy
-        // which is needed to notify the CFolioHandler on SFT burn
-        address cfolio = _sftHolder.tokenIdToAddress(tokenId.toSftTokenId());
-        require(cfolio != address(0), 'Invalid cfolio');
-
-        address cFolioHandler = IWOWSCryptofolio(cfolio)._tradefloors(0);
-
-        uint256 iter = numUniqueCFolioHandlers;
-        while (iter > 0 && uniqueCFolioHandlers[iter - 1] != cFolioHandler)
-          --iter;
-        if (iter == 0) {
-          require(cFolioHandler != address(0), 'Invalid CFH address');
-          uniqueCFolioHandlers[numUniqueCFolioHandlers++] = cFolioHandler;
-        }
-        cFolioHandlers[i] = cFolioHandler;
-      }
-      _relinkOwner(from, to, tokenId, uint256(-1));
+    // Relink owner
+    for (uint256 i = 0; i < length; ++i) {
+      _relinkOwner(from, to, tokenIds[i], uint256(-1));
     }
 
     // On Burn we need to transfer SFT ownership back
@@ -691,48 +646,6 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
         amounts,
         ''
       );
-    } else if (numBaseSft > 0) {
-      // Prevent transfer from SFT into cfolio
-      require(
-        _addressToTokenId(to) == uint256(-1),
-        'TF: SFT -> CFolio not allowed'
-      );
-    }
-
-    // Handle CFolioItem transfers
-    if (numUniqueCFolioHandlers > 0) {
-      for (uint256 i = 0; i < numUniqueCFolioHandlers; ++i) {
-        ICFolioItemCallback(uniqueCFolioHandlers[i])
-          .onCFolioItemsTransferedFrom(from, to, tokenIds, cFolioHandlers);
-      }
-
-      // Underlying value of cFolioItems can be changed from concept
-      // if the cfolioItem is inside an cfolio SFT (unlocked).
-      // We need to re-evaluate the hash of each cfolioItem which
-      // transfers out of such an cFolio SFT into non-cfolio SFT
-      if (
-        from != address(0) &&
-        to != address(0) &&
-        _addressToTokenId(from).isBaseCard() &&
-        _addressToTokenId(to) == uint256(-1)
-      ) {
-        IWOWSSftMinter minter = IWOWSSftMinter(
-          _getAddressRegistryAddress(_addressRegistry, AddressBook.SFT_MINTER)
-        );
-        for (uint256 i = 0; i < tokenIds.length; i++) {
-          uint256 tokenId = tokenIds[i];
-          if (tokenId.isCFolioCard()) {
-            uint256 tokenIdNew = minter.tradeFloorTokenId(
-              tokenId.toSftTokenId()
-            );
-            if (tokenIdNew != tokenId) {
-              _burn(to, tokenId, 1);
-              _mintAndEmit(to, tokenIdNew);
-              _relinkOwner(to, address(0), tokenId, tokenIdNew);
-            }
-          }
-        }
-      }
     }
   }
 
@@ -746,13 +659,10 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     bytes memory data
   ) private {
     // We only support tokens from our SFT Holder contract
-    require(
-      _msgSender() == _addressRegistry.getRegistryEntry(AddressBook.SFT_HOLDER),
-      'Invalid sender'
-    );
+    require(_msgSender() == address(_sftHolder), 'TF: Invalid sender');
 
     // Validate parameters
-    require(tokenIds.length == amounts.length, 'Lengths mismatch');
+    require(tokenIds.length == amounts.length, 'TF: Lengths mismatch');
 
     // To save gas we allow minting directly into a given recipient
     address sftRecipient;
@@ -761,16 +671,12 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
       require(sftRecipient != address(0), 'TF: invalid recipient');
     } else sftRecipient = from;
 
-    IWOWSSftMinter minter = IWOWSSftMinter(
-      _getAddressRegistryAddress(_addressRegistry, AddressBook.SFT_MINTER)
-    );
-
     // Update state
     uint256[] memory mintedTokenIds = new uint256[](tokenIds.length);
     for (uint256 i = 0; i < tokenIds.length; ++i) {
       require(amounts[i] == 1, 'Amount != 1 not allowed');
 
-      uint256 mintedTokenId = minter.tradeFloorTokenId(tokenIds[i]);
+      uint256 mintedTokenId = _hashedTokenId(tokenIds[i]);
       mintedTokenIds[i] = mintedTokenId;
 
       // OpenSea only listens to TransferSingle event on mint
@@ -856,27 +762,6 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   }
 
   /**
-   * @dev Check if the address is a valid target
-   *
-   * If sftHolder returns a valid tokenId, it must be a card not owned by this
-   * contract (which means it is locked). Even though Cryptofolio supports
-   * multiple TradeFloors, the main SFT lock handling happens only in this
-   * contract instance.
-   *
-   * @param test The address to test
-   *
-   * @return True if the address is a valid target, false otherwise
-   */
-  function _validTarget(address test) private view returns (bool) {
-    uint256 tokenId;
-    return
-      test == address(0) ||
-      (tokenId = _addressToTokenId(test)) == uint256(-1) ||
-      (tokenId.isBaseCard() &&
-        IERC1155(address(_sftHolder)).balanceOf(address(this), tokenId) == 0);
-  }
-
-  /**
    * @dev Save contract size by wrappng external call into an internal
    */
   function _getAddressRegistryAddress(IAddressRegistry reg, bytes32 data)
@@ -906,5 +791,46 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
 
     // Rarible needs to be informed about fees
     emit SecondarySaleFees(tokenId, getFeeRecipients(0), getFeeBps(0));
+  }
+
+  /**
+   * @dev Calculate a 128-bit hash for making tokenIds unique to underlying asset
+   *
+   * @param sftTokenId The tokenId from SFT contract from that we use the first 128 bit
+   * TokenIds in SFT contract are limited to max 128 Bit in WowsSftMinter contract.
+   */
+  function _hashedTokenId(uint256 sftTokenId) private view returns (uint256) {
+    bytes memory hashData;
+    uint256[] memory tokenIds;
+    uint256 tokenIdsLength;
+    if (sftTokenId.isBaseCard()) {
+      // It's a base card, calculate hash using all cfolioItems
+      address cfolio = _sftHolder.tokenIdToAddress(sftTokenId);
+      require(cfolio != address(0), 'TF: src token invalid');
+      (tokenIds, tokenIdsLength) = IWOWSCryptofolio(cfolio).getCryptofolio(
+        _cfiBridge
+      );
+      hashData = abi.encodePacked(address(this), sftTokenId);
+    } else {
+      // It's a cfolioItem itself, only calculate underlying value
+      tokenIds = new uint256[](1);
+      tokenIds[0] = sftTokenId;
+      tokenIdsLength = 1;
+    }
+
+    // Run through all cfolioItems and let their single CFolioItemHandler
+    // append hashable data
+    for (uint256 i = 0; i < tokenIdsLength; ++i) {
+      address cfolio = _sftHolder.tokenIdToAddress(tokenIds[i].toSftTokenId());
+      require(cfolio != address(0), 'TF: item token invalid');
+
+      address handler = IWOWSCryptofolio(cfolio)._tradefloors(0);
+      require(handler != address(0), 'TF: item handler invalid');
+
+      hashData = ICFolioItemCallback(handler).appendHash(cfolio, hashData);
+    }
+
+    uint256 hashNum = uint256(keccak256(hashData));
+    return (hashNum ^ (hashNum << 128)).maskHash() | sftTokenId;
   }
 }

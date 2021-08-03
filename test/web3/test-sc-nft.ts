@@ -22,6 +22,7 @@ import { abi as CurveYDepositAbi } from '../../contracts/bytecode/curve-contract
 import { abi as CurveYSwapAbi } from '../../contracts/bytecode/curve-contracts/StableSwapY.json';
 //import CurveYDepositAbi from '../../src/abi/contracts/interfaces/curve/CurveDepositInterface.sol/ICurveFiDepositY.json';
 import YearnVaultAbi from '../../src/abi/contracts/interfaces/curve/YTokenInterface.sol/IYERC20.json';
+import CFolioItemBridgeAbi from '../../src/abi/contracts/src/cfolio/CFolioItemBridge.sol/CFolioItemBridge.json';
 import CFolioItemHandlerScAbi from '../../src/abi/contracts/src/cfolio/CFolioItemHandlerSC.sol/CFolioItemHandlerSC.json';
 import WOWSSftMinterAbi from '../../src/abi/contracts/src/crowdsale/WOWSSftMinter.sol/WOWSSftMinter.json';
 import CFolioFarmAbi from '../../src/abi/contracts/src/investment/CFolioFarm.sol/CFolioFarm.json';
@@ -160,6 +161,16 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
     WOWSERC1155Abi,
     marketingWallet
   );
+  const cfiBridgeContract = new ethers.Contract(
+    addresses.cfiBridge,
+    CFolioItemBridgeAbi,
+    marketingWallet
+  );
+  const cfiBridgeProxyContract = new ethers.Contract(
+    addresses.cfiBridgeProxy,
+    UpgradeProxyAbi,
+    marketingWallet
+  );
   const sftMinterContract = new ethers.Contract(
     addresses.sftMinter,
     WOWSSftMinterAbi,
@@ -205,6 +216,8 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
     curveYSwapContract,
     curveYDepositContract,
     sftHolderContract,
+    cfiBridgeContract,
+    cfiBridgeProxyContract,
     sftMinterContract,
     tradeFloorContract,
     tradeFloorProxyContract,
@@ -219,6 +232,7 @@ describe('SC NFTs', function () {
   let marketingWallet: SignerWithAddress;
   let contracts: any;
 
+  let cfiBridgeProxyInstance: ethers.Contract;
   let tradeFloorProxyInstance: ethers.Contract;
   let cfolioItemHandlerSCProxyInstance: ethers.Contract;
 
@@ -308,6 +322,17 @@ describe('SC NFTs', function () {
 
     console.log(`    ETH price is $${ethUsd}`);
     console.log(`    Using '${GAS_PRICE}' gas at ${gasPrice / 1e9} Gwei`);
+  });
+
+  it('should attach the cfi bridge proxy', async function () {
+    this.timeout(60 * 1000);
+
+    const { cfiBridgeContract, cfiBridgeProxyContract } = contracts;
+
+    // Attach the proxy and set marketing wallet signer
+    cfiBridgeProxyInstance = cfiBridgeContract
+      .attach(cfiBridgeProxyContract.address)
+      .connect(marketingWallet);
   });
 
   it('should attach the trade floor proxy', async function () {
@@ -600,7 +625,7 @@ describe('SC NFTs', function () {
       wowsTokenIdWolf,
       []
     );
-    await chai.expect(tx).to.be.revertedWith('CFIH: Bois only');
+    await chai.expect(tx).to.be.revertedWith('CFIHSC: Bois only');
 
     // Wolf cryptofolio should be in its original state
     const [tokenIds, idsLength] = await cryptofolioContractWolf.getCryptofolio(
@@ -619,7 +644,7 @@ describe('SC NFTs', function () {
     const {
       sftHolderContract,
       sftMinterContract,
-      tradeFloorProxyContract,
+      cfiBridgeProxyContract,
       cfolioFarmSCContract,
     } = contracts;
 
@@ -646,13 +671,6 @@ describe('SC NFTs', function () {
       )})`
     );
 
-    // Check cryptofolio and the SC NFT should appear
-    const [tokenIds, idsLength] = await cryptofolioContractBoi.getCryptofolio(
-      tradeFloorProxyContract.address
-    );
-    chai.expect(idsLength).to.equal(1);
-    cfolioItemTokenIdTf = tokenIds[0];
-
     // Get the address of the investment card clone contract
     cryptofolioItemAddressBoiSC = await sftHolderContract.tokenIdToAddress(
       cfolioItemTokenId
@@ -673,48 +691,44 @@ describe('SC NFTs', function () {
       .to.emit(cryptofolioContractBoi, 'CryptoFolioAdded')
       .withArgs(
         cryptofolioAddressBoi,
-        tradeFloorProxyContract.address,
-        [cfolioItemTokenIdTf],
+        cfiBridgeProxyContract.address,
+        [cfolioItemTokenId],
         [1]
       );
-  });
-
-  it('should check trade floor ID', async function () {
-    chai.expect(cfolioItemTokenIdTf.and(HASH_MASK)).to.equal(cfolioItemTokenId);
   });
 
   it('should check cryptofolio for SC NFT', async function () {
     this.timeout(60 * 1000);
 
-    const { tradeFloorProxyContract } = contracts;
+    const { cfiBridgeProxyContract } = contracts;
 
     // Check cryptofolio and the SC NFT should appear
     const [tokenIds, idsLength] = await cryptofolioContractBoi.getCryptofolio(
-      tradeFloorProxyContract.address
+      cfiBridgeProxyContract.address
     );
     chai.expect(idsLength).to.equal(1);
-    chai.expect(tokenIds[0]).to.equal(cfolioItemTokenIdTf);
+    chai.expect(tokenIds[0]).to.equal(cfolioItemTokenId);
   });
 
-  it('should check cryptofolio for trade floor NFT', async function () {
+  it('should check cryptofolio item bridge for NFT', async function () {
     this.timeout(60 * 1000);
 
-    // Item in the trade floor contract should belong to the cryptofolio
-    const balance = await tradeFloorProxyInstance.balanceOf(
+    // Item in the CFI bridge contract should belong to the cryptofolio
+    const balance = await cfiBridgeProxyInstance.balanceOf(
       cryptofolioAddressBoi,
-      cfolioItemTokenIdTf
+      cfolioItemTokenId
     );
     chai.expect(balance).to.equal(1);
   });
 
-  it('should check trade floor for investment SFT', async function () {
+  it('should check SFT holder contract for investment NFT', async function () {
     this.timeout(60 * 1000);
 
-    const { sftHolderContract, tradeFloorProxyContract } = contracts;
+    const { sftHolderContract, cfiBridgeProxyContract } = contracts;
 
-    // Item in the SFT holder should belong to the trade floor
+    // Item in the SFT holder contract should belong to the CFI bridge
     const balance = await sftHolderContract.balanceOf(
-      tradeFloorProxyContract.address,
+      cfiBridgeProxyContract.address,
       cfolioItemTokenId
     );
     chai.expect(balance).to.equal(1);
@@ -764,7 +778,7 @@ describe('SC NFTs', function () {
 
   //
   // Now that we've minted an SC NFT into a cryptofolio, we move it out of the
-  // cryptofolio and into the user's wallet.
+  // cryptofolio and into the user's wallet, and after this into the TradeFloor.
   //
 
   it('should remove c-folio item from base SFT c-folio', async function () {
@@ -772,14 +786,16 @@ describe('SC NFTs', function () {
 
     const { cfolioFarmSCContract } = contracts;
 
-    // Transfer locked cryptofolio item NFT
-    const tx = tradeFloorProxyInstance.safeTransferFrom(
+    // Transfer bridged cryptofolio item NFT
+    const tx = cfiBridgeProxyInstance.burnBatch(
       cryptofolioAddressBoi,
-      marketingWallet.address,
-      cfolioItemTokenIdTf,
-      1,
-      []
+      [cfolioItemTokenId],
+      [1]
     );
+    await chai
+      .expect(tx)
+      .to.emit(cfolioFarmSCContract, 'ShareRemoved')
+      .withArgs(cryptofolioAddressBoi, yPoolBalance.div(2));
 
     // Log gas cost
     const receipt = await (await tx).wait();
@@ -789,28 +805,72 @@ describe('SC NFTs', function () {
         .mul(await getGasPrice())
         .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
     console.log(
-      `    Transfer locked SC NFT (from card to wallet) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+      `    Burn SC NFT (from card to wallet) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
         gasCost
       )})`
     );
+  });
+
+  it('should transfer cfolioitem to tradefloor', async function () {
+    this.timeout(60 * 1000);
+
+    const { sftHolderContract, tradeFloorProxyContract } = contracts;
+
+    // Transfer SFT into the TradeFloor contract
+    const tx = await sftHolderContract.safeTransferFrom(
+      marketingWallet.address,
+      tradeFloorProxyContract.address,
+      cfolioItemTokenId,
+      1,
+      []
+    );
+
+    // Fetch the generated tokenID
+    const tokenIds = await tradeFloorProxyInstance.getTokenIds(
+      marketingWallet.address
+    );
+    chai.expect(tokenIds.length).to.equal(1);
+    cfolioItemTokenIdTf = tokenIds[0];
 
     await chai
       .expect(tx)
-      .to.emit(cfolioFarmSCContract, 'ShareRemoved')
+      .to.emit(tradeFloorProxyInstance, 'TransferSingle')
       .withArgs(
-        cryptofolioAddressBoi, // User
-        yPoolBalance.div(2) // Amount
+        sftHolderContract.address,
+        ADDRESS_ZERO,
+        marketingWallet.address,
+        cfolioItemTokenIdTf,
+        1
       );
+
+    it('should check trade floor ID', async function () {
+      chai
+        .expect(cfolioItemTokenIdTf.and(HASH_MASK))
+        .to.equal(cfolioItemTokenId);
+    });
+
+    // Log gas cost
+    const receipt = await (await tx).wait();
+    const gasUsedGwei = receipt.gasUsed;
+    const gasCost =
+      gasUsedGwei
+        .mul(await getGasPrice())
+        .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
+    console.log(
+      `    Transfer SC NFT (from Wallet to TF) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+        gasCost
+      )})`
+    );
   });
 
   it('should check empty cryptofolio for no c-folio items', async function () {
     this.timeout(60 * 1000);
 
-    const { tradeFloorProxyContract } = contracts;
+    const { cfiBridgeProxyContract } = contracts;
 
-    // Check cryptofolio and the SC NFT should appear
+    // Check cryptofolio and the SC NFT shouldn't appear
     const [tokenIds, idsLength] = await cryptofolioContractBoi.getCryptofolio(
-      tradeFloorProxyContract.address
+      cfiBridgeProxyContract.address
     );
     chai.expect(idsLength).to.equal(0);
   });
@@ -1099,8 +1159,8 @@ describe('SC NFTs', function () {
   // was previously done automatically as part of the crowdsale minting
   // function at the beginning of this test suite. Now we perform it manually.
   //
-  // To lock the investment SFT, we send it to the Trade Floor. The Trade Floor
-  // will send back an SC NFT.
+  // To lock the investment SFT, we send it to the TradeFloor. The TradeFloor
+  // sends back a new NFT.
   //
 
   it('should lock investment SFT into trade floor', async function () {
@@ -1132,6 +1192,35 @@ describe('SC NFTs', function () {
     );
   });
 
+  //
+  // Test depositing into a CFolioItem that sits inside an unlocked
+  //
+
+  it('should remove c-folio from tradefloor', async function () {
+    this.timeout(60 * 1000);
+
+    // Transfer bridged cryptofolio item NFT
+    const tx = tradeFloorProxyInstance.burnBatch(
+      marketingWallet.address,
+      [cfolioItemTokenIdTf],
+      [1]
+    );
+    await chai.expect(tx).to.not.be.reverted;
+
+    // Log gas cost
+    const receipt = await (await tx).wait();
+    const gasUsedGwei = receipt.gasUsed;
+    const gasCost =
+      gasUsedGwei
+        .mul(await getGasPrice())
+        .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
+    console.log(
+      `    Burn SC SFT (from card to wallet) gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
+        gasCost
+      )})`
+    );
+  });
+
   it('should check wallet for trade floor NFT', async function () {
     this.timeout(60 * 1000);
 
@@ -1140,17 +1229,17 @@ describe('SC NFTs', function () {
       marketingWallet.address,
       cfolioItemTokenIdTf
     );
-    chai.expect(balance).to.equal(1);
+    chai.expect(balance).to.equal(0);
   });
 
   it('should check trade floor for investment SFT', async function () {
     this.timeout(60 * 1000);
 
-    const { sftHolderContract, tradeFloorProxyContract } = contracts;
+    const { sftHolderContract } = contracts;
 
     // Item in the SFT holder should belong to the trade floor
     const balance = await sftHolderContract.balanceOf(
-      tradeFloorProxyContract.address,
+      marketingWallet.address,
       cfolioItemTokenId
     );
     chai.expect(balance).to.equal(1);
@@ -1162,18 +1251,19 @@ describe('SC NFTs', function () {
   // automatically by the crowdsale minting contract. Here we do it manually.
   //
 
-  it('should transfer the locked NFT into the boi card', async function () {
+  it('should transfer the NFT into the boi card', async function () {
     this.timeout(60 * 1000);
 
-    const { cfolioFarmSCContract } = contracts;
+    const { cfiBridgeProxyContract, cfolioFarmSCContract, sftHolderContract } =
+      contracts;
 
-    // Transfer locked cryptofolio item NFT
-    const tx = tradeFloorProxyInstance.safeTransferFrom(
+    // Transfer cryptofolio item NFT
+    const tx = sftHolderContract.safeTransferFrom(
       marketingWallet.address,
-      cryptofolioAddressBoi,
-      cfolioItemTokenIdTf,
+      cfiBridgeProxyContract.address,
+      cfolioItemTokenId,
       1,
-      []
+      cryptofolioAddressBoi
     );
     await chai.expect(tx).to.emit(cfolioFarmSCContract, 'ShareAdded');
     //.withArgs(cryptofolioAddressBoi, lpBalance.div(2)); // TODO
@@ -1192,21 +1282,14 @@ describe('SC NFTs', function () {
     );
   });
 
-  //
-  // Test depositing into a locked CFolioItem that sits inside an unlocked
-  // CFolio. This optimization allows for us to avoid a transfer -> unlock ->
-  // deposit -> lock -> transfer transaction.
-  //
-
-  it('should withdraw DAI from CFIHSC (locked NFT, unlocked card)', async function () {
+  it('should withdraw DAI from CFIHSC (unlocked card)', async function () {
     this.timeout(60 * 1000);
 
     const tx = cfolioItemHandlerSCProxyInstance.withdraw(
       wowsTokenIdBoi,
-      cfolioItemTokenIdTf,
+      cfolioItemTokenId,
       [100, 0, 0, 0, 100]
     );
-    await chai.expect(tx).to.not.be.reverted;
 
     // Log gas cost
     const receipt = await (await tx).wait();
@@ -1246,15 +1329,14 @@ describe('SC NFTs', function () {
     chai.expect(currentYPoolBalance).to.equal(yPoolBalance.sub(100));
   });
 
-  it('should deposit DAI to CFIHSC (locked investment SFT)', async function () {
+  it('should deposit DAI to CFIHSC', async function () {
     this.timeout(60 * 1000);
 
     const tx = cfolioItemHandlerSCProxyInstance.deposit(
       wowsTokenIdBoi,
-      cfolioItemTokenIdTf,
+      cfolioItemTokenId,
       [100, 0, 0, 0, 0]
     );
-    await chai.expect(tx).to.not.be.reverted;
 
     // Log gas cost
     const receipt = await (await tx).wait();
@@ -1346,12 +1428,11 @@ describe('SC NFTs', function () {
     this.timeout(60 * 1000);
 
     // Burn locked cryptofolio NFT
-    const tx = tradeFloorProxyInstance.burn(
+    const tx = cfiBridgeProxyInstance.burnBatch(
       cryptofolioAddressBoi,
-      cfolioItemTokenIdTf,
-      1
+      [cfolioItemTokenId],
+      [1]
     );
-    await chai.expect(tx).to.not.be.reverted;
 
     // Log gas cost
     const receipt = await (await tx).wait();
@@ -1382,7 +1463,7 @@ describe('SC NFTs', function () {
       cfolioItemTokenId,
       1
     );
-    await chai.expect(tx).to.be.revertedWith('CFIH: not empty');
+    await chai.expect(tx).to.be.revertedWith('CFIH: Not empty');
   });
 
   it('should get the remaining yCRV balance in CFIHSC', async function () {

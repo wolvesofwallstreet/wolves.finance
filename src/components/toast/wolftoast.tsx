@@ -22,7 +22,7 @@ import {
   ADDRESS_COPIED,
   CFOLIO_ITEM_BUY,
   CFOLIO_ITEM_DEPOSIT,
-  CFOLIO_ITEM_LOCK_TRANSFER,
+  CFOLIO_ITEM_UNLOCK_TRANSFER,
   CFOLIO_ITEM_WITHDRAW,
   CONNECTION_CHANGED,
   REVOKE_APPROVAL,
@@ -79,13 +79,13 @@ class WolfToast extends Component<TOASTPROPS, TOASTSTATE> {
     StoreClasses.emitter.on(CFOLIO_ITEM_BUY, this.onTransaction);
     StoreClasses.emitter.on(CFOLIO_ITEM_DEPOSIT, this.onTransaction);
     StoreClasses.emitter.on(CFOLIO_ITEM_WITHDRAW, this.onTransaction);
-    StoreClasses.emitter.on(CFOLIO_ITEM_LOCK_TRANSFER, this.onTransaction);
+    StoreClasses.emitter.on(CFOLIO_ITEM_UNLOCK_TRANSFER, this.onTransaction);
     StoreClasses.emitter.on(REVOKE_APPROVAL, this.onTransaction);
   }
 
   componentWillUnmount(): void {
     StoreClasses.emitter.off(REVOKE_APPROVAL, this.onTransaction);
-    StoreClasses.emitter.off(CFOLIO_ITEM_LOCK_TRANSFER, this.onTransaction);
+    StoreClasses.emitter.off(CFOLIO_ITEM_UNLOCK_TRANSFER, this.onTransaction);
     StoreClasses.emitter.off(CFOLIO_ITEM_WITHDRAW, this.onTransaction);
     StoreClasses.emitter.off(CFOLIO_ITEM_DEPOSIT, this.onTransaction);
     StoreClasses.emitter.off(CFOLIO_ITEM_BUY, this.onTransaction);
