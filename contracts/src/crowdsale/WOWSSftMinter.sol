@@ -493,8 +493,8 @@ contract WOWSSftMinter is Context, AccessControl {
     view
     returns (bytes memory result)
   {
-    uint256[] memory cFolioItems;
-    uint256[] memory oneCFolioItem = new uint256[](1);
+    uint256[] memory cfolioItems;
+    uint256[] memory oneCfolioItem = new uint256[](1);
     uint256 cfolioLength;
     uint256 rewardRate;
     uint256 timestamp;
@@ -504,20 +504,17 @@ contract WOWSSftMinter is Context, AccessControl {
         // Only main TradeFloor supported
         uint256 sftTokenId = tokenIds[i].toSftTokenId();
         address cfolio = _sftContract.tokenIdToAddress(sftTokenId);
-        if (address(cfolio) != address(0)) {
-          uint256[] memory cfolioItems = _sftContract.getTokenIds(cfolio);
-          cfolioLength = cfolioItems.length;
-        } else {
-          cFolioItems = oneCFolioItem;
-          cfolioLength = 0;
-        }
+        require(cfolio != address(0), 'WM: Invalid cfi');
+
+        cfolioItems = _sftContract.getTokenIds(cfolio);
+        cfolioLength = cfolioItems.length;
 
         rewardRate = sftEvaluator.rewardRate(tokenIds[i]);
         (timestamp, ) = _sftContract.getTokenData(sftTokenId);
       } else {
-        oneCFolioItem[0] = tokenIds[i];
+        oneCfolioItem[0] = tokenIds[i];
         cfolioLength = 1;
-        cFolioItems = oneCFolioItem; // Reference, no copy
+        cfolioItems = oneCfolioItem; // Reference, no copy
         rewardRate = 0;
         timestamp = 0;
       }
@@ -525,19 +522,19 @@ contract WOWSSftMinter is Context, AccessControl {
       result = abi.encodePacked(result, rewardRate, timestamp, cfolioLength);
 
       for (uint256 j = 0; j < cfolioLength; ++j) {
-        uint256 sftTokenId = cFolioItems[j].toSftTokenId();
-        uint256 cfolioType = _sftContract.getCFolioItemType(sftTokenId);
+        uint256 tokenId = cfolioItems[j];
+        uint256 cfolioType = _sftContract.getCFolioItemType(tokenId);
         uint256[] memory amounts;
 
-        address cfolio = _sftContract.tokenIdToAddress(sftTokenId);
-        if (address(cfolio) != address(0)) {
-          address handler = IWOWSCryptofolio(cfolio).getHandler();
-          amounts = ICFolioItemHandler(handler).getAmounts(cfolio);
-        }
+        address cfolio = _sftContract.tokenIdToAddress(tokenId);
+        require(address(cfolio) != address(0), 'WM: Invalid cfi');
+
+        address handler = IWOWSCryptofolio(cfolio).getHandler();
+        amounts = ICFolioItemHandler(handler).getAmounts(cfolio);
 
         result = abi.encodePacked(
           result,
-          cFolioItems[j],
+          cfolioItems[j],
           cfolioType,
           amounts.length,
           amounts
