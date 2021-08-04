@@ -30,4 +30,4 @@ export const SFT_UPGRADE = 'SFT_UPGRADE'; // Upgrade Reward Share
 export const CFOLIO_ITEM_BUY = 'CFOLIO_ITEM_BUY'; // Buy (mint) cfolioItem
 export const CFOLIO_ITEM_DEPOSIT = 'CFOLIO_ITEM_DEPOSIT'; // Add investment into existing CFI
 export const CFOLIO_ITEM_WITHDRAW = 'CFOLIO_ITEM_WITHDRAW_LP'; // Remove LP token from existing CFI
-export const CFOLIO_ITEM_LOCK_TRANSFER = 'CFOLIO_ITEM_LOCK_TRANSFER'; // LockTransfer / transfer CFI's
+export const CFOLIO_ITEM_UNLOCK_TRANSFER = 'CFOLIO_ITEM_UNLOCK_TRANSFER'; // UnlockBurn / transfer CFIs
