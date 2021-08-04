@@ -14,8 +14,11 @@ import '../../0xerc1155/tokens/ERC1155/ERC1155Holder.sol';
 
 import './interfaces/IERC1155BurnMintable.sol';
 import './interfaces/IWOWSCryptofolio.sol';
+import '../utils/TokenIds.sol';
 
 contract WOWSCryptofolio is IWOWSCryptofolio, Context, ERC1155Holder {
+  using TokenIds for uint256;
+
   //////////////////////////////////////////////////////////////////////////////
   // State
   //////////////////////////////////////////////////////////////////////////////
@@ -33,6 +36,9 @@ contract WOWSCryptofolio is IWOWSCryptofolio, Context, ERC1155Holder {
   // Signs if this is a cryptofolio (not I-NFT)
   bool private _isCryptofolio;
 
+  // Constants
+  string private constant FORBIDDEN = 'CF: Forbidden';
+
   //////////////////////////////////////////////////////////////////////////////
   // Events
   //////////////////////////////////////////////////////////////////////////////
@@ -49,8 +55,13 @@ contract WOWSCryptofolio is IWOWSCryptofolio, Context, ERC1155Holder {
   // Modifier
   //////////////////////////////////////////////////////////////////////////////
 
-  modifier onlySftContract(address adr) {
-    require(adr == address(_sftContract), 'CF: Only deployer');
+  modifier onlyFromSftContract() {
+    require(_msgSender() == address(_sftContract), 'CF: Only deployer');
+    _;
+  }
+
+  modifier onlyCFolio() {
+    require(_isCryptofolio, 'CF: Only cfolio');
     _;
   }
 
@@ -79,7 +90,7 @@ contract WOWSCryptofolio is IWOWSCryptofolio, Context, ERC1155Holder {
    */
   function getHandler() external view override returns (address) {
     // Access control
-    require(!_isCryptofolio, 'CF: Forbidden');
+    require(!_isCryptofolio, FORBIDDEN);
 
     return handlerOrOwner;
   }
@@ -87,13 +98,9 @@ contract WOWSCryptofolio is IWOWSCryptofolio, Context, ERC1155Holder {
   /**
    * @dev See {IWOWSCryptofolio-setOwner}.
    */
-  function setOwner(address newOwner)
-    external
-    override
-    onlySftContract(_msgSender())
-  {
+  function setOwner(address newOwner) external override onlyFromSftContract {
     // Access control
-    require(_isCryptofolio, 'CF: Forbidden');
+    require(_isCryptofolio, FORBIDDEN);
 
     if (handlerOrOwner != address(0))
       _sftContract.setApprovalForAll(handlerOrOwner, false);
@@ -107,10 +114,10 @@ contract WOWSCryptofolio is IWOWSCryptofolio, Context, ERC1155Holder {
   function setHandler(address newHandler)
     external
     override
-    onlySftContract(_msgSender())
+    onlyFromSftContract
   {
     // Access control
-    require(!_isCryptofolio, 'CF: Forbidden');
+    require(!_isCryptofolio, FORBIDDEN);
 
     handlerOrOwner = newHandler;
   }
@@ -143,7 +150,10 @@ contract WOWSCryptofolio is IWOWSCryptofolio, Context, ERC1155Holder {
     uint256 tokenId,
     uint256 amount,
     bytes calldata data
-  ) public override onlySftContract(operator) returns (bytes4) {
+  ) public override onlyFromSftContract onlyCFolio returns (bytes4) {
+    // Validate tokenId
+    require(tokenId.isCFolioCard(), 'CF: Only CFI');
+
     // Call ancestor
     return super.onERC1155Received(operator, from, tokenId, amount, data);
   }
@@ -157,8 +167,11 @@ contract WOWSCryptofolio is IWOWSCryptofolio, Context, ERC1155Holder {
     uint256[] calldata tokenIds,
     uint256[] calldata amounts,
     bytes calldata data
-  ) public override onlySftContract(operator) returns (bytes4) {
-    // Update state
+  ) public override onlyFromSftContract onlyCFolio returns (bytes4) {
+    // Validate tokenIds
+    for (uint256 i = 0; i < tokenIds.length; ++i)
+      require(tokenIds[i].isCFolioCard(), 'CF: Only CFI');
+
     // Call ancestor
     return
       super.onERC1155BatchReceived(operator, from, tokenIds, amounts, data);

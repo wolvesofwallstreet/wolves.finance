@@ -17,7 +17,6 @@ import fs from 'fs';
 
 import WOWSSftMinterAbi from '../../src/abi/contracts/src/crowdsale/WOWSSftMinter.sol/WOWSSftMinter.json';
 import RewardHandlerAbi from '../../src/abi/contracts/src/investment/RewardHandler.sol/RewardHandler.json';
-import UpgradeProxyAbi from '../../src/abi/contracts/src/proxy/UpgradeProxy.sol/UpgradeProxy.json';
 import TradeFloorAbi from '../../src/abi/contracts/src/token/TradeFloor.sol/TradeFloor.json';
 import WOWSTokenAbi from '../../src/abi/contracts/src/token/WOWSErc20.sol/WowsToken.json';
 import WOWSERC1155Abi from '../../src/abi/contracts/src/token/WOWSErc1155.sol/WOWSERC1155.json';
@@ -73,23 +72,18 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
     marketingWallet
   );
   const sftHolderContract = new ethers.Contract(
-    addresses.sftHolder,
+    addresses.sftHolderProxy,
     WOWSERC1155Abi,
     marketingWallet
   );
   const sftMinterContract = new ethers.Contract(
-    addresses.sftMinter,
+    addresses.sftMinterProxy,
     WOWSSftMinterAbi,
     marketingWallet
   );
   const tradeFloorContract = new ethers.Contract(
-    addresses.tradeFloor,
-    TradeFloorAbi,
-    marketingWallet
-  );
-  const tradeFloorProxyContract = new ethers.Contract(
     addresses.tradeFloorProxy,
-    UpgradeProxyAbi,
+    TradeFloorAbi,
     marketingWallet
   );
 
@@ -99,7 +93,6 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
     sftHolderContract,
     sftMinterContract,
     tradeFloorContract,
-    tradeFloorProxyContract,
   };
 });
 
@@ -121,16 +114,11 @@ describe('SFT contracts', function () {
   it('should check access', async function () {
     this.timeout(60 * 1000);
 
-    const {
-      sftHolderContract,
-      sftMinterContract,
-      tradeFloorContract,
-      tradeFloorProxyContract,
-    } = await setupTest();
+    const { sftHolderContract, sftMinterContract, tradeFloorContract } =
+      await setupTest();
 
     const DEFAULT_ADMIN_ROLE = await sftHolderContract.DEFAULT_ADMIN_ROLE();
     const MINTER_ROLE = await sftHolderContract.MINTER_ROLE();
-    const TRADEFLOOR_ROLE = await sftHolderContract.TRADEFLOOR_ROLE();
     const OPERATOR_ROLE = await sftHolderContract.OPERATOR_ROLE();
 
     // Test deployer
@@ -139,9 +127,6 @@ describe('SFT contracts', function () {
     ).to.be.false;
     chai.expect(await sftHolderContract.hasRole(MINTER_ROLE, signer.address)).to
       .be.false;
-    chai.expect(
-      await sftHolderContract.hasRole(TRADEFLOOR_ROLE, signer.address)
-    ).to.be.false;
     chai.expect(await sftHolderContract.hasRole(OPERATOR_ROLE, signer.address))
       .to.be.false;
 
@@ -154,9 +139,6 @@ describe('SFT contracts', function () {
     ).to.be.true;
     chai.expect(
       await sftHolderContract.hasRole(MINTER_ROLE, marketingWallet.address)
-    ).to.be.false;
-    chai.expect(
-      await sftHolderContract.hasRole(TRADEFLOOR_ROLE, marketingWallet.address)
     ).to.be.false;
     chai.expect(
       await sftHolderContract.hasRole(OPERATOR_ROLE, marketingWallet.address)
@@ -173,12 +155,6 @@ describe('SFT contracts', function () {
       await sftHolderContract.hasRole(MINTER_ROLE, sftMinterContract.address)
     ).to.be.true;
     chai.expect(
-      await sftHolderContract.hasRole(
-        TRADEFLOOR_ROLE,
-        sftMinterContract.address
-      )
-    ).to.be.false;
-    chai.expect(
       await sftHolderContract.hasRole(OPERATOR_ROLE, sftMinterContract.address)
     ).to.be.false;
 
@@ -193,10 +169,7 @@ describe('SFT contracts', function () {
       await sftHolderContract.hasRole(MINTER_ROLE, tradeFloorContract.address)
     ).to.be.false;
     chai.expect(
-      await sftHolderContract.hasRole(
-        TRADEFLOOR_ROLE,
-        tradeFloorContract.address
-      )
+      await sftHolderContract.hasRole(OPERATOR_ROLE, tradeFloorContract.address)
     ).to.be.false;
     chai.expect(
       await sftHolderContract.hasRole(OPERATOR_ROLE, tradeFloorContract.address)
@@ -206,79 +179,15 @@ describe('SFT contracts', function () {
     chai.expect(
       await sftHolderContract.hasRole(
         DEFAULT_ADMIN_ROLE,
-        tradeFloorProxyContract.address
+        tradeFloorContract.address
       )
     ).to.be.false;
     chai.expect(
-      await sftHolderContract.hasRole(
-        MINTER_ROLE,
-        tradeFloorProxyContract.address
-      )
+      await sftHolderContract.hasRole(MINTER_ROLE, tradeFloorContract.address)
     ).to.be.false;
     chai.expect(
-      await sftHolderContract.hasRole(
-        TRADEFLOOR_ROLE,
-        tradeFloorProxyContract.address
-      )
-    ).to.be.true;
-    chai.expect(
-      await sftHolderContract.hasRole(
-        OPERATOR_ROLE,
-        tradeFloorProxyContract.address
-      )
+      await sftHolderContract.hasRole(OPERATOR_ROLE, tradeFloorContract.address)
     ).to.be.false;
-  });
-
-  it('should have a trade floor', async function () {
-    this.timeout(60 * 1000);
-
-    const { sftHolderContract, tradeFloorContract, tradeFloorProxyContract } =
-      await setupTest();
-
-    // Check that the SFT knows the trade floor
-    let isTradeFloor = await sftHolderContract.isTradeFloor(
-      tradeFloorContract.address
-    );
-    chai.expect(isTradeFloor).to.be.false;
-    isTradeFloor = await sftHolderContract.isTradeFloor(
-      tradeFloorProxyContract.address
-    );
-    chai.expect(isTradeFloor).to.be.true;
-  });
-
-  it('should know the next WOWS token ID', async function () {
-    this.timeout(60 * 1000);
-
-    const { sftHolderContract } = await setupTest();
-
-    // Test parameters
-    const level = 1;
-    const cardId = 1;
-
-    // Check next mintable token ID of a given level and card ID
-    // Result is a tuple of (found, tokenId)
-    const result = await sftHolderContract.getNextMintableTokenId(
-      level,
-      cardId
-    );
-
-    // The result should be found
-    const found = result[0];
-    chai.expect(found).to.be.true;
-
-    // The token ID should be 0x01010000 (level = 0x01, card ID = 0x01)
-    const tokenId = result[1];
-    chai.expect(tokenId).to.equal('0x01010000');
-  });
-
-  it('should know the next custom token ID', async function () {
-    this.timeout(60 * 1000);
-
-    const { sftHolderContract } = await setupTest();
-
-    // Check next mintable custom token ID for custom SFTs
-    const customtokenId = await sftHolderContract.getNextMintableCustomToken();
-    chai.expect(customtokenId).to.equal('0x100000000');
   });
 
   it('should have a WOWS URI', async function () {
@@ -331,78 +240,20 @@ describe('SFT contracts', function () {
     this.timeout(60 * 1000);
 
     const { sftHolderContract } = await setupTest();
-    const MINTER_ROLE = await sftHolderContract.MINTER_ROLE();
 
     // Default URI of first custom token should be empty initially
     const tokenId = ethers.BigNumber.from('0x100000000');
     let uri = await sftHolderContract.uri(tokenId);
     chai.expect(uri).to.equal(METADATA_URI + '0100000000.json');
 
-    // Grant minter role
-    let tx = sftHolderContract.grantRole(MINTER_ROLE, marketingWallet.address);
-    await chai.expect(tx).to.not.be.reverted;
-
     // Set default URI for custom tokens
-    const referenceUri = METADATA_URI + 'custom.json';
-    tx = sftHolderContract.setCustomURI(tokenId, referenceUri);
+    const referenceUri = 'New/';
+    const tx = sftHolderContract.setCustomMetadataURI(referenceUri);
     await chai.expect(tx).to.not.be.reverted;
 
     // Check the default URI for custom tokens
     uri = await sftHolderContract.uri(tokenId);
-    chai.expect(uri).to.equal(referenceUri);
-  });
-
-  it('should set WOWS URI', async function () {
-    this.timeout(60 * 1000);
-
-    const { sftHolderContract } = await setupTest();
-
-    const DEFAULT_ADMIN_ROLE = await sftHolderContract.DEFAULT_ADMIN_ROLE();
-    const MINTER_ROLE = await sftHolderContract.MINTER_ROLE();
-
-    // Check the URI of (level = 1, card ID = 1)
-    const tokenId = ethers.BigNumber.from('0x01010000');
-    let uri = await sftHolderContract.uri(tokenId);
-    chai.expect(uri).to.equal(METADATA_URI + '0101.json');
-
-    // Set the URI of (level = 1, card ID = 1)
-    const referenceUri = METADATA_URI + 'custom.json';
-    let tx = sftHolderContract.setCustomURI(tokenId, referenceUri);
-    await chai.expect(tx).to.be.revertedWith('Access denied');
-
-    // Check roles (marketing wallet should be admin but not minter)
-    chai.expect(
-      await sftHolderContract.hasRole(
-        DEFAULT_ADMIN_ROLE,
-        marketingWallet.address
-      )
-    ).to.be.true;
-    chai.expect(
-      await sftHolderContract.hasRole(MINTER_ROLE, marketingWallet.address)
-    ).to.be.false;
-
-    // Grant minter role
-    tx = sftHolderContract.grantRole(MINTER_ROLE, marketingWallet.address);
-    await chai.expect(tx).to.not.be.reverted;
-
-    // Check roles (marketing wallet should be admin AND minter)
-    chai.expect(
-      await sftHolderContract.hasRole(
-        DEFAULT_ADMIN_ROLE,
-        marketingWallet.address
-      )
-    ).to.be.true;
-    chai.expect(
-      await sftHolderContract.hasRole(MINTER_ROLE, marketingWallet.address)
-    ).to.be.true;
-
-    // Set the URI of (level = 1, card ID = 1)
-    tx = sftHolderContract.setCustomURI(tokenId, referenceUri);
-    await chai.expect(tx).to.be.revertedWith('Only custom cards');
-
-    // Check the URI of (level = 1, card ID = 1)
-    uri = await sftHolderContract.uri(tokenId);
-    chai.expect(uri).to.equal(METADATA_URI + '0101.json');
+    chai.expect(uri).to.equal(referenceUri + '0100000000.json');
   });
 
   it('should set custom URI', async function () {
@@ -415,60 +266,25 @@ describe('SFT contracts', function () {
 
     // Test parameters
     const wowsReferenceUri = METADATA_URI + '0101.json';
-    const customReferenceUri = METADATA_URI + 'custom.json';
-    const baseMetadataUri = METADATA_URI + 'custom/';
+    const baseMetadataUri = 'New/';
     const wowsTokenId = ethers.BigNumber.from('0x01010000');
     const customTokenId = ethers.BigNumber.from('0x100000000');
-
-    // Test access control
-    let tx = sftHolderContract.setCustomURI(customTokenId, customReferenceUri);
-    await chai.expect(tx).to.be.revertedWith('Access denied');
-
-    // Check roles (marketing wallet should be admin but not minter)
-    chai.expect(
-      await sftHolderContract.hasRole(
-        DEFAULT_ADMIN_ROLE,
-        marketingWallet.address
-      )
-    ).to.be.true;
-    chai.expect(
-      await sftHolderContract.hasRole(MINTER_ROLE, marketingWallet.address)
-    ).to.be.false;
-
-    // Grant minter role
-    tx = sftHolderContract.grantRole(MINTER_ROLE, marketingWallet.address);
-    await chai.expect(tx).to.not.be.reverted;
-
-    // Check roles (marketing wallet should be admin AND minter)
-    chai.expect(
-      await sftHolderContract.hasRole(
-        DEFAULT_ADMIN_ROLE,
-        marketingWallet.address
-      )
-    ).to.be.true;
-    chai.expect(
-      await sftHolderContract.hasRole(MINTER_ROLE, marketingWallet.address)
-    ).to.be.true;
 
     // Check the current URI of custom token
     let uri = await sftHolderContract.uri(customTokenId);
     chai.expect(uri).to.equal(METADATA_URI + '0100000000.json');
 
     // Set the URI of custom token
-    tx = sftHolderContract.setCustomURI(customTokenId, customReferenceUri);
+    let tx = sftHolderContract.setCustomMetadataURI(baseMetadataUri);
     await chai.expect(tx).to.not.be.reverted;
 
     // Check the new URI of custom token
     uri = await sftHolderContract.uri(customTokenId);
-    chai.expect(uri).to.equal(customReferenceUri);
+    chai.expect(uri).to.equal(baseMetadataUri + '0100000000.json');
 
     // Check the current URI of WOWS token
     uri = await sftHolderContract.uri(wowsTokenId);
     chai.expect(uri).to.equal(wowsReferenceUri);
-
-    // Set the URI of WOWS token (should fail)
-    tx = sftHolderContract.setCustomURI(wowsTokenId, customReferenceUri);
-    await chai.expect(tx).to.be.revertedWith('Only custom cards');
 
     // Check the default URI of WOWS token
     uri = await sftHolderContract.uri(0);
@@ -481,39 +297,6 @@ describe('SFT contracts', function () {
     // Check the new URI of WOWS token
     uri = await sftHolderContract.uri(wowsTokenId);
     chai.expect(uri).to.equal(baseMetadataUri + '0101.json');
-  });
-
-  it('should get card data', async function () {
-    this.timeout(60 * 1000);
-
-    const { sftHolderContract } = await setupTest();
-
-    // Test parameters
-    const level = 1;
-    const cardId = 1;
-
-    // Check card data
-    const [cap, minted] = await sftHolderContract.getCardData(level, cardId);
-    chai.expect(cap).to.equal(20);
-    chai.expect(minted).to.equal(0);
-  });
-
-  it('should get card data by batch', async function () {
-    this.timeout(60 * 1000);
-
-    const { sftHolderContract } = await setupTest();
-
-    // Test parameters
-    const level = [1, 2];
-    const cardId = [1, 2];
-
-    // Check card data by batch
-    const [cap, minted, cap2, minted2] =
-      await sftHolderContract.getCardDataBatch(level, cardId);
-    chai.expect(cap).to.equal(20);
-    chai.expect(minted).to.equal(0);
-    chai.expect(cap2).to.equal(0);
-    chai.expect(minted2).to.equal(0);
   });
 
   it('should get token data', async function () {
@@ -553,43 +336,68 @@ describe('SFT contracts', function () {
     chai.expect(result.length).to.equal(0);
   });
 
+  //////////////////////////////////////////////////////////////////////////////
+  // SFT minter contract
+  //////////////////////////////////////////////////////////////////////////////
+
+  it('should get card spec', async function () {
+    this.timeout(60 * 1000);
+
+    const { sftMinterContract } = await setupTest();
+
+    // Test parameters
+    const level = 1;
+    const cardId = 1;
+
+    // Check card data
+    const [prices, minted, caps] = await sftMinterContract.getBaseSpec(
+      [level],
+      [cardId]
+    );
+    chai.expect(caps[0]).to.equal(40);
+    chai.expect(minted[0]).to.equal(0);
+  });
+
   it('should set WOWS level cap', async function () {
     this.timeout(60 * 1000);
 
-    const { sftHolderContract } = await setupTest();
+    const { sftMinterContract } = await setupTest();
 
     // Test empty arrays
     let levels = [];
     let newCaps = [];
-    let tx = sftHolderContract.setWowsLevelCaps(levels, newCaps);
+    let newPrices = [];
+    let tx = sftMinterContract.setBaseSpec(levels, newCaps, newPrices);
     await chai.expect(tx).to.not.be.reverted;
 
     // Test mismatching lengths
     levels = [0];
     newCaps = [200, 200];
-    tx = sftHolderContract.setWowsLevelCaps(levels, newCaps);
-    await chai.expect(tx).to.be.revertedWith("Lengths don't match");
+    newPrices = ['2500000000000000000'];
+    tx = sftMinterContract.setBaseSpec(levels, newCaps, newPrices);
+    await chai.expect(tx).to.be.revertedWith('WM: Length mismatch');
 
     // Set level caps
     levels = [0, 1];
     newCaps = [200, 200];
-    tx = sftHolderContract.setWowsLevelCaps(levels, newCaps);
+    newPrices = ['2500000000000000000', '4500000000000000000'];
+    tx = sftMinterContract.setBaseSpec(levels, newCaps, newPrices);
     await chai.expect(tx).to.not.be.reverted;
   });
-
-  //////////////////////////////////////////////////////////////////////////////
-  // SFT minter contract
-  //////////////////////////////////////////////////////////////////////////////
 
   it('should have an owner', async function () {
     this.timeout(60 * 1000);
 
     const { sftMinterContract } = await setupTest();
 
-    // Check ownership
-    chai
-      .expect(await sftMinterContract.owner())
-      .to.equal(marketingWallet.address);
+    const DEFAULT_ADMIN_ROLE = await sftMinterContract.DEFAULT_ADMIN_ROLE();
+
+    chai.expect(
+      await sftMinterContract.hasRole(
+        DEFAULT_ADMIN_ROLE,
+        marketingWallet.address
+      )
+    ).to.be.true;
   });
 
   it('should have reward role for Reward handler', async function () {
@@ -623,6 +431,7 @@ describe('SFT contracts', function () {
 
     // Test parameters
     const levels = [0, 1, 4, 5];
+    const cards = [0, 0, 0, 0];
     const referencePrices = [
       '2500000000000000000',
       '4500000000000000000',
@@ -631,7 +440,7 @@ describe('SFT contracts', function () {
     ];
 
     // Check initial prices
-    const prices = await sftMinterContract.getPrices(levels);
+    const [prices, ,] = await sftMinterContract.getBaseSpec(levels, cards);
     for (let i = 0; i < 4; i++) {
       const referencePrice = referencePrices[i];
       const price = prices[i];
@@ -646,14 +455,16 @@ describe('SFT contracts', function () {
 
     // Test parameters
     const levels = [0, 1, 2, 3];
+    const cards = [0, 0, 0, 0];
+    const caps = [40, 40, 40, 40];
     const referencePrices = ['100', '300', '100', '300'];
 
     // Set prices
-    const tx = sftMinterContract.setPrices(levels, referencePrices);
+    const tx = sftMinterContract.setBaseSpec(levels, caps, referencePrices);
     await chai.expect(tx).to.not.be.reverted;
 
     // Check new prices
-    const prices = await sftMinterContract.getPrices(levels);
+    const [prices, ,] = await sftMinterContract.getBaseSpec(levels, cards);
     for (let i = 0; i < 4; i++) {
       const referencePrice = referencePrices[i];
       const price = prices[i];

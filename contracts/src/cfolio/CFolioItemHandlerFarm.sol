@@ -45,20 +45,20 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
   // Routing
   //////////////////////////////////////////////////////////////////////////////
 
-  // Route to SFT Minter. Only setup from SFT Minter allowed.
-  address public sftMinter;
+  // Route to SFT Minter. Need for getRewards access.
+  address private immutable _sftMinter;
 
   // SFT evaluator
-  ISFTEvaluator public immutable sftEvaluator;
+  ISFTEvaluator private immutable _sftEvaluator;
 
   // Reward emitter
-  ICFolioFarmOwnable public immutable cfolioFarm;
+  ICFolioFarmOwnable internal immutable _cfolioFarm;
 
   // Admin
-  address public immutable admin;
+  address private immutable _admin;
 
   // The SFT contract needed to check if the address is a c-folio
-  IWOWSERC1155 public immutable sftHolder;
+  IWOWSERC1155 internal immutable _sftHolder;
 
   //////////////////////////////////////////////////////////////////////////////
   // Events
@@ -73,13 +73,6 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
   event RewardUpdated(uint256 previousAmount, uint256 newAmount);
 
   /**
-   * @dev Emitted when a new minter is set by the admin
-   *
-   * @param minter The new minter
-   */
-  event NewMinter(address minter);
-
-  /**
    * @dev Emitted when the contract is destructed
    *
    * @param thisContract The address of this contract
@@ -91,12 +84,12 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
   //////////////////////////////////////////////////////////////////////////////
 
   modifier onlySFTHolder() {
-    require(_msgSender() == address(sftHolder), 'CFHI: Only SFTH');
+    require(_msgSender() == address(_sftHolder), 'CFHI: Only SFTH');
     _;
   }
 
   modifier onlyAdmin() {
-    require(_msgSender() == admin, 'CFIH: Only admin');
+    require(_msgSender() == _admin, 'CFIH: Only admin');
     _;
   }
 
@@ -113,24 +106,23 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
    */
   constructor(IAddressRegistry addressRegistry, bytes32 rewardFarmKey) {
     // Admin
-    admin = addressRegistry.getRegistryEntry(AddressBook.ADMIN_ACCOUNT);
+    _admin = addressRegistry.getRegistryEntry(AddressBook.ADMIN_ACCOUNT);
 
     // The SFT holder
-    sftHolder = IWOWSERC1155(
+    _sftHolder = IWOWSERC1155(
       addressRegistry.getRegistryEntry(AddressBook.SFT_HOLDER_PROXY)
     );
 
     // The SFT minter
-    sftMinter = addressRegistry.getRegistryEntry(AddressBook.SFT_MINTER);
-    emit NewMinter(sftMinter);
+    _sftMinter = addressRegistry.getRegistryEntry(AddressBook.SFT_MINTER_PROXY);
 
     // SFT evaluator
-    sftEvaluator = ISFTEvaluator(
+    _sftEvaluator = ISFTEvaluator(
       addressRegistry.getRegistryEntry(AddressBook.SFT_EVALUATOR_PROXY)
     );
 
     // WOWS rewards
-    cfolioFarm = ICFolioFarmOwnable(
+    _cfolioFarm = ICFolioFarmOwnable(
       addressRegistry.getRegistryEntry(rewardFarmKey)
     );
   }
@@ -145,24 +137,38 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
   function onCFolioItemsTransferedFrom(
     address from,
     address to,
-    uint256[] calldata, /* tokenIds*/
-    address[] calldata /* cfolioHandlers*/
+    uint256[] calldata tokenIds,
+    address[] calldata cfolioHandlers
   ) external override onlySFTHolder {
     // In case of transfer verify the target
     uint256 sftTokenId;
 
     if (
       to != address(0) &&
-      (sftTokenId = sftHolder.addressToTokenId(to)) != uint256(-1)
+      (sftTokenId = _sftHolder.addressToTokenId(to)) != uint256(-1)
     ) {
       _verifyTransferTarget(sftTokenId);
-      _updateRewards(to, sftEvaluator.rewardRate(sftTokenId));
+      _updateRewards(to, _sftEvaluator.rewardRate(sftTokenId));
     }
     if (
       from != address(0) &&
-      (sftTokenId = sftHolder.addressToTokenId(from)) != uint256(-1)
+      (sftTokenId = _sftHolder.addressToTokenId(from)) != uint256(-1)
     ) {
-      _updateRewards(from, sftEvaluator.rewardRate(sftTokenId));
+      _updateRewards(from, _sftEvaluator.rewardRate(sftTokenId));
+    }
+    // Validate that cfolioItems are empty before we burn them
+    if (to == address(0)) {
+      require(
+        tokenIds.length == cfolioHandlers.length,
+        'CFIH: Length mismatch'
+      );
+      for (uint256 i = 0; i < tokenIds.length; ++i) {
+        if (cfolioHandlers[i] == address(this)) {
+          address cfolio = _sftHolder.tokenIdToAddress(tokenIds[i]);
+          require(cfolio != address(0), 'CFIH: Invalid cfolio');
+          require(_cfolioFarm.balanceOf(cfolio) == 0, 'CFIH: Not empty');
+        }
+      }
     }
   }
 
@@ -179,7 +185,7 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
       abi.encodePacked(
         current,
         address(this),
-        cfolioFarm.balanceOf(cfolioItem)
+        _cfolioFarm.balanceOf(cfolioItem)
       );
   }
 
@@ -192,11 +198,11 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
    */
   function sftUpgrade(uint256 tokenId, uint32 newRate) external override {
     // Validate access
-    require(_msgSender() == address(sftEvaluator), 'CFIH: Invalid caller');
+    require(_msgSender() == address(_sftEvaluator), 'CFIH: Invalid caller');
     require(tokenId.isBaseCard(), 'CFIH: Invalid token');
 
     // CFolio address
-    address cfolio = sftHolder.tokenIdToAddress(tokenId);
+    address cfolio = _sftHolder.tokenIdToAddress(tokenId);
 
     // Update state
     _updateRewards(cfolio, newRate);
@@ -212,22 +218,29 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
    * is part of an unlocked base SFT
    */
   function deposit(
+    address from,
     uint256 baseTokenId,
     uint256 tokenId,
     uint256[] calldata amounts
   ) external override {
+    // allow fast lane from sftMinter
+    if (_msgSender() != _sftMinter) {
+      require(from == _msgSender(), 'CFIH: Invalid from');
+    }
+
     // Validate parameters
     (address baseCFolio, address itemCFolio) = _verifyAssetAccess(
+      from,
       baseTokenId,
       tokenId
     );
 
     // Call the implementation
-    _deposit(itemCFolio, _msgSender(), amounts);
+    _deposit(itemCFolio, from, amounts);
 
     // Update rewards if CFI is inside cfolio
     if (baseCFolio != address(0))
-      _updateRewards(baseCFolio, sftEvaluator.rewardRate(baseTokenId));
+      _updateRewards(baseCFolio, _sftEvaluator.rewardRate(baseTokenId));
   }
 
   /**
@@ -246,6 +259,7 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
   ) external override {
     // Validate parameters
     (address baseCFolio, address itemCFolio) = _verifyAssetAccess(
+      _msgSender(),
       baseTokenId,
       tokenId
     );
@@ -255,7 +269,7 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
 
     // Update rewards if CFI is inside cfolio
     if (baseCFolio != address(0))
-      _updateRewards(baseCFolio, sftEvaluator.rewardRate(baseTokenId));
+      _updateRewards(baseCFolio, _sftEvaluator.rewardRate(baseTokenId));
   }
 
   /**
@@ -272,20 +286,20 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
 
     // Verify that tokenId has a valid cFolio address
     uint256 sftTokenId = tokenId.toSftTokenId();
-    address cfolio = sftHolder.tokenIdToAddress(sftTokenId);
+    address cfolio = _sftHolder.tokenIdToAddress(sftTokenId);
     require(cfolio != address(0), 'CFHI: No cfolio');
 
     // Verify that the tokenId is owned by msg.sender in case of direct
     // call or recipient in case of sftMinter call in the SFT contract.
     // This also verifies that the token is not locked in TradeFloor.
     require(
-      IERC1155(address(sftHolder)).balanceOf(_msgSender(), sftTokenId) == 1 ||
-        (_msgSender() == sftMinter &&
-          IERC1155(address(sftHolder)).balanceOf(recipient, sftTokenId) == 1),
+      IERC1155(address(_sftHolder)).balanceOf(_msgSender(), sftTokenId) == 1 ||
+        (_msgSender() == _sftMinter &&
+          IERC1155(address(_sftHolder)).balanceOf(recipient, sftTokenId) == 1),
       'CFHI: Forbidden'
     );
 
-    cfolioFarm.getReward(cfolio, recipient);
+    _cfolioFarm.getReward(cfolio, recipient);
   }
 
   /**
@@ -300,7 +314,7 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
     uint256[5] memory uiData;
 
     // Get basic data once
-    uiData = cfolioFarm.getUIData(address(0));
+    uiData = _cfolioFarm.getUIData(address(0));
 
     // total / rewardDuration / rewardPerDuration
     result = abi.encodePacked(uiData[0], uiData[2], uiData[3]);
@@ -313,9 +327,9 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
         uint256 share = 0;
         uint256 earned = 0;
         if (sftTokenId.isBaseCard()) {
-          address cfolio = sftHolder.tokenIdToAddress(sftTokenId);
+          address cfolio = _sftHolder.tokenIdToAddress(sftTokenId);
           if (cfolio != address(0)) {
-            uiData = cfolioFarm.getUIData(cfolio);
+            uiData = _cfolioFarm.getUIData(cfolio);
             share = uiData[1];
             earned = uiData[4];
           }
@@ -366,21 +380,7 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
     // contract", which is not the case due to the onlyAdmin modifier.
     //
     // slither-disable-next-line suicidal
-    selfdestruct(payable(admin));
-  }
-
-  /**
-   * @dev Set a new SFT minter
-   */
-  function setMinter(address newMinter) external onlyAdmin {
-    // Validate parameters
-    require(newMinter != address(0), 'CFIH: Invalid');
-
-    // Update state
-    sftMinter = newMinter;
-
-    // Dispatch event
-    emit NewMinter(newMinter);
+    selfdestruct(payable(_admin));
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -393,7 +393,7 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
    */
   function _updateRewards(address cfolio, uint32 rate) private {
     // Get c-folio items of this base cFolio
-    uint256[] memory tokenIds = sftHolder.getTokenIds(cfolio);
+    uint256[] memory tokenIds = _sftHolder.getTokenIds(cfolio);
     uint256 length = tokenIds.length;
 
     // Marginal increase in gas per item is around 25K. Bounding items to 100
@@ -403,28 +403,31 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
     // Calculate new reward amount
     uint256 newRewardAmount = 0;
     for (uint256 i = 0; i < length; ++i) {
-      address secondaryCFolio = sftHolder.tokenIdToAddress(tokenIds[i]);
+      address secondaryCFolio = _sftHolder.tokenIdToAddress(tokenIds[i]);
       require(secondaryCFolio != address(0), 'CFIH: Invalid tokenId');
       if (IWOWSCryptofolio(secondaryCFolio).getHandler() == address(this))
         newRewardAmount = newRewardAmount.add(
-          cfolioFarm.balanceOf(secondaryCFolio)
+          _cfolioFarm.balanceOf(secondaryCFolio)
         );
     }
     newRewardAmount = newRewardAmount.mul(rate).div(1E6);
 
     // Calculate existing reward amount
-    uint256 exitingRewardAmount = cfolioFarm.balanceOf(cfolio);
+    uint256 exitingRewardAmount = _cfolioFarm.balanceOf(cfolio);
 
     // Compare amounts and add/remove shares
     if (newRewardAmount > exitingRewardAmount) {
       // Update state
-      cfolioFarm.addShares(cfolio, newRewardAmount.sub(exitingRewardAmount));
+      _cfolioFarm.addShares(cfolio, newRewardAmount.sub(exitingRewardAmount));
 
       // Dispatch event
       emit RewardUpdated(exitingRewardAmount, newRewardAmount);
     } else if (newRewardAmount < exitingRewardAmount) {
       // Update state
-      cfolioFarm.removeShares(cfolio, exitingRewardAmount.sub(newRewardAmount));
+      _cfolioFarm.removeShares(
+        cfolio,
+        exitingRewardAmount.sub(newRewardAmount)
+      );
 
       // Dispatch event
       emit RewardUpdated(exitingRewardAmount, newRewardAmount);
@@ -442,16 +445,16 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
    * unlocked, otherwise baseTokenId has to be unlocked and the locked
    * cfolioItemTokenId has to be inside its c-folio.
    */
-  function _verifyAssetAccess(uint256 baseTokenId, uint256 cfolioItemTokenId)
-    private
-    view
-    returns (address, address)
-  {
+  function _verifyAssetAccess(
+    address from,
+    uint256 baseTokenId,
+    uint256 cfolioItemTokenId
+  ) private view returns (address, address) {
     // Verify it's a cfolioItemTokenId
     require(cfolioItemTokenId.isCFolioCard(), 'CFHI: Not cFolioCard');
 
     // Verify that the tokenId is one of ours
-    address cFolio = sftHolder.tokenIdToAddress(
+    address cFolio = _sftHolder.tokenIdToAddress(
       cfolioItemTokenId.toSftTokenId()
     );
     require(cFolio != address(0), 'CFIH: Invalid cFolioTokenId');
@@ -465,31 +468,31 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
     if (baseTokenId != uint256(-1)) {
       // Verify it's a c-folio base card
       require(baseTokenId.isBaseCard(), 'CFHI: Not baseCard');
-      baseCFolio = sftHolder.tokenIdToAddress(baseTokenId.toSftTokenId());
+      baseCFolio = _sftHolder.tokenIdToAddress(baseTokenId.toSftTokenId());
       require(baseCFolio != address(0), 'CFIH: Invalid baseCFolioTokenId');
 
       // Verify that the tokenId is owned by msg.sender in SFT contract.
       // This also verifies that the token is not locked in TradeFloor.
       require(
-        IERC1155(address(sftHolder)).balanceOf(_msgSender(), baseTokenId) == 1,
+        IERC1155(address(_sftHolder)).balanceOf(from, baseTokenId) == 1,
         'CFHI: Access denied (B)'
       );
 
       // Verify that the cfiTokenId is owned by given baseCFolio.
       // In V2 we have unlocked CFIs in baseCfolio in contrast to V1
+
       require(
-        IERC1155(address(sftHolder)).balanceOf(baseCFolio, cfolioItemTokenId) ==
-          1,
+        IERC1155(address(_sftHolder)).balanceOf(
+          baseCFolio,
+          cfolioItemTokenId
+        ) == 1,
         'CFHI: Access denied (CF)'
       );
     } else {
       // Verify that the tokenId is owned by msg.sender in SFT contract.
       // This also verifies that the token is not locked in TradeFloor.
       require(
-        IERC1155(address(sftHolder)).balanceOf(
-          _msgSender(),
-          cfolioItemTokenId
-        ) == 1,
+        IERC1155(address(_sftHolder)).balanceOf(from, cfolioItemTokenId) == 1,
         'CFHI: Access denied'
       );
     }

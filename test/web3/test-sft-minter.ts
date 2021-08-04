@@ -21,8 +21,6 @@ import CFolioItemHandlerLpAbi from '../../src/abi/contracts/src/cfolio/CFolioIte
 import PresaleAbi from '../../src/abi/contracts/src/crowdsale/Crowdsale.sol/Crowdsale.json';
 import WOWSSftMinterAbi from '../../src/abi/contracts/src/crowdsale/WOWSSftMinter.sol/WOWSSftMinter.json';
 import CFolioFarmAbi from '../../src/abi/contracts/src/investment/CFolioFarm.sol/CFolioFarm.json';
-import UpgradeProxyAbi from '../../src/abi/contracts/src/proxy/UpgradeProxy.sol/UpgradeProxy.json';
-import TradeFloorAbi from '../../src/abi/contracts/src/token/TradeFloor.sol/TradeFloor.json';
 import WOWSCryptofolioAbi from '../../src/abi/contracts/src/token/WOWSCryptofolio.sol/WOWSCryptofolio.json';
 import WOWSTokenAbi from '../../src/abi/contracts/src/token/WOWSErc20.sol/WowsToken.json';
 import WOWSERC1155Abi from '../../src/abi/contracts/src/token/WOWSErc1155.sol/WOWSERC1155.json';
@@ -101,23 +99,13 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
     marketingWallet
   );
   const sftHolderContract = new ethers.Contract(
-    addresses.sftHolder,
+    addresses.sftHolderProxy,
     WOWSERC1155Abi,
     marketingWallet
   );
   const sftMinterContract = new ethers.Contract(
-    addresses.sftMinter,
+    addresses.sftMinterProxy,
     WOWSSftMinterAbi,
-    marketingWallet
-  );
-  const tradeFloorContract = new ethers.Contract(
-    addresses.tradeFloor,
-    TradeFloorAbi,
-    marketingWallet
-  );
-  const tradeFloorProxyContract = new ethers.Contract(
-    addresses.tradeFloorProxy,
-    UpgradeProxyAbi,
     marketingWallet
   );
   const cfolioItemHandlerLPContract = new ethers.Contract(
@@ -141,8 +129,6 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
     uniV2PairContract,
     sftHolderContract,
     sftMinterContract,
-    tradeFloorContract,
-    tradeFloorProxyContract,
     cfolioItemHandlerLPContract,
     cfolioFarmLPContract,
     presaleContract,
@@ -162,8 +148,6 @@ describe('SFT minter', function () {
 
   let cfolioItemAddress1: string; // Address of CFolioLItem with LP deposit
   let cfolioItemAddress2: string; // Address of CFolioLItem without LP deposit
-
-  let tradeFloorProxyInstance: ethers.Contract;
 
   // Test parameters
   const level1Price = '4500000000000000000';
@@ -237,17 +221,6 @@ describe('SFT minter', function () {
 
     console.log(`    ETH price is $${ethUsd}`);
     console.log(`    Using '${GAS_PRICE}' gas at ${gasPrice / 1e9} Gwei`);
-  });
-
-  it('should attach the trade floor proxy', async function () {
-    this.timeout(60 * 1000);
-
-    const { tradeFloorContract, tradeFloorProxyContract } = contracts;
-
-    // Attach the proxy and set marketing wallet signer
-    tradeFloorProxyInstance = tradeFloorContract
-      .attach(tradeFloorProxyContract.address)
-      .connect(marketingWallet);
   });
 
   //////////////////////////////////////////////////////////////////////////////
@@ -544,7 +517,6 @@ describe('SFT minter', function () {
 
     // Mint a new LP investment type into marketing wallet
     const tx = sftMinterContract.mintCFolioItemSFT(
-      marketingWallet.address,
       cFolioItemType,
       // uint256(-1) == No parent cryptofolio, mint to recipient (marketing wallet)
       ethers.BigNumber.from(
@@ -611,14 +583,13 @@ describe('SFT minter', function () {
     chai.expect(balance).to.equal(lpBalance);
   });
 
-  it('should allow empty price mint', async function () {
+  it('should allow 0 price mint', async function () {
     this.timeout(60 * 1000);
 
     const { sftMinterContract } = contracts;
 
     // Mint a new LP investment type into marketing wallet
     const tx = sftMinterContract.mintCFolioItemSFT(
-      marketingWallet.address,
       cFolioItemType,
       // uint256(-1) == No parent cryptofolio, mint to recipient (marketing wallet)
       ethers.BigNumber.from(

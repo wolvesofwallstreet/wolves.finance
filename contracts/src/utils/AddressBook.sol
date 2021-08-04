@@ -19,7 +19,7 @@ library AddressBook {
   bytes32 public constant UNISWAP_V2_PAIR = 'UNISWAP_V2_PAIR';
   bytes32 public constant WOWS_BOOSTER = 'WOWS_BOOSTER';
   bytes32 public constant REWARD_HANDLER = 'REWARD_HANDLER';
-  bytes32 public constant SFT_MINTER = 'SFT_MINTER_PROXY';
+  bytes32 public constant SFT_MINTER_PROXY = 'SFT_MINTER_PROXY';
   bytes32 public constant SFT_HOLDER_PROXY = 'SFT_HOLDER_PROXY';
   bytes32 public constant BOIS_REWARDS = 'BOIS_REWARDS';
   bytes32 public constant WOLVES_REWARDS = 'WOLVES_REWARDS';

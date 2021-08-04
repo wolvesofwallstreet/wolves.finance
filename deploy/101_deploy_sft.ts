@@ -189,7 +189,7 @@ const sft_func = async function (hardhat_re) {
 
     const sftHolderInterface = new ethers.utils.Interface(sftHolderAbi);
     const proxyCallData = sftHolderInterface.encodeFunctionData('initialize', [
-      ADDRESS_REGISTRY_ADDRESS,
+      marketingWallet,
       METADATA_URI,
       METADATA_URI,
       METADATA_URI,

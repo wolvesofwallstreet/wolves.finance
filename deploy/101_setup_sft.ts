@@ -163,7 +163,7 @@ const func = async function (hardhat_re) {
   // 4.) Call WOWSSftMinter.sol::setPrices()
   //
 
-  if ((await SFT_MINTER_INSTANCE._pricePerLevel(0)).isZero()) {
+  if ((await SFT_MINTER_INSTANCE.getBaseSpec([0], [0])).prices[0].isZero()) {
     await catchUnknownSigner(
       execute(
         SFT_MINTER_CONTRACT,
@@ -172,8 +172,9 @@ const func = async function (hardhat_re) {
           to: generatedAddresses.sftMinterProxy,
           log: true,
         },
-        'setPrices',
+        'setBaseSpec',
         ['0', '1', '4', '5'],
+        ['40', '40', '40', '40'],
         [
           '2500000000000000000',
           '4500000000000000000',

@@ -65,6 +65,9 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
   }
   mapping(address => Owned) private _owned;
 
+  // cfolioType of cfolioItem
+  mapping(uint256 => uint256) private _cfolioItemTypes;
+
   // Our master cryptofolio used for clones
   address private immutable _cryptofolio;
   string private _cfolioMetadataURI;
@@ -77,6 +80,12 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
     require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'SFT: Only admin');
     _;
   }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Events
+  //////////////////////////////////////////////////////////////////////////////
+
+  event UpdatedCFolioType(uint256 indexed tokenId, uint256 cfolioItemType);
 
   //////////////////////////////////////////////////////////////////////////////
   // Initialization
@@ -124,7 +133,7 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
    * @dev See {IWOWSERC1155-addressToTokenId}.
    */
   function addressToTokenId(address tokenAddress)
-    external
+    public
     view
     override
     returns (uint256)
@@ -219,6 +228,22 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
     _customLevels[tokenId] = cardLevel;
   }
 
+  /**
+   * @dev See {IWOWSERC1155-setCFolioType}.
+   */
+  function setCFolioItemType(uint256 tokenId, uint256 cfolioItemType)
+    external
+    override
+  {
+    require(tokenId.isCFolioCard(), 'Invalid tokenId');
+    require(hasRole(MINTER_ROLE, _msgSender()), 'SFT: Minter only');
+
+    _cfolioItemTypes[tokenId] = cfolioItemType;
+
+    // Dispatch event
+    emit UpdatedCFolioType(tokenId, cfolioItemType);
+  }
+
   //////////////////////////////////////////////////////////////////////////////
   // Implementation of {IERC1155}
   //////////////////////////////////////////////////////////////////////////////
@@ -234,7 +259,11 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
     // Prevent auctions like OpenSea from selling this token. Selling by third
     // parties is only allowed for cryptofolios which are locked in one of our
     // TradeFloor contracts.
-    require(hasRole(OPERATOR_ROLE, operator), 'Only Operators');
+    require(
+      addressToTokenId(_msgSender()) != uint256(-1) ||
+        hasRole(OPERATOR_ROLE, operator),
+      'Only Operators'
+    );
 
     // Call ancestor
     super.setApprovalForAll(operator, approved);
@@ -369,6 +398,22 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
     return result;
   }
 
+  /**
+   * @dev See {IWOWSERC1155-getCFolioItemType}.
+   */
+  function getCFolioItemType(uint256 tokenId)
+    external
+    view
+    override
+    returns (uint256)
+  {
+    // Validate parameters
+    require(tokenId.isCFolioCard(), 'SFTE: Invalid tokenId');
+
+    // Load state
+    return _cfolioItemTypes[tokenId.toSftTokenId()];
+  }
+
   //////////////////////////////////////////////////////////////////////////////
   // Internal functionality
   //////////////////////////////////////////////////////////////////////////////
@@ -438,9 +483,6 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
         tokenInfo.minted = false;
       }
 
-      // Signal ownership change in Cryptofolio
-      IWOWSCryptofolio(tokenAddress).setOwner(to);
-
       if (!tokenId.isBaseCard()) {
         address handler = IWOWSCryptofolio(tokenAddress).getHandler();
         uint256 iter = numUniqueCFolioHandlers;
@@ -450,6 +492,9 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
           uniqueCFolioHandlers[numUniqueCFolioHandlers++] = handler;
         }
         cFolioHandlers[i] = handler;
+      } else {
+        // Signal ownership change in Cryptofolio
+        IWOWSCryptofolio(tokenAddress).setOwner(to);
       }
 
       // Remove tokenId from List

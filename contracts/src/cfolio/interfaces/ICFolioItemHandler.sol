@@ -32,11 +32,13 @@ interface ICFolioItemHandler is ICFolioItemCallback {
    * Transfers amounts of assets from users wallet to the contract. In general,
    * an Approval call is required before the function is called.
    *
+   * @param from must be msg.sender for calls not from sftMinter
    * @param baseTokenId cFolio tokenId, must be unlocked, or -1
    * @param tokenId cFolioItem tokenId, must be unlocked if not in unlocked cFolio
    * @param amounts Investment amounts, implementation specific
    */
   function deposit(
+    address from,
     uint256 baseTokenId,
     uint256 tokenId,
     uint256[] calldata amounts

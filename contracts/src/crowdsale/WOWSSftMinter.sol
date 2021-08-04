@@ -44,7 +44,7 @@ contract WOWSSftMinter is Context, AccessControl {
   // BaseCard Info per level
   mapping(uint16 => BaseLevelData) private _baseLevelData;
   mapping(uint24 => uint16) private _baseCardsMinted;
-  uint256 public nextCustomCardId = (1 << 32);
+  uint256 public nextCustomCardId;
 
   // CFolioItem
   struct CFolioItemSft {
@@ -55,7 +55,7 @@ contract WOWSSftMinter is Context, AccessControl {
   }
   mapping(uint256 => CFolioItemSft) private cfolioItemSfts; // C-folio type to c-folio data
   ICFolioItemHandler[] private cfolioItemHandlers;
-  uint256 public nextCFolioItemNft = (1 << 64);
+  uint256 public nextCFolioItemNft;
 
   // The ERC1155 contract we are minting from
   IWOWSERC1155 private immutable _sftContract;
@@ -101,7 +101,7 @@ contract WOWSSftMinter is Context, AccessControl {
   //////////////////////////////////////////////////////////////////////////////
 
   modifier onlyAdmin() {
-    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()));
+    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'WM: Only admin');
     _;
   }
 
@@ -144,6 +144,9 @@ contract WOWSSftMinter is Context, AccessControl {
     rewardHandler = IRewardHandler(
       addressRegistry.getRegistryEntry(AddressBook.REWARD_HANDLER)
     );
+
+    nextCustomCardId = (1 << 32);
+    nextCFolioItemNft = (1 << 64);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -159,7 +162,10 @@ contract WOWSSftMinter is Context, AccessControl {
     uint256[] calldata prices
   ) external onlyAdmin {
     // Validate parameters
-    require(levels.length == prices.length, 'WM: Length mismatch');
+    require(
+      levels.length == prices.length && levels.length == caps.length,
+      'WM: Length mismatch'
+    );
 
     // Update state
     for (uint256 i = 0; i < levels.length; ++i) {
@@ -318,14 +324,12 @@ contract WOWSSftMinter is Context, AccessControl {
    *
    * Approval of WOWS token required before the call.
    *
-   * @param recipient Recipient of the SFT, unused if sftTokenId is != -1
    * @param cfolioItemType The item type of the SFT
    * @param sftTokenId If <> -1 recipient is the SFT c-folio / handler must be called
    * @param investAmounts Arguments needed for the handler (in general investments).
    * Investments may be zero if the user is just buying an SFT.
    */
   function mintCFolioItemSFT(
-    address recipient,
     uint256 cfolioItemType,
     uint256 sftTokenId,
     uint256[] calldata investAmounts
@@ -334,9 +338,6 @@ contract WOWSSftMinter is Context, AccessControl {
     require(tradeFloor != address(0), 'WM: TF not set');
     require(address(sftEvaluator) != address(0), 'WM: SFTE not set');
 
-    // Validate parameters
-    require(recipient != address(0), 'WM: Invalid recipient');
-
     // Load state
     CFolioItemSft storage sftData = cfolioItemSfts[cfolioItemType];
 
@@ -344,22 +345,21 @@ contract WOWSSftMinter is Context, AccessControl {
     require(address(sftData.handler) != address(0), 'WM: Invalid type (CFI)');
     require(sftData.numMinted < sftData.maxMintable, 'WM: Sold out (CFI)');
 
-    address sftCFolio = address(0);
+    // Mint by default to sender
+    address recipient = _msgSender();
+
     if (sftTokenId != uint256(-1)) {
       require(sftTokenId.isBaseCard(), 'WM: Invalid baseId');
 
       // Get the CFolio contract address, it will be the final recipient
-      sftCFolio = _sftContract.tokenIdToAddress(sftTokenId);
-      require(sftCFolio != address(0), 'WM: Bad baseId');
-
-      // Intermediate owner of the minted SFT
-      recipient = address(this);
+      recipient = _sftContract.tokenIdToAddress(sftTokenId);
+      require(recipient != address(0), 'WM: Bad baseId');
     }
 
     uint256 tokenId = nextCFolioItemNft++;
     require(tokenId.isCFolioCard(), 'WM: Invalid cfiId');
 
-    sftEvaluator.setCFolioItemType(tokenId, cfolioItemType);
+    _sftContract.setCFolioItemType(tokenId, cfolioItemType);
 
     // Update state, mint SFT token
     sftData.numMinted += 1;
@@ -373,23 +373,10 @@ contract WOWSSftMinter is Context, AccessControl {
 
     if (investAmounts.length > 0) {
       ICFolioItemHandler(sftData.handler).deposit(
+        _msgSender(),
         sftTokenId,
         tokenId,
         investAmounts
-      );
-    }
-
-    // If the SFT's c-folio is final recipient of c-folio item, we call the
-    // handler and lock the c-folio item in the TradeFloor contract before we transfer
-    // it to the SFT
-    if (sftCFolio != address(0)) {
-      // Lock the SFT into the TradeFloor contract
-      IERC1155BurnMintable(address(_sftContract)).safeTransferFrom(
-        address(this),
-        sftCFolio,
-        tokenId,
-        1,
-        ''
       );
     }
   }
@@ -539,7 +526,7 @@ contract WOWSSftMinter is Context, AccessControl {
 
       for (uint256 j = 0; j < cfolioLength; ++j) {
         uint256 sftTokenId = cFolioItems[j].toSftTokenId();
-        uint256 cfolioType = sftEvaluator.getCFolioItemType(sftTokenId);
+        uint256 cfolioType = _sftContract.getCFolioItemType(sftTokenId);
         uint256[] memory amounts;
 
         address cfolio = _sftContract.tokenIdToAddress(sftTokenId);

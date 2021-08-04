@@ -29,7 +29,7 @@ contract SFTEvaluator is ISFTEvaluator, Context {
   // Attention: Proxy implementation: Only add new state at the end
 
   // Admin
-  address public immutable admin;
+  address private immutable _admin;
 
   // The SFT contract we need for level
   IWOWSERC1155 private immutable _sftHolder;
@@ -37,19 +37,13 @@ contract SFTEvaluator is ISFTEvaluator, Context {
   // Current reward weight of a baseCard
   mapping(uint256 => uint256) private _rewardRates;
 
-  // cfolioType of cfolioItem
-  mapping(uint256 => uint256) private _cfolioItemTypes;
-
-  // The SFTMinter contract we need for access right
-  address public sftMinter;
-
   //////////////////////////////////////////////////////////////////////////////
   // Events
   //////////////////////////////////////////////////////////////////////////////
 
-  event RewardRate(uint256 indexed tokenId, uint32 rate);
+  event Constructed(address admin, address sftHolder);
 
-  event UpdatedCFolioType(uint256 indexed tokenId, uint256 cfolioItemType);
+  event RewardRate(uint256 indexed tokenId, uint32 rate);
 
   //////////////////////////////////////////////////////////////////////////////
   // Initialization
@@ -57,15 +51,17 @@ contract SFTEvaluator is ISFTEvaluator, Context {
 
   constructor(IAddressRegistry addressRegistry) {
     // The SFT holder
-    _sftHolder = IWOWSERC1155(
-      addressRegistry.getRegistryEntry(AddressBook.SFT_HOLDER_PROXY)
+    address sftHolder = addressRegistry.getRegistryEntry(
+      AddressBook.SFT_HOLDER_PROXY
     );
+    _sftHolder = IWOWSERC1155(sftHolder);
 
     // Admin
-    admin = addressRegistry.getRegistryEntry(AddressBook.ADMIN_ACCOUNT);
+    address admin = addressRegistry.getRegistryEntry(AddressBook.ADMIN_ACCOUNT);
+    _admin = admin;
 
-    // Minter
-    sftMinter = addressRegistry.getRegistryEntry(AddressBook.SFT_MINTER);
+    // Fire event
+    emit Constructed(admin, sftHolder);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -86,31 +82,6 @@ contract SFTEvaluator is ISFTEvaluator, Context {
       _rewardRates[sftTokenId] == 0
         ? _baseRate(sftTokenId)
         : uint32(_rewardRates[sftTokenId]);
-  }
-
-  /**
-   * @dev See {ISFTEvaluator-getCFolioItemType}.
-   */
-  function getCFolioItemType(uint256 tokenId)
-    external
-    view
-    override
-    returns (uint256)
-  {
-    // Validate parameters
-    require(tokenId.isCFolioCard(), 'SFTE: Invalid tokenId');
-
-    // Load state
-    return _cfolioItemTypes[tokenId.toSftTokenId()];
-  }
-
-  /**
-   * @dev Set a new SFTMinter implementation.
-   */
-  function setMinter(address newMinter) external {
-    require(_msgSender() == admin, 'SFTE: Forbidden');
-
-    sftMinter = newMinter;
   }
 
   /**
@@ -176,22 +147,6 @@ contract SFTEvaluator is ISFTEvaluator, Context {
       // Revert if requested
       require(!revertUnchanged, 'Rate unchanged');
     }
-  }
-
-  /**
-   * @dev See {ISFTEvaluator-setCFolioType}.
-   */
-  function setCFolioItemType(uint256 tokenId, uint256 cfolioItemType)
-    external
-    override
-  {
-    require(tokenId.isCFolioCard(), 'Invalid tokenId');
-    require(_msgSender() == sftMinter, 'SFTE: Minter only');
-
-    _cfolioItemTypes[tokenId] = cfolioItemType;
-
-    // Dispatch event
-    emit UpdatedCFolioType(tokenId, cfolioItemType);
   }
 
   //////////////////////////////////////////////////////////////////////////////

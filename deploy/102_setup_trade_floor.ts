@@ -14,7 +14,6 @@ require('hardhat-deploy');
 require('hardhat-deploy-ethers');
 
 // TODO: Fully qualified contract names
-const SFT_HOLDER_CONTRACT = 'WOWSERC1155';
 const SFT_MINTER_CONTRACT = 'WOWSSftMinter';
 const TRADE_FLOOR_PROXY_CONTRACT = 'TradeFloorProxy';
 
@@ -58,12 +57,9 @@ const func = async function (hardhat_re) {
   );
   const generatedAddresses = generatedNetworks[chainId] || {};
 
-  // Load contract instances
-  const SFT_HOLDER_INSTANCE = await hardhat_re.ethers.getContract(
-    SFT_HOLDER_CONTRACT
-  );
   const SFT_MINTER_INSTANCE = await hardhat_re.ethers.getContract(
-    SFT_MINTER_CONTRACT
+    SFT_MINTER_CONTRACT,
+    generatedAddresses.sftMinterProxy
   );
 
   //////////////////////////////////////////////////////////////////////////////
@@ -75,31 +71,7 @@ const func = async function (hardhat_re) {
   log_step('Marketing wallet calls for SFT testing');
 
   //
-  // 1.) Call WowsERC1155.sol::grantRole(TRADEFLOOR_ROLE, TradeFloorProxy)
-  //
-
-  if (
-    !(await SFT_HOLDER_INSTANCE.hasRole(
-      await SFT_HOLDER_INSTANCE.TRADEFLOOR_ROLE(),
-      generatedAddresses.tradeFloorProxy
-    ))
-  ) {
-    await catchUnknownSigner(
-      execute(
-        SFT_HOLDER_CONTRACT,
-        {
-          from: marketingWallet,
-          log: true,
-        },
-        'grantRole',
-        await SFT_HOLDER_INSTANCE.TRADEFLOOR_ROLE(),
-        generatedAddresses.tradeFloorProxy
-      )
-    );
-  }
-
-  //
-  // 2.) Call WOWSSftMinter.sol::setTradeFloor(TradeFloorProxy)
+  // 1.) Call WOWSSftMinter.sol::setTradeFloor(TradeFloorProxy)
   //
 
   if (
@@ -111,6 +83,7 @@ const func = async function (hardhat_re) {
         SFT_MINTER_CONTRACT,
         {
           from: marketingWallet,
+          to: generatedAddresses.sftMinterProxy,
           log: true,
         },
         'setTradeFloor',
@@ -119,7 +92,7 @@ const func = async function (hardhat_re) {
     );
   }
   //
-  // 3.) Check if we have to upgrade the tradeFloor implementation
+  // 2.) Check if we have to upgrade the tradeFloor implementation
   //
   if (
     (await getProxyImplementation(

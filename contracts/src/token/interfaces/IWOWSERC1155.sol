@@ -62,6 +62,11 @@ interface IWOWSERC1155 {
     view
     returns (uint256[] memory);
 
+  /**
+   * @dev Returns the cFolioItemType of a given cFolioItem tokenId
+   */
+  function getCFolioItemType(uint256 tokenId) external view returns (uint256);
+
   //////////////////////////////////////////////////////////////////////////////
   // State modifiers
   //////////////////////////////////////////////////////////////////////////////
@@ -104,4 +109,10 @@ interface IWOWSERC1155 {
    * @param cardLevel The new level of the specified token
    */
   function setCustomCardLevel(uint256 tokenId, uint8 cardLevel) external;
+
+  /**
+   * @dev Sets the cfolioItemType of a cfolioItem tokenId, not yet used
+   * sftHolder tokenId expected (without hash)
+   */
+  function setCFolioItemType(uint256 tokenId, uint256 cfolioItemType_) external;
 }
