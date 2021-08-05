@@ -79,6 +79,9 @@ contract WOWSSftMinter is Context, AccessControl {
   // Events
   //////////////////////////////////////////////////////////////////////////////
 
+  // Emitted when constructor is called
+  event Constructed(address wowsToken, address sftHolder);
+
   // Emitted if a new SFT is minted
   event Mint(
     address indexed recipient,
@@ -122,13 +125,17 @@ contract WOWSSftMinter is Context, AccessControl {
     );
 
     // Set immutable addresses
-    _wowsToken = IERC20(
-      addressRegistry.getRegistryEntry(AddressBook.WOWS_TOKEN)
+    address wowsToken = addressRegistry.getRegistryEntry(
+      AddressBook.WOWS_TOKEN
     );
+    _wowsToken = IERC20(wowsToken);
 
-    _sftContract = IWOWSERC1155(
-      addressRegistry.getRegistryEntry(AddressBook.SFT_HOLDER_PROXY)
+    address sftHolder = addressRegistry.getRegistryEntry(
+      AddressBook.SFT_HOLDER_PROXY
     );
+    _sftContract = IWOWSERC1155(sftHolder);
+
+    emit Constructed(wowsToken, sftHolder);
   }
 
   function initialize(IAddressRegistry addressRegistry) external {

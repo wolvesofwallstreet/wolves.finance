@@ -65,6 +65,23 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
   //////////////////////////////////////////////////////////////////////////////
 
   /*
+   * @dev Emitted when the contract is contstructed
+   *
+   * @param admin The immutable admin address
+   * @param sftHolder The immutable sftHolder address
+   * @param sftMinter The immutable sftMinter address
+   * @param sftEvaluator The immutable sftEvaluator address
+   * @param cfolioFarm The immutable cfolioFarm address
+   */
+  event Constructed(
+    address admin,
+    address sftHolder,
+    address sftMinter,
+    address sftEvaluator,
+    address cfolioFarm
+  );
+
+  /*
    * @dev Emitted when a reward is updated, either increased or decreased
    *
    * @param previousAmount The amount before updating the reward
@@ -106,25 +123,32 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
    */
   constructor(IAddressRegistry addressRegistry, bytes32 rewardFarmKey) {
     // Admin
-    _admin = addressRegistry.getRegistryEntry(AddressBook.ADMIN_ACCOUNT);
+    address admin = addressRegistry.getRegistryEntry(AddressBook.ADMIN_ACCOUNT);
+    _admin = admin;
 
     // The SFT holder
-    _sftHolder = IWOWSERC1155(
-      addressRegistry.getRegistryEntry(AddressBook.SFT_HOLDER_PROXY)
+    address sftHolder = addressRegistry.getRegistryEntry(
+      AddressBook.SFT_HOLDER_PROXY
     );
+    _sftHolder = IWOWSERC1155(sftHolder);
 
     // The SFT minter
-    _sftMinter = addressRegistry.getRegistryEntry(AddressBook.SFT_MINTER_PROXY);
+    address sftMinter = addressRegistry.getRegistryEntry(
+      AddressBook.SFT_MINTER_PROXY
+    );
+    _sftMinter = sftMinter;
 
     // SFT evaluator
-    _sftEvaluator = ISFTEvaluator(
-      addressRegistry.getRegistryEntry(AddressBook.SFT_EVALUATOR_PROXY)
+    address sftEvaluator = addressRegistry.getRegistryEntry(
+      AddressBook.SFT_EVALUATOR_PROXY
     );
+    _sftEvaluator = ISFTEvaluator(sftEvaluator);
 
     // WOWS rewards
-    _cfolioFarm = ICFolioFarmOwnable(
-      addressRegistry.getRegistryEntry(rewardFarmKey)
-    );
+    address cfolioFarm = addressRegistry.getRegistryEntry(rewardFarmKey);
+    _cfolioFarm = ICFolioFarmOwnable(cfolioFarm);
+
+    emit Constructed(admin, sftHolder, sftMinter, sftEvaluator, cfolioFarm);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -373,7 +397,7 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
    */
   function selfDestruct() external onlyAdmin {
     // Dispatch event
-    CFolioItemHandlerDestructed(address(this));
+    emit CFolioItemHandlerDestructed(address(this));
 
     // Disable high-impact Slither detector "suicidal" here. Slither explains
     // that "CFolioItemHandlerFarm.selfDestruct() allows anyone to destruct the
