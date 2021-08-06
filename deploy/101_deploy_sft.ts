@@ -95,7 +95,7 @@ async function setRegistryKey(deployer, execute, registryInstance, key, value) {
 const sft_func = async function (hardhat_re) {
   const { deployments, getNamedAccounts } = hardhat_re;
 
-  const { execute, deploy, get } = deployments;
+  const { execute, deploy } = deployments;
   const { deployer, marketingWallet } = await getNamedAccounts();
 
   // Get chain ID
@@ -196,22 +196,13 @@ const sft_func = async function (hardhat_re) {
       CONTRACT_METADATA_NAME,
     ]);
 
-    let sftHolderProxyReceipt = undefined;
-    try {
-      sftHolderProxyReceipt = await get(SFT_HOLDER_PROXY_CONTRACT);
-
-      if (!sftHolderProxyReceipt.address) {
-        throw new Error('No address');
-      }
-    } catch (err) {
-      sftHolderProxyReceipt = await deploy(SFT_HOLDER_PROXY_CONTRACT, {
-        contract: UPGRADE_PROXY_CONTRACT,
-        from: deployer,
-        args: [ADDRESS_REGISTRY_ADDRESS, SFT_HOLDER_ADDRESS, proxyCallData],
-        log: true,
-        deterministicDeployment: true,
-      });
-    }
+    const sftHolderProxyReceipt = await deploy(SFT_HOLDER_PROXY_CONTRACT, {
+      contract: UPGRADE_PROXY_CONTRACT,
+      from: deployer,
+      args: [ADDRESS_REGISTRY_ADDRESS, SFT_HOLDER_ADDRESS, proxyCallData],
+      log: true,
+      deterministicDeployment: true,
+    });
 
     generatedAddresses.sftHolderProxy = sftHolderProxyReceipt.address;
   }
@@ -263,26 +254,17 @@ const sft_func = async function (hardhat_re) {
       ADDRESS_REGISTRY_ADDRESS,
     ]);
 
-    let sftMinterProxyReceipt = undefined;
-    try {
-      sftMinterProxyReceipt = await get(SFT_MINTER_PROXY_CONTRACT);
-
-      if (!sftMinterProxyReceipt.address) {
-        throw new Error('No address');
-      }
-    } catch (err) {
-      sftMinterProxyReceipt = await deploy(SFT_MINTER_PROXY_CONTRACT, {
-        contract: UPGRADE_PROXY_CONTRACT,
-        from: deployer,
-        args: [
-          ADDRESS_REGISTRY_ADDRESS,
-          generatedAddresses.sftMinter,
-          proxyCallData,
-        ],
-        log: true,
-        deterministicDeployment: true,
-      });
-    }
+    const sftMinterProxyReceipt = await deploy(SFT_MINTER_PROXY_CONTRACT, {
+      contract: UPGRADE_PROXY_CONTRACT,
+      from: deployer,
+      args: [
+        ADDRESS_REGISTRY_ADDRESS,
+        generatedAddresses.sftMinter,
+        proxyCallData,
+      ],
+      log: true,
+      deterministicDeployment: true,
+    });
 
     generatedAddresses.sftMinterProxy = sftMinterProxyReceipt.address;
   }

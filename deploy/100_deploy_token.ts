@@ -145,21 +145,6 @@ const func = async function (hardhat_re) {
       args: [deployer],
       log: true,
       deterministicDeployment: true,
-
-      /* TODO: Diamond upgradeability support
-      owner: deployer,
-
-      facets: [ADDRESS_REGISTRY_CONTRACT],
-
-      // Has to be a non-zero 32bytes string (in hex format)
-      // TODO
-      deterministicSalt: ADDRESS_ZERO,
-
-      execute: {
-        methodName: 'postUpgrade',
-        args: [],
-      },
-      */
     });
 
     generatedAddresses.addressRegistry = addressRegistryReceipt.address;

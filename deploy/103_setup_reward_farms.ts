@@ -59,7 +59,7 @@ const func = async function (hardhat_re) {
   const { deployments, getNamedAccounts } = hardhat_re;
 
   const { catchUnknownSigner, execute } = deployments;
-  const { deployer, marketingWallet } = await getNamedAccounts();
+  const { marketingWallet } = await getNamedAccounts();
 
   // Get chain ID
   const chainId = await hardhat_re.getChainId();
@@ -120,7 +120,7 @@ const func = async function (hardhat_re) {
       execute(
         CFOLIO_FARM_LP_CONTRACT,
         {
-          from: deployer,
+          from: marketingWallet,
           log: true,
         },
         'transferOwnership',
@@ -145,7 +145,7 @@ const func = async function (hardhat_re) {
       execute(
         CFOLIO_FARM_SC_CONTRACT,
         {
-          from: deployer,
+          from: marketingWallet,
           log: true,
         },
         'transferOwnership',
