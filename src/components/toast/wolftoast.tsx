@@ -115,7 +115,7 @@ class WolfToast extends Component<TOASTPROPS, TOASTSTATE> {
           : 'toast.walletConnected'
       );
       this.connectId = this._updateToast(this.connectId, {
-        render: msg,
+        render: this._formatToast(undefined, msg),
         autoClose: 2000,
       });
     }
@@ -168,10 +168,16 @@ class WolfToast extends Component<TOASTPROPS, TOASTSTATE> {
   _formatToast(type: string | undefined, message: string): ReactNode {
     const className = type ? 'wolflogo wolflogo--' + type : 'wolflogo';
     return (
-      <>
-        <img alt="logo" src={logo} className={className} width="24px" />
-        <span>{message}</span>
-      </>
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        <img
+          alt="logo"
+          src={logo}
+          className={className}
+          width="24px"
+          height="24px"
+        />
+        <span style={{ display: 'block', flexGrow: 1 }}>{message}</span>
+      </div>
     );
   }
 

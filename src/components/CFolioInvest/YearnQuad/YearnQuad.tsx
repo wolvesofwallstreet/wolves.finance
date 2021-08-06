@@ -100,8 +100,10 @@ function YearnQuad({
   }, [cfolioItem]);
 
   useEffect(() => {
-    if (tabOption) setCurrencyIndex(4);
-    setCheckedIndex(-1);
+    if (tabOption) {
+      setCurrencyIndex(4);
+      setCheckedIndex(0);
+    } else setCheckedIndex(-1);
     setInputVals([0, 0, 0, 0, 0]);
   }, [tabOption]);
 

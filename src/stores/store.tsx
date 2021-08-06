@@ -1904,6 +1904,12 @@ class Store {
           cfihContract?.address
         );
         if (allowance.lt(investWeiAmounts[index])) {
+          // USDT doesn't allow increase of existing allowance
+          if (balances[index] === 'USDT' && !allowance.eq(0)) {
+            throw new Error(
+              "Revoke USDT allowance in 'Manage Approval' required!"
+            );
+          }
           const tx = await approvalContracts[index]?.approve(
             cfihContract?.address,
             this._checkUnlimited(
