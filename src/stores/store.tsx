@@ -792,21 +792,28 @@ class Store {
         UniV2PairAbi,
         provider
       );
-      this.sftHolderContractRO = new ethers.Contract(
-        chainAddresses.sftHolderProxy,
-        SFTHolderAbi,
-        provider
-      );
-      this.sftMintContractRO = new ethers.Contract(
-        chainAddresses.sftMinterProxy,
-        SFTMinterAbi,
-        provider
-      );
-      this.tradeFloorContractRO = new ethers.Contract(
-        chainAddresses.tradeFloorProxy,
-        TradeFloorAbi,
-        provider
-      );
+      if (chainAddresses.sftHolderProxy) {
+        this.sftHolderContractRO = new ethers.Contract(
+          chainAddresses.sftHolderProxy,
+          SFTHolderAbi,
+          provider
+        );
+      }
+
+      if (chainAddresses.sftMinterProxy) {
+        this.sftMintContractRO = new ethers.Contract(
+          chainAddresses.sftMinterProxy,
+          SFTMinterAbi,
+          provider
+        );
+      }
+      if (chainAddresses.tradeFloorProxy) {
+        this.tradeFloorContractRO = new ethers.Contract(
+          chainAddresses.tradeFloorProxy,
+          TradeFloorAbi,
+          provider
+        );
+      }
 
       this.cfolioFarmLpAddress = chainAddresses.cfolioFarmLP;
       this.cfolioFarmScAddress = chainAddresses.cfolioFarmSC;
@@ -870,21 +877,27 @@ class Store {
         TokenAbi,
         signer
       );
-      this.cfihLpContract = new ethers.Contract(
-        chainAddresses.cfolioItemHandlerLPProxy,
-        CFolioItemHandlerAbi,
-        signer
-      );
-      this.cfihScContract = new ethers.Contract(
-        chainAddresses.cfolioItemHandlerSCProxy,
-        CFolioItemHandlerAbi,
-        signer
-      );
-      this.sftEvaluatorContract = new ethers.Contract(
-        chainAddresses.sftEvaluatorProxy,
-        SftEvaluatorAbi,
-        signer
-      );
+      if (chainAddresses.cfolioItemHandlerLPProxy) {
+        this.cfihLpContract = new ethers.Contract(
+          chainAddresses.cfolioItemHandlerLPProxy,
+          CFolioItemHandlerAbi,
+          signer
+        );
+      }
+      if (chainAddresses.cfolioItemHandlerSCProxy) {
+        this.cfihScContract = new ethers.Contract(
+          chainAddresses.cfolioItemHandlerSCProxy,
+          CFolioItemHandlerAbi,
+          signer
+        );
+      }
+      if (chainAddresses.sftEvaluatorProxy) {
+        this.sftEvaluatorContract = new ethers.Contract(
+          chainAddresses.sftEvaluatorProxy,
+          SftEvaluatorAbi,
+          signer
+        );
+      }
       return true;
     }
     return false;
@@ -1144,7 +1157,7 @@ class Store {
       const contracts = [this.cfihLpContract, this.cfihScContract];
 
       for (let i = 0; i < 2; ++i) {
-        if (!contracts[i]) continue;
+        if (!contracts[i]) return;
 
         const sfts = this.assets.userSFT.filter(
           (sft) =>
@@ -1554,7 +1567,7 @@ class Store {
       if (allowance.lt(sftAmount)) {
         const tx = await this.tokenContract.approve(
           sftMintContract.address,
-          sftAmount
+          this._checkUnlimited('WOWS', sftAmount)
         );
         emitter.emit(SFT_BUY, {
           status: 'approve',
@@ -1819,6 +1832,7 @@ class Store {
       }
 
       const tx = await cfihContract.deposit(
+        this.address,
         sftTokenId,
         cfolioTokenId,
         investWeiAmounts,
