@@ -8,6 +8,7 @@
 
 #wows-link {
   width: 220px;
+  display: inline-block;
 }
 
 .page1-container {

@@ -29,7 +29,6 @@ function Page1(props: PAGE1_PROPS) {
           <h3 className="tk-aktiv-grotesk-condensed">{t('page1.head2')}</h3>
           <a
             id="wows-link"
-            type="button"
             className="wolves-btn tk-grotesk-bold mt-1"
             target="_blank"
             rel="noreferrer"
