@@ -17,6 +17,15 @@
   opacity: 0.5;
 }
 
+a.wolves-btn {
+  padding-top: 4px;
+}
+
+a.wolves-btn:hover {
+  text-decoration: none;
+  color: var(--wolves-blue-dk);
+}
+
 .wolves-container {
   background-attachment: fixed;
   background-position-x: center;

@@ -29,6 +29,7 @@ interface HEADER_STATE {
   address: string;
   networkName: string;
   wowsPrice?: number;
+  wowsAmount?: number;
 }
 
 type DropDownItem = {
@@ -50,7 +51,7 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
 
   constructor(props: HEADER_PROPS) {
     super(props);
-    this.state = { address: '', networkName: '' };
+    this.state = { address: '', networkName: '', wowsAmount: 0 };
 
     this.handleSubmit = this.handleSubmit.bind(this);
     this.onConnectionChanged = this.onConnectionChanged.bind(this);
@@ -77,6 +78,11 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
       const wowsPrice = StoreClasses.store.getAssets().rewardInfo[0].priceWOWS;
       this.setState({
         wowsPrice: wowsPrice > 0 ? wowsPrice : undefined,
+      });
+    }
+    if (status.status === 'balances') {
+      this.setState({
+        wowsAmount: StoreClasses.store.getAssets().balances['WOWS'].value,
       });
     }
   }
@@ -249,6 +255,12 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
           {this.state.wowsPrice !== undefined && (
             <span className="dp-conn-price">
               1 WOWS &asymp; ${this.state.wowsPrice.toFixed(0)}
+            </span>
+          )}
+          <br />
+          {this.state.wowsAmount !== undefined && (
+            <span className="dp-conn-price">
+              My WOWS: {this.state.wowsAmount.toFixed(2)}
             </span>
           )}
         </div>

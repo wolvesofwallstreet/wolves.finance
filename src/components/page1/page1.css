@@ -6,6 +6,10 @@
  * See LICENSE.txt for more information.
  */
 
+#wows-link {
+  width: 220px;
+}
+
 .page1-container {
   position: relative;
   display: flex;

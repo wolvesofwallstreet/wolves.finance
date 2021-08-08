@@ -27,6 +27,16 @@ function Page1(props: PAGE1_PROPS) {
         <div className="page1-title-box-text">
           <h2 className="tk-vincente-bold no-margin">{t('page1.head1')}</h2>
           <h3 className="tk-aktiv-grotesk-condensed">{t('page1.head2')}</h3>
+          <a
+            id="wows-link"
+            type="button"
+            className="wolves-btn tk-grotesk-bold mt-1"
+            target="_blank"
+            rel="noreferrer"
+            href="https://app.uniswap.org/#/swap?inputCurrency=ETH&outputCurrency=0x672EF7E4Fe230B5cA1466C5fDD40588d30FdF90a&use=v2"
+          >
+            BUY WOWS ON UNISWAP V.2
+          </a>
         </div>
       </div>
       {/************** Left ************/}
