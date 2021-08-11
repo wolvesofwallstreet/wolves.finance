@@ -34,11 +34,13 @@ const config = {
       default: 1,
       rinkeby: env.RINKEBY_GNOSIS_MARKETING_WALLET_ADDRESS,
       mainnet: env.MAINNET_GNOSIS_MARKETING_WALLET_ADDRESS,
+      mumbai: env.DEPLOYER_ADDRESS,
     },
     teamWallet: {
       default: 2,
       rinkeby: env.RINKEBY_GNOSIS_TEAM_WALLET_ADDRESS,
       mainnet: env.MAINNET_GNOSIS_TEAM_WALLET_ADDRESS,
+      mumbai: env.DEPLOYER_ADDRESS,
     },
     testUser: {
       default: 3,
@@ -176,6 +178,11 @@ const config = {
     mainnet: {
       url: `https://mainnet.infura.io/v3/${env.INFURA_API_KEY}`,
       accounts: TESTNET_ACCOUNTS,
+    },
+    mumbai: {
+      url: 'https://matic-mumbai.chainstacklabs.com',
+      accounts: TESTNET_ACCOUNTS,
+      gasPrice: 1000000000,
     },
   },
   etherscan: {
