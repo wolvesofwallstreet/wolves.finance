@@ -32,7 +32,6 @@ import Web3Modal, {
 import WalletLinkLogo from '../assets/coinbase-wallet.svg';
 import { CARD_LEVEL, CARDS, CFOLIO_ITEMS } from '../components/types/cards';
 import { addresses } from '../config/addresses';
-import { privateNetworkRPC, privateNetworkWS } from '../config/networks';
 import {
   ASSETS_STATE,
   CFOLIO_ITEM_BUY,
@@ -87,6 +86,8 @@ export type Payload = {
 };
 
 type ChainAddresses = {
+  rpcEndpoint?: string;
+  wssEndpoint?: string;
   token: string;
   stakeFarm: string;
   sftMinterProxy: string;
@@ -479,6 +480,11 @@ class Store {
 
   /*********************** NETWORK ******************/
 
+  getEndpoint(wss: boolean): string | undefined {
+    const chainAddresses = this._getChainAddresses();
+    return wss ? chainAddresses?.wssEndpoint : chainAddresses?.rpcEndpoint;
+  }
+
   connect = async () => {
     try {
       if (this.ethersProvider) {
@@ -486,10 +492,9 @@ class Store {
       }
 
       let ethersProvider: ethers.providers.JsonRpcProvider;
-      if (this.networkName === 'private') {
-        ethersProvider = new ethers.providers.JsonRpcProvider(
-          privateNetworkRPC
-        );
+      const endpoint = this.getEndpoint(false);
+      if (endpoint) {
+        ethersProvider = new ethers.providers.JsonRpcProvider(endpoint);
       } else {
         const web3Provider = await this.web3Modal.connect();
         await this.subscribeProvider(web3Provider);
@@ -500,7 +505,7 @@ class Store {
       this.address = ethers.utils.getAddress(accounts[this.accountId]);
       const network = await ethersProvider.getNetwork();
       this.chainId = network.chainId;
-      if (this.networkName !== 'private') this.networkName = network.name;
+      this.networkName = network.name;
       await this._launchEventProvider();
       if (await this._setupContracts(ethersProvider)) this._emitNetworkChange();
       this.ethersProvider = ethersProvider;
@@ -513,10 +518,10 @@ class Store {
 
   autoconnect = async () => {
     const query = new URLSearchParams(window.location.search);
-    const defaultNetwork = query.get('network');
+    const defaultChain = query.get('chainId');
     const defaultAccountId = query.get('accountId');
 
-    if (defaultNetwork) this.networkName = defaultNetwork;
+    if (defaultChain) this.chainId = parseInt(defaultChain);
     if (defaultAccountId) this.accountId = parseInt(defaultAccountId);
 
     if (this.web3Modal.cachedProvider) {
@@ -584,6 +589,7 @@ class Store {
     this.tradeFloorContractRO?.removeAllListeners();
     this.tradeFloorContractRO = undefined;
     this.lpContractRO = undefined;
+    this.uniDaiWethPairContractRO = undefined;
     await this.disconnect(false);
     if (this.eventProvider) {
       this.eventProvider?.removeAllListeners();
@@ -712,16 +718,13 @@ class Store {
           | ethers.providers.WebSocketProvider
           | ethers.providers.JsonRpcProvider;
         this.isWSEventProvider = true;
-        if (this.networkName === 'private') {
-          if (privateNetworkWS.startsWith('http')) {
+        const endpoint = this.getEndpoint(true);
+        if (endpoint) {
+          if (endpoint.startsWith('http')) {
             this.isWSEventProvider = false;
-            eventProvider = new ethers.providers.JsonRpcProvider(
-              privateNetworkWS
-            );
+            eventProvider = new ethers.providers.JsonRpcProvider(endpoint);
           } else {
-            eventProvider = new ethers.providers.WebSocketProvider(
-              privateNetworkWS
-            );
+            eventProvider = new ethers.providers.WebSocketProvider(endpoint);
           }
         } else {
           eventProvider = ethers.providers.InfuraProvider.getWebSocketProvider(
@@ -824,7 +827,7 @@ class Store {
           UniV2PairAbi,
           provider
         );
-      }
+      } else this.uniDaiWethPairContractRO = undefined;
 
       if (chainAddresses.curveYDeposit !== '') {
         this.curveYDepositContractRO = new ethers.Contract(
@@ -832,7 +835,7 @@ class Store {
           CurveYDepositAbi,
           provider
         );
-      }
+      } else this.curveYDepositContractRO = undefined;
 
       // Setup our balances
       this.assets.balances['WOWS'].address = chainAddresses.token;

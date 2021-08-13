@@ -83,6 +83,7 @@
     "uniDaiWeth": "0x03E6c12eF405AC3F642B9184eDed8E1322de1a9e"
   },
   "80001": {
+    "wssEndpoint": "wss://ws-matic-mumbai.chainstacklabs.com",
     "weth": "0x3AC6B77A1ed7bF6E1D42ddD69f055f7357E8e7d6",
     "uniV2Factory": "0x53C0c7b4f14eC80F46aCB4c5A6f3EEa857CF3300",
     "uniV2Router": "0x7F9126294d29d69af49cAB05eFE1016a04481a60",
