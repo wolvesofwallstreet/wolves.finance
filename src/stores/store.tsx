@@ -1361,7 +1361,7 @@ class Store {
 
   aprToApy(apr: number): string {
     const apy = (Math.pow(1.0 + apr / 100 / 52, 52) - 1.0) * 100;
-    return apy > 1e4 ? 'INF' : (apy * 100).toFixed(2);
+    return apy > 1e4 ? 'INF' : apy.toFixed(2);
   }
 
   /************** TX ****************/
