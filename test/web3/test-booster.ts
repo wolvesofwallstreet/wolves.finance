@@ -419,7 +419,7 @@ describe('Booster rewards', function () {
     chai
       .expect(result.locked[0])
       .to.be.within(
-        ethers.BigNumber.from('200892000000000000000'),
+        ethers.BigNumber.from('200891000000000000000'),
         ethers.BigNumber.from('200893000000000000000')
       );
     // Should be still ~ 5% of the orignal locked value
@@ -447,7 +447,7 @@ describe('Booster rewards', function () {
     chai
       .expect(result.locked[0])
       .to.be.within(
-        ethers.BigNumber.from('200892000000000000000'),
+        ethers.BigNumber.from('200891000000000000000'),
         ethers.BigNumber.from('200893000000000000000')
       );
     // Should be still ~ 5% of the orignal locked value
