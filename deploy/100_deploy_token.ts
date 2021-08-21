@@ -19,14 +19,19 @@ const ADDRESS_REGISTRY_CONTRACT = 'AddressRegistry';
 const TOKEN_CONTRACT = 'WowsToken';
 const CONTROLLER_CONTRACT = 'Controller';
 const UNIV2_STAKE_FARM_CONTRACT = 'UniV2StakeFarm';
+const BOOSTER_PROXY_CONTRACT = 'BoosterProxy';
 const BOOSTER_CONTRACT = 'Booster';
 const REWARD_HANDLER_CONTRACT = 'RewardHandler';
 const PRESALE_CONTRACT = 'Crowdsale';
+const UPGRADE_PROXY_CONTRACT = 'UpgradeProxy';
 
 // Path to address files
 const CONFIG_ADDRESSES = `${__dirname}/../src/config/addresses.json`;
 const GENERATED_ADDRESSES = `${__dirname}/../src/config/generated-addresses.json`;
 const IGNORE_ADDRESSES = process.env.IGNORE_ADDRESSES !== undefined;
+
+// Contract ABIs
+const BOOSTER_ABI = `${__dirname}/../src/abi/contracts/src/booster/Booster.sol/Booster.json`;
 
 // Addressbook constants
 const ADDRESS_BOOK_TEAM_WALLET_KEY =
@@ -41,8 +46,8 @@ const ADDRESS_BOOK_STAKE_FARM_KEY = ethers.utils.formatBytes32String(
 );
 const ADDRESS_BOOK_WOWS_TOKEN_KEY =
   ethers.utils.formatBytes32String('WOWS_TOKEN');
-const ADDRESS_BOOK_WOWS_BOOSTER_KEY =
-  ethers.utils.formatBytes32String('WOWS_BOOSTER');
+const ADDRESS_BOOK_WOWS_BOOSTER_PROXY_KEY =
+  ethers.utils.formatBytes32String('WOWS_BOOSTER_PROXY');
 const ADDRESS_BOOK_REWARD_HANDLER_KEY =
   ethers.utils.formatBytes32String('REWARD_HANDLER');
 const ADDRESS_BOOK_DEPLOYER_KEY = ethers.utils.formatBytes32String('DEPLOYER');
@@ -119,6 +124,9 @@ const func = async function (hardhat_re) {
 
   const configAddresses = (!IGNORE_ADDRESSES && configNetworks[chainId]) || {};
   const generatedAddresses = generatedNetworks[chainId] || {};
+
+  // Load ABIs
+  const boosterAbi = JSON.parse(fs.readFileSync(BOOSTER_ABI));
 
   console.log('Deployer: ', deployer);
   console.log('MarketingWallet: ', marketingWallet);
@@ -285,7 +293,7 @@ const func = async function (hardhat_re) {
   //
   //////////////////////////////////////////////////////////////////////////////
 
-  if (configAddresses.booster) {
+  if (configAddresses.rewardHandler) {
     log_step(`Using deployed RewardHandler: ${configAddresses.rewardHandler}`);
     generatedAddresses.rewardHandler = configAddresses.rewardHandler;
   } else {
@@ -301,7 +309,92 @@ const func = async function (hardhat_re) {
     generatedAddresses.rewardHandler = rewardHandlerReceipt.address;
   }
 
-  const REWARD_HANDLER_ADDRESS = generatedAddresses.rewardHandler;
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // Register address for RewardHandler
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  log_step('Setting RewardHander in address registry');
+
+  await setRegistryKey(
+    deployer,
+    execute,
+    ADDRESS_REGISTRY_INSTANCE,
+    ADDRESS_BOOK_REWARD_HANDLER_KEY,
+    generatedAddresses.rewardHandler
+  );
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // Deploy booster
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  if (configAddresses.booster) {
+    log_step(`Using deployed booster: ${configAddresses.booster}`);
+    generatedAddresses.booster = configAddresses.booster;
+  } else {
+    log_step('Deploying booster');
+
+    const boosterReceipt = await deploy(BOOSTER_CONTRACT, {
+      from: deployer,
+      log: true,
+      args: [marketingWallet],
+      deterministicDeployment: true,
+    });
+
+    generatedAddresses.booster = boosterReceipt.address;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // Deploy Booster proxy
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  if (configAddresses.boosterProxy) {
+    log_step(`Using Booster proxy: ${configAddresses.boosterProxy}`);
+    generatedAddresses.boosterProxy = configAddresses.boosterProxy;
+  } else {
+    log_step('Deploying Booster proxy');
+
+    const boosterInterface = new ethers.utils.Interface(boosterAbi);
+    const proxyCallData = boosterInterface.encodeFunctionData('initialize', [
+      marketingWallet,
+      generatedAddresses.rewardHandler,
+    ]);
+
+    const boosterProxyReceipt = await deploy(BOOSTER_PROXY_CONTRACT, {
+      contract: UPGRADE_PROXY_CONTRACT,
+      from: deployer,
+      args: [
+        ADDRESS_REGISTRY_ADDRESS,
+        generatedAddresses.booster,
+        proxyCallData,
+      ],
+      log: true,
+      deterministicDeployment: true,
+    });
+
+    generatedAddresses.boosterProxy = boosterProxyReceipt.address;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // Register address for Booster Proxy
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  log_step('Setting booster proxy in address registry');
+
+  await setRegistryKey(
+    deployer,
+    execute,
+    ADDRESS_REGISTRY_INSTANCE,
+    ADDRESS_BOOK_WOWS_BOOSTER_PROXY_KEY,
+    generatedAddresses.boosterProxy
+  );
 
   //////////////////////////////////////////////////////////////////////////////
   //
@@ -321,19 +414,13 @@ const func = async function (hardhat_re) {
 
     const controllerReceipt = await deploy(CONTROLLER_CONTRACT, {
       from: deployer,
-      args: [
-        ADDRESS_REGISTRY_ADDRESS,
-        REWARD_HANDLER_ADDRESS,
-        PREVIOUS_CONTROLLER,
-      ],
+      args: [ADDRESS_REGISTRY_ADDRESS, PREVIOUS_CONTROLLER],
       log: true,
       deterministicDeployment: true,
     });
 
     generatedAddresses.controller = controllerReceipt.address;
   }
-
-  const CONTROLLER_ADDRESS = generatedAddresses.controller;
 
   //////////////////////////////////////////////////////////////////////////////
   //
@@ -359,7 +446,7 @@ const func = async function (hardhat_re) {
         STAKE_FARM_NAME,
         UNIV2_PAIR_ADDRESS,
         REWARD_TOKEN,
-        CONTROLLER_ADDRESS,
+        generatedAddresses.controller,
         ROUTE,
       ],
       log: true,
@@ -385,62 +472,6 @@ const func = async function (hardhat_re) {
     ADDRESS_REGISTRY_INSTANCE,
     ADDRESS_BOOK_STAKE_FARM_KEY,
     UNIV2_STAKE_FARM_ADDRESS
-  );
-
-  //////////////////////////////////////////////////////////////////////////////
-  //
-  // Deploy booster
-  //
-  //////////////////////////////////////////////////////////////////////////////
-
-  if (configAddresses.booster) {
-    log_step(`Using deployed booster: ${configAddresses.booster}`);
-    generatedAddresses.booster = configAddresses.booster;
-  } else {
-    log_step('Deploying booster');
-
-    const boosterReceipt = await deploy(BOOSTER_CONTRACT, {
-      from: deployer,
-      log: true,
-      args: [deployer],
-      deterministicDeployment: true,
-    });
-
-    generatedAddresses.booster = boosterReceipt.address;
-  }
-
-  const BOOSTER_ADDRESS = generatedAddresses.booster;
-
-  //////////////////////////////////////////////////////////////////////////////
-  //
-  // Register address for Booster
-  //
-  //////////////////////////////////////////////////////////////////////////////
-
-  log_step('Setting booster in address registry');
-
-  await setRegistryKey(
-    deployer,
-    execute,
-    ADDRESS_REGISTRY_INSTANCE,
-    ADDRESS_BOOK_WOWS_BOOSTER_KEY,
-    BOOSTER_ADDRESS
-  );
-
-  //////////////////////////////////////////////////////////////////////////////
-  //
-  // Register address for RewardHandler
-  //
-  //////////////////////////////////////////////////////////////////////////////
-
-  log_step('Setting RewardHander in address registry');
-
-  await setRegistryKey(
-    deployer,
-    execute,
-    ADDRESS_REGISTRY_INSTANCE,
-    ADDRESS_BOOK_REWARD_HANDLER_KEY,
-    REWARD_HANDLER_ADDRESS
   );
 
   //////////////////////////////////////////////////////////////////////////////

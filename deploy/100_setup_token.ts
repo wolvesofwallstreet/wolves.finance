@@ -20,6 +20,12 @@ const CONTROLLER_CONTRACT = 'Controller';
 const CONTROLLER_UPDATE_CONTRACT = 'ControllerUpdate';
 const REWARD_HANDLER_CONTRACT = 'RewardHandler';
 const UNIV2_STAKE_FARM_CONTRACT = 'UniV2StakeFarm';
+const BOOSTER_CONTRACT = 'Booster';
+const BOOSTER_PROXY_CONTRACT = 'BoosterProxy';
+
+// keccak-256("eip1967.proxy.implementation") - 1
+const UPGRADE_PROXY_IMPLEMENTATION_SLOT =
+  '0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc';
 
 // Path to generated addresses file
 const CONFIG_ADDRESSES = `${__dirname}/../src/config/addresses.json`;
@@ -29,6 +35,16 @@ const IGNORE_ADDRESSES = process.env.IGNORE_ADDRESSES !== undefined;
 // Helper function
 function log_step(step_string) {
   console.log(`\n==> ${step_string}\n`);
+}
+
+async function getProxyImplementation(hre, contractAddress) {
+  const data = await hre.ethers.provider.getStorageAt(
+    contractAddress,
+    UPGRADE_PROXY_IMPLEMENTATION_SLOT
+  );
+  return hre.ethers.utils.getAddress(
+    hre.ethers.BigNumber.from(data).toHexString()
+  );
 }
 
 /**
@@ -54,15 +70,20 @@ const func = async function (hardhat_re) {
   const generatedAddresses = generatedNetworks[chainId] || {};
 
   // Load deployed contract instances
-  const CONTROLLER_INSTANCE = await hardhat_re.ethers.getContract(
+  const controllerInstance = await hardhat_re.ethers.getContract(
     CONTROLLER_CONTRACT
   );
-  const TOKEN_INSTANCE = await hardhat_re.ethers.getContract(TOKEN_CONTRACT);
-  const REWARD_HANDLER_INSTANCE = await hardhat_re.ethers.getContract(
+  const tokenInstance = await hardhat_re.ethers.getContract(TOKEN_CONTRACT);
+  const rewardHandlerInstance = await hardhat_re.ethers.getContract(
     REWARD_HANDLER_CONTRACT
   );
-  const UNIV2_STAKE_FARM_INSTANCE = await hardhat_re.ethers.getContract(
+  const uniV2StakeFarmInstance = await hardhat_re.ethers.getContract(
     UNIV2_STAKE_FARM_CONTRACT
+  );
+  // Booster on Booster_PROXY address
+  const boosterInstance = await hardhat_re.ethers.getContractAt(
+    BOOSTER_CONTRACT,
+    generatedAddresses.boosterProxy
   );
 
   //////////////////////////////////////////////////////////////////////////////
@@ -73,6 +94,8 @@ const func = async function (hardhat_re) {
 
   log_step('Marketing wallet calls');
 
+  const REWARD_HANDLER_REWARD_ROLE = await rewardHandlerInstance.REWARD_ROLE();
+
   //
   // 1.) Call RewardHandler.sol::revokeRole(RewardHandler.REWARD_ROLE(), controllerUpdate)
   //
@@ -80,8 +103,8 @@ const func = async function (hardhat_re) {
   if (
     configAddresses.controllerUpdate &&
     configAddresses.controllerUpdate !== generatedAddresses.controller &&
-    (await REWARD_HANDLER_INSTANCE.hasRole(
-      await REWARD_HANDLER_INSTANCE.REWARD_ROLE(),
+    (await rewardHandlerInstance.hasRole(
+      REWARD_HANDLER_REWARD_ROLE,
       configAddresses.controllerUpdate
     ))
   ) {
@@ -93,25 +116,25 @@ const func = async function (hardhat_re) {
           log: false,
         },
         'revokeRole',
-        await REWARD_HANDLER_INSTANCE.REWARD_ROLE(),
-        generatedAddresses.controllerUpdate
+        REWARD_HANDLER_REWARD_ROLE,
+        configAddresses.controllerUpdate
       )
     );
   }
 
   //
-  // 2.) Call RewardHandler.sol::grantRole(RewardHandler.sol.REWARD_ROLE(), controller)
-  //     This is to allow controller to call into RewardHandler.sol to distribute
+  // 2.) Call RewardHandler.sol::grantRole(RewardHandler.sol.REWARD_ROLE(), boosterProxy)
+  //     This is to allow booster proxy to call into RewardHandler.sol to distribute
   //     rewards.
   //
 
   if (
-    !(await REWARD_HANDLER_INSTANCE.hasRole(
-      await REWARD_HANDLER_INSTANCE.REWARD_ROLE(),
-      generatedAddresses.controller
+    !(await rewardHandlerInstance.hasRole(
+      REWARD_HANDLER_REWARD_ROLE,
+      generatedAddresses.boosterProxy
     ))
   ) {
-    console.log('Grant reward role to controller');
+    console.log('Grant reward role to booster proxy');
 
     await catchUnknownSigner(
       execute(
@@ -121,23 +144,53 @@ const func = async function (hardhat_re) {
           log: false,
         },
         'grantRole',
-        await REWARD_HANDLER_INSTANCE.REWARD_ROLE(),
-        generatedAddresses.controller
+        REWARD_HANDLER_REWARD_ROLE,
+        generatedAddresses.boosterProxy
       )
     );
   } else {
-    console.log('Reward role already granted to controller');
+    console.log('Reward role already granted to booster proxy');
+  }
+
+  const TOKEN_MINTER_ROLE = await tokenInstance.MINTER_ROLE();
+
+  //
+  // 3.) Revoke old rewardHandler MINTER_ROLE
+  //
+  if (
+    configAddresses.rewardHandlerUpdate &&
+    configAddresses.rewardHandlerUpdate !== generatedAddresses.rewardHandler &&
+    (await tokenInstance.hasRole(
+      TOKEN_MINTER_ROLE,
+      configAddresses.rewardHandlerUpdate
+    ))
+  ) {
+    console.log('Revoke minter role from old reward handler');
+
+    await catchUnknownSigner(
+      execute(
+        TOKEN_CONTRACT,
+        {
+          from: marketingWallet,
+          log: true,
+        },
+        'revokeRole',
+        TOKEN_MINTER_ROLE,
+        configAddresses.rewardHandlerUpdate
+      )
+    );
+  } else {
+    console.log('Minter role not set for old reward handler');
   }
 
   //
-  // 3.) Call WOWSErc20.sol::grantRole(WOWSErc20.sol.MINTER_ROLE(), controller)
+  // 4.) Call WOWSErc20.sol::grantRole(WOWSErc20.sol.MINTER_ROLE(), controller)
   //     This is to allow controller to call into WOWSErc20.sol to distribute
   //     rewards.
   //
-
   if (
-    !(await TOKEN_INSTANCE.hasRole(
-      await TOKEN_INSTANCE.MINTER_ROLE(),
+    !(await tokenInstance.hasRole(
+      TOKEN_MINTER_ROLE,
       generatedAddresses.rewardHandler
     ))
   ) {
@@ -151,7 +204,7 @@ const func = async function (hardhat_re) {
           log: true,
         },
         'grantRole',
-        await TOKEN_INSTANCE.MINTER_ROLE(),
+        TOKEN_MINTER_ROLE,
         generatedAddresses.rewardHandler
       )
     );
@@ -160,7 +213,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 4.) Call Controller.sol::registerFarm()
+  // 5.) Call Controller.sol::registerFarm()
   //     Parameters:
   //       * farmAddress         The UniV2StakeFarm address
   //       * rewardCap           15,000 * 1e18 Wei
@@ -177,9 +230,9 @@ const func = async function (hardhat_re) {
   const REWARD_FEE = 2 * 1e4;
 
   if (
-    (await UNIV2_STAKE_FARM_INSTANCE.controller()) ===
-      CONTROLLER_INSTANCE.address &&
-    (await CONTROLLER_INSTANCE.farms(FARM_ADDRESS)).farmStartedAtBlock.isZero()
+    (await uniV2StakeFarmInstance.controller()) ===
+      controllerInstance.address &&
+    (await controllerInstance.farms(FARM_ADDRESS)).farmStartedAtBlock.isZero()
   ) {
     console.log('Register farm with controller');
 
@@ -203,7 +256,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 5.) If we have a Controller Upgrade, call OldController::transferAllFarms(newController)
+  // 6.) If we have a Controller Upgrade, call OldController::transferAllFarms(newController)
   // !! In deployments a ControllerUpdate.json file is expected with the old Controller
   //
   if (
@@ -228,13 +281,12 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 6.) Call WOWSErc20.sol::grantRole(WOWSErc20.sol.MINTER_ROLE(), Crowdsale.sol)
+  // 7.) Call WOWSErc20.sol::grantRole(WOWSErc20.sol.MINTER_ROLE(), Crowdsale.sol)
   //     !!! ONLY DURING PRESALE !!!
   //
-
   if (
-    !(await TOKEN_INSTANCE.hasRole(
-      await TOKEN_INSTANCE.MINTER_ROLE(),
+    !(await tokenInstance.hasRole(
+      TOKEN_MINTER_ROLE,
       generatedAddresses.presale
     ))
   ) {
@@ -248,7 +300,7 @@ const func = async function (hardhat_re) {
           log: true,
         },
         'grantRole',
-        await TOKEN_INSTANCE.MINTER_ROLE(),
+        TOKEN_MINTER_ROLE,
         generatedAddresses.presale
       )
     );
@@ -257,14 +309,130 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 7.) Call Controller.sol::setWorker(teamwallet)
+  // 8.) Call Controller.sol::setWorker(teamwallet)
   //     Until we haven't an automatic process for maintanance
   //     the current tem wallet is the "worker" (see next)
   //
-  // 8.) Call Controller.sol::refuelfarms < 1 day before duration ends
+  // 9.) Call Controller.sol::refuelfarms < 1 day before duration ends
   //     Until we haven't an automatic process for maintanance
   //     this has to be done every 2 weeks
   //
+
+  //
+  // 10.) Check if we have to upgrade the tradeFloor implementation
+  //
+  if (
+    (await getProxyImplementation(
+      hardhat_re,
+      generatedAddresses.boosterProxy
+    )) !== generatedAddresses.booster
+  ) {
+    await catchUnknownSigner(
+      execute(
+        BOOSTER_PROXY_CONTRACT,
+        {
+          from: marketingWallet,
+          log: true,
+        },
+        'upgradeTo',
+        generatedAddresses.booster
+      )
+    );
+  }
+
+  //
+  // 11.) Check if we have to set the rewardHandler
+  //
+  if (
+    (await boosterInstance.rewardHandler()) !== generatedAddresses.rewardHandler
+  ) {
+    await catchUnknownSigner(
+      execute(
+        BOOSTER_CONTRACT,
+        {
+          from: marketingWallet,
+          to: generatedAddresses.boosterProxy,
+          log: true,
+        },
+        'setRewardHandler',
+        generatedAddresses.rewardHandler
+      )
+    );
+  }
+
+  const BOOSTER_CONTROLLER_ROLE = await boosterInstance.CONTROLLER_ROLE();
+
+  //
+  // 12.) Revoke CONTROLLER role in Booster for controller)
+  //
+  if (
+    configAddresses.controllerUpdate &&
+    configAddresses.controllerUpdate !== generatedAddresses.controller &&
+    (await boosterInstance.hasRole(
+      BOOSTER_CONTROLLER_ROLE,
+      configAddresses.controllerUpdate
+    ))
+  ) {
+    await catchUnknownSigner(
+      execute(
+        BOOSTER_CONTRACT,
+        {
+          from: marketingWallet,
+          to: generatedAddresses.boosterProxy,
+          log: false,
+        },
+        'revokeRole',
+        BOOSTER_CONTROLLER_ROLE,
+        configAddresses.controllerUpdate
+      )
+    );
+  }
+
+  //
+  // 13.) Grant CONTROLLER_ROLE for new controller
+  //
+  if (
+    !(await boosterInstance.hasRole(
+      BOOSTER_CONTROLLER_ROLE,
+      generatedAddresses.controller
+    ))
+  ) {
+    await catchUnknownSigner(
+      execute(
+        BOOSTER_CONTRACT,
+        {
+          from: marketingWallet,
+          to: generatedAddresses.boosterProxy,
+          log: true,
+        },
+        'grantRole',
+        BOOSTER_CONTROLLER_ROLE,
+        generatedAddresses.controller
+      )
+    );
+  }
+
+  //
+  // 14.) terminate old rewardHandler
+  //
+  if (
+    configAddresses.rewardHandlerUpdate &&
+    configAddresses.rewardHandlerUpdate !== generatedAddresses.rewardHandler
+  ) {
+    await catchUnknownSigner(
+      execute(
+        REWARD_HANDLER_CONTRACT,
+        {
+          from: marketingWallet,
+          to: configAddresses.rewardHandlerUpdate,
+          log: true,
+        },
+        'terminate',
+        generatedAddresses.rewardHandler,
+        false // Should be set to true if verified
+      )
+    );
+  }
 };
 
 module.exports = func;
