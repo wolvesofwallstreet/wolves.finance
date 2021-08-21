@@ -240,7 +240,7 @@ contract WOWSSftMinter is Context, Ownable {
     // contract", which is not the case due to the {Ownable-onlyOwner} modifier.
     //
     // slither-disable-next-line suicidal
-    selfdestruct(msg.sender);
+    selfdestruct(_msgSender());
   }
 
   /**
@@ -408,7 +408,7 @@ contract WOWSSftMinter is Context, Ownable {
     address cfolio = _sftContract.tokenIdToAddress(sftTokenId);
     require(cfolio != address(0), 'WM: Invalid cfolio');
 
-    address receiver = lockPeriod > 0 ? cfolio : msg.sender;
+    address receiver = lockPeriod > 0 ? cfolio : _msgSender();
 
     bool[] memory lookup = new bool[](cfolioItemHandlers.length);
     (uint256[] memory items, uint256 itemsLength) = IWOWSCryptofolio(cfolio)
@@ -421,7 +421,7 @@ contract WOWSSftMinter is Context, Ownable {
       ].handlerId;
       if (!lookup[handlerId]) {
         cfolioItemHandlers[handlerId].getRewards(
-          msg.sender,
+          _msgSender(),
           receiver,
           sftTokenId
         );

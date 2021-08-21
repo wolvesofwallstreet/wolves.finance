@@ -303,7 +303,7 @@ contract Booster is IBooster, AccessControl {
     address cfolio = sftHolder.tokenIdToAddress(sftTokenId);
     require(cfolio != address(0), 'B: Invalid cfolio');
     require(
-      IERC1155(address(sftHolder)).balanceOf(msg.sender, sftTokenId) == 1,
+      IERC1155(address(sftHolder)).balanceOf(_msgSender(), sftTokenId) == 1,
       'B: Access denied'
     );
 
@@ -321,7 +321,7 @@ contract Booster is IBooster, AccessControl {
 
     // Update state
     if (reLock) _addMore(cfolio, currentLock, ts, claimable);
-    else rewardHandler.distribute2(msg.sender, claimable, currentLock.fee);
+    else rewardHandler.distribute2(_msgSender(), claimable, currentLock.fee);
   }
 
   //////////////////////////////////////////////////////////////////////////////

@@ -8,6 +8,8 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
+import '@openzeppelin/contracts/utils/Context.sol';
+
 import './interfaces/ISFTEvaluator.sol';
 import './interfaces/ICFolioItemHandler.sol';
 
@@ -17,7 +19,7 @@ import '../utils/AddressBook.sol';
 import '../utils/interfaces/IAddressRegistry.sol';
 import '../utils/TokenIds.sol';
 
-contract SFTEvaluator is ISFTEvaluator {
+contract SFTEvaluator is ISFTEvaluator, Context {
   using TokenIds for uint256;
 
   //////////////////////////////////////////////////////////////////////////////
@@ -182,7 +184,7 @@ contract SFTEvaluator is ISFTEvaluator {
    */
   function setMinter(address newMinter) external {
     // Access control
-    require(msg.sender == admin, 'SFTE: Forbidden');
+    require(_msgSender() == admin, 'SFTE: Forbidden');
 
     // Set state
     sftMinter = newMinter;
@@ -196,7 +198,7 @@ contract SFTEvaluator is ISFTEvaluator {
     override
   {
     require(tokenId.isCFolioCard(), 'Invalid tokenId');
-    require(msg.sender == sftMinter, 'SFTE: Minter only');
+    require(_msgSender() == sftMinter, 'SFTE: Minter only');
 
     _cfolioItemTypes[tokenId] = cfolioItemType;
 
