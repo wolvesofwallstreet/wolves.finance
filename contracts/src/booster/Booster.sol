@@ -86,9 +86,17 @@ contract Booster is IBooster, AccessControl {
   // Events
   //////////////////////////////////////////////////////////////////////////////
 
-  event Lock(address indexed recipient, uint256 amountIn, uint256 amountLocked);
-  event Add(address indexed recipient, uint256 amount, uint256 amountLocked);
-  event Claim(address indexed recipient, uint256 amount);
+  event TokensLocked(
+    address indexed recipient,
+    uint256 amountIn,
+    uint256 amountLocked
+  );
+  event MoreAdded(
+    address indexed recipient,
+    uint256 amount,
+    uint256 amountLocked
+  );
+  event RewardsClaimed(address indexed recipient, uint256 amount);
 
   //////////////////////////////////////////////////////////////////////////////
   // Initialization
@@ -196,7 +204,7 @@ contract Booster is IBooster, AccessControl {
 
           rewardsProvided.add(reward);
           _verifyRewardsProvided();
-          emit Lock(
+          emit TokensLocked(
             recipient,
             currentLock.totalAmount.sub(reward),
             currentLock.totalAmount
@@ -268,7 +276,7 @@ contract Booster is IBooster, AccessControl {
     currentLock.pendingAmount = 0;
     currentLock.providedAmount.add(claimable);
 
-    emit Claim(cfolio, claimable);
+    emit RewardsClaimed(cfolio, claimable);
 
     if (reLock) _addMore(cfolio, currentLock, ts, claimable);
     else rewardHandler.distribute2(msg.sender, claimable, currentLock.fee);
@@ -362,7 +370,7 @@ contract Booster is IBooster, AccessControl {
     lock_.totalAmount = lock_.totalAmount.add(amount).add(reward);
     rewardsProvided.add(reward);
     _verifyRewardsProvided();
-    emit Add(recipient, amount, amount.add(reward));
+    emit MoreAdded(recipient, amount, amount.add(reward));
   }
 
   /**
