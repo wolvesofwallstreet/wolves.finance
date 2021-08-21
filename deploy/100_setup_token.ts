@@ -413,7 +413,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 14.) terminate old rewardHandler
+  // 14.) Terminate old rewardHandler
   //
   if (
     configAddresses.rewardHandlerUpdate &&
