@@ -239,7 +239,9 @@ contract Booster is IBooster, AccessControl {
         currentLock.fee = fee;
         currentLock.totalAmount = currentLock.totalAmount.add(amount);
       }
-    } else rewardHandler.distribute2(recipient, amount, fee);
+    } else {
+      rewardHandler.distribute2(recipient, amount, fee);
+    }
   }
 
   /**
@@ -320,8 +322,11 @@ contract Booster is IBooster, AccessControl {
     emit RewardsClaimed(cfolio, claimable);
 
     // Update state
-    if (reLock) _addMore(cfolio, currentLock, ts, claimable);
-    else rewardHandler.distribute2(_msgSender(), claimable, currentLock.fee);
+    if (reLock) {
+      _addMore(cfolio, currentLock, ts, claimable);
+    } else {
+      rewardHandler.distribute2(_msgSender(), claimable, currentLock.fee);
+    }
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -435,7 +440,9 @@ contract Booster is IBooster, AccessControl {
         lock_.end = 0;
         lock_.totalAmount = 0;
         lock_.providedAmount = 0;
-      } else lock_.last = ts;
+      } else {
+        lock_.last = ts;
+      }
     }
   }
 
@@ -448,13 +455,17 @@ contract Booster is IBooster, AccessControl {
     returns (uint256)
   {
     if (lock_.end != 0) {
-      if (ts >= lock_.end) return lock_.totalAmount.sub(lock_.providedAmount);
-      else
+      if (ts >= lock_.end) {
+        return lock_.totalAmount.sub(lock_.providedAmount);
+      } else {
         return
           lock_.pendingAmount.add(
             lock_.totalAmount.mul(ts.sub(lock_.last)).div(MONTHLY_REWARD)
           );
-    } else return lock_.pendingAmount;
+      }
+    } else {
+      return lock_.pendingAmount;
+    }
   }
 
   /**
