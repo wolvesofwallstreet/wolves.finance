@@ -19,10 +19,6 @@ import '../booster/interfaces/IBooster.sol';
 import './interfaces/IController.sol';
 import './interfaces/IFarm.sol';
 
-interface IFarmOwnable is IFarm {
-  function owner() external view returns (address);
-}
-
 contract Controller is IController, Context, Ownable {
   using SafeMath for uint256;
 
