@@ -254,7 +254,7 @@ describe('Booster rewards', function () {
     contracts = await setupTest();
   });
 
-  it('should check lp wallet balance', async function () {
+  it('should check LP wallet balance', async function () {
     this.timeout(60 * 1000);
 
     const { uniV2PairContract, lpBalance } = contracts;
@@ -301,7 +301,7 @@ describe('Booster rewards', function () {
     await chai.expect(tx).to.not.be.reverted;
   });
 
-  it('should ffd 1 day to produce rewards', async function () {
+  it('should fast forward 1 day to produce rewards', async function () {
     this.timeout(60 * 1000);
 
     const { cfolioItemHandlerLPContract } = contracts;
@@ -362,7 +362,7 @@ describe('Booster rewards', function () {
     chai.expect(result.pending[0]).to.be.equal(ethers.BigNumber.from('0'));
   });
 
-  it('should ffd 15 days to produce rewards', async function () {
+  it('should fast forward 15 days to produce rewards', async function () {
     this.timeout(60 * 1000);
 
     const { cfolioItemHandlerLPContract } = contracts;
@@ -431,7 +431,7 @@ describe('Booster rewards', function () {
       );
   });
 
-  it('should ffd 10 days to produce rewards', async function () {
+  it('should fast forward 10 days to produce rewards', async function () {
     this.timeout(60 * 1000);
 
     const { boosterContract } = contracts;
@@ -459,7 +459,7 @@ describe('Booster rewards', function () {
       );
   });
 
-  it('should ffd over the 1 month', async function () {
+  it('should fast forward over the 1 month', async function () {
     this.timeout(60 * 1000);
 
     const { boosterContract } = contracts;
@@ -495,9 +495,9 @@ describe('Booster rewards', function () {
 
     const result = await boosterContract.getRewardInfo([wowsTokenIdWolf]);
 
-    // Should be resetted to 0
+    // Should be reset to 0
     chai.expect(result.locked[0]).to.be.equal(ethers.BigNumber.from('0'));
-    // Should be resetted to 0
+    // Should be reset to 0
     chai.expect(result.pending[0]).to.be.equal(ethers.BigNumber.from('0'));
   });
 });
