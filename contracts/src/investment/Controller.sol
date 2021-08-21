@@ -12,9 +12,9 @@ import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/math/SafeMath.sol';
 import '@openzeppelin/contracts/utils/Context.sol';
 
+import '../booster/interfaces/IBooster.sol';
 import '../utils/AddressBook.sol';
 import '../utils/interfaces/IAddressRegistry.sol';
-import '../booster/interfaces/IBooster.sol';
 
 import './interfaces/IController.sol';
 import './interfaces/IFarm.sol';
