@@ -167,6 +167,41 @@ contract Booster is IBooster, AccessControl {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
+   * @dev See {IBooster-getRewardInfo}
+   */
+  function getRewardInfo(uint256[] memory tokenIds)
+    external
+    view
+    override
+    returns (
+      uint256[] memory locked,
+      uint256[] memory pending,
+      uint256[] memory apr,
+      uint256[] memory secsLeft
+    )
+  {
+    locked = new uint256[](tokenIds.length);
+    pending = new uint256[](tokenIds.length);
+    apr = new uint256[](tokenIds.length);
+    secsLeft = new uint256[](tokenIds.length);
+
+    uint256 ts = _getTimestamp();
+
+    for (uint256 i = 0; i < tokenIds.length; ++i) {
+      address cfolio = sftHolder.tokenIdToAddress(tokenIds[i].toSftTokenId());
+      require(cfolio != address(0), 'B: Invalid tokenId');
+
+      TimeLock storage currentLock = timeLocks[cfolio];
+      locked[i] = currentLock.totalAmount;
+      pending[i] = _getPendingAmount(currentLock, ts);
+      apr[i] = currentLock.apr;
+      secsLeft[i] = currentLock.end >= ts
+        ? currentLock.end.sub(ts)
+        : uint256(-1);
+    }
+  }
+
+  /**
    * @dev See {IBooster-distributeFromFarm}
    */
   function distributeFromFarm(
@@ -257,41 +292,6 @@ contract Booster is IBooster, AccessControl {
 
       // We never should reach this line
       revert('B: LockPeriod wrong');
-    }
-  }
-
-  /**
-   * @dev See {IBooster-getRewardInfo}
-   */
-  function getRewardInfo(uint256[] memory tokenIds)
-    external
-    view
-    override
-    returns (
-      uint256[] memory locked,
-      uint256[] memory pending,
-      uint256[] memory apr,
-      uint256[] memory secsLeft
-    )
-  {
-    locked = new uint256[](tokenIds.length);
-    pending = new uint256[](tokenIds.length);
-    apr = new uint256[](tokenIds.length);
-    secsLeft = new uint256[](tokenIds.length);
-
-    uint256 ts = _getTimestamp();
-
-    for (uint256 i = 0; i < tokenIds.length; ++i) {
-      address cfolio = sftHolder.tokenIdToAddress(tokenIds[i].toSftTokenId());
-      require(cfolio != address(0), 'B: Invalid tokenId');
-
-      TimeLock storage currentLock = timeLocks[cfolio];
-      locked[i] = currentLock.totalAmount;
-      pending[i] = _getPendingAmount(currentLock, ts);
-      apr[i] = currentLock.apr;
-      secsLeft[i] = currentLock.end >= ts
-        ? currentLock.end.sub(ts)
-        : uint256(-1);
     }
   }
 
