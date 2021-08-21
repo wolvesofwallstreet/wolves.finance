@@ -10,14 +10,14 @@ pragma solidity >=0.7.0 <0.8.0;
 
 import '@openzeppelin/contracts/utils/Context.sol';
 
-import './interfaces/ISFTEvaluator.sol';
-import './interfaces/ICFolioItemHandler.sol';
-
 import '../token/interfaces/IWOWSCryptofolio.sol';
 import '../token/interfaces/IWOWSERC1155.sol';
 import '../utils/AddressBook.sol';
 import '../utils/interfaces/IAddressRegistry.sol';
 import '../utils/TokenIds.sol';
+
+import './interfaces/ISFTEvaluator.sol';
+import './interfaces/ICFolioItemHandler.sol';
 
 contract SFTEvaluator is ISFTEvaluator, Context {
   using TokenIds for uint256;
