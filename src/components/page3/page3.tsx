@@ -176,6 +176,11 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
                   rewardEarned: 0,
                   mintTimestamp: 0,
                   cfolioItems: [],
+                  boosterRewards: {
+                    total: 0,
+                    pending: 0,
+                    apr: 0,
+                  },
                 };
               }
             );
