@@ -236,7 +236,7 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev See {IRewardHandler-getPendingBoosterRewards}
+   * @dev See {IRewardHandler-getBoosterRewards}
    */
   function getBoosterRewards() external view override returns (uint256) {
     IERC20WowsMintable rewardToken = IERC20WowsMintable(

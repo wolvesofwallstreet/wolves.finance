@@ -14,7 +14,6 @@ interface IRewardHandler {
    *
    * @return The amount which is allocated for the Booster (18 decimals)
    */
-
   function getBoosterRewards() external view returns (uint256);
 
   /**
@@ -27,7 +26,6 @@ interface IRewardHandler {
    * @param amount The amount of WOWS to transfer to the recipient
    * @param fee The reward fee in 1e6 factor notation
    */
-
   function distribute2(
     address recipient,
     uint256 amount,

@@ -29,10 +29,13 @@ contract Booster is IBooster, AccessControl {
   //////////////////////////////////////////////////////////////////////////////
 
   bytes32 public constant CONTROLLER_ROLE = bytes32('CONTROLLER');
+
   // 30 days in seconds multiplied by 10 (10% per month)
   uint256 private constant MONTHLY_REWARD = 25920000;
+
   // Maximum rewards provided from tokenomics
   uint256 private constant MAX_TOKENOMICS_REWARDS = 7500000000000000000000;
+
   // SECONDS PER YEAR
   uint256 private constant SECONDS_PER_YEAR = 360 * 86400;
 
@@ -58,18 +61,18 @@ contract Booster is IBooster, AccessControl {
   }
   mapping(address => TimeLock) public timeLocks;
 
-  // reward definition (1 / 3 / 6 month)
+  // Reward definition (1 / 3 / 6 month)
   struct RewardDefinition {
     uint256 length; // in seconds
     uint256 apr; // 1E18 == 100%
   }
   RewardDefinition[] public rewardDefinitions;
 
-  // overall provided rewards
+  // Overall provided rewards
   uint256 public rewardsProvided;
 
   //////////////////////////////////////////////////////////////////////////////
-  // Modifier
+  // Modifiers
   //////////////////////////////////////////////////////////////////////////////
 
   modifier onlyAdmin() {
@@ -86,16 +89,40 @@ contract Booster is IBooster, AccessControl {
   // Events
   //////////////////////////////////////////////////////////////////////////////
 
+  /**
+   * @dev Temporary tokens owned by recipient were locked
+   *
+   * Tokens are owned by recipient for a specific duration of seconds.
+   *
+   * @param recipient The recipient of the rewards
+   * @param amountIn The amount of tokens in
+   * @param amountLocked The amount of tokens locked (amount plus reward)
+   */
   event TokensLocked(
     address indexed recipient,
     uint256 amountIn,
     uint256 amountLocked
   );
+
+  /**
+   * @dev More amount was added into existing lock pool
+   *
+   * @param recipient The SFT receiving the rewards
+   * @param amount The amount of tokens claimed
+   * @param amountLocked The amount of tokens locked
+   */
   event MoreAdded(
     address indexed recipient,
     uint256 amount,
     uint256 amountLocked
   );
+
+  /**
+   * @dev Rrewards were claimed either into wallet or re-locked
+   *
+   * @param recipient The recipient of the rewards
+   * @param amount The amount of tokens claimed
+   */
   event RewardsClaimed(address indexed recipient, uint256 amount);
 
   //////////////////////////////////////////////////////////////////////////////
@@ -135,6 +162,10 @@ contract Booster is IBooster, AccessControl {
     rewardDefinitions.push(RewardDefinition(2592000, 1000000000000000000));
   }
 
+  //////////////////////////////////////////////////////////////////////////////
+  // Implementation of {IBooster}
+  //////////////////////////////////////////////////////////////////////////////
+
   /**
    * @dev See {IBooster-distributeFromFarm}
    */
@@ -148,22 +179,27 @@ contract Booster is IBooster, AccessControl {
     require(recipient != address(0), 'B: Invalid recipient');
 
     if (sftHolder.addressToTokenId(recipient) != uint256(-1)) {
-      // Prepare locking amunt into SFT
+      // Prepare locking amount into SFT
       TimeLock storage currentLock = timeLocks[recipient];
 
       if (currentLock.end != 0) {
         uint256 ts = _getTimestamp();
+
         // Update pending rewards
         _updatePendingRewards(currentLock, ts);
+
         // Add more
         require(currentLock.fee == fee, 'B: Fee change');
+
         // Add amount to total
         _addMore(recipient, currentLock, ts, amount);
       } else {
+        // Validate state
         require(
           currentLock.totalAmount == 0 || currentLock.fee == fee,
           'B: Fee mismatch'
         );
+
         // Prepare for a new lock
         currentLock.fee = fee;
         currentLock.totalAmount = currentLock.totalAmount.add(amount);
@@ -184,12 +220,11 @@ contract Booster is IBooster, AccessControl {
     TimeLock storage currentLock = timeLocks[recipient];
 
     // Verify that we have already updated lock (from preceeding
-    // distributeFromFarm call)
+    // {distributeFromFarm} call)
     require(currentLock.end == 0 || currentLock.last == ts, 'B: Sync failure');
 
     if (currentLock.end == 0) {
-      // Start a new lock session
-      // calculate the amount we provide
+      // Start a new lock session. Calculate the amount we provide.
       for (uint256 i = 0; i < rewardDefinitions.length; ++i) {
         if (lockPeriod >= rewardDefinitions[i].length) {
           uint256 reward = (
@@ -197,13 +232,18 @@ contract Booster is IBooster, AccessControl {
               rewardDefinitions[i].apr
             )
           ).div(SECONDS_PER_YEAR.mul(1E18));
+
           currentLock.totalAmount = currentLock.totalAmount.add(reward);
           currentLock.end = ts + rewardDefinitions[i].length;
           currentLock.apr = rewardDefinitions[i].apr;
           currentLock.last = ts;
 
           rewardsProvided.add(reward);
+
+          // Validate state
           _verifyRewardsProvided();
+
+          // Dispatch event
           emit TokensLocked(
             recipient,
             currentLock.totalAmount.sub(reward),
@@ -276,8 +316,10 @@ contract Booster is IBooster, AccessControl {
     currentLock.pendingAmount = 0;
     currentLock.providedAmount.add(claimable);
 
+    // Dispatch event
     emit RewardsClaimed(cfolio, claimable);
 
+    // Update state
     if (reLock) _addMore(cfolio, currentLock, ts, claimable);
     else rewardHandler.distribute2(msg.sender, claimable, currentLock.fee);
   }
@@ -307,6 +349,8 @@ contract Booster is IBooster, AccessControl {
   function setSftHolder(address sftHolder_) external onlyAdmin {
     // Validate input
     require(sftHolder_ != address(0), 'B: Invalid sftHolder');
+
+    // Update state
     sftHolder = IWOWSERC1155(sftHolder_);
   }
 
@@ -321,6 +365,7 @@ contract Booster is IBooster, AccessControl {
     // Validate input
     require(durations.length == aprs.length, 'B: Length mismatch');
 
+    // Update state
     delete (rewardDefinitions);
     for (uint256 i = 0; i < durations.length; ++i) {
       require(i == 0 || durations[i] > durations[i - 1], 'B: Wrong sorting');
@@ -333,7 +378,7 @@ contract Booster is IBooster, AccessControl {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev Helper function to avoid solhint disables on several places
+   * @dev Helper function to avoid disabling solhint in several places
    */
   function _getTimestamp() private view returns (uint256) {
     // solhint-disable-next-line not-rely-on-time
@@ -347,12 +392,12 @@ contract Booster is IBooster, AccessControl {
     // Validate input
     require(rewardHandler_ != address(0), 'B: Invalid rewardHandler');
 
-    // Set state
+    // Update state
     rewardHandler = IRewardHandler(rewardHandler_);
   }
 
   /**
-   * @dev Add more amount into existing lock pool.
+   * @dev Add more amount into existing lock pool
    *
    * Function will revert in case lock is closed because lock_.end is 0
    * and every subtraction with ts > 0 will fail in SafeMath
@@ -367,9 +412,15 @@ contract Booster is IBooster, AccessControl {
     uint256 reward = (amount.mul(lock_.end.sub(ts)).mul(lock_.apr)).div(
       SECONDS_PER_YEAR.mul(1E18)
     );
+
+    // Update state
     lock_.totalAmount = lock_.totalAmount.add(amount).add(reward);
     rewardsProvided.add(reward);
+
+    // Validate state
     _verifyRewardsProvided();
+
+    // Dispatch event
     emit MoreAdded(recipient, amount, amount.add(reward));
   }
 
@@ -407,11 +458,11 @@ contract Booster is IBooster, AccessControl {
   }
 
   /**
-   * @dev Verify that we never exceed the token supply from
-   * tokenomics and fees
+   * @dev Verify that we never exceed the token supply from tokenomics and fees
    */
   function _verifyRewardsProvided() private view {
     uint256 externalSupply = rewardHandler.getBoosterRewards();
+
     require(
       rewardsProvided <= externalSupply.add(MAX_TOKENOMICS_REWARDS),
       'B: Cap reached'

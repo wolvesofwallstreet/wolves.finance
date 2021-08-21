@@ -15,7 +15,7 @@ interface IBooster {
   /**
    * @dev Return information about the reward state in Booster
    *
-   * @param tokenIds The sft or tf tokenId
+   * @param tokenIds The SFT or TF tokenId
    *
    * @return locked The total amounts locked
    * @return pending The pending amounts claimable
@@ -33,12 +33,12 @@ interface IBooster {
     );
 
   /**
-   * @dev handles farm distribution, only callable from controller
+   * @dev Handles farm distribution, only callable from controller
    *
-   * If recipient is booster contract, amount is temporary stored
-   * and locked in a second call
+   * If recipient is booster contract, amount is temporarily stored and locked
+   * in a second call.
    *
-   * @param farm The reward farm the call originates from
+   * @param farm The reward farm that the call originates from
    * @param recipient The recipient of the rewards
    * @param amount The amount to distribute
    * @param fee The fee in 6 decimal notation
@@ -51,8 +51,8 @@ interface IBooster {
   ) external;
 
   /**
-   * @dev Locks temporary stored owned by recipient
-   * for a specific duration of seconds.
+   * @dev Locks temporary tokens owned by recipient for a specific duration
+   * of seconds.
    *
    * @param recipient The recipient of the rewards
    * @param lockPeriod The lock period in seconds
@@ -60,10 +60,10 @@ interface IBooster {
   function lock(address recipient, uint256 lockPeriod) external;
 
   /**
-   * @dev Claim rewards either into wallet or re-locks them
+   * @dev Claim rewards either into wallet or re-lock them
    *
-   * @param sftTokenId The tokenId which manages the rewards
-   * @param reLock Re-Lock existing rewards to earn more
+   * @param sftTokenId The tokenId that manages the rewards
+   * @param reLock True to re-lock existing rewards to earn more
    */
   function claimRewards(uint256 sftTokenId, bool reLock) external;
 }

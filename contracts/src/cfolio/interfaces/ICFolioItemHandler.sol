@@ -73,7 +73,7 @@ interface ICFolioItemHandler is ICFolioItemCallback {
   /**
    * @dev Get the rewards collected by an SFT base card
    *
-   * Calls only allowed from sftMinter
+   * Calls only allowed from sftMinter.
    *
    * @param owner The owner of the NFT token
    * @param recipient Recipient of the rewards (- fees)

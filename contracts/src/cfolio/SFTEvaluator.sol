@@ -32,16 +32,16 @@ contract SFTEvaluator is ISFTEvaluator {
   // The SFT contract we need for level
   IWOWSERC1155 private immutable _sftHolder;
 
-  // The cfolioitem bridge contract
+  // The cfolioItem bridge contract
   address private immutable _cfiBridge;
 
   // Current reward weight of a baseCard
   mapping(uint256 => uint256) private _rewardRates;
 
-  // cfolioType of cfolioItem
+  // cfolioType -> cfolioItem
   mapping(uint256 => uint256) private _cfolioItemTypes;
 
-  // sftMinter
+  // SFT minter
   address public sftMinter;
 
   //////////////////////////////////////////////////////////////////////////////

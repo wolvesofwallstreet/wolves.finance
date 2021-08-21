@@ -205,9 +205,11 @@ contract WOWSSftMinter is Context, Ownable {
       for (; j < cfolioItemHandlers.length; ++j) {
         if (address(cfolioItemHandlers[j]) == handlers[i]) break;
       }
+
       if (j == cfolioItemHandlers.length) {
         cfolioItemHandlers.push(ICFolioItemHandler(handlers[i]));
       }
+
       CFolioItemSft storage cfi = cfolioItemSfts[cFolioTypes[i]];
       cfi.handlerId = j;
       cfi.maxMintable = maxMint[i];
@@ -218,8 +220,11 @@ contract WOWSSftMinter is Context, Ownable {
         (, , uint128 numMinted, ) = oldMinter.cfolioItemSfts(cFolioTypes[i]);
         cfolioItemSfts[cFolioTypes[i]].numMinted = numMinted;
       }
+
       nextCFolioItemNft = oldMinter.nextCFolioItemNft();
     }
+
+    // Dispatch event
     emit CFolioSpecChanged(cFolioTypes, oldMinter);
   }
 
@@ -227,6 +232,7 @@ contract WOWSSftMinter is Context, Ownable {
    * @dev upgrades state from an existing WOWSSFTMinter
    */
   function destructContract() external onlyOwner {
+    // Dispatch event
     emit Destruct();
 
     // Disable high-impact Slither detector "suicidal" here. Slither explains
@@ -370,8 +376,8 @@ contract WOWSSftMinter is Context, Ownable {
     // outside this function.
 
     // If the SFT's c-folio is final recipient of c-folio item, we call the
-    // handler and lock the c-folio item in the TradeFloor contract before we transfer
-    // it to the SFT
+    // handler and lock the c-folio item in the TradeFloor contract before we
+    // transfer it to the SFT.
     if (sftCFolio != address(0)) {
       // Lock the SFT into the TradeFloor contract
       IERC1155BurnMintable(address(_sftContract)).safeTransferFrom(
@@ -390,11 +396,11 @@ contract WOWSSftMinter is Context, Ownable {
   /**
    * @dev Claim rewards from all c-folio farms
    *
-   * If lockPeriod > 0, Booster locks the token on behalf of sftToken
-   * and provides extra rewards. Otherwise rewards are distributed
-   * in rewardHandler.
+   * If lockPeriod > 0, Booster locks the token on behalf of sftToken and
+   * provides extra rewards. Otherwise rewards are distributed in
+   * rewardHandler.
    *
-   * @param sftTokenId valid SFT tokenId, must not be locked in TF
+   * @param sftTokenId Valid SFT tokenId, must not be locked in TF
    * @param lockPeriod Lock time in seconds
    */
   function claimSFTRewards(uint256 sftTokenId, uint256 lockPeriod) external {
@@ -423,8 +429,8 @@ contract WOWSSftMinter is Context, Ownable {
       }
     }
 
-    // In case lockPeriod is set, all rewards are temporary parked in booster.
-    // Lock the parked rewards for the current msg.sender.
+    // In case lockPeriod is set, all rewards are temporarily parked in
+    // booster. Lock the parked rewards for the current msg.sender.
     if (lockPeriod > 0) {
       _booster.lock(receiver, lockPeriod);
     }

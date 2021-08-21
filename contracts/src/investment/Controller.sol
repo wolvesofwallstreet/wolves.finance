@@ -389,7 +389,10 @@ contract Controller is IController, Context, Ownable {
     external
     onlyOwner
   {
+    // Validate parameters
     require(IFarm(farmAddress).controller() == this, 'Invalid farm (C)');
+
+    // Update state
     IFarm(farmAddress).setRewardsDuration(newDuration);
   }
 
@@ -400,7 +403,7 @@ contract Controller is IController, Context, Ownable {
   /**
    * @dev Allows rebalancing assets inside a farm
    *
-   * There is currently no active implementation
+   * There is currently no active implementation.
    */
   function rebalance() external onlyWorker {
     // Update state
@@ -419,11 +422,11 @@ contract Controller is IController, Context, Ownable {
   /**
    * @dev Refuel all farms which will expire in the next hour
    *
-   * By default the preconfigured rewardPerDuration is used, but
-   * can be overridden by rewards parameter.
+   * By default the preconfigured rewardPerDuration is used, but can be
+   * overridden by rewards parameter.
    *
-   * @notice If rewards parameer is provided, the value cannot exceed
-   * the preconfigured rewardPerDuration.
+   * @notice If rewards parameer is provided, the value cannot exceed the
+   * preconfigured rewardPerDuration.
    *
    * @param addresses Addresses to be used instead rewardPerDuration
    * @param rewards Amonts to be used instead rewardPerDuration
@@ -432,12 +435,15 @@ contract Controller is IController, Context, Ownable {
     external
     onlyWorker
   {
+    // Validate parameters
     require(addresses.length == rewards.length, 'C: Length mismatch');
+
     address iterAddress = farmHead;
     bool oneRefueled = false;
     while (iterAddress != address(0)) {
       // Refuel if farm end is one day ahead
       Farm storage farm = farms[iterAddress];
+
       if (
         farm.active &&
         // solhint-disable-next-line not-rely-on-time
@@ -445,6 +451,7 @@ contract Controller is IController, Context, Ownable {
       ) {
         uint256 i;
         while (i < addresses.length && addresses[i] != iterAddress) ++i;
+
         uint256 reward = (i < addresses.length &&
           rewards[i] < farm.rewardPerDuration)
           ? rewards[i]
