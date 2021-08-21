@@ -236,6 +236,22 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
+   * @dev See {IRewardHandler-getPendingBoosterRewards}
+   */
+  function getBoosterRewards() external view override returns (uint256) {
+    IERC20WowsMintable rewardToken = IERC20WowsMintable(
+      _addressRegistry.getRegistryEntry(AddressBook.WOWS_TOKEN)
+    );
+    address booster = _addressRegistry.getRegistryEntry(
+      AddressBook.WOWS_BOOSTER_PROXY
+    );
+    return
+      rewardToken.balanceOf(booster).add(
+        _distributeAmount.mul(FEE_TO_BOOSTER).div(1e6)
+      );
+  }
+
+  /**
    * @dev See {IRewardHandler-distribute2}
    */
   function distribute2(
@@ -321,7 +337,7 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
         AddressBook.TEAM_WALLET
       );
       address booster = _addressRegistry.getRegistryEntry(
-        AddressBook.WOWS_BOOSTER
+        AddressBook.WOWS_BOOSTER_PROXY
       );
 
       // Load state

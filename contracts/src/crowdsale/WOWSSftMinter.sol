@@ -13,6 +13,7 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import '@openzeppelin/contracts/utils/Context.sol';
 
+import '../booster/interfaces/IBooster.sol';
 import '../cfolio/interfaces/ICFolioItemHandler.sol';
 import '../cfolio/interfaces/ISFTEvaluator.sol';
 import '../investment/interfaces/IRewardHandler.sol';
@@ -20,6 +21,8 @@ import '../token/interfaces/IERC1155BurnMintable.sol';
 import '../token/interfaces/ITradeFloor.sol';
 import '../token/interfaces/IWOWSCryptofolio.sol';
 import '../token/interfaces/IWOWSERC1155.sol';
+import '../utils/AddressBook.sol';
+import '../utils/interfaces/IAddressRegistry.sol';
 import '../utils/TokenIds.sol';
 
 contract WOWSSftMinter is Context, Ownable {
@@ -34,7 +37,7 @@ contract WOWSSftMinter is Context, Ownable {
   mapping(uint16 => uint256) public _pricePerLevel;
 
   struct CFolioItemSft {
-    ICFolioItemHandler handler;
+    uint256 handlerId;
     uint256 price;
     uint128 numMinted;
     uint128 maxMintable;
@@ -52,6 +55,9 @@ contract WOWSSftMinter is Context, Ownable {
 
   // WOWS token contract
   IERC20 private immutable _wowsToken;
+
+  // Booster
+  IBooster private immutable _booster;
 
   // Reward handler which distributes WOWS
   IRewardHandler public rewardHandler;
@@ -93,33 +99,30 @@ contract WOWSSftMinter is Context, Ownable {
   /**
    * @dev Contruct WOWSSftMinter
    *
-   * @param owner Owner of this contract
-   * @param wowsToken The WOWS ERC-20 token contract
-   * @param rewardHandler_ Handler which distributes
-   * @param sftContract Cryptofolio SFT source
+   * @param addressRegistry WOWS system addressRegistry
    */
-  constructor(
-    address owner,
-    IERC20 wowsToken,
-    IRewardHandler rewardHandler_,
-    IWOWSERC1155 sftContract,
-    address cfiBridge
-  ) {
-    // Validate parameters
-    require(owner != address(0), 'O: 0 address');
-    require(address(wowsToken) != address(0), 'WT: 0 address');
-    require(address(rewardHandler_) != address(0), 'RH: 0 address');
-    require(address(sftContract) != address(0), 'SFT: 0 address');
-    require(cfiBridge != address(0), 'CFIB: 0 address');
-
+  constructor(IAddressRegistry addressRegistry) {
     // Initialize {Ownable}
-    transferOwnership(owner);
+    transferOwnership(
+      addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET)
+    );
 
     // Initialize state
-    _sftContract = sftContract;
-    _wowsToken = wowsToken;
-    _cfiBridge = cfiBridge;
-    rewardHandler = rewardHandler_;
+    _sftContract = IWOWSERC1155(
+      addressRegistry.getRegistryEntry(AddressBook.SFT_HOLDER)
+    );
+    _wowsToken = IERC20(
+      addressRegistry.getRegistryEntry(AddressBook.WOWS_TOKEN)
+    );
+    _cfiBridge = addressRegistry.getRegistryEntry(
+      AddressBook.CFOLIOITEM_BRIDGE_PROXY
+    );
+    rewardHandler = IRewardHandler(
+      addressRegistry.getRegistryEntry(AddressBook.REWARD_HANDLER)
+    );
+    _booster = IBooster(
+      addressRegistry.getRegistryEntry(AddressBook.WOWS_BOOSTER_PROXY)
+    );
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -195,12 +198,9 @@ contract WOWSSftMinter is Context, Ownable {
     );
 
     // Update state
-    for (uint256 i = 0; i < cFolioTypes.length; ++i) {
-      CFolioItemSft storage cfi = cfolioItemSfts[cFolioTypes[i]];
-      cfi.handler = ICFolioItemHandler(handlers[i]);
-      cfi.maxMintable = maxMint[i];
-      cfi.price = prices[i];
+    delete (cfolioItemHandlers);
 
+    for (uint256 i = 0; i < cFolioTypes.length; ++i) {
       uint256 j = 0;
       for (; j < cfolioItemHandlers.length; ++j) {
         if (address(cfolioItemHandlers[j]) == handlers[i]) break;
@@ -208,6 +208,10 @@ contract WOWSSftMinter is Context, Ownable {
       if (j == cfolioItemHandlers.length) {
         cfolioItemHandlers.push(ICFolioItemHandler(handlers[i]));
       }
+      CFolioItemSft storage cfi = cfolioItemSfts[cFolioTypes[i]];
+      cfi.handlerId = j;
+      cfi.maxMintable = maxMint[i];
+      cfi.price = prices[i];
     }
     if (address(oldMinter) != address(0)) {
       for (uint256 i = 0; i < cFolioTypes.length; ++i) {
@@ -326,8 +330,10 @@ contract WOWSSftMinter is Context, Ownable {
     CFolioItemSft storage sftData = cfolioItemSfts[cfolioItemType];
 
     // Validate state
-    require(address(sftData.handler) != address(0), 'CFI Minter: Invalid type');
-    require(sftData.numMinted < sftData.maxMintable, 'CFI Minter: sold out');
+    require(
+      sftData.numMinted < sftData.maxMintable,
+      'CFI Minter: Insufficient amount'
+    );
 
     address sftCFolio = address(0);
     if (sftTokenId != uint256(-1)) {
@@ -354,7 +360,11 @@ contract WOWSSftMinter is Context, Ownable {
     _mint(recipient, tokenId, sftData.price, cfolioItemType);
 
     // Let CFolioHandler setup the new minted token
-    sftData.handler.setupCFolio(_msgSender(), tokenId, investAmounts);
+    cfolioItemHandlers[sftData.handlerId].setupCFolio(
+      _msgSender(),
+      tokenId,
+      investAmounts
+    );
 
     // Check-effects-interaction not needed, as `_setupCFolio` can't be mutated
     // outside this function.
@@ -380,11 +390,43 @@ contract WOWSSftMinter is Context, Ownable {
   /**
    * @dev Claim rewards from all c-folio farms
    *
+   * If lockPeriod > 0, Booster locks the token on behalf of sftToken
+   * and provides extra rewards. Otherwise rewards are distributed
+   * in rewardHandler.
+   *
    * @param sftTokenId valid SFT tokenId, must not be locked in TF
+   * @param lockPeriod Lock time in seconds
    */
-  function claimSFTRewards(uint256 sftTokenId) external {
-    for (uint256 i = 0; i < cfolioItemHandlers.length; ++i) {
-      cfolioItemHandlers[i].getRewards(msg.sender, sftTokenId);
+  function claimSFTRewards(uint256 sftTokenId, uint256 lockPeriod) external {
+    // If lockPeriod > 0 rewards are managed by booster
+    address cfolio = _sftContract.tokenIdToAddress(sftTokenId);
+    require(cfolio != address(0), 'WM: Invalid cfolio');
+
+    address receiver = lockPeriod > 0 ? cfolio : msg.sender;
+
+    bool[] memory lookup = new bool[](cfolioItemHandlers.length);
+    (uint256[] memory items, uint256 itemsLength) = IWOWSCryptofolio(cfolio)
+      .getCryptofolio(_cfiBridge);
+
+    for (uint256 i = 0; i < itemsLength; ++i) {
+      // Get the handler of this type
+      uint256 handlerId = cfolioItemSfts[
+        sftEvaluator.getCFolioItemType(items[i])
+      ].handlerId;
+      if (!lookup[handlerId]) {
+        cfolioItemHandlers[handlerId].getRewards(
+          msg.sender,
+          receiver,
+          sftTokenId
+        );
+        lookup[handlerId] = true;
+      }
+    }
+
+    // In case lockPeriod is set, all rewards are temporary parked in booster.
+    // Lock the parked rewards for the current msg.sender.
+    if (lockPeriod > 0) {
+      _booster.lock(receiver, lockPeriod);
     }
   }
 
@@ -531,6 +573,25 @@ contract WOWSSftMinter is Context, Ownable {
         );
       }
     }
+  }
+
+  /**
+   * @dev Get CFIItemHandlerRewardInfo and Booster rewardInfo.
+   */
+  function getRewardInfo(address cfih, uint256[] calldata tokenIds)
+    external
+    view
+    returns (
+      bytes memory result,
+      uint256[] memory boosterLocked,
+      uint256[] memory boosterPending,
+      uint256[] memory boosterApr,
+      uint256[] memory boosterSecsLeft
+    )
+  {
+    result = ICFolioItemHandler(cfih).getRewardInfo(tokenIds);
+    (boosterLocked, boosterPending, boosterApr, boosterSecsLeft) = _booster
+      .getRewardInfo(tokenIds);
   }
 
   /**

@@ -34,7 +34,7 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
 
   uint256 public override periodFinish = 0;
   uint256 public rewardRate = 0;
-  uint256 public rewardsDuration = 14 days;
+  uint256 public override rewardsDuration = 14 days;
   uint256 public lastUpdateTime;
   uint256 public rewardPerTokenStored;
   uint256 private availableRewards;
@@ -126,7 +126,7 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
     return _farmName;
   }
 
-  function totalSupply() external view returns (uint256) {
+  function totalSupply() external view override returns (uint256) {
     return _totalSupply;
   }
 

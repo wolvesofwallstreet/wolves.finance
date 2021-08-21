@@ -73,10 +73,17 @@ interface ICFolioItemHandler is ICFolioItemCallback {
   /**
    * @dev Get the rewards collected by an SFT base card
    *
+   * Calls only allowed from sftMinter
+   *
+   * @param owner The owner of the NFT token
    * @param recipient Recipient of the rewards (- fees)
    * @param tokenId SFT base card tokenId, must be unlocked
    */
-  function getRewards(address recipient, uint256 tokenId) external;
+  function getRewards(
+    address owner,
+    address recipient,
+    uint256 tokenId
+  ) external;
 
   /**
    * @dev Get amounts (handler specific) for a cfolioItem

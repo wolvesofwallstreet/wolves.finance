@@ -38,7 +38,7 @@ contract UniV2StakeFarm is
   IUniswapV2Pair public stakingToken;
   uint256 public override periodFinish = 0;
   uint256 public rewardRate = 0;
-  uint256 public rewardsDuration = 7 days;
+  uint256 public override rewardsDuration = 14 days;
   uint256 public lastUpdateTime;
   uint256 public rewardPerTokenStored;
   uint256 private availableRewards;

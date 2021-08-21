@@ -27,6 +27,11 @@ interface IFarm {
   function periodFinish() external view returns (uint256);
 
   /**
+   * @dev Return tghe rewards duration in seconds
+   */
+  function rewardsDuration() external view returns (uint256);
+
+  /**
    * @dev Sets a new controller, can only called by current controller
    */
   function setController(address newController) external;

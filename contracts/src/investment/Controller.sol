@@ -14,13 +14,23 @@ import '@openzeppelin/contracts/utils/Context.sol';
 
 import '../utils/AddressBook.sol';
 import '../utils/interfaces/IAddressRegistry.sol';
+import '../booster/interfaces/IBooster.sol';
 
 import './interfaces/IController.sol';
 import './interfaces/IFarm.sol';
-import './interfaces/IRewardHandler.sol';
+
+interface IFarmOwnable is IFarm {
+  function owner() external view returns (address);
+}
 
 contract Controller is IController, Context, Ownable {
   using SafeMath for uint256;
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Routing
+  //////////////////////////////////////////////////////////////////////////////
+
+  IBooster private immutable _booster;
 
   //////////////////////////////////////////////////////////////////////////////
   // State
@@ -28,9 +38,6 @@ contract Controller is IController, Context, Ownable {
 
   // We need the previous controller for calculation of pending rewards
   address public previousController;
-
-  // Our rewardHandler which distributes rewards
-  IRewardHandler public rewardHandler;
 
   // The address which is alowed to call service functions
   address public worker;
@@ -86,17 +93,16 @@ contract Controller is IController, Context, Ownable {
    * and distributes them to the different recipients
    *
    * @param _addressRegistry IAdressRegistry to get system addresses
-   * @param _rewardHandler Handler of reward distribution
    * @param _previousController The previous controller
    */
-  constructor(
-    IAddressRegistry _addressRegistry,
-    address _rewardHandler,
-    address _previousController
-  ) {
+  constructor(IAddressRegistry _addressRegistry, address _previousController) {
     // Initialize state
-    setRewardHandler(_rewardHandler);
     previousController = _previousController;
+
+    // Proxied booster address / immutable
+    _booster = IBooster(
+      _addressRegistry.getRegistryEntry(AddressBook.WOWS_BOOSTER_PROXY)
+    );
 
     // Initialize {Ownable}
     address _marketingWallet = _addressRegistry.getRegistryEntry(
@@ -108,10 +114,6 @@ contract Controller is IController, Context, Ownable {
   //////////////////////////////////////////////////////////////////////////////
   // Routing
   //////////////////////////////////////////////////////////////////////////////
-
-  function setRewardHandler(address _rewardHandler) public onlyOwner {
-    rewardHandler = IRewardHandler(_rewardHandler);
-  }
 
   function setWorker(address _worker) external onlyOwner {
     worker = _worker;
@@ -167,7 +169,12 @@ contract Controller is IController, Context, Ownable {
     );
 
     // Update state
-    rewardHandler.distribute2(recipient, amount, farm.rewardFee);
+    _booster.distributeFromFarm(
+      _msgSender(),
+      recipient,
+      amount,
+      farm.rewardFee
+    );
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -291,8 +298,8 @@ contract Controller is IController, Context, Ownable {
    *
    * Deposit / withdraw and rewards are disabled while pause is set to true.
    *
-   * @param _farmAddress Contract address of farm to disable
-   * @param _pause To enable / disable a farm
+   * @param _farmAddress Contract address of farm to pause
+   * @param _pause To pause / unpause a farm
    */
   function pauseFarm(address _farmAddress, bool _pause) external onlyOwner {
     // Load state
@@ -310,6 +317,12 @@ contract Controller is IController, Context, Ownable {
     _checkActive(farm);
   }
 
+  /**
+   * @dev Transfer farm to a new controller
+   *
+   * @param _farmAddress Contract address of farm to transfer
+   * @param _newController The new controller which receives the farm
+   */
   function transferFarm(address _farmAddress, address _newController)
     public
     onlyOwner
@@ -352,12 +365,26 @@ contract Controller is IController, Context, Ownable {
     emit FarmTransfered(_farmAddress, _newController);
   }
 
+  /**
+   * @dev Transfer all existing farms to a new controller
+   *
+   * @param _newController The new controller which receives the farms
+   */
   function transferAllFarms(address _newController) external onlyOwner {
     while (farmHead != address(0)) {
       transferFarm(farmHead, _newController);
     }
   }
 
+  /**
+   * @dev Change the reward duration in a Farm
+   *
+   * @param farmAddress Contract address of farm to change duration
+   * @param newDuration The new reward duration in seconds
+   *
+   * @notice In general a farm has to be in finished state to be able
+   * to change the duration
+   */
   function setFarmRewardDuration(address farmAddress, uint256 newDuration)
     external
     onlyOwner
@@ -370,6 +397,11 @@ contract Controller is IController, Context, Ownable {
   // Utility functions
   //////////////////////////////////////////////////////////////////////////////
 
+  /**
+   * @dev Allows rebalancing assets inside a farm
+   *
+   * There is currently no active implementation
+   */
   function rebalance() external onlyWorker {
     // Update state
     address iterAddress = farmHead;
@@ -384,7 +416,23 @@ contract Controller is IController, Context, Ownable {
     emit Rebalanced(iterAddress);
   }
 
-  function refuelFarms() external onlyWorker {
+  /**
+   * @dev Refuel all farms which will expire in the next hour
+   *
+   * By default the preconfigured rewardPerDuration is used, but
+   * can be overridden by rewards parameter.
+   *
+   * @notice If rewards parameer is provided, the value cannot exceed
+   * the preconfigured rewardPerDuration.
+   *
+   * @param addresses Addresses to be used instead rewardPerDuration
+   * @param rewards Amonts to be used instead rewardPerDuration
+   */
+  function refuelFarms(address[] calldata addresses, uint256[] calldata rewards)
+    external
+    onlyWorker
+  {
+    require(addresses.length == rewards.length, 'C: Length mismatch');
     address iterAddress = farmHead;
     bool oneRefueled = false;
     while (iterAddress != address(0)) {
@@ -393,15 +441,25 @@ contract Controller is IController, Context, Ownable {
       if (
         farm.active &&
         // solhint-disable-next-line not-rely-on-time
-        block.timestamp + 86400 >= IFarm(iterAddress).periodFinish()
+        block.timestamp + 3600 >= IFarm(iterAddress).periodFinish()
       ) {
+        uint256 i;
+        while (i < addresses.length && addresses[i] != iterAddress) ++i;
+        uint256 reward = (i < addresses.length &&
+          rewards[i] < farm.rewardPerDuration)
+          ? rewards[i]
+          : farm.rewardPerDuration;
+
         // Update state
-        IFarm(iterAddress).notifyRewardAmount(farm.rewardPerDuration);
-        farm.rewardProvided = farm.rewardProvided.add(farm.rewardPerDuration);
-        oneRefueled = true;
+        IFarm(iterAddress).notifyRewardAmount(reward);
+        farm.rewardProvided = farm.rewardProvided.add(reward);
+
+        require(farm.rewardProvided <= farm.rewardCap, 'C: Cap reached');
 
         // Dispatch event
-        emit Refueled(iterAddress, farm.rewardPerDuration);
+        emit Refueled(iterAddress, reward);
+
+        oneRefueled = true;
       }
       iterAddress = farm.nextFarm;
     }
@@ -412,6 +470,9 @@ contract Controller is IController, Context, Ownable {
   // Implementation details
   //////////////////////////////////////////////////////////////////////////////
 
+  /**
+   * @dev Shortcut to check if a farm is active
+   */
   function _checkActive(Farm storage farm) internal {
     farm.active = !(farm.paused || farm.farmEndedAtBlock > 0);
   }
