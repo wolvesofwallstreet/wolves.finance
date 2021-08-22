@@ -433,6 +433,31 @@ const func = async function (hardhat_re) {
   } else {
     console.log('Minter role not set for old reward handler');
   }
+
+  //
+  // 14.) Revoke old rewardHandler MINTER_ROLE
+  //
+  if (
+    configAddresses.boosterUpdate &&
+    configAddresses.boosterUpdate !== generatedAddresses.booster
+  ) {
+    console.log('Destruct old Booster implementation');
+
+    await catchUnknownSigner(
+      execute(
+        BOOSTER_CONTRACT,
+        {
+          from: marketingWallet,
+          to: configAddresses.boosterUpdate,
+          log: true,
+        },
+        'destructContract',
+        generatedAddresses.boosterProxy
+      )
+    );
+  } else {
+    console.log('Booster contract not selfdestructed');
+  }
 };
 
 module.exports = func;
