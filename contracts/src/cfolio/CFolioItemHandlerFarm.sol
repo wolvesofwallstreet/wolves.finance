@@ -318,7 +318,11 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
    *
    * We allow reward pull only for unlocked SFTs.
    */
-  function getRewards(address recipient, uint256 tokenId) external override {
+  function getRewards(
+    address owner,
+    address recipient,
+    uint256 tokenId
+  ) external override {
     // Validate parameters
     require(recipient != address(0), 'CFIH: Invalid recipient');
     require(tokenId.isBaseCard(), 'CFIH: Invalid tokenId');
@@ -328,13 +332,11 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
     address cfolio = sftHolder.tokenIdToAddress(sftTokenId);
     require(cfolio != address(0), 'CFHI: No cfolio');
 
-    // Verify that the tokenId is owned by msg.sender in case of direct
-    // call or recipient in case of sftMinter call in the SFT contract.
+    // Verify that the tokenId is owned by owner and caller is sftMinter.
     // This also verifies that the token is not locked in TradeFloor.
     require(
-      IERC1155(address(sftHolder)).balanceOf(_msgSender(), sftTokenId) == 1 ||
-        (_msgSender() == sftMinter &&
-          IERC1155(address(sftHolder)).balanceOf(recipient, sftTokenId) == 1),
+      _msgSender() == sftMinter &&
+        IERC1155(address(sftHolder)).balanceOf(owner, sftTokenId) == 1,
       'CFHI: Forbidden'
     );
 

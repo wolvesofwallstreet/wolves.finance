@@ -16,7 +16,7 @@ library AddressBook {
   bytes32 public constant WETH_WOWS_STAKE_FARM = 'WETH_WOWS_STAKE_FARM';
   bytes32 public constant WOWS_TOKEN = 'WOWS_TOKEN';
   bytes32 public constant UNISWAP_V2_PAIR = 'UNISWAP_V2_PAIR';
-  bytes32 public constant WOWS_BOOSTER = 'WOWS_BOOSTER';
+  bytes32 public constant WOWS_BOOSTER_PROXY = 'WOWS_BOOSTER_PROXY';
   bytes32 public constant REWARD_HANDLER = 'REWARD_HANDLER';
   bytes32 public constant SFT_MINTER = 'SFT_MINTER';
   bytes32 public constant SFT_HOLDER = 'SFT_HOLDER';
