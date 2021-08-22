@@ -9,6 +9,7 @@ import './page4.css';
 
 import { BigNumber, ethers } from 'ethers';
 import React, { Component } from 'react';
+import { Modal } from 'react-bootstrap';
 import { TFunction, withTranslation } from 'react-i18next';
 import { RouteComponentProps } from 'react-router-dom';
 
@@ -56,6 +57,9 @@ type PAGE4_STATE = {
   txPending: boolean;
   currentIndex: number;
   selectedCFolio: number;
+  modalOpen: boolean;
+  boosterExistingValue: number;
+  boosterNewValue: number;
 };
 
 const INITIAL_PAGE4_STATE: PAGE4_STATE = {
@@ -64,6 +68,9 @@ const INITIAL_PAGE4_STATE: PAGE4_STATE = {
   txPending: false,
   currentIndex: -1,
   selectedCFolio: -1,
+  modalOpen: false,
+  boosterExistingValue: 0, // TODO: 1
+  boosterNewValue: 0, // TODO: 15552000
 };
 
 class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
@@ -334,6 +341,10 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       type: SFT_CLAIM,
       content: {
         id: this.renderList[this.state.currentIndex].sft?.tokenId,
+        time: this.renderList[this.state.currentIndex].sft?.boosterRewards
+          .secsLeft
+          ? this.state.boosterExistingValue
+          : this.state.boosterNewValue,
       },
     };
     this.setState({ txPending: true });
@@ -377,6 +388,9 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       isWalletConnected,
       txPending,
       type,
+      modalOpen,
+      boosterExistingValue,
+      boosterNewValue,
     } = this.state;
 
     const currentRender =
@@ -509,19 +523,22 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       }
     }
 
+    const claimableAmount = currentRender?.sft
+      ? currentRender?.sft.rewardEarned +
+        currentRender?.sft.boosterRewards.pending
+      : 0;
     const claimText =
       currentRender?.sft &&
-      (currentRender.sft.cfolioItems.length > 0 ||
-        currentRender.sft.rewardEarned > 0)
+      (currentRender.sft.cfolioItems.length > 0 || claimableAmount > 0)
         ? !isWalletConnected
           ? { l: t('header.connectWallet').toString(), d: true }
-          : txPending
+          : txPending && !modalOpen
           ? { l: t('page4.txPending'), d: true }
           : {
               l: t('page4.claim', {
-                amount: currentRender.sft.rewardEarned.toFixed(6),
+                amount: claimableAmount.toFixed(6),
               }).toString(),
-              d: locked || currentRender.sft.rewardEarned === 0,
+              d: locked || claimableAmount === 0,
             }
         : undefined;
 
@@ -600,6 +617,51 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
 
     const imgClass =
       selectedCFolio < 0 ? 'card-visual' : 'card-visual monochrome';
+
+    const hideCB = () => {
+      this.setState({ modalOpen: false });
+    };
+
+    const boosterState = (value: number, n: number): string => {
+      return value === n ? 'active' : 'select';
+    };
+
+    const boosterFuncN = (n: number) => {
+      return boosterNewValue === n
+        ? undefined
+        : () => this.setState({ boosterNewValue: n });
+    };
+
+    const boosterFuncE = (n: number) => {
+      return boosterExistingValue === n
+        ? undefined
+        : () => this.setState({ boosterExistingValue: n });
+    };
+
+    let boosterFarmButtonText = '',
+      boosterFarmText = '';
+
+    if (modalOpen && currentRender?.sft) {
+      if (currentRender.sft.rewardEarned) {
+        if (currentRender.sft.boosterRewards.secsLeft) {
+          boosterFarmButtonText = t(
+            boosterExistingValue > 0 ? 'page4.lockWows' : 'page4.claim',
+            { amount: currentRender.sft.rewardEarned.toFixed(6) }
+          );
+          boosterFarmText = `My booster lock: due (${remainingFromSecs(
+            currentRender.sft.boosterRewards.secsLeft
+          )}), APR (${currentRender.sft.boosterRewards.apr * 100})`;
+        } else {
+          boosterFarmButtonText = t(
+            boosterNewValue > 0 ? 'page4.lockWows' : 'page4.claim',
+            { amount: currentRender.sft.rewardEarned.toFixed(6) }
+          );
+          boosterFarmText = 'Create a new booster lock';
+        }
+      } else {
+        boosterFarmText = 'No Farm rewards claimable';
+      }
+    }
 
     return (
       <div
@@ -797,6 +859,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                           type="button"
                           value={claimText.l}
                           disabled={claimText.d}
+                          //onClick={() => this.setState({modalOpen: true})} TODO: enable
                           onClick={() => this._onClaim()}
                         />
                         {!txPending &&
@@ -823,6 +886,90 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
               )}
             </div>
           </div>
+        )}
+        {modalOpen && (
+          <Modal
+            show={true}
+            backdrop="static"
+            onHide={hideCB}
+            animation={false}
+          >
+            <Modal.Header closeButton>
+              <span className="tk-vincente-bold font-28 lh-1 mb-0">
+                BOOST MY REWARDS
+              </span>
+            </Modal.Header>
+            <Modal.Body>
+              <span className="tk-grotesk-lightbold">
+                <p>
+                  Your can boost your rewards by locking them into the Booster.
+                  While the rewards are locked, you can claim 10% per month
+                  either directly into your wallet, or reinvest into the Booster
+                  to earn more.
+                </p>
+                <p>
+                  Once you have selected a lock period, you cannot change it's
+                  expire time. But you can always add rewards into it.
+                </p>
+                <span className="d-block w-100 text-center">
+                  {boosterFarmText}
+                </span>
+                {currentRender?.sft && currentRender.sft.rewardEarned > 0 && (
+                  <>
+                    {currentRender.sft.boosterRewards.secsLeft ? (
+                      <div id="lock-container">
+                        <div
+                          className={boosterState(boosterExistingValue, 1)}
+                          onClick={boosterFuncE(1)}
+                        >
+                          Lock into Booster
+                        </div>
+                        <div
+                          className={boosterState(boosterExistingValue, 0)}
+                          onClick={boosterFuncE(0)}
+                        >
+                          Claim into wallet
+                        </div>
+                      </div>
+                    ) : (
+                      <div id="lock-container">
+                        <div
+                          className={boosterState(boosterNewValue, 2592000)}
+                          onClick={boosterFuncN(2592000)}
+                        >
+                          1 month (100% APR)
+                        </div>
+                        <div
+                          className={boosterState(boosterNewValue, 7776000)}
+                          onClick={boosterFuncN(7776000)}
+                        >
+                          3 months (130% APR)
+                        </div>
+                        <div
+                          className={boosterState(boosterNewValue, 15552000)}
+                          onClick={boosterFuncN(15552000)}
+                        >
+                          6 months (175% APR)
+                        </div>
+                        <div
+                          className={boosterState(boosterNewValue, 0)}
+                          onClick={boosterFuncN(0)}
+                        >
+                          Claim into wallet
+                        </div>
+                      </div>
+                    )}
+                    <button
+                      className={'wolves-btn mt-2 tk-aktiv-grotesk-condensed'}
+                      onClick={() => this._onClaim()}
+                    >
+                      {boosterFarmButtonText}
+                    </button>
+                  </>
+                )}
+              </span>
+            </Modal.Body>
+          </Modal>
         )}
       </div>
     );

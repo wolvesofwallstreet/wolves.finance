@@ -147,3 +147,25 @@
     flex-basis: 100%;
   }
 }
+
+#lock-container {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+#lock-container div {
+  text-align: center;
+  flex-basis: calc(50% - 4px);
+  border: 1px solid lightgray;
+  margin: 2px;
+  height: 26px;
+}
+
+#lock-container div.active {
+  border: 2px solid var(--wolves-orange);
+}
+
+#lock-container div.select {
+  cursor: pointer;
+}

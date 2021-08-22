@@ -62,6 +62,7 @@ const dispatcher = new Dispatcher.Dispatcher();
 type PayloadContent = {
   amount?: number;
   investment?: number;
+  time?: number;
   id?: ethers.BigNumber;
   type?: number;
   filter?: Array<string>;
@@ -165,6 +166,13 @@ export type SFTCHILD = {
   assets: number[];
 };
 
+export type BoosterRewards = {
+  total: number;
+  pending: number;
+  apr: number;
+  secsLeft?: number;
+};
+
 export type SFT = {
   tokenId: ethers.BigNumber;
   levelId: number;
@@ -178,6 +186,7 @@ export type SFT = {
   rewardEarned: number;
   mintTimestamp: number;
   cfolioItems: SFTCHILD[];
+  boosterRewards: BoosterRewards;
 };
 
 export const BIGNUMBER_MAX = ethers.BigNumber.from(
@@ -1020,6 +1029,11 @@ class Store {
             rewardEarned: 0,
             mintTimestamp: 0,
             cfolioItems: [],
+            boosterRewards: {
+              total: 0,
+              pending: 0,
+              apr: 0,
+            },
           };
         })
         .sort((a, b) =>
@@ -1043,6 +1057,11 @@ class Store {
         rewardEarned: 0,
         mintTimestamp: 0,
         cfolioItems: [],
+        boosterRewards: {
+          total: 0,
+          pending: 0,
+          apr: 0,
+        },
       });
 
       // Get all CFolio Items and tokenId information, root cFolioItems go into wallet (-1)
@@ -1117,6 +1136,7 @@ class Store {
 
   _getSftRewards = async (plc: PayloadContent) => {
     try {
+      if (!this.sftMintContractRO) return;
       const filter = ['wolves', 'bois'];
       const contracts = [this.cfihLpContract, this.cfihScContract];
 
@@ -1131,20 +1151,37 @@ class Store {
 
         if (sfts.length === 0) continue;
 
-        // Returns totalsupply, rewardDur, rewardsPerDur, [share, earned]
-        const result = await contracts[i]?.getRewardInfo(
+        // Returns:
+        //  result: totalsupply, rewardDur, rewardsPerDur, [share, earned]
+        //  boosterLocked
+        //  boosterPending
+        //  boosterApr
+        //  boosterSecsLeft
+        const result = await this.sftMintContractRO.getRewardInfo(
+          contracts[i]?.address,
           sfts.map((sft) => sft.tokenId)
         );
         let readIndex = 0;
+        const cfiResult = result.result;
         const ri = this.assets.rewardInfo[i];
-        ri.total = readUint256(result, readIndex++);
+        ri.total = readUint256(cfiResult, readIndex++);
         const total = this.fromWei(ri.total);
-        ri.rewardDuration = readUint256(result, readIndex++).toNumber();
-        ri.rewardPerDuration = readUint256(result, readIndex++);
-        sfts.forEach((sft) => {
+        ri.rewardDuration = readUint256(cfiResult, readIndex++).toNumber();
+        ri.rewardPerDuration = readUint256(cfiResult, readIndex++);
+        sfts.forEach((sft, index) => {
           sft.rewardShare =
-            (this.fromWei(readUint256(result, readIndex++)) * 100) / total;
-          sft.rewardEarned = this.fromWei(readUint256(result, readIndex++));
+            (this.fromWei(readUint256(cfiResult, readIndex++)) * 100) / total;
+          sft.rewardEarned = this.fromWei(readUint256(cfiResult, readIndex++));
+          sft.boosterRewards.total = this.fromWei(result.boosterLocked[index]);
+          sft.boosterRewards.pending = this.fromWei(
+            result.boosterPending[index]
+          );
+          sft.boosterRewards.apr = this.fromWei(result.boosterApr[index]);
+          sft.boosterRewards.secsLeft = result.boosterSecsLeft[index].eq(
+            BIGNUMBER_MAX
+          )
+            ? undefined
+            : result.boosterSecsLeft[index].toNumber();
         });
       }
       await this._updatePoolAPR();
@@ -2183,7 +2220,8 @@ class Store {
 
       const mintContract = this.sftMintContractRO.connect(this.ethersSigner);
       const tx: ethers.ContractTransaction = await mintContract.claimSFTRewards(
-        payloadContent.id
+        payloadContent.id,
+        payloadContent.time ?? 0
       );
       emitter.emit(SFT_CLAIM, {
         status: 'tx',
