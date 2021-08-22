@@ -347,7 +347,7 @@ describe('Booster rewards', function () {
       2592000
     );
 
-    await chai.expect(tx).to.emit(boosterContract, 'Lock');
+    await chai.expect(tx).to.emit(boosterContract, 'TokensLocked');
 
     const result = await boosterContract.getRewardInfo([wowsTokenIdWolf]);
 
@@ -411,7 +411,7 @@ describe('Booster rewards', function () {
       wowsTokenIdWolf,
       1 // rewardDuration should be meaningless but must be > 0
     );
-    await chai.expect(tx).to.emit(boosterContract, 'Add');
+    await chai.expect(tx).to.emit(boosterContract, 'MoreAdded');
 
     const result = await boosterContract.getRewardInfo([wowsTokenIdWolf]);
 
@@ -491,7 +491,7 @@ describe('Booster rewards', function () {
 
     const tx = await boosterContract.claimRewards(wowsTokenIdWolf, false);
 
-    await chai.expect(tx).to.emit(boosterContract, 'Claim');
+    await chai.expect(tx).to.emit(boosterContract, 'RewardsClaimed');
 
     const result = await boosterContract.getRewardInfo([wowsTokenIdWolf]);
 
