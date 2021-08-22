@@ -18,6 +18,7 @@ import {
   ASSETS_STATE,
   SFT_BUY,
   SFT_CLAIM,
+  SFT_CLAIM_BOOSTER,
   SFT_LOCK,
   SFT_REWARD,
   SFT_UNLOCK,
@@ -60,6 +61,7 @@ type PAGE4_STATE = {
   modalOpen: boolean;
   boosterExistingValue: number;
   boosterNewValue: number;
+  boosterRelock: number;
 };
 
 const INITIAL_PAGE4_STATE: PAGE4_STATE = {
@@ -69,8 +71,9 @@ const INITIAL_PAGE4_STATE: PAGE4_STATE = {
   currentIndex: -1,
   selectedCFolio: -1,
   modalOpen: false,
-  boosterExistingValue: 0, // TODO: 1
-  boosterNewValue: 0, // TODO: 15552000
+  boosterExistingValue: 1,
+  boosterNewValue: 15552000,
+  boosterRelock: 1,
 };
 
 class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
@@ -103,6 +106,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     StoreClasses.emitter.on(ASSETS_STATE, this.onAssetsState);
     StoreClasses.emitter.on(SFT_BUY, this.onSFTTransaction);
     StoreClasses.emitter.on(SFT_CLAIM, this.onSFTTransaction);
+    StoreClasses.emitter.on(SFT_CLAIM_BOOSTER, this.onSFTTransaction);
     StoreClasses.emitter.on(SFT_LOCK, this.onSFTTransaction);
     StoreClasses.emitter.on(SFT_UNLOCK, this.onSFTTransaction);
     StoreClasses.emitter.on(SFT_UPGRADE, this.onSFTTransaction);
@@ -120,6 +124,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     StoreClasses.emitter.off(SFT_UPGRADE, this.onSFTTransaction);
     StoreClasses.emitter.off(SFT_UNLOCK, this.onSFTTransaction);
     StoreClasses.emitter.off(SFT_LOCK, this.onSFTTransaction);
+    StoreClasses.emitter.off(SFT_CLAIM_BOOSTER, this.onSFTTransaction);
     StoreClasses.emitter.off(SFT_CLAIM, this.onSFTTransaction);
     StoreClasses.emitter.off(SFT_BUY, this.onSFTTransaction);
     StoreClasses.emitter.off(ASSETS_STATE, this.onAssetsState);
@@ -351,6 +356,18 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     StoreClasses.dispatcher.dispatch(payload);
   }
 
+  _onClaimBooster(): void {
+    const payload: Payload = {
+      type: SFT_CLAIM_BOOSTER,
+      content: {
+        id: this.renderList[this.state.currentIndex].sft?.tokenId,
+        time: this.state.boosterRelock,
+      },
+    };
+    this.setState({ txPending: true });
+    StoreClasses.dispatcher.dispatch(payload);
+  }
+
   _onUpgrade(): void {
     const payload: Payload = {
       type: SFT_UPGRADE,
@@ -391,6 +408,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       modalOpen,
       boosterExistingValue,
       boosterNewValue,
+      boosterRelock,
     } = this.state;
 
     const currentRender =
@@ -632,34 +650,71 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         : () => this.setState({ boosterNewValue: n });
     };
 
+    const boosterFuncR = (n: number) => {
+      return boosterRelock === n
+        ? undefined
+        : () => this.setState({ boosterRelock: n });
+    };
+
     const boosterFuncE = (n: number) => {
       return boosterExistingValue === n
         ? undefined
         : () => this.setState({ boosterExistingValue: n });
     };
 
-    let boosterFarmButtonText = '',
-      boosterFarmText = '';
+    let boosterFarmButtonText, boosterFarmText, boosterButtonText, boosterText;
 
     if (modalOpen && currentRender?.sft) {
       if (currentRender.sft.rewardEarned) {
+        let lockRewards;
         if (currentRender.sft.boosterRewards.secsLeft) {
-          boosterFarmButtonText = t(
-            boosterExistingValue > 0 ? 'page4.lockWows' : 'page4.claim',
-            { amount: currentRender.sft.rewardEarned.toFixed(6) }
-          );
-          boosterFarmText = `My booster lock: due (${remainingFromSecs(
+          lockRewards = boosterExistingValue > 0;
+          boosterFarmText = `Booster lock: due\u00a0(${remainingFromSecs(
             currentRender.sft.boosterRewards.secsLeft
-          )}), APR (${currentRender.sft.boosterRewards.apr * 100})`;
+          )}), APR\u00a0(${currentRender.sft.boosterRewards.apr * 100} %)`;
         } else {
-          boosterFarmButtonText = t(
-            boosterNewValue > 0 ? 'page4.lockWows' : 'page4.claim',
-            { amount: currentRender.sft.rewardEarned.toFixed(6) }
-          );
+          lockRewards = boosterNewValue > 0;
           boosterFarmText = 'Create a new booster lock';
         }
+        boosterFarmButtonText = txPending
+          ? { l: t('page4.txPending'), d: true }
+          : {
+              l: t(lockRewards ? 'page4.lockWows' : 'page4.claim', {
+                amount: currentRender.sft.rewardEarned.toFixed(6),
+              }),
+              d: false,
+            };
       } else {
-        boosterFarmText = 'No Farm rewards claimable';
+        boosterFarmText = 'No farm rewards claimable';
+      }
+
+      if (currentRender.sft.boosterRewards.secsLeft) {
+        boosterText = `Booster lock: amount\u00a0(${currentRender.sft.boosterRewards.total.toFixed(
+          2
+        )} WOWS)
+        , due\u00a0(${remainingFromSecs(
+          currentRender.sft.boosterRewards.secsLeft
+        )}), APR\u00a0(${currentRender.sft.boosterRewards.apr * 100} %)`;
+      }
+
+      if (currentRender.sft.boosterRewards.pending) {
+        let lockRewards;
+        if (currentRender.sft.boosterRewards.secsLeft) {
+          lockRewards = boosterRelock;
+        } else {
+          lockRewards = false;
+          boosterText = 'No active booster lock';
+        }
+        boosterButtonText = txPending
+          ? { l: t('page4.txPending'), d: true }
+          : {
+              l: t(lockRewards ? 'page4.relockWows' : 'page4.claim', {
+                amount: currentRender.sft.boosterRewards.pending.toFixed(6),
+              }),
+              d: false,
+            };
+      } else if (!currentRender.sft.boosterRewards.secsLeft) {
+        boosterText = 'No booster rewards claimable';
       }
     }
 
@@ -859,8 +914,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                           type="button"
                           value={claimText.l}
                           disabled={claimText.d}
-                          //onClick={() => this.setState({modalOpen: true})} TODO: enable
-                          onClick={() => this._onClaim()}
+                          onClick={() => this.setState({ modalOpen: true })}
                         />
                         {!txPending &&
                           isWalletConnected &&
@@ -908,7 +962,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                   to earn more.
                 </p>
                 <p>
-                  Once you have selected a lock period, you cannot change it's
+                  Once you have created a lock period, you cannot change it's
                   expire time. But you can always add rewards into it.
                 </p>
                 <span className="d-block w-100 text-center">
@@ -917,7 +971,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                 {currentRender?.sft && currentRender.sft.rewardEarned > 0 && (
                   <>
                     {currentRender.sft.boosterRewards.secsLeft ? (
-                      <div id="lock-container">
+                      <div className="lock-container">
                         <div
                           className={boosterState(boosterExistingValue, 1)}
                           onClick={boosterFuncE(1)}
@@ -932,7 +986,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                         </div>
                       </div>
                     ) : (
-                      <div id="lock-container">
+                      <div className="lock-container">
                         <div
                           className={boosterState(boosterNewValue, 2592000)}
                           onClick={boosterFuncN(2592000)}
@@ -962,11 +1016,42 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                     <button
                       className={'wolves-btn mt-2 tk-aktiv-grotesk-condensed'}
                       onClick={() => this._onClaim()}
+                      disabled={boosterFarmButtonText?.d}
                     >
-                      {boosterFarmButtonText}
+                      {boosterFarmButtonText?.l}
                     </button>
                   </>
                 )}
+                <hr />
+                <span className="d-block w-100 text-center">{boosterText}</span>
+                {currentRender?.sft &&
+                  currentRender.sft.boosterRewards.pending > 0 && (
+                    <>
+                      {currentRender.sft.boosterRewards.secsLeft && (
+                        <div className="lock-container">
+                          <div
+                            className={boosterState(boosterRelock, 1)}
+                            onClick={boosterFuncR(1)}
+                          >
+                            Relock into Booster
+                          </div>
+                          <div
+                            className={boosterState(boosterRelock, 0)}
+                            onClick={boosterFuncR(0)}
+                          >
+                            Claim into wallet
+                          </div>
+                        </div>
+                      )}
+                      <button
+                        className={'wolves-btn mt-2 tk-aktiv-grotesk-condensed'}
+                        onClick={() => this._onClaimBooster()}
+                        disabled={boosterButtonText?.d}
+                      >
+                        {boosterButtonText?.l}
+                      </button>
+                    </>
+                  )}
               </span>
             </Modal.Body>
           </Modal>

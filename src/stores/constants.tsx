@@ -25,6 +25,7 @@ export const SFT_LOCK = 'SFT_LOCK'; // Transfer SFT to TradingFloor contract
 export const SFT_UNLOCK = 'SFT_UNLOCK'; // Burn NFT, transfer SFT back
 export const SFT_REWARD = 'SFT_REWARD'; // REQUEST REWARD INFO
 export const SFT_CLAIM = 'SFT_CLAIM'; // Claim all SFT rewards
+export const SFT_CLAIM_BOOSTER = 'SFT_CLAIM_BOOSTER'; // Claim all SFT rewards from booster
 export const SFT_UPGRADE = 'SFT_UPGRADE'; // Upgrade Reward Share
 
 export const CFOLIO_ITEM_BUY = 'CFOLIO_ITEM_BUY'; // Buy (mint) cfolioItem

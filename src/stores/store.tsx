@@ -10,6 +10,7 @@ import WalletConnectProvider from '@walletconnect/web3-provider';
 import ERC20Abi from 'abi/contracts/0xerc1155/interfaces/IERC20.sol/IERC20.json';
 import CurveYDepositAbi from 'abi/contracts/interfaces/curve/CurveDepositInterface.sol/ICurveFiDepositY.json';
 import UniV2PairAbi from 'abi/contracts/interfaces/uniswap/IUniswapV2Pair.sol/IUniswapV2Pair.json';
+import BoosterAbi from 'abi/contracts/src/booster/Booster.sol/Booster.json';
 import CFolioItemBridgeAbi from 'abi/contracts/src/cfolio/CFolioItemBridge.sol/CFolioItemBridge.json';
 import CFolioItemHandlerAbi from 'abi/contracts/src/cfolio/interfaces/ICFolioItemHandler.sol/ICFolioItemHandler.json';
 import SftEvaluatorAbi from 'abi/contracts/src/cfolio/SFTEvaluator.sol/SFTEvaluator.json';
@@ -45,6 +46,7 @@ import {
   REVOKE_APPROVAL,
   SFT_BUY,
   SFT_CLAIM,
+  SFT_CLAIM_BOOSTER,
   SFT_LOCK,
   SFT_REWARD,
   SFT_UNLOCK,
@@ -93,6 +95,7 @@ type ChainAddresses = {
   stakeFarm: string;
   sftMinter: string;
   sftHolder: string;
+  boosterProxy: string;
   tradeFloorProxy: string;
   sftEvaluatorProxy: string;
   cfolioFarmLP: string;
@@ -242,6 +245,7 @@ class Store {
   cfihLpContract?: ethers.Contract;
   cfihScContract?: ethers.Contract;
   sftEvaluatorContract?: ethers.Contract;
+  boosterContract?: ethers.Contract;
 
   sftHolderContractRO?: ethers.Contract;
   sftMintContractRO?: ethers.Contract;
@@ -429,6 +433,9 @@ class Store {
         case SFT_CLAIM:
           this._doSftClaim(_payload.content);
           break;
+        case SFT_CLAIM_BOOSTER:
+          this._doSftClaimBooster(_payload.content);
+          break;
         case SFT_LOCK:
           this._doSftLock(_payload.content);
           break;
@@ -577,6 +584,7 @@ class Store {
       this.cfihLpContract = undefined;
       this.cfihScContract = undefined;
       this.sftEvaluatorContract = undefined;
+      this.boosterContract = undefined;
       this.ethersSigner = undefined;
     }
     this.address = '';
@@ -884,6 +892,11 @@ class Store {
       this.sftEvaluatorContract = new ethers.Contract(
         chainAddresses.sftEvaluatorProxy,
         SftEvaluatorAbi,
+        signer
+      );
+      this.boosterContract = new ethers.Contract(
+        chainAddresses.boosterProxy,
+        BoosterAbi,
         signer
       );
       return true;
@@ -2247,6 +2260,43 @@ class Store {
       emitter.emit(SFT_CLAIM, {
         status: 'error',
         type: SFT_CLAIM,
+        errorMessage: e.error ? e.error.message : e.message,
+      } as StatusResult);
+    }
+  };
+
+  _doSftClaimBooster = async (payloadContent: PayloadContent) => {
+    try {
+      if (!payloadContent.id) {
+        throw new Error('Invalid id');
+      }
+      if (!this.boosterContract) {
+        throw new Error('Invalid contract state');
+      }
+      const tx: ethers.ContractTransaction =
+        await this.boosterContract.claimRewards(
+          payloadContent.id,
+          payloadContent.time
+        );
+      emitter.emit(SFT_CLAIM_BOOSTER, {
+        status: 'tx',
+        tx: tx.hash,
+      } as StatusResult);
+
+      await tx.wait();
+
+      emitter.emit(SFT_CLAIM_BOOSTER, {
+        status: 'success',
+        tx: tx.hash,
+      } as StatusResult);
+
+      this._addDQ(tx.blockNumber ?? 0, {
+        type: SFT_REWARD,
+        content: {},
+      } as Payload);
+    } catch (e) {
+      emitter.emit(SFT_CLAIM_BOOSTER, {
+        status: 'error',
         errorMessage: e.error ? e.error.message : e.message,
       } as StatusResult);
     }
