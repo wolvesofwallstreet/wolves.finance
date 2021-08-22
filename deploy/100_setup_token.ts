@@ -154,36 +154,7 @@ const func = async function (hardhat_re) {
   const TOKEN_MINTER_ROLE = await tokenInstance.MINTER_ROLE();
 
   //
-  // 3.) Revoke old rewardHandler MINTER_ROLE
-  //
-  if (
-    configAddresses.rewardHandlerUpdate &&
-    configAddresses.rewardHandlerUpdate !== generatedAddresses.rewardHandler &&
-    (await tokenInstance.hasRole(
-      TOKEN_MINTER_ROLE,
-      configAddresses.rewardHandlerUpdate
-    ))
-  ) {
-    console.log('Revoke minter role from old reward handler');
-
-    await catchUnknownSigner(
-      execute(
-        TOKEN_CONTRACT,
-        {
-          from: marketingWallet,
-          log: true,
-        },
-        'revokeRole',
-        TOKEN_MINTER_ROLE,
-        configAddresses.rewardHandlerUpdate
-      )
-    );
-  } else {
-    console.log('Minter role not set for old reward handler');
-  }
-
-  //
-  // 4.) Call WOWSErc20.sol::grantRole(WOWSErc20.sol.MINTER_ROLE(), controller)
+  // 3.) Call WOWSErc20.sol::grantRole(WOWSErc20.sol.MINTER_ROLE(), controller)
   //     This is to allow controller to call into WOWSErc20.sol to distribute
   //     rewards.
   //
@@ -212,7 +183,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 5.) Call Controller.sol::registerFarm()
+  // 4.) Call Controller.sol::registerFarm()
   //     Parameters:
   //       * farmAddress         The UniV2StakeFarm address
   //       * rewardCap           15,000 * 1e18 Wei
@@ -255,7 +226,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 6.) If we have a Controller Upgrade, call OldController::transferAllFarms(newController)
+  // 5.) If we have a Controller Upgrade, call OldController::transferAllFarms(newController)
   // !! In deployments a ControllerUpdate.json file is expected with the old Controller
   //
   if (
@@ -281,7 +252,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 7.) Call WOWSErc20.sol::grantRole(WOWSErc20.sol.MINTER_ROLE(), Crowdsale.sol)
+  // 6.) Call WOWSErc20.sol::grantRole(WOWSErc20.sol.MINTER_ROLE(), Crowdsale.sol)
   //     !!! ONLY DURING PRESALE !!!
   //
   if (
@@ -309,17 +280,17 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 8.) Call Controller.sol::setWorker(teamwallet)
+  // 7.) Call Controller.sol::setWorker(teamwallet)
   //     Until we haven't an automatic process for maintanance
   //     the current tem wallet is the "worker" (see next)
   //
-  // 9.) Call Controller.sol::refuelfarms < 1 day before duration ends
+  // 8.) Call Controller.sol::refuelfarms < 1 day before duration ends
   //     Until we haven't an automatic process for maintanance
   //     this has to be done every 2 weeks
   //
 
   //
-  // 10.) Check if we have to upgrade the tradeFloor implementation
+  // 9.) Check if we have to upgrade the tradeFloor implementation
   //
   if (
     (await getProxyImplementation(
@@ -341,7 +312,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 11.) Check if we have to set the rewardHandler
+  // 10.) Check if we have to set the rewardHandler
   //
   if (
     (await boosterInstance.rewardHandler()) !== generatedAddresses.rewardHandler
@@ -363,7 +334,7 @@ const func = async function (hardhat_re) {
   const BOOSTER_CONTROLLER_ROLE = await boosterInstance.CONTROLLER_ROLE();
 
   //
-  // 12.) Revoke CONTROLLER role in Booster for controller)
+  // 11.) Revoke CONTROLLER role in Booster for controller)
   //
   if (
     configAddresses.controllerUpdate &&
@@ -389,7 +360,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 13.) Grant CONTROLLER_ROLE for new controller
+  // 12.) Grant CONTROLLER_ROLE for new controller
   //
   if (
     !(await boosterInstance.hasRole(
@@ -413,7 +384,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 14.) Terminate old rewardHandler
+  // 13.) Terminate old rewardHandler
   //
   if (
     configAddresses.rewardHandlerUpdate &&
@@ -432,6 +403,35 @@ const func = async function (hardhat_re) {
         false // Should be set to true if verified
       )
     );
+  }
+
+  //
+  // 14.) Revoke old rewardHandler MINTER_ROLE
+  //
+  if (
+    configAddresses.rewardHandlerUpdate &&
+    configAddresses.rewardHandlerUpdate !== generatedAddresses.rewardHandler &&
+    (await tokenInstance.hasRole(
+      TOKEN_MINTER_ROLE,
+      configAddresses.rewardHandlerUpdate
+    ))
+  ) {
+    console.log('Revoke minter role from old reward handler');
+
+    await catchUnknownSigner(
+      execute(
+        TOKEN_CONTRACT,
+        {
+          from: marketingWallet,
+          log: true,
+        },
+        'revokeRole',
+        TOKEN_MINTER_ROLE,
+        configAddresses.rewardHandlerUpdate
+      )
+    );
+  } else {
+    console.log('Minter role not set for old reward handler');
   }
 };
 
