@@ -373,7 +373,7 @@ contract Booster is IBooster, AccessControl {
     // Update state
     delete (rewardDefinitions);
     for (uint256 i = 0; i < durations.length; ++i) {
-      require(i == 0 || durations[i] > durations[i - 1], 'B: Wrong sorting');
+      require(i == 0 || durations[i - 1] > durations[i], 'B: Wrong sorting');
       rewardDefinitions.push(RewardDefinition(durations[i], aprs[i]));
     }
   }
