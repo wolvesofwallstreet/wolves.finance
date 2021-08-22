@@ -662,19 +662,15 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         : () => this.setState({ boosterExistingValue: n });
     };
 
-    let boosterFarmButtonText, boosterFarmText, boosterButtonText, boosterText;
+    let boosterFarmButtonText, boosterButtonText, boosterPeriod;
 
     if (modalOpen && currentRender?.sft) {
       if (currentRender.sft.rewardEarned) {
         let lockRewards;
         if (currentRender.sft.boosterRewards.secsLeft) {
           lockRewards = boosterExistingValue > 0;
-          boosterFarmText = `Booster lock: due\u00a0(${remainingFromSecs(
-            currentRender.sft.boosterRewards.secsLeft
-          )}), APR\u00a0(${currentRender.sft.boosterRewards.apr * 100} %)`;
         } else {
           lockRewards = boosterNewValue > 0;
-          boosterFarmText = 'Create a new booster lock';
         }
         boosterFarmButtonText = txPending
           ? { l: t('page4.txPending'), d: true }
@@ -684,17 +680,24 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
               }),
               d: false,
             };
-      } else {
-        boosterFarmText = 'No farm rewards claimable';
       }
 
       if (currentRender.sft.boosterRewards.secsLeft) {
-        boosterText = `Booster lock: amount\u00a0(${currentRender.sft.boosterRewards.total.toFixed(
-          2
-        )} WOWS)
-        , due\u00a0(${remainingFromSecs(
-          currentRender.sft.boosterRewards.secsLeft
-        )}), APR\u00a0(${currentRender.sft.boosterRewards.apr * 100} %)`;
+        switch (currentRender.sft.boosterRewards.apr) {
+          case 1.75:
+            boosterPeriod = '6 months';
+            break;
+          case 1.3:
+            boosterPeriod = '3 months';
+            break;
+          case 1.0:
+            boosterPeriod = '1 month';
+            break;
+          default:
+            boosterPeriod = 'Unknown';
+        }
+      } else {
+        boosterPeriod = 'No period started';
       }
 
       if (currentRender.sft.boosterRewards.pending) {
@@ -703,7 +706,6 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
           lockRewards = boosterRelock;
         } else {
           lockRewards = false;
-          boosterText = 'No active booster lock';
         }
         boosterButtonText = txPending
           ? { l: t('page4.txPending'), d: true }
@@ -713,8 +715,6 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
               }),
               d: false,
             };
-      } else if (!currentRender.sft.boosterRewards.secsLeft) {
-        boosterText = 'No booster rewards claimable';
       }
     }
 
@@ -965,11 +965,30 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                   Once you have created a lock period, you cannot change it's
                   expire time. But you can always add rewards into it.
                 </p>
+                <hr />
                 <span className="d-block w-100 text-center">
-                  {boosterFarmText}
+                  <b>Booster lock:</b> {boosterPeriod}
+                  {currentRender?.sft?.boosterRewards.secsLeft && (
+                    <>
+                      <br />
+                      <b>Terminate:</b>{' '}
+                      {remainingFromSecs(
+                        currentRender.sft.boosterRewards.secsLeft
+                      )}
+                      <br />
+                      <b>Locked Amount:</b>{' '}
+                      {currentRender.sft.boosterRewards.total.toFixed(2)} WOWS
+                      <br />
+                      <b>APR:</b> {currentRender.sft.boosterRewards.apr * 100} %
+                    </>
+                  )}
                 </span>
                 {currentRender?.sft && currentRender.sft.rewardEarned > 0 && (
                   <>
+                    <hr />
+                    <span className="tk-vincente-bold font-22 d-block w-100 text-center">
+                      FARM REWARDS
+                    </span>
                     {currentRender.sft.boosterRewards.secsLeft ? (
                       <div className="lock-container">
                         <div
@@ -1022,11 +1041,13 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                     </button>
                   </>
                 )}
-                <hr />
-                <span className="d-block w-100 text-center">{boosterText}</span>
                 {currentRender?.sft &&
                   currentRender.sft.boosterRewards.pending > 0 && (
                     <>
+                      <hr />
+                      <span className="tk-vincente-bold font-22 d-block w-100 text-center">
+                        BOOSTER REWARDS
+                      </span>
                       {currentRender.sft.boosterRewards.secsLeft && (
                         <div className="lock-container">
                           <div
