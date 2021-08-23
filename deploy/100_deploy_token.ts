@@ -38,6 +38,8 @@ const ADDRESS_BOOK_TEAM_WALLET_KEY =
   ethers.utils.formatBytes32String('TEAM_WALLET');
 const ADDRESS_BOOK_MARKETING_WALLET_KEY =
   ethers.utils.formatBytes32String('MARKETING_WALLET');
+const ADDRESS_BOOK_ADMIN_ACCOUNT_KEY =
+  ethers.utils.formatBytes32String('ADMIN_ACCOUNT');
 const ADDRESS_BOOK_UNISWAP_V2_ROUTER02_KEY = ethers.utils.formatBytes32String(
   'UNISWAP_V2_ROUTER02'
 );
@@ -151,21 +153,6 @@ const func = async function (hardhat_re) {
       args: [deployer],
       log: true,
       deterministicDeployment: true,
-
-      /* TODO: Diamond upgradeability support
-      owner: deployer,
-
-      facets: [ADDRESS_REGISTRY_CONTRACT],
-
-      // Has to be a non-zero 32bytes string (in hex format)
-      // TODO
-      deterministicSalt: ADDRESS_ZERO,
-
-      execute: {
-        methodName: 'postUpgrade',
-        args: [],
-      },
-      */
     });
 
     generatedAddresses.addressRegistry = addressRegistryReceipt.address;
@@ -212,6 +199,13 @@ const func = async function (hardhat_re) {
     ADDRESS_REGISTRY_INSTANCE,
     ADDRESS_BOOK_TEAM_WALLET_KEY,
     teamWallet
+  );
+  await setRegistryKey(
+    deployer,
+    execute,
+    ADDRESS_REGISTRY_INSTANCE,
+    ADDRESS_BOOK_ADMIN_ACCOUNT_KEY,
+    marketingWallet
   );
   await setRegistryKey(
     deployer,

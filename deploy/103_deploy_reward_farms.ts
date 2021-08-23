@@ -18,16 +18,16 @@ require('hardhat-deploy-ethers');
 const CFOLIO_FARM_CONTRACT = 'CFolioFarm';
 const ADDRESS_REGISTRY_CONTRACT = 'AddressRegistry';
 const CFOLIO_ITEM_HANDLER_LP_CONTRACT = 'CFolioItemHandlerLP';
-const CFOLIO_ITEM_HANDLER_LP_PROXY_CONTRACT = 'CFolioItemHandlerLPProxy';
 const CFOLIO_ITEM_HANDLER_SC_CONTRACT = 'CFolioItemHandlerSC';
-const CFOLIO_ITEM_HANDLER_SC_PROXY_CONTRACT = 'CFolioItemHandlerSCProxy';
 const SFT_EVALUATOR_CONTRACT = 'SFTEvaluator';
-const SFT_EVALUATOR_PROXY_CONTRACT = 'SFTEvaluatorProxy';
 const UPGRADE_PROXY_CONTRACT = 'UpgradeProxy';
 
-// Deployed aliases
+// Deployed contract aliases
+const SFT_EVALUATOR_PROXY_CONTRACT = 'SFTEvaluatorProxy';
 const CFOLIO_FARM_LP_CONTRACT = 'CFolioFarmLP';
 const CFOLIO_FARM_SC_CONTRACT = 'CFolioFarmSC';
+const CFOLIO_ITEM_HANDLER_LP_PROXY_CONTRACT = 'CFolioItemHandlerLPProxy';
+const CFOLIO_ITEM_HANDLER_SC_PROXY_CONTRACT = 'CFolioItemHandlerSCProxy';
 
 // Contract ABIs
 const CFOLIO_ITEM_HANDLER_SC_ABI = `${__dirname}/../src/abi/contracts/src/cfolio/CFolioItemHandlerSC.sol/CFolioItemHandlerSC.json`;
@@ -92,8 +92,8 @@ async function setRegistryKey(deployer, execute, registryInstance, key, value) {
 const func = async function (hardhat_re) {
   const { deployments, getNamedAccounts } = hardhat_re;
 
-  const { deploy, execute, get } = deployments;
-  const { deployer } = await getNamedAccounts();
+  const { deploy, execute } = deployments;
+  const { deployer, marketingWallet } = await getNamedAccounts();
 
   // Get chain ID
   const chainId = await hardhat_re.getChainId();
@@ -206,7 +206,7 @@ const func = async function (hardhat_re) {
     const cfolioFarmLPReceipt = await deploy(CFOLIO_FARM_LP_CONTRACT, {
       contract: CFOLIO_FARM_CONTRACT,
       from: deployer,
-      args: [deployer, CFOLIO_FARM_LP_NAME, CONTROLLER_ADDRESS],
+      args: [marketingWallet, CFOLIO_FARM_LP_NAME, CONTROLLER_ADDRESS],
       log: true,
       deterministicDeployment: true,
     });
@@ -310,7 +310,7 @@ const func = async function (hardhat_re) {
     const cfolioFarmSCReceipt = await deploy(CFOLIO_FARM_SC_CONTRACT, {
       contract: CFOLIO_FARM_CONTRACT,
       from: deployer,
-      args: [deployer, CFOLIO_FARM_SC_NAME, CONTROLLER_ADDRESS],
+      args: [marketingWallet, CFOLIO_FARM_SC_NAME, CONTROLLER_ADDRESS],
       log: true,
       deterministicDeployment: true,
     });
@@ -365,20 +365,6 @@ const func = async function (hardhat_re) {
 
   //////////////////////////////////////////////////////////////////////////////
   //
-  // Create initialization calldata
-  //
-  //////////////////////////////////////////////////////////////////////////////
-
-  const cfolioItemHandlerSCInterface = new ethers.utils.Interface(
-    cfolioItemHandlerSCAbi
-  );
-  const proxyCallData = cfolioItemHandlerSCInterface.encodeFunctionData(
-    'initialize',
-    []
-  );
-
-  //////////////////////////////////////////////////////////////////////////////
-  //
   // Deploy CFolioItemHandlerSCProxy
   //
   //////////////////////////////////////////////////////////////////////////////
@@ -392,36 +378,28 @@ const func = async function (hardhat_re) {
   } else {
     log_step('Deploying CFolioItemHandlerSC proxy');
 
-    let cfolioItemHandlerSCProxyReceipt = undefined;
-    try {
-      cfolioItemHandlerSCProxyReceipt = await get(
-        CFOLIO_ITEM_HANDLER_SC_PROXY_CONTRACT
-      );
+    const cfolioItemHandlerSCInterface = new ethers.utils.Interface(
+      cfolioItemHandlerSCAbi
+    );
+    const proxyCallData = cfolioItemHandlerSCInterface.encodeFunctionData(
+      'initialize',
+      []
+    );
 
-      if (!cfolioItemHandlerSCProxyReceipt.address) {
-        throw new Error('No address');
+    const cfolioItemHandlerSCProxyReceipt = await deploy(
+      CFOLIO_ITEM_HANDLER_SC_PROXY_CONTRACT,
+      {
+        contract: UPGRADE_PROXY_CONTRACT,
+        from: deployer,
+        args: [
+          ADDRESS_REGISTRY_ADDRESS,
+          generatedAddresses.cfolioItemHandlerSC,
+          proxyCallData,
+        ],
+        log: true,
+        deterministicDeployment: true,
       }
-
-      console.log(
-        'INFO: Proxy upgrade required! Initialization: ',
-        proxyCallData
-      );
-    } catch (err) {
-      cfolioItemHandlerSCProxyReceipt = await deploy(
-        CFOLIO_ITEM_HANDLER_SC_PROXY_CONTRACT,
-        {
-          contract: UPGRADE_PROXY_CONTRACT,
-          from: deployer,
-          args: [
-            ADDRESS_REGISTRY_ADDRESS,
-            generatedAddresses.cfolioItemHandlerSC,
-            proxyCallData,
-          ],
-          log: true,
-          deterministicDeployment: true,
-        }
-      );
-    }
+    );
 
     generatedAddresses.cfolioItemHandlerSCProxy =
       cfolioItemHandlerSCProxyReceipt.address;
