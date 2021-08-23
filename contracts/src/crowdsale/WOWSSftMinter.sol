@@ -8,10 +8,10 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
-import '@openzeppelin/contracts/access/Ownable.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
-import '@openzeppelin/contracts/utils/Context.sol';
+import '../../0xerc1155/access/AccessControl.sol';
+import '../../0xerc1155/interfaces/IERC20.sol';
+import '../../0xerc1155/utils/SafeERC20.sol';
+import '../../0xerc1155/utils/Context.sol';
 
 import '../booster/interfaces/IBooster.sol';
 import '../cfolio/interfaces/ICFolioItemHandler.sol';
@@ -25,7 +25,7 @@ import '../utils/AddressBook.sol';
 import '../utils/interfaces/IAddressRegistry.sol';
 import '../utils/TokenIds.sol';
 
-contract WOWSSftMinter is Context, Ownable {
+contract WOWSSftMinter is Context, AccessControl {
   using TokenIds for uint256;
   using SafeERC20 for IERC20;
 
@@ -33,25 +33,32 @@ contract WOWSSftMinter is Context, Ownable {
   // State
   //////////////////////////////////////////////////////////////////////////////
 
-  // PricePerlevel, customLevel start at 0xFF
-  mapping(uint16 => uint256) public _pricePerLevel;
+  // CFolio NFTs (baseCards)
 
+  // PricePerlevel, customLevel start at 0xFF
+  struct BaseLevelData {
+    uint16 cap;
+    uint256 price;
+  }
+
+  // BaseCard Info per level
+  mapping(uint16 => BaseLevelData) private _baseLevelData;
+  mapping(uint24 => uint16) private _baseCardsMinted;
+  uint256 public nextCustomCardId;
+
+  // CFolioItem
   struct CFolioItemSft {
     uint256 handlerId;
     uint256 price;
     uint128 numMinted;
     uint128 maxMintable;
   }
-  mapping(uint256 => CFolioItemSft) public cfolioItemSfts; // C-folio type to c-folio data
+  mapping(uint256 => CFolioItemSft) private cfolioItemSfts; // C-folio type to c-folio data
   ICFolioItemHandler[] private cfolioItemHandlers;
-
-  uint256 public nextCFolioItemNft = (1 << 64);
+  uint256 public nextCFolioItemNft;
 
   // The ERC1155 contract we are minting from
   IWOWSERC1155 private immutable _sftContract;
-
-  // The cfolioItem wrapper bridge
-  address private immutable _cfiBridge;
 
   // WOWS token contract
   IERC20 private immutable _wowsToken;
@@ -68,15 +75,15 @@ contract WOWSSftMinter is Context, Ownable {
   // SFTEvaluator to store the cfolioItemType
   ISFTEvaluator public sftEvaluator;
 
-  // Set while minting CFolioToken
-  bool private _setupCFolio;
-
   // 1.0 of the rewards go to distribution
   uint32 private constant ALL = 1 * 1e6;
 
   //////////////////////////////////////////////////////////////////////////////
   // Events
   //////////////////////////////////////////////////////////////////////////////
+
+  // Emitted when constructor is called
+  event Constructed(address wowsToken, address sftHolder, address booster);
 
   // Emitted if a new SFT is minted
   event Mint(
@@ -86,11 +93,23 @@ contract WOWSSftMinter is Context, Ownable {
     uint256 cfolioType
   );
 
+  // Emitted if base mint specifications (e.g. limits / price) have changed
+  event BaseSpecChanged(uint256[] ids);
+
   // Emitted if cFolio mint specifications (e.g. limits / price) have changed
-  event CFolioSpecChanged(uint256[] ids, WOWSSftMinter upgradeFrom);
+  event CFolioSpecChanged(uint256[] ids);
 
   // Emitted if the contract gets destroyed
   event Destruct();
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Modifier
+  //////////////////////////////////////////////////////////////////////////////
+
+  modifier onlyAdmin() {
+    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'WM: Only admin');
+    _;
+  }
 
   //////////////////////////////////////////////////////////////////////////////
   // Constructor
@@ -99,30 +118,48 @@ contract WOWSSftMinter is Context, Ownable {
   /**
    * @dev Contruct WOWSSftMinter
    *
-   * @param addressRegistry WOWS system addressRegistry
+   * @param addressRegistry provides all immutables
    */
   constructor(IAddressRegistry addressRegistry) {
-    // Initialize {Ownable}
-    transferOwnership(
-      addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET)
+    // Access control (need admin for selfDestruct)
+    _setupRole(
+      DEFAULT_ADMIN_ROLE,
+      addressRegistry.getRegistryEntry(AddressBook.ADMIN_ACCOUNT)
     );
 
+    // Set immutable addresses
+    address wowsToken = addressRegistry.getRegistryEntry(
+      AddressBook.WOWS_TOKEN
+    );
+    _wowsToken = IERC20(wowsToken);
+
+    address sftHolder = addressRegistry.getRegistryEntry(
+      AddressBook.SFT_HOLDER_PROXY
+    );
+    _sftContract = IWOWSERC1155(sftHolder);
+
+    address booster = addressRegistry.getRegistryEntry(AddressBook.WOWS_BOOSTER_PROXY);
+    _booster = IBooster(booster);
+
+    emit Constructed(wowsToken, sftHolder, booster);
+  }
+
+  function initialize(IAddressRegistry addressRegistry) external {
+    // Check for single entry
+    require(address(rewardHandler) == address(0), 'WM: Already initialized');
+
     // Initialize state
-    _sftContract = IWOWSERC1155(
-      addressRegistry.getRegistryEntry(AddressBook.SFT_HOLDER)
+    _setupRole(
+      DEFAULT_ADMIN_ROLE,
+      addressRegistry.getRegistryEntry(AddressBook.ADMIN_ACCOUNT)
     );
-    _wowsToken = IERC20(
-      addressRegistry.getRegistryEntry(AddressBook.WOWS_TOKEN)
-    );
-    _cfiBridge = addressRegistry.getRegistryEntry(
-      AddressBook.CFOLIOITEM_BRIDGE_PROXY
-    );
+
     rewardHandler = IRewardHandler(
       addressRegistry.getRegistryEntry(AddressBook.REWARD_HANDLER)
     );
-    _booster = IBooster(
-      addressRegistry.getRegistryEntry(AddressBook.WOWS_BOOSTER_PROXY)
-    );
+
+    nextCustomCardId = (1 << 32);
+    nextCFolioItemNft = (1 << 64);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -132,16 +169,22 @@ contract WOWSSftMinter is Context, Ownable {
   /**
    * @dev Set prices for the given levels
    */
-  function setPrices(uint16[] memory levels, uint256[] memory prices)
-    external
-    onlyOwner
-  {
+  function setBaseSpec(
+    uint16[] calldata levels,
+    uint16[] calldata caps,
+    uint256[] calldata prices
+  ) external onlyAdmin {
     // Validate parameters
-    require(levels.length == prices.length, 'Length mismatch');
+    require(
+      levels.length == prices.length && levels.length == caps.length,
+      'WM: Length mismatch'
+    );
 
     // Update state
-    for (uint256 i = 0; i < levels.length; ++i)
-      _pricePerLevel[levels[i]] = prices[i];
+    for (uint256 i = 0; i < levels.length; ++i) {
+      _baseLevelData[levels[i]].cap = caps[i];
+      _baseLevelData[levels[i]].price = prices[i];
+    }
   }
 
   /**
@@ -151,8 +194,11 @@ contract WOWSSftMinter is Context, Ownable {
    */
   function setRewardHandler(IRewardHandler newRewardHandler)
     external
-    onlyOwner
+    onlyAdmin
   {
+    // Validate parameters
+    require(address(newRewardHandler) != address(0), 'WM: Invalid RH');
+
     // Update state
     rewardHandler = newRewardHandler;
   }
@@ -160,9 +206,9 @@ contract WOWSSftMinter is Context, Ownable {
   /**
    * @dev Set Trade Floor
    */
-  function setTradeFloor(address tradeFloor_) external onlyOwner {
+  function setTradeFloor(address tradeFloor_) external onlyAdmin {
     // Validate parameters
-    require(tradeFloor_ != address(0), 'Invalid TF');
+    require(tradeFloor_ != address(0), 'WM: Invalid TF');
 
     // Update state
     tradeFloor = tradeFloor_;
@@ -171,9 +217,9 @@ contract WOWSSftMinter is Context, Ownable {
   /**
    * @dev Set SFT evaluator
    */
-  function setSFTEvaluator(ISFTEvaluator sftEvaluator_) external onlyOwner {
+  function setSFTEvaluator(ISFTEvaluator sftEvaluator_) external onlyAdmin {
     // Validate parameters
-    require(address(sftEvaluator_) != address(0), 'Invalid TF');
+    require(address(sftEvaluator_) != address(0), 'WM: Invalid SFTE');
 
     // Update state
     sftEvaluator = sftEvaluator_;
@@ -186,15 +232,14 @@ contract WOWSSftMinter is Context, Ownable {
     uint256[] calldata cFolioTypes,
     address[] calldata handlers,
     uint128[] calldata maxMint,
-    uint256[] calldata prices,
-    WOWSSftMinter oldMinter
-  ) external onlyOwner {
+    uint256[] calldata prices
+  ) external onlyAdmin {
     // Validate parameters
     require(
       cFolioTypes.length == handlers.length &&
         handlers.length == maxMint.length &&
         maxMint.length == prices.length,
-      'Length mismatch'
+      'WM: Length mismatch'
     );
 
     // Update state
@@ -215,24 +260,13 @@ contract WOWSSftMinter is Context, Ownable {
       cfi.maxMintable = maxMint[i];
       cfi.price = prices[i];
     }
-    if (address(oldMinter) != address(0)) {
-      for (uint256 i = 0; i < cFolioTypes.length; ++i) {
-        (, , uint128 numMinted, ) = oldMinter.cfolioItemSfts(cFolioTypes[i]);
-        cfolioItemSfts[cFolioTypes[i]].numMinted = numMinted;
-      }
-
-      nextCFolioItemNft = oldMinter.nextCFolioItemNft();
-    }
-
-    // Dispatch event
-    emit CFolioSpecChanged(cFolioTypes, oldMinter);
+    emit CFolioSpecChanged(cFolioTypes);
   }
 
   /**
    * @dev upgrades state from an existing WOWSSFTMinter
    */
-  function destructContract() external onlyOwner {
-    // Dispatch event
+  function destructContract() external onlyAdmin {
     emit Destruct();
 
     // Disable high-impact Slither detector "suicidal" here. Slither explains
@@ -254,23 +288,23 @@ contract WOWSSftMinter is Context, Ownable {
     uint8 cardId
   ) external {
     // Validate parameters
-    require(recipient != address(0), 'Invalid recipient');
+    require(recipient != address(0), 'WM: Invalid recipient');
 
     // Load state
-    uint256 price = _pricePerLevel[level];
+    uint256 price = _baseLevelData[level].price;
+    (uint24 bcmId, uint16 minted) = _getBaseCardsMinted(level, cardId);
 
     // Validate state
-    require(price > 0, 'No price available');
+    require(price > 0, 'WM: No price available');
+    require(minted < _baseLevelData[level].cap, 'WM: No price available');
 
-    // Get the next free mintable token for level / cardId
-    (bool success, uint256 tokenId) = _sftContract.getNextMintableTokenId(
-      level,
-      cardId
-    );
-    require(success, 'Unsufficient cards');
+    // Calculate the tokenId
+    uint256 baseTokenId = ((uint256(level) << 8) | cardId) << 16;
+
+    _baseCardsMinted[bcmId]++;
 
     // Update state
-    _mint(recipient, tokenId, price, 0);
+    _mint(recipient, baseTokenId + minted, price, 0, '');
   }
 
   /**
@@ -278,32 +312,27 @@ contract WOWSSftMinter is Context, Ownable {
    *
    * Approval of WOWS token required before the call.
    */
-  function mintCustomSFT(
-    address recipient,
-    uint8 level,
-    string memory uri
-  ) external {
+  function mintCustomSFT(address recipient, uint8 level) external {
     // Validate parameters
-    require(recipient != address(0), 'Invalid recipient');
+    require(recipient != address(0), 'WM: Invalid recipient');
 
     // Load state
-    uint256 price = _pricePerLevel[0x100 + level];
+    uint256 price = _baseLevelData[uint16(level) << 8].price;
 
     // Validate state
-    require(price > 0, 'No price available');
+    require(price > 0, 'WM: No price available');
 
-    // Get the next free mintable token for level / cardId
-    uint256 tokenId = _sftContract.getNextMintableCustomToken();
+    // Get the next free mintable custom card Id
+    uint256 tokenId = nextCustomCardId++;
 
     // Custom baseToken only allowed < 64Bit
-    require(tokenId.isBaseCard(), 'Max tokenId reached');
+    require(tokenId.isBaseCard(), 'WM: Max tokenId reached');
 
-    // Set card level and uri
+    // Set card level
     _sftContract.setCustomCardLevel(tokenId, level);
-    _sftContract.setCustomURI(tokenId, uri);
 
     // Update state
-    _mint(recipient, tokenId, price, 0);
+    _mint(recipient, tokenId, price, 0, '');
   }
 
   /**
@@ -311,85 +340,60 @@ contract WOWSSftMinter is Context, Ownable {
    *
    * Approval of WOWS token required before the call.
    *
-   * Post-condition: `_setupCFolio` must be false.
-   *
-   * @param recipient Recipient of the SFT, unused if sftTokenId is != -1
    * @param cfolioItemType The item type of the SFT
    * @param sftTokenId If <> -1 recipient is the SFT c-folio / handler must be called
    * @param investAmounts Arguments needed for the handler (in general investments).
    * Investments may be zero if the user is just buying an SFT.
    */
   function mintCFolioItemSFT(
-    address recipient,
     uint256 cfolioItemType,
     uint256 sftTokenId,
     uint256[] calldata investAmounts
   ) external {
     // Validate state
-    require(!_setupCFolio, 'Already setting up');
-    require(address(sftEvaluator) != address(0), 'SFTE not set');
-
-    // Validate parameters
-    require(recipient != address(0), 'Invalid recipient');
+    require(address(sftEvaluator) != address(0), 'WM: SFTE not set');
 
     // Load state
     CFolioItemSft storage sftData = cfolioItemSfts[cfolioItemType];
 
     // Validate state
-    require(
-      sftData.numMinted < sftData.maxMintable,
-      'CFI Minter: Insufficient amount'
-    );
+    require(sftData.numMinted < sftData.maxMintable, 'WM: Sold out (CFI)');
 
-    address sftCFolio = address(0);
+    // Mint by default to sender
+    address recipient = _msgSender();
+
     if (sftTokenId != uint256(-1)) {
-      require(sftTokenId.isBaseCard(), 'Invalid sftTokenId');
+      require(sftTokenId.isBaseCard(), 'WM: Invalid baseId');
 
       // Get the CFolio contract address, it will be the final recipient
-      sftCFolio = _sftContract.tokenIdToAddress(sftTokenId);
-      require(sftCFolio != address(0), 'Bad sftTokenId');
-
-      // Intermediate owner of the minted SFT
-      recipient = address(this);
-
-      // Allow this contract to be an ERC1155 holder
-      _setupCFolio = true;
+      recipient = _sftContract.tokenIdToAddress(sftTokenId);
+      require(recipient != address(0), 'WM: Bad baseId');
     }
 
     uint256 tokenId = nextCFolioItemNft++;
-    require(tokenId.isCFolioCard(), 'Invalid cfolioItem tokenId');
+    require(tokenId.isCFolioCard(), 'WM: Invalid cfiId');
 
-    sftEvaluator.setCFolioItemType(tokenId, cfolioItemType);
+    _sftContract.setCFolioItemType(tokenId, cfolioItemType);
+
+    ICFolioItemHandler handler = cfolioItemHandlers[sftData.handlerId]; 
 
     // Update state, mint SFT token
     sftData.numMinted += 1;
-    _mint(recipient, tokenId, sftData.price, cfolioItemType);
-
-    // Let CFolioHandler setup the new minted token
-    cfolioItemHandlers[sftData.handlerId].setupCFolio(
-      _msgSender(),
+    _mint(
+      recipient,
       tokenId,
-      investAmounts
+      sftData.price,
+      cfolioItemType,
+      abi.encodePacked(handler)
     );
 
-    // Check-effects-interaction not needed, as `_setupCFolio` can't be mutated
-    // outside this function.
-
-    // If the SFT's c-folio is final recipient of c-folio item, we call the
-    // handler and lock the c-folio item in the TradeFloor contract before we
-    // transfer it to the SFT.
-    if (sftCFolio != address(0)) {
-      // Lock the SFT into the TradeFloor contract
-      IERC1155BurnMintable(address(_sftContract)).safeTransferFrom(
-        address(this),
-        address(_cfiBridge),
+    if (investAmounts.length > 0) {
+      handler.deposit(
+        _msgSender(),
+        sftTokenId,
         tokenId,
-        1,
-        abi.encodePacked(sftCFolio)
+        investAmounts
       );
-
-      // Reset the temporary state which allows holding ERC1155 token
-      _setupCFolio = false;
     }
   }
 
@@ -411,13 +415,13 @@ contract WOWSSftMinter is Context, Ownable {
     address receiver = lockPeriod > 0 ? cfolio : _msgSender();
 
     bool[] memory lookup = new bool[](cfolioItemHandlers.length);
-    (uint256[] memory items, uint256 itemsLength) = IWOWSCryptofolio(cfolio)
-      .getCryptofolio(_cfiBridge);
+    uint256[] memory cfolioItems = _sftContract.getTokenIds(cfolio);
+    uint256 cfolioLength = cfolioItems.length;
 
-    for (uint256 i = 0; i < itemsLength; ++i) {
+    for (uint256 i = 0; i < cfolioLength; ++i) {
       // Get the handler of this type
       uint256 handlerId = cfolioItemSfts[
-        sftEvaluator.getCFolioItemType(items[i])
+        _sftContract.getCFolioItemType(cfolioItems[i])
       ].handlerId;
       if (!lookup[handlerId]) {
         cfolioItemHandlers[handlerId].getRewards(
@@ -446,14 +450,14 @@ contract WOWSSftMinter is Context, Ownable {
    * Only accept ERC1155 tokens during this setup.
    */
   function onERC1155Received(
-    address,
+    address operator,
     address,
     uint256,
     uint256,
     bytes memory
   ) external view returns (bytes4) {
     // Validate state
-    require(_setupCFolio, 'Only during setup');
+    require(operator == address(this), 'WM: Not allowed');
 
     // Call ancestor
     return this.onERC1155Received.selector;
@@ -466,15 +470,26 @@ contract WOWSSftMinter is Context, Ownable {
   /**
    * @dev Query prices for given levels
    */
-  function getPrices(uint16[] memory levels)
+  function getBaseSpec(uint8[] calldata levels, uint8[] calldata cardIds)
     external
     view
-    returns (uint256[] memory)
+    returns (
+      uint256[] memory prices,
+      uint16[] memory numMinted,
+      uint16[] memory maxMintable
+    )
   {
-    uint256[] memory result = new uint256[](levels.length);
-    for (uint256 i = 0; i < levels.length; ++i)
-      result[i] = _pricePerLevel[levels[i]];
-    return result;
+    require(levels.length == cardIds.length, 'WM: Length mismatch');
+
+    prices = new uint256[](levels.length);
+    numMinted = new uint16[](levels.length);
+    maxMintable = new uint16[](levels.length);
+
+    for (uint256 i = 0; i < levels.length; ++i) {
+      prices[i] = _baseLevelData[levels[i]].price;
+      maxMintable[i] = _baseLevelData[levels[i]].cap;
+      (, numMinted[i]) = _getBaseCardsMinted(levels[i], cardIds[i]);
+    }
   }
 
   /**
@@ -526,8 +541,8 @@ contract WOWSSftMinter is Context, Ownable {
     view
     returns (bytes memory result)
   {
-    uint256[] memory cFolioItems;
-    uint256[] memory oneCFolioItem = new uint256[](1);
+    uint256[] memory cfolioItems;
+    uint256[] memory oneCfolioItem = new uint256[](1);
     uint256 cfolioLength;
     uint256 rewardRate;
     uint256 timestamp;
@@ -537,21 +552,17 @@ contract WOWSSftMinter is Context, Ownable {
         // Only main TradeFloor supported
         uint256 sftTokenId = tokenIds[i].toSftTokenId();
         address cfolio = _sftContract.tokenIdToAddress(sftTokenId);
-        if (address(cfolio) != address(0)) {
-          (cFolioItems, cfolioLength) = IWOWSCryptofolio(cfolio).getCryptofolio(
-            _cfiBridge
-          );
-        } else {
-          cFolioItems = oneCFolioItem;
-          cfolioLength = 0;
-        }
+        require(cfolio != address(0), 'WM: Invalid cfi');
+
+        cfolioItems = _sftContract.getTokenIds(cfolio);
+        cfolioLength = cfolioItems.length;
 
         rewardRate = sftEvaluator.rewardRate(tokenIds[i]);
         (timestamp, ) = _sftContract.getTokenData(sftTokenId);
       } else {
-        oneCFolioItem[0] = tokenIds[i];
+        oneCfolioItem[0] = tokenIds[i];
         cfolioLength = 1;
-        cFolioItems = oneCFolioItem; // Reference, no copy
+        cfolioItems = oneCfolioItem; // Reference, no copy
         rewardRate = 0;
         timestamp = 0;
       }
@@ -559,20 +570,19 @@ contract WOWSSftMinter is Context, Ownable {
       result = abi.encodePacked(result, rewardRate, timestamp, cfolioLength);
 
       for (uint256 j = 0; j < cfolioLength; ++j) {
-        uint256 sftTokenId = cFolioItems[j].toSftTokenId();
-        uint256 cfolioType = sftEvaluator.getCFolioItemType(sftTokenId);
+        uint256 tokenId = cfolioItems[j];
+        uint256 cfolioType = _sftContract.getCFolioItemType(tokenId);
         uint256[] memory amounts;
 
-        address cfolio = _sftContract.tokenIdToAddress(sftTokenId);
-        if (address(cfolio) != address(0)) {
-          address handler = IWOWSCryptofolio(cfolio)._tradefloors(0);
-          if (handler != address(0))
-            amounts = ICFolioItemHandler(handler).getAmounts(cfolio);
-        }
+        address cfolio = _sftContract.tokenIdToAddress(tokenId);
+        require(address(cfolio) != address(0), 'WM: Invalid cfi');
+
+        address handler = IWOWSCryptofolio(cfolio).getHandler();
+        amounts = ICFolioItemHandler(handler).getAmounts(cfolio);
 
         result = abi.encodePacked(
           result,
-          cFolioItems[j],
+          cfolioItems[j],
           cfolioType,
           amounts.length,
           amounts
@@ -641,19 +651,43 @@ contract WOWSSftMinter is Context, Ownable {
     address recipient,
     uint256 tokenId,
     uint256 price,
-    uint256 cfolioType
+    uint256 cfolioType,
+    bytes memory data
   ) internal {
     // Transfer WOWS from user to reward handler
     if (price > 0)
       _wowsToken.safeTransferFrom(_msgSender(), address(rewardHandler), price);
 
     // Mint the token
-    IERC1155BurnMintable(address(_sftContract)).mint(recipient, tokenId, 1, '');
+    IERC1155BurnMintable(address(_sftContract)).mint(
+      recipient,
+      tokenId,
+      1,
+      data
+    );
 
     // Distribute the rewards
     if (price > 0) rewardHandler.distribute2(recipient, price, ALL);
 
     // Log event
     emit Mint(recipient, tokenId, price, cfolioType);
+  }
+
+  /**
+   * @dev Get the number of cards that have been minted
+   *
+   * @param level The level of cards to check
+   * @param cardId The ID of cards to check
+   *
+   * @return bcmLevelId the idx for direct access to _baseCardsMinted
+   * @return cardsMinted The number of cards that have been minted
+   */
+  function _getBaseCardsMinted(uint16 level, uint8 cardId)
+    private
+    view
+    returns (uint24 bcmLevelId, uint16 cardsMinted)
+  {
+    bcmLevelId = (uint24(level) << 8) | cardId;
+    cardsMinted = _baseCardsMinted[bcmLevelId];
   }
 }

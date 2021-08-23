@@ -13,6 +13,7 @@ import '@openzeppelin/contracts/proxy/Clones.sol';
 import './interfaces/IWOWSCryptofolio.sol';
 import './interfaces/IWOWSERC1155.sol';
 import './WOWSMinterPauser.sol';
+import '../cfolio/interfaces/ICFolioItemHandler.sol';
 import '../utils/TokenIds.sol';
 
 contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
@@ -21,9 +22,6 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
   //////////////////////////////////////////////////////////////////////////////
   // Constants
   //////////////////////////////////////////////////////////////////////////////
-
-  // Used to restict calls to TRADEFLOOR but also to collect all TRADEFLOORS
-  bytes32 public constant TRADEFLOOR_ROLE = 'TRADEFLOOR_ROLE';
 
   // Operator role is required to set approval for tokens. This prevents
   // auctions like OpenSea from selling the tokens. Selling by third parties
@@ -35,19 +33,9 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
   // State
   //////////////////////////////////////////////////////////////////////////////
 
-  // Cap per card for each level
-  mapping(uint8 => uint16) private _wowsLevelCap;
-
-  // How many cards have been minted
-  mapping(uint16 => uint16) private _wowsCardsMinted;
-
   // Card state of custom NFT's
-  struct CustomCard {
-    string uri;
-    uint8 level;
-  }
-  mapping(uint256 => CustomCard) private _customCards;
-  uint256 private _customCardCount;
+  mapping(uint256 => uint8) private _customLevels;
+  string private _customMetadataURI;
 
   struct ListKey {
     uint256 index;
@@ -77,11 +65,30 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
   }
   mapping(address => Owned) private _owned;
 
+  // cfolioType of cfolioItem
+  mapping(uint256 => uint256) private _cfolioItemTypes;
+
   // Our master cryptofolio used for clones
-  address private _cryptofolio;
+  address private immutable _cryptofolio;
+  string private _cfolioMetadataURI;
 
   //////////////////////////////////////////////////////////////////////////////
-  // Constructor
+  // Modifier
+  //////////////////////////////////////////////////////////////////////////////
+
+  modifier onlyAdmin() {
+    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'SFT: Only admin');
+    _;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Events
+  //////////////////////////////////////////////////////////////////////////////
+
+  event UpdatedCFolioType(uint256 indexed tokenId, uint256 cfolioItemType);
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Initialization
   //////////////////////////////////////////////////////////////////////////////
 
   /**
@@ -89,27 +96,33 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
    *
    * The other token URI's must be set separately.
    */
-  constructor(
-    address owner,
-    address cryptofolio,
-    string memory baseMetadataURI,
-    string memory contractMetadataURI
-  ) {
+  constructor(address owner, address cryptofolio) {
+    _cryptofolio = cryptofolio;
     // Initialize {AccessControl}
     _setupRole(DEFAULT_ADMIN_ROLE, owner);
+  }
 
-    // Setup wows card definition
-    _wowsLevelCap[0] = 20;
-    _wowsLevelCap[1] = 20;
-    _wowsLevelCap[4] = 20;
-    _wowsLevelCap[5] = 20;
+  function initialize(
+    address owner,
+    string calldata baseMetadataURI,
+    string calldata customMetadataURI,
+    string calldata cfolioMetadataURI,
+    string calldata contractMetadataURI
+  ) public {
+    // Check for one time initialization
+    require(
+      getRoleMemberCount(DEFAULT_ADMIN_ROLE) == 0,
+      'SFT: Already initialized'
+    );
 
-    // Our clone blueprint cryptofolio.
-    _cryptofolio = cryptofolio;
+    // Initialize {AccessControl}
+    _setupRole(DEFAULT_ADMIN_ROLE, owner);
 
     // Metadata
     _setBaseMetadataURI(baseMetadataURI);
     _setContractMetadataURI(contractMetadataURI);
+    _cfolioMetadataURI = cfolioMetadataURI;
+    _customMetadataURI = customMetadataURI;
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -117,17 +130,10 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev See {IWOWSERC1155-isTradeFloor}.
-   */
-  function isTradeFloor(address account) external view override returns (bool) {
-    return hasRole(TRADEFLOOR_ROLE, account);
-  }
-
-  /**
    * @dev See {IWOWSERC1155-addressToTokenId}.
    */
   function addressToTokenId(address tokenAddress)
-    external
+    public
     view
     override
     returns (uint256)
@@ -158,57 +164,39 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
   }
 
   /**
-   * @dev See {IWOWSERC1155-getNextMintableTokenId}.
-   */
-  function getNextMintableTokenId(uint8 level, uint8 cardId)
-    external
-    view
-    override
-    returns (bool, uint256)
-  {
-    // Encode token ID
-    uint256 tokenId = _encodeTokenId(level, cardId);
-
-    // Load state
-    uint256 tokenIdEnd = tokenId + _wowsLevelCap[level];
-
-    // Search state
-    for (; tokenId < tokenIdEnd; ++tokenId) {
-      if (!_tokenInfos[tokenId].minted) {
-        // Success
-        return (true, tokenId);
-      }
-    }
-
-    // Error case: no free token ID
-    return (false, uint256(-1));
-  }
-
-  /**
-   * @dev See {IWOWSERC1155-getNextMintableCustomToken}.
-   */
-  function getNextMintableCustomToken()
-    external
-    view
-    override
-    returns (uint256)
-  {
-    // Validate state
-    require(_customCardCount + (1 << 32) > _customCardCount, 'math overflow');
-
-    // Encode token ID
-    return _customCardCount + (1 << 32);
-  }
-
-  /**
    * @dev See {IWOWSERC1155-setBaseMetadataURI}.
    */
-  function setBaseMetadataURI(string memory baseMetadataURI) external override {
-    // Access control
-    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Access denied');
-
+  function setBaseMetadataURI(string calldata baseMetadataURI)
+    external
+    override
+    onlyAdmin
+  {
     // Set state
     _setBaseMetadataURI(baseMetadataURI);
+  }
+
+  /**
+   * @dev See {IWOWSERC1155-setCustomMetadataURI}.
+   */
+  function setCustomMetadataURI(string calldata customMetadataURI)
+    external
+    override
+    onlyAdmin
+  {
+    // Set state
+    _customMetadataURI = customMetadataURI;
+  }
+
+  /**
+   * @dev See {IWOWSERC1155-setCFolioMetadataURI}.
+   */
+  function setCFolioMetadataURI(string calldata cfolioMetadataURI)
+    external
+    override
+    onlyAdmin
+  {
+    // Set state
+    _cfolioMetadataURI = cfolioMetadataURI;
   }
 
   /**
@@ -217,29 +205,10 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
   function setContractMetadataURI(string memory contractMetadataURI)
     external
     override
+    onlyAdmin
   {
-    // Access control
-    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Access denied');
-
     // Set state
     _setContractMetadataURI(contractMetadataURI);
-  }
-
-  /**
-   * @dev See {IWOWSERC1155-setCustomURI}.
-   */
-  function setCustomURI(uint256 tokenId, string memory customURI)
-    public
-    override
-  {
-    // Access control
-    require(hasRole(MINTER_ROLE, _msgSender()), 'Access denied');
-
-    // Validate parameters
-    require(!tokenId.isStockCard(), 'Only custom cards');
-
-    // Update state
-    _customCards[tokenId].uri = customURI;
   }
 
   /**
@@ -250,13 +219,29 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
     override
   {
     // Access control
-    require(hasRole(MINTER_ROLE, _msgSender()), 'Only minter');
+    require(hasRole(MINTER_ROLE, _msgSender()), 'SFT: Only minter');
 
     // Validate parameter
-    require(!tokenId.isStockCard(), 'Only custom cards');
+    require(!tokenId.isCustomCard(), 'SFT: Only custom cards');
 
     // Update state
-    _customCards[tokenId].level = cardLevel;
+    _customLevels[tokenId] = cardLevel;
+  }
+
+  /**
+   * @dev See {IWOWSERC1155-setCFolioType}.
+   */
+  function setCFolioItemType(uint256 tokenId, uint256 cfolioItemType)
+    external
+    override
+  {
+    require(tokenId.isCFolioCard(), 'Invalid tokenId');
+    require(hasRole(MINTER_ROLE, _msgSender()), 'SFT: Minter only');
+
+    _cfolioItemTypes[tokenId] = cfolioItemType;
+
+    // Dispatch event
+    emit UpdatedCFolioType(tokenId, cfolioItemType);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -274,7 +259,11 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
     // Prevent auctions like OpenSea from selling this token. Selling by third
     // parties is only allowed for cryptofolios which are locked in one of our
     // TradeFloor contracts.
-    require(hasRole(OPERATOR_ROLE, operator), 'Only Operators');
+    require(
+      addressToTokenId(_msgSender()) != uint256(-1) ||
+        hasRole(OPERATOR_ROLE, operator),
+      'Only Operators'
+    );
 
     // Call ancestor
     super.setApprovalForAll(operator, approved);
@@ -300,16 +289,13 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
     returns (string memory)
   {
     // Custom token
-    if (!tokenId.isStockCard()) {
-      if (bytes(_customCards[tokenId].uri).length == 0) {
-        return _uri(tokenId, 0);
-      } else {
-        return _customCards[tokenId].uri;
-      }
+    if (tokenId.isStockCard()) {
+      return _uri('', tokenId >> 16, 4);
+    } else if (tokenId.isCustomCard()) {
+      return _uri(_customMetadataURI, tokenId, 0);
+    } else {
+      return _uri(_cfolioMetadataURI, tokenId, 0);
     }
-
-    // WOWS token
-    return _uri(tokenId >> 16, 4);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -328,7 +314,12 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
     bytes memory data
   ) internal virtual override {
     // Perform action
-    _tokenTransfered(from, to, tokenId, amount);
+    uint256[] memory tokenIds = new uint256[](1);
+    tokenIds[0] = tokenId;
+    uint256[] memory amounts = new uint256[](1);
+    amounts[0] = 1;
+
+    _tokenTransfered(from, to, tokenIds, amounts, data);
 
     // Call ancestor
     super._beforeTokenTransfer(operator, from, to, tokenId, amount, data);
@@ -349,10 +340,7 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
     require(tokenIds.length == amounts.length, 'Length mismatch');
 
     // Process tokens being transferred
-    uint256 length = tokenIds.length;
-    for (uint256 i = 0; i < length; ++i) {
-      _tokenTransfered(from, to, tokenIds[i], amounts[i]);
-    }
+    _tokenTransfered(from, to, tokenIds, amounts, data);
 
     // Call ancestor
     super._beforeBatchTokenTransfer(
@@ -368,59 +356,6 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
   //////////////////////////////////////////////////////////////////////////////
   // Getters
   //////////////////////////////////////////////////////////////////////////////
-
-  /**
-   * @dev Return information about a WOWS card
-   *
-   * NOTE: The implementation in the initial deployment was incorrect. If you
-   * are interacting with contract 0x64B3342dB643f3Fb4da5781b6D09B44Ab4668dE4,
-   * you must use {getCardDataBatch}!
-   *
-   * @param level The level of the card
-   * @param cardId The ID of the card
-   *
-   * @return cap Max mintable cards
-   * @return minted Number of cards that are already minted
-   */
-  function getCardData(uint8 level, uint8 cardId)
-    external
-    view
-    returns (uint16 cap, uint16 minted)
-  {
-    // Load state
-    return (_wowsLevelCap[level], _getCardsMinted(level, cardId));
-  }
-
-  /**
-   * @dev Return information about a WOWS card
-   *
-   * @param levels The levels of the card to query
-   * @param cardIds A list of card IDs to query
-   *
-   * @return capMintedPair Array of 16-bit cap,minted,...
-   */
-  function getCardDataBatch(uint8[] memory levels, uint8[] memory cardIds)
-    external
-    view
-    returns (uint16[] memory capMintedPair)
-  {
-    // Validate parameters
-    require(levels.length == cardIds.length, 'Length mismatch');
-
-    // Return value
-    uint16[] memory result = new uint16[](cardIds.length * 2);
-
-    // Load state
-    for (uint256 i = 0; i < cardIds.length; ++i) {
-      // Record cap
-      result[i * 2] = _wowsLevelCap[levels[i]];
-
-      // Record minted
-      result[i * 2 + 1] = _getCardsMinted(levels[i], cardIds[i]);
-    }
-
-    return result;
-  }
 
   /**
    * @dev See {IWOWSERC1155-getTokenData}.
@@ -442,7 +377,7 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
    * @dev See {IWOWSERC1155-getTokenIds}.
    */
   function getTokenIds(address account)
-    external
+    public
     view
     override
     returns (uint256[] memory)
@@ -463,29 +398,20 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
     return result;
   }
 
-  //////////////////////////////////////////////////////////////////////////////
-  // State modifiers
-  //////////////////////////////////////////////////////////////////////////////
-
   /**
-   * @dev Set the cap of a specific WOWS level
-   *
-   * Note that this function can be used to add a new card.
+   * @dev See {IWOWSERC1155-getCFolioItemType}.
    */
-  function setWowsLevelCaps(uint8[] memory levels, uint16[] memory newCaps)
-    public
+  function getCFolioItemType(uint256 tokenId)
+    external
+    view
+    override
+    returns (uint256)
   {
-    // Access control
-    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admin');
-
     // Validate parameters
-    require(levels.length == newCaps.length, "Lengths don't match");
+    require(tokenId.isCFolioCard(), 'SFTE: Invalid tokenId');
 
-    // Update state
-    for (uint256 i = 0; i < levels.length; ++i) {
-      require(_wowsLevelCap[levels[i]] < newCaps[i], 'Decrement forbidden');
-      _wowsLevelCap[levels[i]] = newCaps[i];
-    }
+    // Load state
+    return _cfolioItemTypes[tokenId.toSftTokenId()];
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -498,125 +424,119 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
   function _tokenTransfered(
     address from,
     address to,
-    uint256 tokenId,
-    uint256 amount
+    uint256[] memory tokenIds,
+    uint256[] memory amounts,
+    bytes memory data
   ) private {
-    // We have only NFTs in this contract
-    require(amount == 1, 'Amount != 1');
+    uint256 tokenIdsLength = tokenIds.length;
+    uint256 numUniqueCFolioHandlers = 0;
+    address[] memory uniqueCFolioHandlers = new address[](tokenIdsLength);
+    address[] memory cFolioHandlers = new address[](tokenIdsLength);
 
-    // Load state
-    address tokenAddress = _tokenIdToAddress[tokenId];
-    TokenInfo storage tokenInfo = _tokenInfos[tokenId];
+    for (uint256 i = 0; i < tokenIdsLength; ++i) {
+      // We have only NFTs in this contract
+      require(amounts[i] == 1, 'Amount != 1');
 
-    // Minting
-    if (from == address(0)) {
-      // Validate state
-      require(!tokenInfo.minted, 'Already minted');
+      uint256 tokenId = tokenIds[i];
+
+      // Load state
+      address tokenAddress = _tokenIdToAddress[tokenId];
+      TokenInfo storage tokenInfo = _tokenInfos[tokenId];
+
+      // Minting
+      if (from == address(0)) {
+        // Validate state
+        require(!tokenInfo.minted, 'Already minted');
+
+        // Update state
+        tokenInfo.minted = true;
+        // solhint-disable-next-line not-rely-on-time
+        tokenInfo.timestamp = uint64(block.timestamp);
+        // Create a new WOWSCryptofolio by cloning masterTokenReceiver
+        // The clone itself is a minimal delegate proxy.
+        if (tokenAddress == address(0)) {
+          tokenAddress = Clones.clone(_cryptofolio);
+          _tokenIdToAddress[tokenId] = tokenAddress;
+          IWOWSCryptofolio(tokenAddress).initialize(tokenId.isBaseCard());
+          if (tokenId.isCFolioCard()) {
+            require(data.length == 20, 'SFT: Invalid data');
+            address handler = _getAddress(data);
+            require(handler != address(0), 'SFT: Invalid address');
+            IWOWSCryptofolio(tokenAddress).setHandler(handler);
+          }
+        }
+        _addressToTokenId[tokenAddress] = tokenId;
+      }
+      // Burning
+      else if (to == address(0)) {
+        // Make sure underlying assets gets burned
+        if (tokenId.isBaseCard()) {
+          uint256[] memory cfolioItems = getTokenIds(tokenAddress);
+          uint256 length = cfolioItems.length;
+          if (length > 0) {
+            uint256[] memory cfolioAmounts = new uint256[](length);
+            for (uint256 j = 0; j < length; ++j) cfolioAmounts[j] = 1;
+            _batchBurn(tokenAddress, cfolioItems, cfolioAmounts);
+          }
+        }
+        // Make token mintable again
+        tokenInfo.minted = false;
+      }
+
+      if (!tokenId.isBaseCard()) {
+        address handler = IWOWSCryptofolio(tokenAddress).getHandler();
+        uint256 iter = numUniqueCFolioHandlers;
+        while (iter > 0 && uniqueCFolioHandlers[iter - 1] != handler) --iter;
+        if (iter == 0) {
+          require(handler != address(0), 'SFTE: Invalid handler');
+          uniqueCFolioHandlers[numUniqueCFolioHandlers++] = handler;
+        }
+        cFolioHandlers[i] = handler;
+      } else {
+        // Signal ownership change in Cryptofolio
+        IWOWSCryptofolio(tokenAddress).setOwner(to);
+      }
+
+      // Remove tokenId from List
+      if (from != address(0)) {
+        // Load state
+        Owned storage fromList = _owned[from];
+
+        // Validate state
+        require(fromList.count > 0, 'Count mismatch');
+
+        ListKey storage key = fromList.listKey;
+        uint256 count = fromList.count;
+
+        // Search the token which links to tokenId
+        for (; count > 0 && key.index != tokenId; --count)
+          key = _tokenInfos[key.index].listKey;
+        require(key.index == tokenId, 'Key mismatch');
+
+        // Unlink prev -> tokenId
+        key.index = tokenInfo.listKey.index;
+        // Unlink tokenId -> next
+        tokenInfo.listKey.index = 0;
+        // Decrement count
+        fromList.count--;
+      }
 
       // Update state
-      tokenInfo.minted = true;
-      // solhint-disable-next-line not-rely-on-time
-      tokenInfo.timestamp = uint64(block.timestamp);
-      // Create a new WOWSCryptofolio by cloning masterTokenReceiver
-      // The clone itself is a minimal delegate proxy.
-      if (tokenAddress == address(0)) {
-        tokenAddress = Clones.clone(_cryptofolio);
-        _tokenIdToAddress[tokenId] = tokenAddress;
-        IWOWSCryptofolio(tokenAddress).initialize();
-      }
-      _addressToTokenId[tokenAddress] = tokenId;
-
-      // Increment the minted count for this card
-      if (tokenId.isBaseCard()) {
-        if (tokenId.isStockCard()) {
-          _wowsCardsMinted[uint16(tokenId >> 16)] += 1;
-        } else {
-          ++_customCardCount;
-        }
+      if (to != address(0)) {
+        Owned storage toList = _owned[to];
+        tokenInfo.listKey.index = toList.listKey.index;
+        toList.listKey.index = tokenId;
+        toList.count++;
       }
     }
-    // Burning
-    else if (to == address(0)) {
-      // Make sure underlying assets gets burned
-      IWOWSCryptofolio(tokenAddress).burn();
-
-      // Make token mintable again
-      tokenInfo.minted = false;
-
-      // Decrement the minted count for this card
-      if (tokenId.isStockCard()) {
-        _wowsCardsMinted[uint16(tokenId >> 16)] -= 1;
-      }
+    for (uint256 i = 0; i < numUniqueCFolioHandlers; ++i) {
+      ICFolioItemHandler(uniqueCFolioHandlers[i]).onCFolioItemsTransferedFrom(
+        from,
+        to,
+        tokenIds,
+        cFolioHandlers
+      );
     }
-
-    // Signal ownership change in Cryptofolio
-    IWOWSCryptofolio(tokenAddress).setOwner(to);
-
-    // Remove tokenId from List
-    if (from != address(0)) {
-      // Load state
-      Owned storage fromList = _owned[from];
-
-      // Validate state
-      require(fromList.count > 0, 'Count mismatch');
-
-      ListKey storage key = fromList.listKey;
-      uint256 count = fromList.count;
-
-      // Search the token which links to tokenId
-      for (; count > 0 && key.index != tokenId; --count)
-        key = _tokenInfos[key.index].listKey;
-      require(key.index == tokenId, 'Key mismatch');
-
-      // Unlink prev -> tokenId
-      key.index = tokenInfo.listKey.index;
-      // Unlink tokenId -> next
-      tokenInfo.listKey.index = 0;
-      // Decrement count
-      fromList.count--;
-    }
-
-    // Update state
-    if (to != address(0)) {
-      Owned storage toList = _owned[to];
-      tokenInfo.listKey.index = toList.listKey.index;
-      toList.listKey.index = tokenId;
-      toList.count++;
-    }
-  }
-
-  /**
-   * @dev Utility function to encode a level and card ID into a token ID
-   *
-   * @param level The level of the card
-   * @param cardId The ID of the card
-   *
-   * @return tokenId The encoded token ID
-   */
-  function _encodeTokenId(uint8 level, uint8 cardId)
-    private
-    pure
-    returns (uint256 tokenId)
-  {
-    uint16 levelCard = (uint16(level) << 8) | cardId;
-    tokenId = uint32(levelCard) << 16;
-  }
-
-  /**
-   * @dev Get the number of cards that have been minted
-   *
-   * @param level The level of cards to check
-   * @param cardId The ID of cards to check
-   *
-   * @return cardsMinted The number of cards that have been minted
-   */
-  function _getCardsMinted(uint8 level, uint8 cardId)
-    private
-    view
-    returns (uint16 cardsMinted)
-  {
-    uint16 levelCard = (uint16(level) << 8) | cardId;
-    cardsMinted = _wowsCardsMinted[levelCard];
   }
 
   /**
@@ -627,10 +547,24 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
    * @return level The level of the token
    */
   function _getLevel(uint256 tokenId) private view returns (uint8 level) {
-    if (!tokenId.isStockCard()) {
-      level = _customCards[tokenId].level;
+    if (tokenId.isCustomCard()) {
+      level = _customLevels[tokenId];
     } else {
       level = uint8(tokenId >> 24);
+    }
+  }
+
+  /**
+   * @dev Get the address from the user data parameter
+   *
+   * @param data Per ERC-1155, the data parameter is additional data with no
+   * specified format, and is sent unaltered in the call to
+   * {IERC1155Receiver-onERC1155Received} on the receiver of the minted token.
+   */
+  function _getAddress(bytes memory data) public pure returns (address addr) {
+    // solhint-disable-next-line no-inline-assembly
+    assembly {
+      addr := mload(add(data, 20))
     }
   }
 }
