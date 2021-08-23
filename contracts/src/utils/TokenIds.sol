@@ -20,6 +20,11 @@ library TokenIds {
     return (tokenId & HASH_MASK) < (1 << 32);
   }
 
+  function isCustomCard(uint256 tokenId) internal pure returns (bool) {
+    return
+      (tokenId & HASH_MASK) >= (1 << 32) && (tokenId & HASH_MASK) < (1 << 64);
+  }
+
   function isCFolioCard(uint256 tokenId) internal pure returns (bool) {
     return
       (tokenId & HASH_MASK) >= (1 << 64) && (tokenId & HASH_MASK) < (1 << 128);

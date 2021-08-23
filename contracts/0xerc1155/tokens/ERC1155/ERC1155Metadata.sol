@@ -39,7 +39,7 @@ contract ERC1155Metadata is IERC1155Metadata, ERC165 {
     override
     returns (string memory)
   {
-    return _uri(_id, 0);
+    return _uri(_baseMetadataURI, _id, 0);
   }
 
   /**
@@ -61,7 +61,7 @@ contract ERC1155Metadata is IERC1155Metadata, ERC165 {
    */
   function _logURIs(uint256[] memory _tokenIDs) internal {
     for (uint256 i = 0; i < _tokenIDs.length; i++) {
-      emit URI(_uri(_tokenIDs[i], 0), _tokenIDs[i]);
+      emit URI(_uri(_baseMetadataURI, _tokenIDs[i], 0), _tokenIDs[i]);
     }
   }
 
@@ -112,13 +112,14 @@ contract ERC1155Metadata is IERC1155Metadata, ERC165 {
    * @notice returns uri
    * @param tokenId Unsigned integer to convert to string
    */
-  function _uri(uint256 tokenId, uint256 minLength)
-    internal
-    view
-    returns (string memory)
-  {
+  function _uri(
+    string memory base,
+    uint256 tokenId,
+    uint256 minLength
+  ) internal view returns (string memory) {
+    if (bytes(base).length == 0) base = _baseMetadataURI;
+
     // Calculate URI
-    string memory baseURL = _baseMetadataURI;
     uint256 temp = tokenId;
     uint256 length = tokenId == 0 ? 2 : 0;
     while (temp != 0) {
@@ -135,6 +136,6 @@ contract ERC1155Metadata is IERC1155Metadata, ERC165 {
     minLength -= length;
     while (minLength > 0) buffer[--minLength] = '0';
 
-    return string(abi.encodePacked(baseURL, buffer, '.json'));
+    return string(abi.encodePacked(base, buffer, '.json'));
   }
 }

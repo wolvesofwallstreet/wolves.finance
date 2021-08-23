@@ -17,15 +17,6 @@ interface IWOWSERC1155 {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev Check if the specified address is a known tradefloor
-   *
-   * @param account The address to check
-   *
-   * @return True if the address is a known tradefloor, false otherwise
-   */
-  function isTradeFloor(address account) external view returns (bool);
-
-  /**
    * @dev Get the token ID of a given address
    *
    * A cross check is required because token ID 0 is valid.
@@ -51,25 +42,6 @@ interface IWOWSERC1155 {
   function tokenIdToAddress(uint256 tokenId) external view returns (address);
 
   /**
-   * @dev Get the next mintable token ID for the specified card
-   *
-   * @param level The level of the card
-   * @param cardId The ID of the card
-   *
-   * @return bool True if a free token ID was found, false otherwise
-   * @return uint256 The first free token ID if one was found, or invalid otherwise
-   */
-  function getNextMintableTokenId(uint8 level, uint8 cardId)
-    external
-    view
-    returns (bool, uint256);
-
-  /**
-   * @dev Return the next mintable custom token ID
-   */
-  function getNextMintableCustomToken() external view returns (uint256);
-
-  /**
    * @dev Return the level and the mint timestamp of tokenId
    *
    * @param tokenId The tokenId to query
@@ -90,34 +62,44 @@ interface IWOWSERC1155 {
     view
     returns (uint256[] memory);
 
+  /**
+   * @dev Returns the cFolioItemType of a given cFolioItem tokenId
+   */
+  function getCFolioItemType(uint256 tokenId) external view returns (uint256);
+
   //////////////////////////////////////////////////////////////////////////////
   // State modifiers
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev Set the base URI for either predefined cards or custom cards
-   * which don't have it's own URI.
+   * @dev Set the base URI for either predefined cards
    *
    * The resulting uri is baseUri+[hex(tokenId)] + '.json'. where
    * tokenId will be reduces to upper 16 bit (>> 16) before building the hex string.
    *
    */
-  function setBaseMetadataURI(string memory baseContractMetadata) external;
+  function setBaseMetadataURI(string calldata baseContractMetadata) external;
+
+  /**
+   * @dev Set the base URI for custom cards
+   *
+   * The resulting uri is baseUri+[hex(tokenId)] + '.json'.
+   */
+  function setCustomMetadataURI(string calldata customMetadataURI) external;
+
+  /**
+   * @dev Set the base URI for cfolio cards
+   *
+   * The resulting uri is baseUri+[hex(tokenId)] + '.json'.
+   */
+  function setCFolioMetadataURI(string calldata cfolioMetadataURI) external;
 
   /**
    * @dev Set the contracts metadata URI
    *
    * @param contractMetadataURI The URI which point to the contract metadata file.
    */
-  function setContractMetadataURI(string memory contractMetadataURI) external;
-
-  /**
-   * @dev Set the URI for a custom card
-   *
-   * @param tokenId The token ID whose URI is being set.
-   * @param customURI The URI which point to an unique metadata file.
-   */
-  function setCustomURI(uint256 tokenId, string memory customURI) external;
+  function setContractMetadataURI(string calldata contractMetadataURI) external;
 
   /**
    * @dev Each custom card has its own level. Level will be used when
@@ -127,4 +109,10 @@ interface IWOWSERC1155 {
    * @param cardLevel The new level of the specified token
    */
   function setCustomCardLevel(uint256 tokenId, uint8 cardLevel) external;
+
+  /**
+   * @dev Sets the cfolioItemType of a cfolioItem tokenId, not yet used
+   * sftHolder tokenId expected (without hash)
+   */
+  function setCFolioItemType(uint256 tokenId, uint256 cfolioItemType_) external;
 }

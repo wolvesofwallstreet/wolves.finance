@@ -29,30 +29,21 @@ contract SFTEvaluator is ISFTEvaluator, Context {
   // Attention: Proxy implementation: Only add new state at the end
 
   // Admin
-  address public immutable admin;
+  address private immutable _admin;
 
   // The SFT contract we need for level
   IWOWSERC1155 private immutable _sftHolder;
 
-  // The cfolioItem bridge contract
-  address private immutable _cfiBridge;
-
   // Current reward weight of a baseCard
   mapping(uint256 => uint256) private _rewardRates;
-
-  // cfolioType -> cfolioItem
-  mapping(uint256 => uint256) private _cfolioItemTypes;
-
-  // SFT minter
-  address public sftMinter;
 
   //////////////////////////////////////////////////////////////////////////////
   // Events
   //////////////////////////////////////////////////////////////////////////////
 
-  event RewardRate(uint256 indexed tokenId, uint32 rate);
+  event Constructed(address admin, address sftHolder);
 
-  event UpdatedCFolioType(uint256 indexed tokenId, uint256 cfolioItemType);
+  event RewardRate(uint256 indexed tokenId, uint32 rate);
 
   //////////////////////////////////////////////////////////////////////////////
   // Initialization
@@ -60,17 +51,17 @@ contract SFTEvaluator is ISFTEvaluator, Context {
 
   constructor(IAddressRegistry addressRegistry) {
     // The SFT holder
-    _sftHolder = IWOWSERC1155(
-      addressRegistry.getRegistryEntry(AddressBook.SFT_HOLDER)
+    address sftHolder = addressRegistry.getRegistryEntry(
+      AddressBook.SFT_HOLDER_PROXY
     );
+    _sftHolder = IWOWSERC1155(sftHolder);
 
     // Admin
-    admin = addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET);
+    address admin = addressRegistry.getRegistryEntry(AddressBook.ADMIN_ACCOUNT);
+    _admin = admin;
 
-    // CFolioItemBridge
-    _cfiBridge = addressRegistry.getRegistryEntry(
-      AddressBook.CFOLIOITEM_BRIDGE_PROXY
-    );
+    // Fire event
+    emit Constructed(admin, sftHolder);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -82,7 +73,7 @@ contract SFTEvaluator is ISFTEvaluator, Context {
    */
   function rewardRate(uint256 tokenId) external view override returns (uint32) {
     // Validate parameters
-    require(tokenId.isBaseCard(), 'Invalid tokenId');
+    require(tokenId.isBaseCard(), 'SFTE: Invalid tokenId');
 
     uint256 sftTokenId = tokenId.toSftTokenId();
 
@@ -94,22 +85,6 @@ contract SFTEvaluator is ISFTEvaluator, Context {
   }
 
   /**
-   * @dev See {ISFTEvaluator-getCFolioItemType}.
-   */
-  function getCFolioItemType(uint256 tokenId)
-    external
-    view
-    override
-    returns (uint256)
-  {
-    // Validate parameters
-    require(tokenId.isCFolioCard(), 'Invalid tokenId');
-
-    // Load state
-    return _cfolioItemTypes[tokenId.toSftTokenId()];
-  }
-
-  /**
    * @dev See {ISFTEvaluator-setRewardRate}.
    */
   function setRewardRate(uint256 tokenId, bool revertUnchanged)
@@ -117,7 +92,7 @@ contract SFTEvaluator is ISFTEvaluator, Context {
     override
   {
     // Validate parameters
-    require(tokenId.isBaseCard(), 'Invalid tokenId');
+    require(tokenId.isBaseCard(), 'SFTE: Invalid tokenId');
 
     // We allow upgrades of locked and unlocked SFTs
     uint256 sftTokenId = tokenId.toSftTokenId();
@@ -133,15 +108,12 @@ contract SFTEvaluator is ISFTEvaluator, Context {
       // Update state
       _rewardRates[sftTokenId] = timed;
 
-      IWOWSCryptofolio cFolio = IWOWSCryptofolio(
-        _sftHolder.tokenIdToAddress(sftTokenId)
-      );
-      require(address(cFolio) != address(0), 'SFTE: invalid tokenId');
+      address cFolio = _sftHolder.tokenIdToAddress(sftTokenId);
+      require(cFolio != address(0), 'SFTE: invalid tokenId');
 
-      // Run through all cfolioItems of cfiBridge
-      (uint256[] memory cFolioItems, uint256 length) = cFolio.getCryptofolio(
-        _cfiBridge
-      );
+      // Run through all cfolioItems
+      uint256[] memory cFolioItems = _sftHolder.getTokenIds(cFolio);
+      uint256 length = cFolioItems.length;
       if (length > 0) {
         // Bound loop to 100 c-folio items to fit in sensible gas limits
         require(length <= 100, 'SFTE: Too many items');
@@ -152,8 +124,8 @@ contract SFTEvaluator is ISFTEvaluator, Context {
         for (uint256 i = 0; i < length; ++i) {
           // Secondary c-folio items have one tradefloor which is the handler
           address handler = IWOWSCryptofolio(
-            _sftHolder.tokenIdToAddress(cFolioItems[i].toSftTokenId())
-          )._tradefloors(0);
+            _sftHolder.tokenIdToAddress(cFolioItems[i])
+          ).getHandler();
           require(
             address(handler) != address(0),
             'SFTE: invalid cfolioItemHandler'
@@ -175,35 +147,6 @@ contract SFTEvaluator is ISFTEvaluator, Context {
       // Revert if requested
       require(!revertUnchanged, 'Rate unchanged');
     }
-  }
-
-  /**
-   * @dev Set SFT minter, admin only.
-   *
-   * @param newMinter The new SFTMinter implementation
-   */
-  function setMinter(address newMinter) external {
-    // Access control
-    require(_msgSender() == admin, 'SFTE: Forbidden');
-
-    // Set state
-    sftMinter = newMinter;
-  }
-
-  /**
-   * @dev See {ISFTEvaluator-setCFolioType}.
-   */
-  function setCFolioItemType(uint256 tokenId, uint256 cfolioItemType)
-    external
-    override
-  {
-    require(tokenId.isCFolioCard(), 'Invalid tokenId');
-    require(_msgSender() == sftMinter, 'SFTE: Minter only');
-
-    _cfolioItemTypes[tokenId] = cfolioItemType;
-
-    // Dispatch event
-    emit UpdatedCFolioType(tokenId, cfolioItemType);
   }
 
   //////////////////////////////////////////////////////////////////////////////

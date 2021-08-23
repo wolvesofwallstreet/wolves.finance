@@ -22,53 +22,42 @@ interface IWOWSCryptofolio {
    * This is a one time call which sets _deployer to msg.sender.
    * Subsequent calls reverts.
    */
-  function initialize() external;
-
-  //////////////////////////////////////////////////////////////////////////////
-  // Getters
-  //////////////////////////////////////////////////////////////////////////////
-
-  /**
-   * @dev Return tradefloor at given index
-   *
-   * @param index The 0-based index in the tradefloor array
-   *
-   * @return The address of the tradefloor and position index
-   */
-  function _tradefloors(uint256 index) external view returns (address);
-
-  /**
-   * @dev Return array of cryptofolio item token IDs
-   *
-   * The token IDs belong to the contract TradeFloor.
-   *
-   * @param tradefloor The TradeFloor that items belong to
-   *
-   * @return tokenIds The token IDs in scope of operator
-   * @return idsLength The number of valid token IDs
-   */
-  function getCryptofolio(address tradefloor)
-    external
-    view
-    returns (uint256[] memory tokenIds, uint256 idsLength);
+  function initialize(bool isCFolio) external;
 
   //////////////////////////////////////////////////////////////////////////////
   // State modifiers
   //////////////////////////////////////////////////////////////////////////////
 
   /**
+   * @dev Get the handler of the I-NFT which was previous set with setHandler
+   *
+   * Reverts if this contract is not for an I-NFT.
+   */
+  function getHandler() external view returns (address);
+
+  /**
    * @dev Set the owner of the underlying NFT
    *
-   * This function is called if ownership of the parent NFT has changed.
+   * This function is called if ownership of the parent NFT has changed
+   * for cFolio
    *
    * The new owner gets allowance to transfer cryptofolio items. The new owner
    * is allowed to transfer / burn cryptofolio items. Make sure that allowance
    * is removed from previous owner.
    *
-   * @param owner The new owner of the underlying NFT, or address(0) if the
-   * underlying NFT is being burned
+   * @param newOwner The new handler or owner of the underlying NFT,
+   * or address(0) if the underlying NFT is being burned
    */
-  function setOwner(address owner) external;
+  function setOwner(address newOwner) external;
+
+  /**
+   * @dev Set the handler of the underlying NFT
+   *
+   * This function is called during I-NFT setup
+   *
+   * @param newHandler The new handler of the underlying NFT,
+   */
+  function setHandler(address newHandler) external;
 
   /**
    * @dev Allow owner (of parent NFT) to approve external operators to transfer
@@ -79,12 +68,5 @@ interface IWOWSCryptofolio {
    * @param operator The operator
    * @param allow True to approve for all NFTs, false to revoke approval
    */
-  function setApprovalForAll(address operator, bool allow) external;
-
-  /**
-   * @dev Burn all cryptofolio items
-   *
-   * In case an underlying NFT is burned, we also burn the cryptofolio.
-   */
-  function burn() external;
+  function setSftApproval(address operator, bool allow) external;
 }
