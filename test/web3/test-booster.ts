@@ -119,13 +119,13 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
   );
 
   const sftHolderContract = new ethers.Contract(
-    addresses.sftHolder,
+    addresses.sftHolderProxy,
     WOWSERC1155Abi,
     marketingWallet
   );
 
   const sftMinterContract = new ethers.Contract(
-    addresses.sftMinter,
+    addresses.sftMinterProxy,
     WOWSSftMinterAbi,
     marketingWallet
   );
@@ -293,7 +293,6 @@ describe('Booster rewards', function () {
 
     // Mint a new LP investment type into Wolf
     const tx = sftMinterContract.mintCFolioItemSFT(
-      marketingWallet.address,
       cFolioItemType,
       wowsTokenIdWolf,
       [investBalance]

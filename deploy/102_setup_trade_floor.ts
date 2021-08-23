@@ -95,7 +95,7 @@ const func = async function (hardhat_re) {
   //
   // 2.) Check if we have to upgrade the tradeFloor implementation
   //
-  
+
   if (
     (await getProxyImplementation(
       hardhat_re,

@@ -542,8 +542,10 @@ describe('LP NFTs', function () {
     // Transfer cryptofolio item NFT into wallet
     const tx = sftHolderContract.safeTransferFrom(
       cryptofolioAddressWolf,
-      [cfolioItemTokenId],
-      [1]
+      marketingWallet.address,
+      cfolioItemTokenId,
+      1,
+      []
     );
     await chai
       .expect(tx)

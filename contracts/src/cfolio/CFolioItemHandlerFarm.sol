@@ -458,8 +458,7 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
         cfolio,
         existingRewardAmount.sub(newRewardAmount)
       );
-    } else
-      return;
+    } else return;
 
     // Dispatch event
     emit RewardUpdated(existingRewardAmount, newRewardAmount);

@@ -21,7 +21,6 @@ const CFOLIO_ITEM_HANDLER_LP_PROXY_CONTRACT = 'CFolioItemHandlerLPProxy';
 const CFOLIO_ITEM_HANDLER_SC_CONTRACT = 'CFolioItemHandlerSC';
 const CFOLIO_ITEM_HANDLER_SC_PROXY_CONTRACT = 'CFolioItemHandlerSCProxy';
 const CONTROLLER_CONTRACT = 'Controller';
-const SFT_EVALUATOR_CONTRACT = 'SFTEvaluator';
 const SFT_EVALUATOR_PROXY_CONTRACT = 'SFTEvaluatorProxy';
 
 // Deployed aliases
@@ -78,11 +77,6 @@ const func = async function (hardhat_re) {
   const SFT_MINTER_INSTANCE = await hardhat_re.ethers.getContract(
     SFT_MINTER_CONTRACT,
     generatedAddresses.sftMinterProxy
-  );
-  // SFTEvaluator on SFTEvaluator proxy address
-  const SFT_EVALUATOR_INSTANCE = await hardhat_re.ethers.getContractAt(
-    SFT_EVALUATOR_CONTRACT,
-    generatedAddresses.sftEvaluatorProxy
   );
 
   // Load ABIs
@@ -433,33 +427,6 @@ const func = async function (hardhat_re) {
     );
   } else {
     console.log('Not upgrading CFIHSC');
-  }
-
-  //
-  // 14.) Set the SFTMinter in SFTE contract if required
-  //
-  try {
-    if (
-      (await SFT_EVALUATOR_INSTANCE.sftMinter()) !==
-      generatedAddresses.sftMinter
-    )
-      throw new Error('Needs update');
-    console.log('SFT minter already set in SFTEvaluator');
-  } catch (e) {
-    console.log('Set SFT minter in SFTE Proxy');
-
-    await catchUnknownSigner(
-      execute(
-        SFT_EVALUATOR_CONTRACT,
-        {
-          from: marketingWallet,
-          to: generatedAddresses.sftEvaluatorProxy,
-          log: true,
-        },
-        'setMinter',
-        generatedAddresses.sftMinter
-      )
-    );
   }
 };
 
