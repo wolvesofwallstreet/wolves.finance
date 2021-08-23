@@ -122,8 +122,8 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 2.) Call RewardHandler.sol::grantRole(RewardHandler.sol.REWARD_ROLE(), boosterProxy)
-  //     This is to allow booster proxy to call into RewardHandler.sol to distribute
+  // 2.) Call RewardHandler.sol::grantRole(RewardHandler.sol.REWARD_ROLE(), controller)
+  //     This is to allow controller to call into RewardHandler.sol to distribute
   //     rewards.
   //
 

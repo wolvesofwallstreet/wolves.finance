@@ -78,7 +78,7 @@ async function setRegistryKey(deployer, execute, registryInstance, key, value) {
 const func = async function (hardhat_re) {
   const { deployments, getNamedAccounts } = hardhat_re;
 
-  const { execute, get, deploy } = deployments;
+  const { execute, deploy } = deployments;
   const { deployer } = await getNamedAccounts();
 
   // Get chain ID
@@ -143,19 +143,6 @@ const func = async function (hardhat_re) {
 
   //////////////////////////////////////////////////////////////////////////////
   //
-  // Create initialization calldata
-  //
-  //////////////////////////////////////////////////////////////////////////////
-
-  const tradeFloorInterface = new ethers.utils.Interface(tradeFloorAbi);
-  const proxyCallData = tradeFloorInterface.encodeFunctionData('initialize', [
-    ADDRESS_REGISTRY_ADDRESS,
-    METADATA_URI,
-    CONTRACT_METADATA_URI,
-  ]);
-
-  //////////////////////////////////////////////////////////////////////////////
-  //
   // Deploy Trade Floor proxy
   //
   //////////////////////////////////////////////////////////////////////////////
@@ -166,27 +153,20 @@ const func = async function (hardhat_re) {
   } else {
     log_step('Deploying Trade Floor proxy');
 
-    let tradeFloorProxyReceipt = undefined;
-    try {
-      tradeFloorProxyReceipt = await get(TRADE_FLOOR_PROXY_CONTRACT);
+    const tradeFloorInterface = new ethers.utils.Interface(tradeFloorAbi);
+    const proxyCallData = tradeFloorInterface.encodeFunctionData('initialize', [
+      ADDRESS_REGISTRY_ADDRESS,
+      METADATA_URI,
+      CONTRACT_METADATA_URI,
+    ]);
 
-      if (!tradeFloorProxyReceipt.address) {
-        throw new Error('No address');
-      }
-
-      console.log(
-        'INFO: Proxy upgrade required! Initialization: ',
-        proxyCallData
-      );
-    } catch (err) {
-      tradeFloorProxyReceipt = await deploy(TRADE_FLOOR_PROXY_CONTRACT, {
-        contract: UPGRADE_PROXY_CONTRACT,
-        from: deployer,
-        args: [ADDRESS_REGISTRY_ADDRESS, TRADE_FLOOR_ADDRESS, proxyCallData],
-        log: true,
-        deterministicDeployment: true,
-      });
-    }
+    const tradeFloorProxyReceipt = await deploy(TRADE_FLOOR_PROXY_CONTRACT, {
+      contract: UPGRADE_PROXY_CONTRACT,
+      from: deployer,
+      args: [ADDRESS_REGISTRY_ADDRESS, TRADE_FLOOR_ADDRESS, proxyCallData],
+      log: true,
+      deterministicDeployment: true,
+    });
 
     generatedAddresses.tradeFloorProxy = tradeFloorProxyReceipt.address;
   }
