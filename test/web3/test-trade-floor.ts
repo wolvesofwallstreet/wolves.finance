@@ -17,7 +17,6 @@ import { ethers } from 'ethers';
 import fs from 'fs';
 
 import WOWSSftMinterAbi from '../../src/abi/contracts/src/crowdsale/WOWSSftMinter.sol/WOWSSftMinter.json';
-import UpgradeProxyAbi from '../../src/abi/contracts/src/proxy/UpgradeProxy.sol/UpgradeProxy.json';
 import TradeFloorAbi from '../../src/abi/contracts/src/token/TradeFloor.sol/TradeFloor.json';
 import WOWSTokenAbi from '../../src/abi/contracts/src/token/WOWSErc20.sol/WowsToken.json';
 import WOWSERC1155Abi from '../../src/abi/contracts/src/token/WOWSErc1155.sol/WOWSERC1155.json';
@@ -85,23 +84,18 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
     marketingWallet
   );
   const sftHolderContract = new ethers.Contract(
-    addresses.sftHolder,
+    addresses.sftHolderProxy,
     WOWSERC1155Abi,
     marketingWallet
   );
   const sftMinterContract = new ethers.Contract(
-    addresses.sftMinter,
+    addresses.sftMinterProxy,
     WOWSSftMinterAbi,
     marketingWallet
   );
   const tradeFloorContract = new ethers.Contract(
-    addresses.tradeFloor,
-    TradeFloorAbi,
-    marketingWallet
-  );
-  const tradeFloorProxyContract = new ethers.Contract(
     addresses.tradeFloorProxy,
-    UpgradeProxyAbi,
+    TradeFloorAbi,
     marketingWallet
   );
 
@@ -110,7 +104,6 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
     sftHolderContract,
     sftMinterContract,
     tradeFloorContract,
-    tradeFloorProxyContract,
   };
 });
 
@@ -118,8 +111,6 @@ describe('Trade Floor', function () {
   let signer: SignerWithAddress;
   let marketingWallet: SignerWithAddress;
   let contracts: any;
-
-  let tradeFloorProxyInstance: ethers.Contract;
 
   let cryptofolioAddressBoi: string;
   let cryptofolioAddressWolf: string;
@@ -194,17 +185,6 @@ describe('Trade Floor', function () {
 
     console.log(`    ETH price is $${ethUsd}`);
     console.log(`    Using '${GAS_PRICE}' gas at ${gasPrice / 1e9} Gwei`);
-  });
-
-  it('should attach the trade floor proxy', async function () {
-    this.timeout(60 * 1000);
-
-    const { tradeFloorContract, tradeFloorProxyContract } = contracts;
-
-    // Attach the proxy and set marketing wallet signer
-    tradeFloorProxyInstance = tradeFloorContract
-      .attach(tradeFloorProxyContract.address)
-      .connect(marketingWallet);
   });
 
   //////////////////////////////////////////////////////////////////////////////
@@ -304,7 +284,7 @@ describe('Trade Floor', function () {
   it('should lock a cryptofolio', async function () {
     this.timeout(60 * 1000);
 
-    const { sftHolderContract, tradeFloorProxyContract } = contracts;
+    const { sftHolderContract, tradeFloorContract } = contracts;
 
     // Check that we have the cryptofolio
     const balanceWolf = await sftHolderContract.balanceOf(
@@ -316,7 +296,7 @@ describe('Trade Floor', function () {
     // Lock wolf cryptofolio
     const tx = await sftHolderContract.safeTransferFrom(
       marketingWallet.address,
-      tradeFloorProxyContract.address,
+      tradeFloorContract.address,
       wowsTokenIdWolf,
       1,
       []
@@ -327,13 +307,13 @@ describe('Trade Floor', function () {
       .withArgs(
         marketingWallet.address,
         marketingWallet.address,
-        tradeFloorProxyContract.address,
+        tradeFloorContract.address,
         wowsTokenIdWolf,
         1
       );
 
     // Get the new minted TradeFloor tokenId
-    const tokenIds = await tradeFloorProxyInstance.getTokenIds(
+    const tokenIds = await tradeFloorContract.getTokenIds(
       marketingWallet.address
     );
     chai.expect(tokenIds.length).to.equal(1);
@@ -356,7 +336,7 @@ describe('Trade Floor', function () {
   it('should check cryptofolio balances', async function () {
     this.timeout(60 * 1000);
 
-    const { sftHolderContract } = contracts;
+    const { sftHolderContract, tradeFloorContract } = contracts;
 
     // Check that we don't have the cryptofolio
     let balanceWolf = await sftHolderContract.balanceOf(
@@ -366,7 +346,7 @@ describe('Trade Floor', function () {
     chai.expect(balanceWolf).to.equal(0);
 
     // Check that we have the locked cryptofolio NFT
-    balanceWolf = await tradeFloorProxyInstance.balanceOf(
+    balanceWolf = await tradeFloorContract.balanceOf(
       marketingWallet.address,
       wowsTokenIdWolfTf
     );
@@ -376,8 +356,10 @@ describe('Trade Floor', function () {
   it('should transfer locked cryptofolio NFT', async function () {
     this.timeout(60 * 1000);
 
+    const { tradeFloorContract } = contracts;
+
     // Transfer locked cryptofolio NFT
-    const tx = tradeFloorProxyInstance.safeTransferFrom(
+    const tx = tradeFloorContract.safeTransferFrom(
       marketingWallet.address,
       signer.address,
       wowsTokenIdWolfTf,
@@ -403,15 +385,17 @@ describe('Trade Floor', function () {
   it('should check NFT balances', async function () {
     this.timeout(60 * 1000);
 
+    const { tradeFloorContract } = contracts;
+
     // Check that we don't have the locked cryptofolio NFT
-    let balanceWolf = await tradeFloorProxyInstance.balanceOf(
+    let balanceWolf = await tradeFloorContract.balanceOf(
       marketingWallet.address,
       wowsTokenIdWolfTf
     );
     chai.expect(balanceWolf).to.equal(0);
 
     // Check that signer has the locked cryptofolio NFT
-    balanceWolf = await tradeFloorProxyInstance.balanceOf(
+    balanceWolf = await tradeFloorContract.balanceOf(
       signer.address,
       wowsTokenIdWolfTf
     );
@@ -421,8 +405,10 @@ describe('Trade Floor', function () {
   it('should burn locked cryptofolio NFT', async function () {
     this.timeout(60 * 1000);
 
+    const { tradeFloorContract } = contracts;
+
     // Burn locked cryptofolio NFT
-    const tx = tradeFloorProxyInstance
+    const tx = tradeFloorContract
       .connect(signer)
       .burn(signer.address, wowsTokenIdWolfTf, 1);
     await chai.expect(tx).to.not.be.reverted;
@@ -464,7 +450,7 @@ describe('Trade Floor', function () {
   it('should return cryptofolio', async function () {
     this.timeout(60 * 1000);
 
-    const { sftHolderContract, tradeFloorProxyContract } = contracts;
+    const { sftHolderContract, tradeFloorContract } = contracts;
 
     // Check that signer has the cryptofolio
     let balanceWolf = await sftHolderContract.balanceOf(
@@ -478,7 +464,7 @@ describe('Trade Floor', function () {
       .connect(signer)
       .safeTransferFrom(
         signer.address,
-        tradeFloorProxyContract.address,
+        tradeFloorContract.address,
         wowsTokenIdWolf,
         1,
         []
@@ -489,13 +475,13 @@ describe('Trade Floor', function () {
       .withArgs(
         signer.address,
         signer.address,
-        tradeFloorProxyContract.address,
+        tradeFloorContract.address,
         wowsTokenIdWolf,
         1
       );
 
     // Transfer locked cryptofolio NFT back to marketing wallet
-    tx = tradeFloorProxyInstance
+    tx = tradeFloorContract
       .connect(signer)
       .safeTransferFrom(
         signer.address,
@@ -507,7 +493,7 @@ describe('Trade Floor', function () {
     await chai.expect(tx).to.not.be.reverted;
 
     // Check that we have the cryptofolio
-    balanceWolf = await tradeFloorProxyInstance.balanceOf(
+    balanceWolf = await tradeFloorContract.balanceOf(
       marketingWallet.address,
       wowsTokenIdWolfTf
     );
@@ -517,14 +503,16 @@ describe('Trade Floor', function () {
   it('should fail to add locked cryptofolio NFT to cryptofolio', async function () {
     this.timeout(60 * 1000);
 
+    const { tradeFloorContract } = contracts;
+
     // Transfer locked cryptofolio NFT into Boi cryptofolio
-    const tx = tradeFloorProxyInstance.safeTransferFrom(
+    const tx = tradeFloorContract.safeTransferFrom(
       marketingWallet.address,
       cryptofolioAddressBoi,
       wowsTokenIdWolfTf,
       1,
       []
     );
-    await chai.expect(tx).to.be.revertedWith('CF: Only tradefloor');
+    await chai.expect(tx).to.be.revertedWith('CF: Only deployer');
   });
 });
