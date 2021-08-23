@@ -138,7 +138,9 @@ contract WOWSSftMinter is Context, AccessControl {
     );
     _sftContract = IWOWSERC1155(sftHolder);
 
-    address booster = addressRegistry.getRegistryEntry(AddressBook.WOWS_BOOSTER_PROXY);
+    address booster = addressRegistry.getRegistryEntry(
+      AddressBook.WOWS_BOOSTER_PROXY
+    );
     _booster = IBooster(booster);
 
     emit Constructed(wowsToken, sftHolder, booster);
@@ -375,7 +377,7 @@ contract WOWSSftMinter is Context, AccessControl {
 
     _sftContract.setCFolioItemType(tokenId, cfolioItemType);
 
-    ICFolioItemHandler handler = cfolioItemHandlers[sftData.handlerId]; 
+    ICFolioItemHandler handler = cfolioItemHandlers[sftData.handlerId];
 
     // Update state, mint SFT token
     sftData.numMinted += 1;
@@ -388,12 +390,7 @@ contract WOWSSftMinter is Context, AccessControl {
     );
 
     if (investAmounts.length > 0) {
-      handler.deposit(
-        _msgSender(),
-        sftTokenId,
-        tokenId,
-        investAmounts
-      );
+      handler.deposit(_msgSender(), sftTokenId, tokenId, investAmounts);
     }
   }
 

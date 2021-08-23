@@ -456,7 +456,8 @@ describe('SFT evaluator', function () {
     const gasCost =
       gasUsedGwei
         .mul(await getGasPrice())
-        .div(ethers.BigNumber.from('1000000000000000')).toNumber() / 1000.0;
+        .div(ethers.BigNumber.from('1000000000000000'))
+        .toNumber() / 1000.0;
     console.log(
       `    Set reward rate (one item) marginal gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
         gasCost

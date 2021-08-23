@@ -15,7 +15,6 @@ require('hardhat-deploy');
 require('hardhat-deploy-ethers');
 
 // TODO: Fully qualified contract names
-const CFOLIOITEM_BRIDGE_PROXY_CONTRACT = 'CFolioItemBridgeProxy';
 const SFT_HOLDER_CONTRACT = 'WOWSERC1155';
 const SFT_HOLDER_PROXY_CONTRACT = 'WOWSERC1155Proxy';
 const SFT_MINTER_CONTRACT = 'WOWSSftMinter';
@@ -242,6 +241,7 @@ const func = async function (hardhat_re) {
   //
   // 7.) Destruct old WOWSSFTMinter implementation
   //
+
   if (
     configAddresses.sftMinterUpdate &&
     configAddresses.sftMinterUpdate !== generatedAddresses.sftMinter
@@ -263,87 +263,16 @@ const func = async function (hardhat_re) {
     console.log('Not destructing old WOWSSftMinter');
   }
 
-  //
-  // 6.) Call WowsERC1155.sol::grantRole(TRADEFLOOR_ROLE, CFolioItemBridgeProxy)
-  //
-
-  if (
-    !(await SFT_HOLDER_INSTANCE.hasRole(
-      await SFT_HOLDER_INSTANCE.TRADEFLOOR_ROLE(),
-      generatedAddresses.cfiBridgeProxy
-    ))
-  ) {
-    await catchUnknownSigner(
-      execute(
-        SFT_HOLDER_CONTRACT,
-        {
-          from: marketingWallet,
-          log: true,
-        },
-        'grantRole',
-        await SFT_HOLDER_INSTANCE.TRADEFLOOR_ROLE(),
-        generatedAddresses.cfiBridgeProxy
-      )
-    );
-  }
-
-  //
-  // 7.) Check if we have to upgrade the cfiBridge implementation
-  //
-  if (
-    (await getProxyImplementation(
-      hardhat_re,
-      generatedAddresses.cfiBridgeProxy
-    )) !== generatedAddresses.cfiBridge
-  ) {
-    await catchUnknownSigner(
-      execute(
-        CFOLIOITEM_BRIDGE_PROXY_CONTRACT,
-        {
-          from: marketingWallet,
-          log: true,
-        },
-        'upgradeTo',
-        generatedAddresses.cfiBridge
-      )
-    );
-  }
-
   const BOOSTER_CONTROLLER_ROLE = await boosterInstance.CONTROLLER_ROLE();
 
   //
-  // 8.) Revoke CONTROLLER role in Booster for sftMinterUpdate)
+  // 8.) Grant CONTROLLER_ROLE for sftMinterProxy
   //
-  if (
-    configAddresses.sftMinter &&
-    configAddresses.sftMinter !== generatedAddresses.sftMinter &&
-    (await boosterInstance.hasRole(
-      BOOSTER_CONTROLLER_ROLE,
-      configAddresses.sftMinterUpdate
-    ))
-  ) {
-    await catchUnknownSigner(
-      execute(
-        BOOSTER_CONTRACT,
-        {
-          from: marketingWallet,
-          to: generatedAddresses.boosterProxy,
-          log: false,
-        },
-        'revokeRole',
-        BOOSTER_CONTROLLER_ROLE,
-        generatedAddresses.sftMinterUpdate
-      )
-    );
-  }
 
-  //
-  // 9.) Grant CONTROLLER_ROLE for new controller
-  //
   if (
     !(await boosterInstance.hasRole(
       BOOSTER_CONTROLLER_ROLE,
-      generatedAddresses.sftMinter
+      generatedAddresses.sftMinterProxy
     ))
   ) {
     await catchUnknownSigner(
@@ -356,15 +285,17 @@ const func = async function (hardhat_re) {
         },
         'grantRole',
         BOOSTER_CONTROLLER_ROLE,
-        generatedAddresses.sftMinter
+        generatedAddresses.sftMinterProxy
       )
     );
   }
 
   //
-  // 10.) Set sftHolder address in Booster
+  // 10.) Set sftHolderProxy address in Booster
   //
-  if ((await boosterInstance.sftHolder()) !== generatedAddresses.sftHolder) {
+  if (
+    (await boosterInstance.sftHolder()) !== generatedAddresses.sftHolderProxy
+  ) {
     await catchUnknownSigner(
       execute(
         BOOSTER_CONTRACT,
@@ -374,7 +305,7 @@ const func = async function (hardhat_re) {
           log: true,
         },
         'setSftHolder',
-        generatedAddresses.sftHolder
+        generatedAddresses.sftHolderProxy
       )
     );
   }
