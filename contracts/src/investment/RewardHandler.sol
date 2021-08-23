@@ -69,6 +69,16 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
    */
   event Received(address, uint256);
 
+  /**
+   * @dev Fired on distribute (rewards -> recipient)
+   */
+  event RewardsDistributed(address indexed, uint256 amount, uint32 fee);
+
+  /**
+   * @dev Fired on distributeAll (collected fees -> internal)
+   */
+  event FeesDistributed(uint256 amount);
+
   //////////////////////////////////////////////////////////////////////////////
   // Initialization
   //////////////////////////////////////////////////////////////////////////////
@@ -296,6 +306,8 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
       // Now send rewards to the user
       rewardToken.safeTransfer(recipient, recipientAmount);
     }
+    // Emit event
+    emit RewardsDistributed(recipient, amount, fee);
   }
 
   /**
@@ -364,6 +376,9 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
         booster,
         distributeAmount.mul(FEE_TO_BOOSTER).div(1e6)
       );
+
+      // Emit event
+      emit FeesDistributed(distributeAmount);
     }
     return rewardToken;
   }
