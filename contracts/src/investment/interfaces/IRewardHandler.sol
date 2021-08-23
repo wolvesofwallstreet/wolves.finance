@@ -10,6 +10,13 @@ pragma solidity 0.7.6;
 
 interface IRewardHandler {
   /**
+   * @dev Get the amount allocated for the Booster
+   *
+   * @return The amount which is allocated for the Booster (18 decimals)
+   */
+  function getBoosterRewards() external view returns (uint256);
+
+  /**
    * @dev Transfer reward and distribute the fee
    *
    * This is the new implementation of distribute() which uses internal fees
@@ -19,7 +26,6 @@ interface IRewardHandler {
    * @param amount The amount of WOWS to transfer to the recipient
    * @param fee The reward fee in 1e6 factor notation
    */
-
   function distribute2(
     address recipient,
     uint256 amount,

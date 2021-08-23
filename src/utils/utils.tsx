@@ -26,5 +26,13 @@ export function remainingFromSecs(secondsLeft: number): string {
     .toString()
     .padStart(2, '0');
 
-  return days + 'd:' + hours + 'h:' + minutes + 'm:' + seconds + 's';
+  return (
+    days +
+    'd:' +
+    hours +
+    'h:' +
+    minutes +
+    'm' +
+    (days === '00' ? ':' + seconds + 's' : '')
+  );
 }

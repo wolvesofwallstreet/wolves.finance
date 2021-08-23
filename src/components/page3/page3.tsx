@@ -176,6 +176,11 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
                   rewardEarned: 0,
                   mintTimestamp: 0,
                   cfolioItems: [],
+                  boosterRewards: {
+                    total: 0,
+                    pending: 0,
+                    apr: 0,
+                  },
                 };
               }
             );
@@ -383,7 +388,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
                         (display === 'my' || type === level.type) && (
                           <CardBox
                             sft={id}
-                            earned={id.rewardEarned}
+                            earned={id.rewardEarned + id.boosterRewards.pending}
                             key={'card_' + index}
                             t={t}
                             progressRefs={this.progressRefs}

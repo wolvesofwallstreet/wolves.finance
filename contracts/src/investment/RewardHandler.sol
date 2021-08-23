@@ -69,6 +69,16 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
    */
   event Received(address, uint256);
 
+  /**
+   * @dev Fired on distribute (rewards -> recipient)
+   */
+  event RewardsDistributed(address indexed, uint256 amount, uint32 fee);
+
+  /**
+   * @dev Fired on distributeAll (collected fees -> internal)
+   */
+  event FeesDistributed(uint256 amount);
+
   //////////////////////////////////////////////////////////////////////////////
   // Initialization
   //////////////////////////////////////////////////////////////////////////////
@@ -236,6 +246,22 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
+   * @dev See {IRewardHandler-getBoosterRewards}
+   */
+  function getBoosterRewards() external view override returns (uint256) {
+    IERC20WowsMintable rewardToken = IERC20WowsMintable(
+      _addressRegistry.getRegistryEntry(AddressBook.WOWS_TOKEN)
+    );
+    address booster = _addressRegistry.getRegistryEntry(
+      AddressBook.WOWS_BOOSTER_PROXY
+    );
+    return
+      rewardToken.balanceOf(booster).add(
+        _distributeAmount.mul(FEE_TO_BOOSTER).div(1e6)
+      );
+  }
+
+  /**
    * @dev See {IRewardHandler-distribute2}
    */
   function distribute2(
@@ -280,6 +306,8 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
       // Now send rewards to the user
       rewardToken.safeTransfer(recipient, recipientAmount);
     }
+    // Emit event
+    emit RewardsDistributed(recipient, amount, fee);
   }
 
   /**
@@ -321,7 +349,7 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
         AddressBook.TEAM_WALLET
       );
       address booster = _addressRegistry.getRegistryEntry(
-        AddressBook.WOWS_BOOSTER
+        AddressBook.WOWS_BOOSTER_PROXY
       );
 
       // Load state
@@ -348,6 +376,9 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
         booster,
         distributeAmount.mul(FEE_TO_BOOSTER).div(1e6)
       );
+
+      // Emit event
+      emit FeesDistributed(distributeAmount);
     }
     return rewardToken;
   }

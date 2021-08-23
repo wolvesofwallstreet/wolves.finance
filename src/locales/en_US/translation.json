@@ -79,6 +79,8 @@
     "lock": "LOCK \"{{name}}\"",
     "unlock": "UNLOCK \"{{name}}\"",
     "claim": "CLAIM {{amount}} WOWS REWARDS",
+    "lockWows": "LOCK {{amount}} WOWS REWARDS",
+    "relockWows": "RELOCK {{amount}} WOWS REWARDS",
     "noQuantity": "NO CARDS AVAILABLE",
     "txPending": "TRANSACTION PENDING",
     "unlockedSft": "THIS C\u2011FOLIO IS UNLOCKED. YOU CAN BUY NEW NFT'S INTO IT, TRANSFER NFT'S USING THE C\u2011FOLIO MANAGER, AND YOU CAN ADD AND REMOVE VALUE TO EXISTING INVESTMENT NFT'S. IN ORDER TO TRADE THIS C\u2011FOLIO ON NFT MARKETPLACES, YOU HAVE TO LOCK IT.",

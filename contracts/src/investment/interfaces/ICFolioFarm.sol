@@ -15,6 +15,11 @@ pragma solidity 0.7.6;
  */
 interface ICFolioFarm {
   /**
+   * @dev Return total invested balance
+   */
+  function totalSupply() external view returns (uint256);
+
+  /**
    * @dev Return invested balance of account
    */
   function balanceOf(address account) external view returns (uint256);

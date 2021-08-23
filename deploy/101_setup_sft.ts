@@ -19,6 +19,7 @@ const CFOLIOITEM_BRIDGE_PROXY_CONTRACT = 'CFolioItemBridgeProxy';
 const SFT_HOLDER_CONTRACT = 'WOWSERC1155';
 const SFT_MINTER_CONTRACT = 'WOWSSftMinter';
 const REWARD_HANDLER_CONTRACT = 'RewardHandler';
+const BOOSTER_CONTRACT = 'Booster';
 
 // keccak-256("eip1967.proxy.implementation") - 1
 const UPGRADE_PROXY_IMPLEMENTATION_SLOT =
@@ -77,6 +78,11 @@ const func = async function (hardhat_re) {
   );
   const SFT_MINTER_INSTANCE = await hardhat_re.ethers.getContract(
     SFT_MINTER_CONTRACT
+  );
+  // Booster on Booster_PROXY address
+  const boosterInstance = await hardhat_re.ethers.getContractAt(
+    BOOSTER_CONTRACT,
+    generatedAddresses.boosterProxy
   );
 
   //////////////////////////////////////////////////////////////////////////////
@@ -274,6 +280,76 @@ const func = async function (hardhat_re) {
         },
         'upgradeTo',
         generatedAddresses.cfiBridge
+      )
+    );
+  }
+
+  const BOOSTER_CONTROLLER_ROLE = await boosterInstance.CONTROLLER_ROLE();
+
+  //
+  // 8.) Revoke CONTROLLER role in Booster for sftMinterUpdate)
+  //
+  if (
+    configAddresses.sftMinter &&
+    configAddresses.sftMinter !== generatedAddresses.sftMinter &&
+    (await boosterInstance.hasRole(
+      BOOSTER_CONTROLLER_ROLE,
+      configAddresses.sftMinterUpdate
+    ))
+  ) {
+    await catchUnknownSigner(
+      execute(
+        BOOSTER_CONTRACT,
+        {
+          from: marketingWallet,
+          to: generatedAddresses.boosterProxy,
+          log: false,
+        },
+        'revokeRole',
+        BOOSTER_CONTROLLER_ROLE,
+        generatedAddresses.sftMinterUpdate
+      )
+    );
+  }
+
+  //
+  // 9.) Grant CONTROLLER_ROLE for new controller
+  //
+  if (
+    !(await boosterInstance.hasRole(
+      BOOSTER_CONTROLLER_ROLE,
+      generatedAddresses.sftMinter
+    ))
+  ) {
+    await catchUnknownSigner(
+      execute(
+        BOOSTER_CONTRACT,
+        {
+          from: marketingWallet,
+          to: generatedAddresses.boosterProxy,
+          log: true,
+        },
+        'grantRole',
+        BOOSTER_CONTROLLER_ROLE,
+        generatedAddresses.sftMinter
+      )
+    );
+  }
+
+  //
+  // 10.) Set sftHolder address in Booster
+  //
+  if ((await boosterInstance.sftHolder()) !== generatedAddresses.sftHolder) {
+    await catchUnknownSigner(
+      execute(
+        BOOSTER_CONTRACT,
+        {
+          from: marketingWallet,
+          to: generatedAddresses.boosterProxy,
+          log: true,
+        },
+        'setSftHolder',
+        generatedAddresses.sftHolder
       )
     );
   }

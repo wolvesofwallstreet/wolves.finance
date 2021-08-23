@@ -9,6 +9,7 @@ import './page4.css';
 
 import { BigNumber, ethers } from 'ethers';
 import React, { Component } from 'react';
+import { Modal } from 'react-bootstrap';
 import { TFunction, withTranslation } from 'react-i18next';
 import { RouteComponentProps } from 'react-router-dom';
 
@@ -17,6 +18,7 @@ import {
   ASSETS_STATE,
   SFT_BUY,
   SFT_CLAIM,
+  SFT_CLAIM_BOOSTER,
   SFT_LOCK,
   SFT_REWARD,
   SFT_UNLOCK,
@@ -56,6 +58,10 @@ type PAGE4_STATE = {
   txPending: boolean;
   currentIndex: number;
   selectedCFolio: number;
+  modalOpen: boolean;
+  boosterExistingValue: number;
+  boosterNewValue: number;
+  boosterRelock: number;
 };
 
 const INITIAL_PAGE4_STATE: PAGE4_STATE = {
@@ -64,6 +70,10 @@ const INITIAL_PAGE4_STATE: PAGE4_STATE = {
   txPending: false,
   currentIndex: -1,
   selectedCFolio: -1,
+  modalOpen: false,
+  boosterExistingValue: 1,
+  boosterNewValue: 15552000,
+  boosterRelock: 1,
 };
 
 class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
@@ -96,6 +106,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     StoreClasses.emitter.on(ASSETS_STATE, this.onAssetsState);
     StoreClasses.emitter.on(SFT_BUY, this.onSFTTransaction);
     StoreClasses.emitter.on(SFT_CLAIM, this.onSFTTransaction);
+    StoreClasses.emitter.on(SFT_CLAIM_BOOSTER, this.onSFTTransaction);
     StoreClasses.emitter.on(SFT_LOCK, this.onSFTTransaction);
     StoreClasses.emitter.on(SFT_UNLOCK, this.onSFTTransaction);
     StoreClasses.emitter.on(SFT_UPGRADE, this.onSFTTransaction);
@@ -113,6 +124,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     StoreClasses.emitter.off(SFT_UPGRADE, this.onSFTTransaction);
     StoreClasses.emitter.off(SFT_UNLOCK, this.onSFTTransaction);
     StoreClasses.emitter.off(SFT_LOCK, this.onSFTTransaction);
+    StoreClasses.emitter.off(SFT_CLAIM_BOOSTER, this.onSFTTransaction);
     StoreClasses.emitter.off(SFT_CLAIM, this.onSFTTransaction);
     StoreClasses.emitter.off(SFT_BUY, this.onSFTTransaction);
     StoreClasses.emitter.off(ASSETS_STATE, this.onAssetsState);
@@ -334,6 +346,22 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       type: SFT_CLAIM,
       content: {
         id: this.renderList[this.state.currentIndex].sft?.tokenId,
+        time: this.renderList[this.state.currentIndex].sft?.boosterRewards
+          .secsLeft
+          ? this.state.boosterExistingValue
+          : this.state.boosterNewValue,
+      },
+    };
+    this.setState({ txPending: true });
+    StoreClasses.dispatcher.dispatch(payload);
+  }
+
+  _onClaimBooster(): void {
+    const payload: Payload = {
+      type: SFT_CLAIM_BOOSTER,
+      content: {
+        id: this.renderList[this.state.currentIndex].sft?.tokenId,
+        time: this.state.boosterRelock,
       },
     };
     this.setState({ txPending: true });
@@ -377,6 +405,10 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       isWalletConnected,
       txPending,
       type,
+      modalOpen,
+      boosterExistingValue,
+      boosterNewValue,
+      boosterRelock,
     } = this.state;
 
     const currentRender =
@@ -509,19 +541,22 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       }
     }
 
+    const claimableAmount = currentRender?.sft
+      ? currentRender?.sft.rewardEarned +
+        currentRender?.sft.boosterRewards.pending
+      : 0;
     const claimText =
       currentRender?.sft &&
-      (currentRender.sft.cfolioItems.length > 0 ||
-        currentRender.sft.rewardEarned > 0)
+      (currentRender.sft.cfolioItems.length > 0 || claimableAmount > 0)
         ? !isWalletConnected
           ? { l: t('header.connectWallet').toString(), d: true }
-          : txPending
+          : txPending && !modalOpen
           ? { l: t('page4.txPending'), d: true }
           : {
               l: t('page4.claim', {
-                amount: currentRender.sft.rewardEarned.toFixed(6),
+                amount: claimableAmount.toFixed(6),
               }).toString(),
-              d: locked || currentRender.sft.rewardEarned === 0,
+              d: locked || claimableAmount === 0,
             }
         : undefined;
 
@@ -600,6 +635,88 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
 
     const imgClass =
       selectedCFolio < 0 ? 'card-visual' : 'card-visual monochrome';
+
+    const hideCB = () => {
+      this.setState({ modalOpen: false });
+    };
+
+    const boosterState = (value: number, n: number): string => {
+      return value === n ? 'active' : 'select';
+    };
+
+    const boosterFuncN = (n: number) => {
+      return boosterNewValue === n
+        ? undefined
+        : () => this.setState({ boosterNewValue: n });
+    };
+
+    const boosterFuncR = (n: number) => {
+      return boosterRelock === n
+        ? undefined
+        : () => this.setState({ boosterRelock: n });
+    };
+
+    const boosterFuncE = (n: number) => {
+      return boosterExistingValue === n
+        ? undefined
+        : () => this.setState({ boosterExistingValue: n });
+    };
+
+    let boosterFarmButtonText, boosterButtonText, boosterPeriod;
+
+    if (modalOpen && currentRender?.sft) {
+      if (currentRender.sft.rewardEarned) {
+        let lockRewards;
+        if (currentRender.sft.boosterRewards.secsLeft) {
+          lockRewards = boosterExistingValue > 0;
+        } else {
+          lockRewards = boosterNewValue > 0;
+        }
+        boosterFarmButtonText = txPending
+          ? { l: t('page4.txPending'), d: true }
+          : {
+              l: t(lockRewards ? 'page4.lockWows' : 'page4.claim', {
+                amount: currentRender.sft.rewardEarned.toFixed(6),
+              }),
+              d: false,
+            };
+      }
+
+      if (currentRender.sft.boosterRewards.secsLeft) {
+        switch (currentRender.sft.boosterRewards.apr) {
+          case 1.75:
+            boosterPeriod = '6 months';
+            break;
+          case 1.3:
+            boosterPeriod = '3 months';
+            break;
+          case 1.0:
+            boosterPeriod = '1 month';
+            break;
+          default:
+            boosterPeriod = 'Unknown';
+        }
+      } else {
+        boosterPeriod = 'No period started';
+      }
+
+      if (currentRender.sft.boosterRewards.pending) {
+        let lockRewards;
+        if (currentRender.sft.boosterRewards.secsLeft) {
+          lockRewards = boosterRelock;
+        } else {
+          lockRewards = false;
+        }
+        boosterButtonText = txPending
+          ? { l: t('page4.txPending'), d: true }
+          : {
+              l: t(lockRewards ? 'page4.relockWows' : 'page4.claim', {
+                amount: currentRender.sft.boosterRewards.pending.toFixed(6),
+              }),
+              d: false,
+            };
+      }
+    }
 
     return (
       <div
@@ -797,7 +914,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                           type="button"
                           value={claimText.l}
                           disabled={claimText.d}
-                          onClick={() => this._onClaim()}
+                          onClick={() => this.setState({ modalOpen: true })}
                         />
                         {!txPending &&
                           isWalletConnected &&
@@ -823,6 +940,142 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
               )}
             </div>
           </div>
+        )}
+        {modalOpen && (
+          <Modal
+            show={true}
+            backdrop="static"
+            onHide={hideCB}
+            animation={false}
+          >
+            <Modal.Header closeButton>
+              <span className="tk-vincente-bold font-28 lh-1 mb-0">
+                BOOST MY REWARDS
+              </span>
+            </Modal.Header>
+            <Modal.Body>
+              <span className="tk-grotesk-lightbold">
+                <p>
+                  Your can boost your rewards by locking them into the Booster.
+                  While the rewards are locked, you can claim 10% per month
+                  either directly into your wallet, or reinvest into the Booster
+                  to earn more.
+                </p>
+                <p>
+                  Once you have created a lock period, you cannot change it's
+                  expire time. But you can always add rewards into it.
+                </p>
+                <hr />
+                <span className="d-block w-100 text-center">
+                  <b>Booster lock:</b> {boosterPeriod}
+                  {currentRender?.sft?.boosterRewards.secsLeft && (
+                    <>
+                      <br />
+                      <b>Terminate:</b>{' '}
+                      {remainingFromSecs(
+                        currentRender.sft.boosterRewards.secsLeft
+                      )}
+                      <br />
+                      <b>Locked Amount:</b>{' '}
+                      {currentRender.sft.boosterRewards.total.toFixed(2)} WOWS
+                      <br />
+                      <b>APR:</b> {currentRender.sft.boosterRewards.apr * 100} %
+                    </>
+                  )}
+                </span>
+                {currentRender?.sft && currentRender.sft.rewardEarned > 0 && (
+                  <>
+                    <hr />
+                    <span className="tk-vincente-bold font-22 d-block w-100 text-center">
+                      FARM REWARDS
+                    </span>
+                    {currentRender.sft.boosterRewards.secsLeft ? (
+                      <div className="lock-container">
+                        <div
+                          className={boosterState(boosterExistingValue, 1)}
+                          onClick={boosterFuncE(1)}
+                        >
+                          Lock into Booster
+                        </div>
+                        <div
+                          className={boosterState(boosterExistingValue, 0)}
+                          onClick={boosterFuncE(0)}
+                        >
+                          Claim into wallet
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="lock-container">
+                        <div
+                          className={boosterState(boosterNewValue, 2592000)}
+                          onClick={boosterFuncN(2592000)}
+                        >
+                          1 month (100% APR)
+                        </div>
+                        <div
+                          className={boosterState(boosterNewValue, 7776000)}
+                          onClick={boosterFuncN(7776000)}
+                        >
+                          3 months (130% APR)
+                        </div>
+                        <div
+                          className={boosterState(boosterNewValue, 15552000)}
+                          onClick={boosterFuncN(15552000)}
+                        >
+                          6 months (175% APR)
+                        </div>
+                        <div
+                          className={boosterState(boosterNewValue, 0)}
+                          onClick={boosterFuncN(0)}
+                        >
+                          Claim into wallet
+                        </div>
+                      </div>
+                    )}
+                    <button
+                      className={'wolves-btn mt-2 tk-aktiv-grotesk-condensed'}
+                      onClick={() => this._onClaim()}
+                      disabled={boosterFarmButtonText?.d}
+                    >
+                      {boosterFarmButtonText?.l}
+                    </button>
+                  </>
+                )}
+                {currentRender?.sft &&
+                  currentRender.sft.boosterRewards.pending > 0 && (
+                    <>
+                      <hr />
+                      <span className="tk-vincente-bold font-22 d-block w-100 text-center">
+                        BOOSTER REWARDS
+                      </span>
+                      {currentRender.sft.boosterRewards.secsLeft && (
+                        <div className="lock-container">
+                          <div
+                            className={boosterState(boosterRelock, 1)}
+                            onClick={boosterFuncR(1)}
+                          >
+                            Relock into Booster
+                          </div>
+                          <div
+                            className={boosterState(boosterRelock, 0)}
+                            onClick={boosterFuncR(0)}
+                          >
+                            Claim into wallet
+                          </div>
+                        </div>
+                      )}
+                      <button
+                        className={'wolves-btn mt-2 tk-aktiv-grotesk-condensed'}
+                        onClick={() => this._onClaimBooster()}
+                        disabled={boosterButtonText?.d}
+                      >
+                        {boosterButtonText?.l}
+                      </button>
+                    </>
+                  )}
+              </span>
+            </Modal.Body>
+          </Modal>
         )}
       </div>
     );

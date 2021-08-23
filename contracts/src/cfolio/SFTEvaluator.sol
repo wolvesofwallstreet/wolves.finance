@@ -8,8 +8,7 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
-import './interfaces/ISFTEvaluator.sol';
-import './interfaces/ICFolioItemHandler.sol';
+import '../../0xerc1155/utils/Context.sol';
 
 import '../token/interfaces/IWOWSCryptofolio.sol';
 import '../token/interfaces/IWOWSERC1155.sol';
@@ -17,7 +16,10 @@ import '../utils/AddressBook.sol';
 import '../utils/interfaces/IAddressRegistry.sol';
 import '../utils/TokenIds.sol';
 
-contract SFTEvaluator is ISFTEvaluator {
+import './interfaces/ISFTEvaluator.sol';
+import './interfaces/ICFolioItemHandler.sol';
+
+contract SFTEvaluator is ISFTEvaluator, Context {
   using TokenIds for uint256;
 
   //////////////////////////////////////////////////////////////////////////////
@@ -32,16 +34,16 @@ contract SFTEvaluator is ISFTEvaluator {
   // The SFT contract we need for level
   IWOWSERC1155 private immutable _sftHolder;
 
-  // The cfolioitem bridge contract
+  // The cfolioItem bridge contract
   address private immutable _cfiBridge;
 
   // Current reward weight of a baseCard
   mapping(uint256 => uint256) private _rewardRates;
 
-  // cfolioType of cfolioItem
+  // cfolioType -> cfolioItem
   mapping(uint256 => uint256) private _cfolioItemTypes;
 
-  // sftMinter
+  // SFT minter
   address public sftMinter;
 
   //////////////////////////////////////////////////////////////////////////////
@@ -182,7 +184,7 @@ contract SFTEvaluator is ISFTEvaluator {
    */
   function setMinter(address newMinter) external {
     // Access control
-    require(msg.sender == admin, 'SFTE: Forbidden');
+    require(_msgSender() == admin, 'SFTE: Forbidden');
 
     // Set state
     sftMinter = newMinter;
@@ -196,7 +198,7 @@ contract SFTEvaluator is ISFTEvaluator {
     override
   {
     require(tokenId.isCFolioCard(), 'Invalid tokenId');
-    require(msg.sender == sftMinter, 'SFTE: Minter only');
+    require(_msgSender() == sftMinter, 'SFTE: Minter only');
 
     _cfolioItemTypes[tokenId] = cfolioItemType;
 

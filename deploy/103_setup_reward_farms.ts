@@ -16,7 +16,6 @@ require('hardhat-deploy-ethers');
 // TODO: Fully qualified contract names
 const SFT_HOLDER_CONTRACT = 'WOWSERC1155';
 const SFT_MINTER_CONTRACT = 'WOWSSftMinter';
-const SFT_MINTER_UPDATE_CONTRACT = 'WOWSSftMinterUpdate';
 const CFOLIO_ITEM_HANDLER_LP_CONTRACT = 'CFolioItemHandlerLP';
 const CFOLIO_ITEM_HANDLER_LP_PROXY_CONTRACT = 'CFolioItemHandlerLPProxy';
 const CFOLIO_ITEM_HANDLER_SC_CONTRACT = 'CFolioItemHandlerSC';
@@ -378,9 +377,10 @@ const func = async function (hardhat_re) {
       // Old contracts don't have destructContract
       await catchUnknownSigner(
         execute(
-          SFT_MINTER_UPDATE_CONTRACT,
+          SFT_MINTER_CONTRACT,
           {
             from: marketingWallet,
+            to: configAddresses.sftMinterUpdate,
             log: true,
           },
           'destructContract'

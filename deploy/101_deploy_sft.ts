@@ -33,12 +33,12 @@ const ADDRESS_BOOK_CFOLIOITEM_BRIDGE_PROXY_KEY =
   ethers.utils.formatBytes32String('CFOLIOITEM_BRIDGE_PROXY');
 
 // ERC-1155 metadata URI
-const METADATA_URI = 'https://4travelers.de/wolves_assets/metadata/';
+const METADATA_URI = 'https://meta.wows.finance/wolves_assets/metadata/';
 
 // Filename for contract metadata, will be prefixed with METADATA_URI
 // TODO: replace mainnet_contract.json with something from config!!!
 const CONTRACT_METADATA_NAME =
-  'https://4travelers.de/wolves_assets/metadata/mainnet_contract.json';
+  'https://meta.wows.finance/wolves_assets/metadata/mainnet_contract.json';
 
 // Path to address files
 const CONFIG_ADDRESSES = `${__dirname}/../src/config/addresses.json`;
@@ -261,13 +261,7 @@ const sft_func = async function (hardhat_re) {
 
     const sftMinterReceipt = await deploy(SFT_MINTER_CONTRACT, {
       from: deployer,
-      args: [
-        marketingWallet,
-        generatedAddresses.token,
-        generatedAddresses.rewardHandler,
-        SFT_HOLDER_ADDRESS,
-        CFOLIOITEM_BRIDGE_PROXY_ADDRESS,
-      ],
+      args: [ADDRESS_REGISTRY_ADDRESS],
       log: true,
       deterministicDeployment: true,
     });

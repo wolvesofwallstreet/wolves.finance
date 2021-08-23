@@ -75,7 +75,7 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
     marketingWallet
   );
   const boosterContract = new ethers.Contract(
-    addresses.booster,
+    addresses.boosterProxy,
     BoosterAbi,
     marketingWallet
   );

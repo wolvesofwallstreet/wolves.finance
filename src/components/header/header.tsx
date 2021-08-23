@@ -195,7 +195,7 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
       {
         id: t('header.myPack'),
         to: '/my?type=myPack&levelId=' + levelId,
-        disabled: type === 'myPack',
+        disabled: location.pathname === '/my',
       },
       {
         id: 'C-FOLIO MANAGER',

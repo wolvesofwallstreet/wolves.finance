@@ -11,6 +11,7 @@ pragma solidity >=0.7.0 <0.8.0;
 import '../../0xerc1155/interfaces/IERC1155.sol';
 import '../../0xerc1155/tokens/ERC1155/ERC1155Holder.sol';
 import '../../0xerc1155/utils/Address.sol';
+import '../../0xerc1155/utils/Context.sol';
 
 import '../token/interfaces/IWOWSCryptofolio.sol';
 import '../token/interfaces/IWOWSERC1155.sol';
@@ -27,7 +28,7 @@ import './interfaces/ICFolioItemHandler.sol';
  * This contract receives CFIs from the sftHolder contract for a
  * CFolio and performs all required Handle actions.
  */
-contract CFolioItemBridge is ICFolioItemBridge, ERC1155Holder {
+contract CFolioItemBridge is ICFolioItemBridge, Context, ERC1155Holder {
   using TokenIds for uint256;
   using Address for address;
 
@@ -113,7 +114,7 @@ contract CFolioItemBridge is ICFolioItemBridge, ERC1155Holder {
   ) external override {
     // Validate parameters
     require(
-      (msg.sender == from) || isApprovedForAll(from, msg.sender),
+      (_msgSender() == from) || isApprovedForAll(from, _msgSender()),
       'CFIB: Not approved'
     );
     require(to != address(0), 'CFIB: Invalid recipient');
@@ -138,7 +139,7 @@ contract CFolioItemBridge is ICFolioItemBridge, ERC1155Holder {
   ) external override {
     // Validate parameters
     require(
-      from == msg.sender || isApprovedForAll(from, msg.sender),
+      from == _msgSender() || isApprovedForAll(from, _msgSender()),
       'CFIB: Not approved'
     );
     require(tokenIds.length == amounts.length, 'CFIB: Length mismatch');
@@ -160,8 +161,8 @@ contract CFolioItemBridge is ICFolioItemBridge, ERC1155Holder {
     override
   {
     // Update operator status
-    _operators[msg.sender][_operator] = _approved;
-    emit BridgeApproval(msg.sender, _operator, _approved);
+    _operators[_msgSender()][_operator] = _approved;
+    emit BridgeApproval(_msgSender(), _operator, _approved);
   }
 
   /**
@@ -306,14 +307,14 @@ contract CFolioItemBridge is ICFolioItemBridge, ERC1155Holder {
     if (to == address(0)) {
       IERC1155(address(_sftHolder)).safeBatchTransferFrom(
         address(this),
-        msg.sender,
+        _msgSender(),
         tokenIds,
         amounts,
         ''
       );
     } else if (to.isContract()) {
       bytes4 retval = IERC1155TokenReceiver(to).onERC1155BatchReceived(
-        msg.sender,
+        _msgSender(),
         from,
         tokenIds,
         amounts,
@@ -338,7 +339,7 @@ contract CFolioItemBridge is ICFolioItemBridge, ERC1155Holder {
           );
       }
 
-    emit BridgeTransfer(msg.sender, from, to, tokenIds, amounts);
+    emit BridgeTransfer(_msgSender(), from, to, tokenIds, amounts);
   }
 
   /**
@@ -351,7 +352,7 @@ contract CFolioItemBridge is ICFolioItemBridge, ERC1155Holder {
     bytes memory data
   ) private {
     // We only support tokens from our SFT Holder contract
-    require(msg.sender == address(_sftHolder), 'CFIB: Invalid');
+    require(_msgSender() == address(_sftHolder), 'CFIB: Invalid');
 
     // Validate parameters
     require(tokenIds.length == amounts.length, 'CFIB: Lengths mismatch');
