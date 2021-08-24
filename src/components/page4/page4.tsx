@@ -664,6 +664,26 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
 
     let boosterFarmButtonText, boosterButtonText, boosterPeriod;
 
+    const boosterTotal = currentRender?.sft?.boosterRewards.total.toFixed(2);
+    if (currentRender?.sft?.boosterRewards.secsLeft) {
+      switch (currentRender.sft.boosterRewards.apr) {
+        case 1.75:
+        case 1.875:
+          boosterPeriod = '6 months';
+          break;
+        case 1.3:
+          boosterPeriod = '3 months';
+          break;
+        case 1.0:
+          boosterPeriod = '1 month';
+          break;
+        default:
+          boosterPeriod = 'Unknown';
+      }
+    } else {
+      boosterPeriod = modalOpen && 'No period started';
+    }
+
     if (modalOpen && currentRender?.sft) {
       if (currentRender.sft.rewardEarned) {
         let lockRewards;
@@ -680,24 +700,6 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
               }),
               d: false,
             };
-      }
-
-      if (currentRender.sft.boosterRewards.secsLeft) {
-        switch (currentRender.sft.boosterRewards.apr) {
-          case 1.75:
-            boosterPeriod = '6 months';
-            break;
-          case 1.3:
-            boosterPeriod = '3 months';
-            break;
-          case 1.0:
-            boosterPeriod = '1 month';
-            break;
-          default:
-            boosterPeriod = 'Unknown';
-        }
-      } else {
-        boosterPeriod = 'No period started';
       }
 
       if (currentRender.sft.boosterRewards.pending) {
@@ -859,6 +861,21 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                           </h3>
                         </li>
                       )}
+                      {boosterPeriod && (
+                        <li>
+                          <h3 className="no-margin">
+                            <span
+                              className="ulink c-pointer"
+                              onClick={() => this.setState({ modalOpen: true })}
+                            >
+                              {t('page4.booster', {
+                                period: boosterPeriod,
+                                amount: boosterTotal,
+                              })}
+                            </span>
+                          </h3>
+                        </li>
+                      )}
                       {apr && (
                         <li>
                           <h3 className="no-margin">
@@ -976,8 +993,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                         currentRender.sft.boosterRewards.secsLeft
                       )}
                       <br />
-                      <b>Locked Amount:</b>{' '}
-                      {currentRender.sft.boosterRewards.total.toFixed(2)} WOWS
+                      <b>Locked Amount:</b> {boosterTotal} WOWS
                       <br />
                       <b>APR:</b> {currentRender.sft.boosterRewards.apr * 100} %
                     </>

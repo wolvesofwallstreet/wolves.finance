@@ -191,6 +191,14 @@ span a:hover {
   user-select: none;
 }
 
+.ulink {
+  text-decoration: underline;
+  text-underline-offset: 1px;
+  text-decoration-thickness: 1px;
+  color: var(--wolves-white);
+  user-select: none;
+}
+
 .noselect {
   -webkit-touch-callout: none; /* iOS Safari */
   -webkit-user-select: none; /* Safari */
