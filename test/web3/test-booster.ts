@@ -196,6 +196,19 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
   tx = controllerContract.setWorker(marketingWallet.address);
   await chai.expect(tx).to.not.be.reverted;
 
+  // Set test parameters
+
+  tx = controllerContract.registerFarm2(
+    addresses.cfolioFarmLP, // Farm
+    '15000000000000000000000', // Cap
+    '192307692300000000000', // RewardForDuration
+    0, // RewardProvided
+    20000, // Fee
+    0, // FarmEnd
+    false // Paused
+  );
+  await chai.expect(tx).to.not.be.reverted;
+
   tx = controllerContract.refuelFarms([], []);
   await chai.expect(tx).to.not.be.reverted;
 
