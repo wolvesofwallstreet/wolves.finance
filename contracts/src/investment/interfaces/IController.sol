@@ -35,6 +35,11 @@ interface IController {
   function onWithdraw(uint256 amount) external view returns (uint256 fee);
 
   /**
+   * @dev Returns the paused state of the calling farm
+   */
+  function paused() external view returns (bool);
+
+  /**
    * @dev Distribute rewards to sender and fee to internal contracts
    */
   function payOutRewards(address recipient, uint256 amount) external;

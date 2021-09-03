@@ -21,8 +21,6 @@ const CFOLIO_ITEM_HANDLER_LP_PROXY_CONTRACT = 'CFolioItemHandlerLPProxy';
 const CFOLIO_ITEM_HANDLER_SC_CONTRACT = 'CFolioItemHandlerSC';
 const CFOLIO_ITEM_HANDLER_SC_PROXY_CONTRACT = 'CFolioItemHandlerSCProxy';
 const CONTROLLER_CONTRACT = 'Controller';
-const SFT_EVALUATOR_CONTRACT = 'SFTEvaluator';
-const SFT_EVALUATOR_PROXY_CONTRACT = 'SFTEvaluatorProxy';
 const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 // Deployed aliases
@@ -90,11 +88,6 @@ const func = async function (hardhat_re) {
   const CFOLIO_ITEM_HANDLER_SC_INSTANCE = await hardhat_re.ethers.getContractAt(
     CFOLIO_ITEM_HANDLER_SC_CONTRACT,
     generatedAddresses.cfolioItemHandlerSCProxy
-  );
-  // SFTEvaluator on SFTEvaluator proxy address
-  const SFT_EVALUATOR_INSTANCE = await hardhat_re.ethers.getContractAt(
-    SFT_EVALUATOR_CONTRACT,
-    generatedAddresses.sftEvaluatorProxy
   );
 
   // Load ABIs
@@ -231,14 +224,16 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 5.) Controller.sol::registerFarm()
+  // 5.) Controller.sol::registerFarm2()
   //
   //   Parameters:
   //     * farmAddress         The CFolioFarmLP address
   //     * rewardCap           15,000 * 1e18 Wei
-  //     * rewardsPerDuration  (5000 * 2 / 52) * 1e18 Wei - we have 2 week duration!
+  //     * rewardsPerDuration  (3000 * 2 / 52) * 1e18 Wei - we have 2 week duration!
   //     * rewardProvided      0 Wei
   //     * rewardFee           2 * 1e4 (0.02 == 2%)
+  //     * farmEndedAtBlock    0
+  //     * paused              false
   //
 
   if (
@@ -254,10 +249,11 @@ const func = async function (hardhat_re) {
       '15000000000000000000000'
     );
     const REWARD_PER_DURATION = hardhat_re.ethers.BigNumber.from(
-      '192307692300000000000'
+      '115384615384615400000'
     );
     const REWARD_PROVIDED = 0;
     const REWARD_FEE = 2 * 1e4;
+    const FARM_END = 0;
     await catchUnknownSigner(
       execute(
         CONTROLLER_CONTRACT,
@@ -265,12 +261,14 @@ const func = async function (hardhat_re) {
           from: marketingWallet,
           log: true,
         },
-        'registerFarm',
+        'registerFarm2',
         generatedAddresses.cfolioFarmLP,
         REWARD_CAP,
         REWARD_PER_DURATION,
         REWARD_PROVIDED,
-        REWARD_FEE
+        REWARD_FEE,
+        FARM_END,
+        false
       )
     );
   } else {
@@ -278,14 +276,16 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 6.) Controller.sol::registerFarm()
+  // 6.) Controller.sol::registerFarm2()
   //
   //   Parameters:
   //     * farmAddress         The CFolioFarmSC address
   //     * rewardCap           15,000 * 1e18 Wei
-  //     * rewardsPerDuration  (5000 * 2 / 52) * 1e18 Wei - we have 2 week duration!
+  //     * rewardsPerDuration  (1500 * 2 / 52) * 1e18 Wei - we have 2 week duration!
   //     * rewardProvided      0 Wei
   //     * rewardFee           2 * 1e4 (0.02 == 2%)
+  //     * farmEndedAtBlock    0
+  //     * paused              false
   //
 
   if (
@@ -301,10 +301,11 @@ const func = async function (hardhat_re) {
       '15000000000000000000000'
     );
     const REWARD_PER_DURATION = hardhat_re.ethers.BigNumber.from(
-      '192307692300000000000'
+      '57692307692307690000'
     );
     const REWARD_PROVIDED = 0;
     const REWARD_FEE = 2 * 1e4;
+    const FARM_END = 0;
     await catchUnknownSigner(
       execute(
         CONTROLLER_CONTRACT,
@@ -312,12 +313,14 @@ const func = async function (hardhat_re) {
           from: marketingWallet,
           log: true,
         },
-        'registerFarm',
+        'registerFarm2',
         generatedAddresses.cfolioFarmSC,
         REWARD_CAP,
         REWARD_PER_DURATION,
         REWARD_PROVIDED,
-        REWARD_FEE
+        REWARD_FEE,
+        FARM_END,
+        false
       )
     );
   } else {
@@ -391,57 +394,6 @@ const func = async function (hardhat_re) {
     }
   } else {
     console.log('C-folio specs already set for WOWSSftMinter');
-  }
-
-  //
-  // 8.) Call WowsSFTMinter.sol::setSFTEvaluator(sftEvaluatorProxy)
-  //
-
-  if (
-    (await SFT_MINTER_INSTANCE.sftEvaluator()) !==
-    generatedAddresses.sftEvaluatorProxy
-  ) {
-    console.log('Setting SFT evaluator in WOWSSftMinter');
-
-    await catchUnknownSigner(
-      execute(
-        SFT_MINTER_CONTRACT,
-        {
-          from: marketingWallet,
-          log: true,
-        },
-        'setSFTEvaluator',
-        generatedAddresses.sftEvaluatorProxy
-      )
-    );
-  } else {
-    console.log('SFT evaluator already set in WOWSSftMinter');
-  }
-
-  //
-  // 9.) Check if we have to upgrade the sftEvaluator implementation
-  //
-  if (
-    (await getProxyImplementation(
-      hardhat_re,
-      generatedAddresses.sftEvaluatorProxy
-    )) !== generatedAddresses.sftEvaluator
-  ) {
-    console.log('Upgrading SFT evaluator');
-
-    await catchUnknownSigner(
-      execute(
-        SFT_EVALUATOR_PROXY_CONTRACT,
-        {
-          from: marketingWallet,
-          log: true,
-        },
-        'upgradeTo',
-        generatedAddresses.sftEvaluator
-      )
-    );
-  } else {
-    console.log('Not upgrading SFT evaluator');
   }
 
   //
@@ -571,33 +523,6 @@ const func = async function (hardhat_re) {
     );
   } else {
     console.log('Not upgrading CFIHSC');
-  }
-
-  //
-  // 14.) Set the SFTMinter in SFTE contract if required
-  //
-  try {
-    if (
-      (await SFT_EVALUATOR_INSTANCE.sftMinter()) !==
-      generatedAddresses.sftMinter
-    )
-      throw new Error('Needs update');
-    console.log('SFT minter already set in SFTEvaluator');
-  } catch (e) {
-    console.log('Set SFT minter in SFTE Proxy');
-
-    await catchUnknownSigner(
-      execute(
-        SFT_EVALUATOR_CONTRACT,
-        {
-          from: marketingWallet,
-          to: generatedAddresses.sftEvaluatorProxy,
-          log: true,
-        },
-        'setMinter',
-        generatedAddresses.sftMinter
-      )
-    );
   }
 };
 

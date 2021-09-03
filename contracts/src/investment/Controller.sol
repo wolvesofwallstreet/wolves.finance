@@ -57,7 +57,7 @@ contract Controller is IController, Context, Ownable {
   // Events
   //////////////////////////////////////////////////////////////////////////////
 
-  event FarmRegistered(address indexed farm);
+  event FarmRegistered(address indexed farm, bool paused);
 
   event FarmUpdated(address indexed farm);
 
@@ -66,8 +66,6 @@ contract Controller is IController, Context, Ownable {
   event FarmPaused(address indexed farm, bool pause);
 
   event FarmTransfered(address indexed farm, address indexed to);
-
-  event Rebalanced(address indexed farm);
 
   event Refueled(address indexed farm, uint256 amount);
 
@@ -149,6 +147,13 @@ contract Controller is IController, Context, Ownable {
   }
 
   /**
+   * @dev See {IController-paused}
+   */
+  function paused() external view override returns (bool) {
+    return farms[_msgSender()].paused;
+  }
+
+  /**
    * @dev See {IController-payOutRewards}
    */
   function payOutRewards(address recipient, uint256 amount) external override {
@@ -178,7 +183,7 @@ contract Controller is IController, Context, Ownable {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev registerFarm can be called from outside (for new Farms deployed with
+   * @dev registerFarm2 can be called from outside (for new Farms deployed with
    * this controller) or from transferFarm() call
    *
    * Contracts are active from the time of registering, but to provide rewards,
@@ -196,14 +201,17 @@ contract Controller is IController, Context, Ownable {
    * for external calls
    * @param _rewardFee Fee we take from the reward and distribute through
    * components (1e6 factor)
+   * @param _farmEnd timestamp when farm was disabled (usually 0)
    */
-  function registerFarm(
+  function registerFarm2(
     address _farmAddress,
     uint256 _rewardCap,
     uint256 _rewardPerDuration,
     uint256 _rewardProvided,
-    uint32 _rewardFee
-  ) external {
+    uint32 _rewardFee,
+    uint256 _farmEnd,
+    bool _paused
+  ) public {
     // Validate access
     require(
       _msgSender() == owner() || _msgSender() == previousController,
@@ -218,9 +226,9 @@ contract Controller is IController, Context, Ownable {
     Farm storage farm = farms[_farmAddress];
     if (farm.farmStartedAtBlock > 0) {
       // Re-enable farm if disabled
-      farm.farmEndedAtBlock = 0;
+      farm.farmEndedAtBlock = _farmEnd;
       farm.paused = false;
-      farm.active = true;
+      farm.active = !_paused && _farmEnd == 0;
       farm.rewardCap = _rewardCap;
       farm.rewardFee = _rewardFee;
       farm.rewardPerDuration = _rewardPerDuration;
@@ -250,23 +258,44 @@ contract Controller is IController, Context, Ownable {
       // Insert the new Farm
       farm.nextFarm = farmHead;
       farm.farmStartedAtBlock = block.number;
-      farm.farmEndedAtBlock = 0;
+      farm.farmEndedAtBlock = _farmEnd;
       farm.rewardCap = _rewardCap;
       farm.rewardProvided = _rewardProvided;
       farm.rewardPerDuration = _rewardPerDuration;
       farm.rewardFee = _rewardFee;
-      farm.paused = false;
-      farm.active = true;
+      farm.paused = _paused;
+      farm.active = !_paused && _farmEnd == 0;
       farmHead = _farmAddress;
 
       // Dispatch event
-      emit FarmRegistered(_farmAddress);
+      emit FarmRegistered(_farmAddress, _paused);
     }
+  }
+
+  /*
+   * @dev backwards compatibility, see registerFarm2
+   */
+  function registerFarm(
+    address _farmAddress,
+    uint256 _rewardCap,
+    uint256 _rewardPerDuration,
+    uint256 _rewardProvided,
+    uint32 _rewardFee
+  ) external {
+    registerFarm2(
+      _farmAddress,
+      _rewardCap,
+      _rewardPerDuration,
+      _rewardProvided,
+      _rewardFee,
+      0,
+      false
+    );
   }
 
   /**
    * @dev Note that disabled farms can only be enabled again by calling
-   * registerFarm() with new parameters
+   * registerFarm2() with new parameters
    *
    * This function is meant to finally end a farm.
    *
@@ -320,45 +349,23 @@ contract Controller is IController, Context, Ownable {
    * @param _newController The new controller which receives the farm
    */
   function transferFarm(address _farmAddress, address _newController)
-    public
+    external
     onlyOwner
   {
     // Validate parameters
     require(_newController != address(0), 'newController = 0');
     require(_newController != address(this), 'newController = this');
 
-    // Load state
-    Farm storage farm = farms[_farmAddress];
+    _transferFarm(_farmAddress, _newController);
+  }
 
-    // Validate state
-    require(farm.farmStartedAtBlock > 0, 'Farm not registered');
-
-    // Update state
-    IFarm(_farmAddress).setController(_newController);
-
-    // Register this farm in the new controller
-    Controller(_newController).registerFarm(
-      _farmAddress,
-      farm.rewardCap,
-      farm.rewardPerDuration,
-      farm.rewardProvided,
-      farm.rewardFee
-    );
-
-    // Remove this farm from controller
-    if (_farmAddress == farmHead) {
-      farmHead = farm.nextFarm;
-    } else {
-      address searchAddress = farmHead;
-      while (farms[searchAddress].nextFarm != _farmAddress)
-        searchAddress = farms[searchAddress].nextFarm;
-      farms[searchAddress].nextFarm = farm.nextFarm;
-    }
-
-    delete (farms[_farmAddress]);
-
-    // Dispatch event
-    emit FarmTransfered(_farmAddress, _newController);
+  /**
+   * @dev Unlinks a farm (set controller to 0)
+   *
+   * @param _farmAddress Contract address of farm to transfer
+   */
+  function unlinkFarm(address _farmAddress) external onlyOwner {
+    _transferFarm(_farmAddress, address(0));
   }
 
   /**
@@ -367,8 +374,11 @@ contract Controller is IController, Context, Ownable {
    * @param _newController The new controller which receives the farms
    */
   function transferAllFarms(address _newController) external onlyOwner {
+    require(_newController != address(0), 'newController = 0');
+    require(_newController != address(this), 'newController = this');
+
     while (farmHead != address(0)) {
-      transferFarm(farmHead, _newController);
+      _transferFarm(farmHead, _newController);
     }
   }
 
@@ -395,25 +405,6 @@ contract Controller is IController, Context, Ownable {
   //////////////////////////////////////////////////////////////////////////////
   // Utility functions
   //////////////////////////////////////////////////////////////////////////////
-
-  /**
-   * @dev Allows rebalancing assets inside a farm
-   *
-   * There is currently no active implementation.
-   */
-  function rebalance() external onlyWorker {
-    // Update state
-    address iterAddress = farmHead;
-    while (iterAddress != address(0)) {
-      if (farms[iterAddress].active) {
-        IFarm(iterAddress).rebalance();
-      }
-      iterAddress = farms[iterAddress].nextFarm;
-    }
-
-    // Dispatch event
-    emit Rebalanced(iterAddress);
-  }
 
   /**
    * @dev Refuel all farms which will expire in the next hour
@@ -445,6 +436,7 @@ contract Controller is IController, Context, Ownable {
         // solhint-disable-next-line not-rely-on-time
         block.timestamp + 3600 >= IFarm(iterAddress).periodFinish()
       ) {
+        // Check for reward override
         uint256 i;
         while (i < addresses.length && addresses[i] != iterAddress) ++i;
 
@@ -469,6 +461,21 @@ contract Controller is IController, Context, Ownable {
     require(oneRefueled, 'NOP');
   }
 
+  function weightSlotWeights(
+    address[] calldata _farms,
+    uint256[] calldata slotIds,
+    uint256[] calldata weights
+  ) external onlyWorker {
+    require(
+      _farms.length == slotIds.length && _farms.length == weights.length,
+      'C: Length mismatch'
+    );
+    for (uint256 i = 0; i < _farms.length; ++i) {
+      require(farms[_farms[i]].farmStartedAtBlock != 0, 'C: Invalid farm');
+      IFarm(_farms[i]).weightSlotId(slotIds[i], weights[i]);
+    }
+  }
+
   //////////////////////////////////////////////////////////////////////////////
   // Implementation details
   //////////////////////////////////////////////////////////////////////////////
@@ -478,5 +485,44 @@ contract Controller is IController, Context, Ownable {
    */
   function _checkActive(Farm storage farm) internal {
     farm.active = !(farm.paused || farm.farmEndedAtBlock > 0);
+  }
+
+  function _transferFarm(address _farmAddress, address _newController) private {
+    // Load state
+    Farm storage farm = farms[_farmAddress];
+
+    // Validate state
+    require(farm.farmStartedAtBlock > 0, 'Farm not registered');
+
+    // Update state
+    IFarm(_farmAddress).setController(_newController);
+
+    // Register this farm in the new controller
+    if (_newController != address(0)) {
+      Controller(_newController).registerFarm2(
+        _farmAddress,
+        farm.rewardCap,
+        farm.rewardPerDuration,
+        farm.rewardProvided,
+        farm.rewardFee,
+        farm.farmEndedAtBlock,
+        farm.paused
+      );
+    }
+
+    // Remove this farm from controller
+    if (_farmAddress == farmHead) {
+      farmHead = farm.nextFarm;
+    } else {
+      address searchAddress = farmHead;
+      while (farms[searchAddress].nextFarm != _farmAddress)
+        searchAddress = farms[searchAddress].nextFarm;
+      farms[searchAddress].nextFarm = farm.nextFarm;
+    }
+
+    delete (farms[_farmAddress]);
+
+    // Dispatch event
+    emit FarmTransfered(_farmAddress, _newController);
   }
 }

@@ -278,9 +278,9 @@ contract UniV2StakeFarm is
     emit RewardAdded(reward);
   }
 
-  // We don't have any rebalancing here
+  // We don't have any slot handling
   // solhint-disable-next-line no-empty-blocks
-  function rebalance() external override onlyController {}
+  function weightSlotId(uint256 slotId, uint256 weight) external override {}
 
   // Added to support recovering LP Rewards from other systems to be distributed to holders
   function recoverERC20(address tokenAddress, uint256 tokenAmount)

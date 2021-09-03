@@ -680,11 +680,13 @@ describe('SC NFTs', function () {
     await chai.expect(tx).to.emit(cfolioFarmSCContract, 'AssetAdded').withArgs(
       cryptofolioItemAddressBoiSC, // Recipient
       yPoolBalance, // Amount
-      yPoolBalance // totalAmount
+      yPoolBalance, // totalAmount
+      0 // slotId
     );
     await chai.expect(tx).to.emit(cfolioFarmSCContract, 'ShareAdded').withArgs(
       cryptofolioAddressBoi, // User
-      yPoolBalance.div(2) // Amount
+      yPoolBalance.div(2), // Amount
+      0 // slotId
     );
     await chai
       .expect(tx)
@@ -795,7 +797,7 @@ describe('SC NFTs', function () {
     await chai
       .expect(tx)
       .to.emit(cfolioFarmSCContract, 'ShareRemoved')
-      .withArgs(cryptofolioAddressBoi, yPoolBalance.div(2));
+      .withArgs(cryptofolioAddressBoi, yPoolBalance.div(2), 0);
 
     // Log gas cost
     const receipt = await (await tx).wait();

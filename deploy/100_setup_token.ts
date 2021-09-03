@@ -183,50 +183,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 4.) Call Controller.sol::registerFarm()
-  //     Parameters:
-  //       * farmAddress         The UniV2StakeFarm address
-  //       * rewardCap           15,000 * 1e18 Wei
-  //       * rewardsPerDuration  (5000 * 2 / 52) * 1e18 Wei - we have 2 week duration!
-  //       * rewardProvided      0 Wei
-  //       * rewardFee           2 * 1e4 (0.02 == 2%)
-  //
-  // We can only register the farm into matching Contoller
-
-  const FARM_ADDRESS = generatedAddresses.stakeFarm;
-  const REWARD_CAP = ethers.BigNumber.from('15000000000000000000000');
-  const REWARD_PER_DURATION = ethers.BigNumber.from('192307692300000000000');
-  const REWARD_PROVIDED = 0;
-  const REWARD_FEE = 2 * 1e4;
-
-  if (
-    (await uniV2StakeFarmInstance.controller()) ===
-      controllerInstance.address &&
-    (await controllerInstance.farms(FARM_ADDRESS)).farmStartedAtBlock.isZero()
-  ) {
-    console.log('Register farm with controller');
-
-    await catchUnknownSigner(
-      execute(
-        CONTROLLER_CONTRACT,
-        {
-          from: marketingWallet,
-          log: true,
-        },
-        'registerFarm',
-        FARM_ADDRESS,
-        REWARD_CAP,
-        REWARD_PER_DURATION,
-        REWARD_PROVIDED,
-        REWARD_FEE
-      )
-    );
-  } else {
-    console.log('Farm already registered with controller');
-  }
-
-  //
-  // 5.) If we have a Controller Upgrade, call OldController::transferAllFarms(newController)
+  // 4.) If we have a Controller Upgrade, call OldController::transferAllFarms(newController)
   // !! In deployments a ControllerUpdate.json file is expected with the old Controller
   //
   if (
@@ -249,6 +206,54 @@ const func = async function (hardhat_re) {
     );
   } else {
     console.log('No need to transfer farms');
+  }
+
+  //
+  // 5.) Call Controller.sol::registerFarm2()
+  //     Parameters:
+  //       * farmAddress         The UniV2StakeFarm address
+  //       * rewardCap           15,000 * 1e18 Wei
+  //       * rewardsPerDuration  (5000 * 2 / 52) * 1e18 Wei - we have 2 week duration!
+  //       * rewardProvided      0 Wei
+  //       * rewardFee           2 * 1e4 (0.02 == 2%)
+  //       * farmEndedAtBlock    0
+  //       * paused              false
+  //
+  // We can only register the farm into matching Contoller
+
+  const FARM_ADDRESS = generatedAddresses.stakeFarm;
+  const REWARD_CAP = ethers.BigNumber.from('15000000000000000000000');
+  const REWARD_PER_DURATION = ethers.BigNumber.from('192307692300000000000');
+  const REWARD_PROVIDED = 0;
+  const REWARD_FEE = 2 * 1e4;
+  const FARM_END = 0;
+
+  if (
+    (await uniV2StakeFarmInstance.controller()) ===
+      controllerInstance.address &&
+    (await controllerInstance.farms(FARM_ADDRESS)).farmStartedAtBlock.isZero()
+  ) {
+    console.log('Register farm with controller');
+
+    await catchUnknownSigner(
+      execute(
+        CONTROLLER_CONTRACT,
+        {
+          from: marketingWallet,
+          log: true,
+        },
+        'registerFarm2',
+        FARM_ADDRESS,
+        REWARD_CAP,
+        REWARD_PER_DURATION,
+        REWARD_PROVIDED,
+        REWARD_FEE,
+        FARM_END,
+        false
+      )
+    );
+  } else {
+    console.log('Farm already registered with controller');
   }
 
   //

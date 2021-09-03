@@ -25,6 +25,18 @@ import './interfaces/ICFolioItemBridge.sol';
 import './interfaces/ICFolioItemHandler.sol';
 import './interfaces/ISFTEvaluator.sol';
 
+interface ICFolioFarmDeprecated {
+  /**
+   * @dev Return invested balance of account
+   */
+  function balanceOf(address account) external view returns (uint256);
+
+  /**
+   * @dev Return pending rewards
+   */
+  function earned(address account) external view returns (uint256);
+}
+
 /**
  * @dev CFolioItemHandlerFarm manages CFolioItems, minted in the SFT contract.
  *
@@ -50,6 +62,9 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
   // Route to SFT Minter. Only setup from SFT Minter allowed.
   address public sftMinter;
 
+  // Registered sidechains
+  mapping(address => uint256) public sideChains;
+
   // The TradeFloor contract which provides c-folio NFTs. This TradeFloor
   // contract calls the IMinterCallback interface functions.
   ICFolioItemBridge public immutable cfiBridge;
@@ -70,20 +85,20 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
   // Events
   //////////////////////////////////////////////////////////////////////////////
 
-  /*
-   * @dev Emitted when a reward is updated, either increased or decreased
-   *
-   * @param previousAmount The amount before updating the reward
-   * @param newAmount The amount after updating the reward
-   */
-  event RewardUpdated(uint256 previousAmount, uint256 newAmount);
-
   /**
    * @dev Emitted when a new minter is set by the admin
    *
    * @param minter The new minter
    */
   event NewMinter(address minter);
+
+  /**
+   * @dev Emitted when a new sidechain is registered
+   *
+   * @param sideChain The address of the root bridge
+   * @param slotId The slotId, 0 for disable
+   */
+  event SideChainRegistered(address sideChain, uint256 slotId);
 
   /**
    * @dev Emitted when the contract is destructed
@@ -190,7 +205,7 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
       abi.encodePacked(
         current,
         address(this),
-        cfolioFarm.balanceOf(cfolioItem)
+        cfolioFarm.balancesOf(cfolioItem)
       );
   }
 
@@ -312,6 +327,18 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
   }
 
   /**
+   * @dev See {ICFolioItemHandler-updateRewards}
+   */
+  function updateRewards(uint256 tokenId) external override {
+    require(tokenId.isBaseCard(), 'CFIH: Invalid tokenId');
+
+    address cFolio = sftHolder.tokenIdToAddress(tokenId.toSftTokenId());
+
+    require(cFolio != address(0), 'CFIH: Invalid cfolio');
+    _updateRewards(cFolio, sftEvaluator.rewardRate(tokenId));
+  }
+
+  /**
    * @dev See {ICFolioItemHandler-getRewards}
    *
    * Note: tokenId must be a base SFT card
@@ -380,6 +407,31 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
     }
   }
 
+  /**
+   * @dev See {ICFolioItemHandler-addAssets}
+   */
+  function addAssets(address cFolioItem, uint256 amount) external override {
+    uint256 slotId = sideChains[_msgSender()];
+    require(slotId > 0, 'CFIH: Unregistered bridge');
+
+    cfolioFarm.addAssets(cFolioItem, amount, slotId);
+  }
+
+  /**
+   * @dev See {ICFolioItemHandler-removeAssets}
+   */
+  function removeAssets(address cFolioItem)
+    external
+    override
+    returns (uint256 amount)
+  {
+    uint256 slotId = sideChains[_msgSender()];
+    require(slotId > 0, 'CFIH: Unregistered bridge');
+
+    amount = cfolioFarm.balanceOf(cFolioItem, slotId);
+    cfolioFarm.removeAssets(cFolioItem, amount, slotId);
+  }
+
   //////////////////////////////////////////////////////////////////////////////
   // Internal interface
   //////////////////////////////////////////////////////////////////////////////
@@ -438,6 +490,44 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
     emit NewMinter(newMinter);
   }
 
+  function registerSideChain(address sideChain, uint256 slotId)
+    external
+    onlyAdmin
+  {
+    require(sideChain != address(0), 'CFIH: Invalid');
+    sideChains[sideChain] = slotId;
+
+    // Emit event
+    emit SideChainRegistered(sideChain, slotId);
+  }
+
+  function migrateFrom(
+    ICFolioFarmDeprecated oldFarm,
+    address[] calldata farmers,
+    uint256 totalRewards
+  ) external onlyAdmin {
+    uint256 totalAmount = cfolioFarm.totalSupply();
+
+    for (uint256 i = 0; i < farmers.length; ++i) {
+      uint256 tokenId = sftHolder.addressToTokenId(farmers[i]);
+      if (tokenId != uint256(-1)) {
+        uint256 amount = oldFarm.balanceOf(farmers[i]);
+        uint256 rewards = tokenId.isBaseCard() ? oldFarm.earned(farmers[i]) : 0;
+
+        if (amount > 0 || rewards > 0) {
+          cfolioFarm.migrateSetAccountState(farmers[i], amount, rewards);
+
+          if (tokenId.isBaseCard()) {
+            totalAmount = totalAmount.add(amount);
+            totalRewards = totalRewards.add(rewards);
+          }
+        }
+      }
+    }
+    cfolioFarm.migrateSetGlobalState(totalAmount, totalRewards);
+    log1(bytes32(totalAmount), bytes32(totalRewards));
+  }
+
   //////////////////////////////////////////////////////////////////////////////
   // Minimal ERC1155 implementation (called from SFTBase CFolio)
   //////////////////////////////////////////////////////////////////////////////
@@ -472,7 +562,9 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
 
     // This call originates from the c-folio. We revert if there are investment
     // amounts left for this c-folio address.
-    require(cfolioFarm.balanceOf(_msgSender()) == 0, 'CFIH: Not empty');
+    uint256[] memory balances = cfolioFarm.balancesOf(_msgSender());
+    for (uint256 slotId = 0; slotId < balances.length; ++slotId)
+      require(balances[slotId] == 0, 'CFIH: Not empty');
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -492,34 +584,45 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
     // fits in sensible gas limits.
     require(length <= 100, 'CFIH: Too many items');
 
+    // Get number of existing sidechain slots
+    uint256 farmSlots = cfolioFarm.slotCount();
+
     // Calculate new reward amount
-    uint256 newRewardAmount = 0;
+    uint256[] memory newRewardAmount = new uint256[](farmSlots);
     for (uint256 i = 0; i < length; ++i) {
       address secondaryCFolio = sftHolder.tokenIdToAddress(tokenIds[i]);
       require(secondaryCFolio != address(0), 'CFIH: Invalid tokenId');
-      if (IWOWSCryptofolio(secondaryCFolio)._tradefloors(0) == address(this))
-        newRewardAmount = newRewardAmount.add(
-          cfolioFarm.balanceOf(secondaryCFolio)
-        );
+      if (IWOWSCryptofolio(secondaryCFolio)._tradefloors(0) == address(this)) {
+        uint256[] memory amounts = cfolioFarm.balancesOf(secondaryCFolio);
+        for (uint256 slotId = 0; slotId < farmSlots; ++slotId)
+          newRewardAmount[slotId] = newRewardAmount[slotId].add(
+            amounts[slotId]
+          );
+      }
     }
-    newRewardAmount = newRewardAmount.mul(rate).div(1E6);
 
-    // Calculate existing reward amount
-    uint256 exitingRewardAmount = cfolioFarm.balanceOf(cfolio);
+    for (uint256 slotId = 0; slotId < farmSlots; ++slotId) {
+      newRewardAmount[slotId] = newRewardAmount[slotId].mul(rate).div(1E6);
 
-    // Compare amounts and add/remove shares
-    if (newRewardAmount > exitingRewardAmount) {
-      // Update state
-      cfolioFarm.addShares(cfolio, newRewardAmount.sub(exitingRewardAmount));
+      // Calculate existing reward amount
+      uint256 exitingRewardAmount = cfolioFarm.balanceOf(cfolio, slotId);
 
-      // Dispatch event
-      emit RewardUpdated(exitingRewardAmount, newRewardAmount);
-    } else if (newRewardAmount < exitingRewardAmount) {
-      // Update state
-      cfolioFarm.removeShares(cfolio, exitingRewardAmount.sub(newRewardAmount));
-
-      // Dispatch event
-      emit RewardUpdated(exitingRewardAmount, newRewardAmount);
+      // Compare amounts and add/remove shares
+      if (newRewardAmount[slotId] > exitingRewardAmount) {
+        // Update state
+        cfolioFarm.addShares(
+          cfolio,
+          newRewardAmount[slotId].sub(exitingRewardAmount),
+          slotId
+        );
+      } else if (newRewardAmount[slotId] < exitingRewardAmount) {
+        // Update state
+        cfolioFarm.removeShares(
+          cfolio,
+          exitingRewardAmount.sub(newRewardAmount[slotId]),
+          slotId
+        );
+      }
     }
   }
 

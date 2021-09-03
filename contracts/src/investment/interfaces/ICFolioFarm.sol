@@ -15,6 +15,11 @@ pragma solidity 0.7.6;
  */
 interface ICFolioFarm {
   /**
+   * @dev Return number of slots
+   */
+  function slotCount() external view returns (uint256);
+
+  /**
    * @dev Return total invested balance
    */
   function totalSupply() external view returns (uint256);
@@ -22,7 +27,15 @@ interface ICFolioFarm {
   /**
    * @dev Return invested balance of account
    */
-  function balanceOf(address account) external view returns (uint256);
+  function balanceOf(address account, uint256 slotId)
+    external
+    view
+    returns (uint256);
+
+  /**
+   * @dev Return invested balances per slot of account
+   */
+  function balancesOf(address account) external view returns (uint256[] memory);
 
   /**
    * @dev Return total, balances[account], rewardDuration, rewardForDuration, earned[account]
@@ -32,22 +45,38 @@ interface ICFolioFarm {
   /**
    * @dev Increase amount of non-rewarded asset
    */
-  function addAssets(address account, uint256 amount) external;
+  function addAssets(
+    address account,
+    uint256 amount,
+    uint256 slotId
+  ) external;
 
   /**
    * @dev Remove amount of previous added assets
    */
-  function removeAssets(address account, uint256 amount) external;
+  function removeAssets(
+    address account,
+    uint256 amount,
+    uint256 slotId
+  ) external;
 
   /**
    * @dev Increase amount of shares and earn rewards
    */
-  function addShares(address account, uint256 amount) external;
+  function addShares(
+    address account,
+    uint256 amount,
+    uint256 slotId
+  ) external;
 
   /**
    * @dev Remove amount of previous added shares, rewards will not be claimed
    */
-  function removeShares(address account, uint256 amount) external;
+  function removeShares(
+    address account,
+    uint256 amount,
+    uint256 slotId
+  ) external;
 
   /**
    * @dev Claim rewards harvested during reward time
@@ -55,9 +84,21 @@ interface ICFolioFarm {
   function getReward(address account, address rewardRecipient) external;
 
   /**
-   * @dev Remove all shares and call getRewards() in a single step
+   * @dev Migrate shares / assets and rewards per account
    */
-  function exit(address account, address rewardRecipient) external;
+  function migrateSetAccountState(
+    address account_,
+    uint256 amount_,
+    uint256 earned_
+  ) external;
+
+  /**
+   * @dev Finalize migration, set summed amounts
+   */
+  function migrateSetGlobalState(
+    uint256 totalSupply_,
+    uint256 availableRewards_
+  ) external;
 }
 
 /**
