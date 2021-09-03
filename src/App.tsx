@@ -13,7 +13,7 @@ import './components/theme/button/wolve_button.css';
 import './components/theme/form/input/wolve_input.css';
 
 import React from 'react';
-import { BrowserRouter, Route, Switch } from 'react-router-dom';
+import { BrowserRouter, Redirect, Route, Switch } from 'react-router-dom';
 
 import CFolioInvest from './components/CFolioInvest';
 import CFolioItemSfts from './components/CFolioItemSfts';
@@ -26,9 +26,26 @@ import Page4 from './components/page4';
 import { PageStatus } from './components/pageStatus';
 import Stake from './components/stake';
 import WolfToast from './components/toast/wolftoast';
-import { StoreContainer } from './stores/store';
+import { CONNECTION_CHANGED } from './stores/constants';
+import { ConnectResult, StoreClasses, StoreContainer } from './stores/store';
 
-class App extends React.Component {
+type APP_STATE = {
+  network?: string;
+};
+
+class App extends React.Component<unknown, APP_STATE> {
+  componentDidMount(): void {
+    StoreClasses.emitter.on(CONNECTION_CHANGED, this.setNetwork);
+  }
+
+  componentWillUnmount(): void {
+    StoreClasses.emitter.off(CONNECTION_CHANGED, this.setNetwork);
+  }
+
+  setNetwork = (result: ConnectResult): void => {
+    if (result.type === 'event') this.setState({ network: result.networkName });
+  };
+
   render(): JSX.Element {
     return (
       <div className="App">
@@ -36,25 +53,36 @@ class App extends React.Component {
           <StoreContainer>
             <WolfToast />
             <Route component={Header} />
-            <Switch>
-              <Route path="/stake" component={Stake} />
-              <Route
-                path="/shop"
-                render={(props) => <Page3 {...props} display={'shop'} />}
-              />
-              <Route
-                path="/my"
-                render={(props) => <Page3 {...props} display={'my'} />}
-              />
-              <Route path="/detail" component={Page4} />
-              <Route path="/status" component={PageStatus} />
+            {this.state?.network?.startsWith('matic') ? (
+              <Switch>
+                <Route path="/cfolio-invest" component={CFolioInvest} />
+                <Route
+                  path="/my"
+                  render={(props) => <Page3 {...props} display={'my'} />}
+                />
+                <Redirect to="/my?type=myPack&levelId=0" />
+              </Switch>
+            ) : (
+              <Switch>
+                <Route path="/stake" component={Stake} />
+                <Route
+                  path="/shop"
+                  render={(props) => <Page3 {...props} display={'shop'} />}
+                />
+                <Route
+                  path="/my"
+                  render={(props) => <Page3 {...props} display={'my'} />}
+                />
+                <Route path="/detail" component={Page4} />
+                <Route path="/status" component={PageStatus} />
 
-              <Route path="/cfolio-sfts" component={CFolioItemSfts} />
-              <Route path="/cfolio-invest" component={CFolioInvest} />
+                <Route path="/cfolio-sfts" component={CFolioItemSfts} />
+                <Route path="/cfolio-invest" component={CFolioInvest} />
 
-              <Route path="/c_folio_manager" component={CFolioManager} />
-              <Route component={Page1} />
-            </Switch>
+                <Route path="/c_folio_manager" component={CFolioManager} />
+                <Route component={Page1} />
+              </Switch>
+            )}
             <Footer />
           </StoreContainer>
         </BrowserRouter>

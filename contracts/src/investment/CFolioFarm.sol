@@ -45,9 +45,10 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
   // Unique name of this farm instance, used in controller
   string private _farmName;
 
-  uint256 private _totalSupply;
+  uint256[] private _totalSupplys;
+  uint256[] public slotWeights;
 
-  mapping(address => uint256) private _balances;
+  mapping(address => mapping(uint256 => uint256)) private _balances;
 
   // The address of the controller
   IController public override controller;
@@ -58,13 +59,23 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
 
   event RewardAdded(uint256 reward);
 
-  event AssetAdded(address indexed user, uint256 amount, uint256 totalAmount);
+  event AssetAdded(
+    address indexed user,
+    uint256 amount,
+    uint256 totalAmount,
+    uint256 slotId
+  );
 
-  event AssetRemoved(address indexed user, uint256 amount, uint256 totalAmount);
+  event AssetRemoved(
+    address indexed user,
+    uint256 amount,
+    uint256 totalAmount,
+    uint256 slotId
+  );
 
-  event ShareAdded(address indexed user, uint256 amount);
+  event ShareAdded(address indexed user, uint256 amount, uint256 slotId);
 
-  event ShareRemoved(address indexed user, uint256 amount);
+  event ShareRemoved(address indexed user, uint256 amount, uint256 slotId);
 
   event RewardPaid(
     address indexed account,
@@ -75,6 +86,8 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
   event RewardsDurationUpdated(uint256 newDuration);
 
   event ControllerChanged(address newController);
+
+  event SlotWeightChanged(uint256 slotId, uint256 newWeight);
 
   //////////////////////////////////////////////////////////////////////////////
   // Modifiers
@@ -116,6 +129,9 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
     // Initialize state
     _farmName = _name;
     controller = IController(_controller);
+    // TotalSupply for slot 0
+    _totalSupplys.push(0);
+    slotWeights.push(1E18);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -127,11 +143,28 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
   }
 
   function totalSupply() external view override returns (uint256) {
-    return _totalSupply;
+    return _totalSupply();
   }
 
-  function balanceOf(address account) external view override returns (uint256) {
-    return _balances[account];
+  function balanceOf(address account, uint256 slotId)
+    external
+    view
+    override
+    returns (uint256)
+  {
+    return _balances[account][slotId];
+  }
+
+  function balancesOf(address account)
+    external
+    view
+    override
+    returns (uint256[] memory result)
+  {
+    uint256 _slotCount = slotWeights.length;
+    result = new uint256[](_slotCount);
+    for (uint256 slotId = 0; slotId < _slotCount; ++slotId)
+      result[slotId] = _balances[account][slotId];
   }
 
   function lastTimeRewardApplicable() public view returns (uint256) {
@@ -140,7 +173,8 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
   }
 
   function rewardPerToken() public view returns (uint256) {
-    if (_totalSupply == 0) {
+    uint256 ts = _totalSupply();
+    if (ts == 0) {
       return rewardPerTokenStored;
     }
 
@@ -150,13 +184,13 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
           .sub(lastUpdateTime)
           .mul(rewardRate)
           .mul(1e18)
-          .div(_totalSupply)
+          .div(ts)
       );
   }
 
   function earned(address account) public view returns (uint256) {
     return
-      _balances[account]
+      _balance(account)
         .mul(rewardPerToken().sub(userRewardPerTokenPaid[account]))
         .div(1e18)
         .add(rewards[account]);
@@ -173,8 +207,8 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
     returns (uint256[5] memory)
   {
     uint256[5] memory result = [
-      _totalSupply,
-      _balances[account],
+      _totalSupply(),
+      _balance(account),
       rewardsDuration,
       rewardRate.mul(rewardsDuration),
       earned(account)
@@ -182,78 +216,84 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
     return result;
   }
 
+  function slotCount() external view override returns (uint256) {
+    return slotWeights.length;
+  }
+
   //////////////////////////////////////////////////////////////////////////////
   // Mutators
   //////////////////////////////////////////////////////////////////////////////
 
-  function addAssets(address account, uint256 amount)
-    external
-    override
-    onlyOwner
-  {
+  function addAssets(
+    address account,
+    uint256 amount,
+    uint256 slotId
+  ) external override onlyOwner {
     // Validate parameters
     require(amount > 0, 'CFolioFarm: Cannot add 0');
+    require(!controller.paused(), 'CFolioFarm: Controller paused');
 
     // Update state
-    _balances[account] = _balances[account].add(amount);
+    _balances[account][slotId] = _balances[account][slotId].add(amount);
 
     // Dispatch event
-    emit AssetAdded(account, amount, _balances[account]);
+    emit AssetAdded(account, amount, _balances[account][slotId], slotId);
   }
 
-  function removeAssets(address account, uint256 amount)
-    external
-    override
-    onlyOwner
-  {
+  function removeAssets(
+    address account,
+    uint256 amount,
+    uint256 slotId
+  ) external override onlyOwner {
     // Validate parameters
     require(amount > 0, 'CFolioFarm: Cannot remove 0');
 
     // Update state
-    _balances[account] = _balances[account].sub(amount);
+    _balances[account][slotId] = _balances[account][slotId].sub(amount);
 
     // Dispatch event
-    emit AssetRemoved(account, amount, _balances[account]);
+    emit AssetRemoved(account, amount, _balances[account][slotId], slotId);
   }
 
-  function addShares(address account, uint256 amount)
-    external
-    override
-    onlyOwner
-    updateReward(account)
-  {
+  function addShares(
+    address account,
+    uint256 amount,
+    uint256 slotId
+  ) external override onlyOwner updateReward(account) {
     // Validate parameters
     require(amount > 0, 'CFolioFarm: Cannot add 0');
+    require(!controller.paused(), 'CFolioFarm: Controller paused');
+    require(slotId < slotWeights.length, 'CFolioFarm: Invalid slotId');
 
     // Update state
-    _totalSupply = _totalSupply.add(amount);
-    _balances[account] = _balances[account].add(amount);
+    _totalSupplys[slotId] = _totalSupplys[slotId].add(amount);
+    _balances[account][slotId] = _balances[account][slotId].add(amount);
 
     // Notify controller
     controller.onDeposit(amount);
 
     // Dispatch event
-    emit ShareAdded(account, amount);
+    emit ShareAdded(account, amount, slotId);
   }
 
-  function removeShares(address account, uint256 amount)
-    public
-    override
-    onlyOwner
-    updateReward(account)
-  {
+  function removeShares(
+    address account,
+    uint256 amount,
+    uint256 slotId
+  ) public override onlyOwner updateReward(account) {
     // Validate parameters
     require(amount > 0, 'CFolioFarm: Cannot remove 0');
+    require(slotId < slotWeights.length, 'CFolioFarm: Invalid slotId');
 
     // Update state
-    _totalSupply = _totalSupply.sub(amount);
-    _balances[account] = _balances[account].sub(amount);
+    _totalSupplys[slotId] = _totalSupplys[slotId].sub(amount);
+    _balances[account][slotId] = _balances[account][slotId].sub(amount);
 
     // Notify controller
     controller.onWithdraw(amount);
 
     // Dispatch event
-    emit ShareRemoved(account, amount);
+    emit ShareRemoved(account, amount, slotId);
   }
 
   function getReward(address account, address rewardRecipient)
@@ -278,13 +318,21 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
     }
   }
 
-  function exit(address account, address rewardRecipient)
+  function weightSlotId(uint256 slotId, uint256 weight)
     external
     override
-    onlyOwner
+    onlyController
+    updateReward(address(0))
   {
-    removeShares(account, _balances[account]);
-    getReward(account, rewardRecipient);
+    uint256 _slotCount = slotWeights.length;
+    require(slotId <= _slotCount, 'CFolioFarm: Invalid slotId');
+    if (slotId == _slotCount) {
+      _totalSupplys.push(0);
+      slotWeights.push(weight);
+    } else slotWeights[slotId] = weight;
+
+    // Emit event
+    emit SlotWeightChanged(slotId, weight);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -301,6 +349,10 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
 
     // Dispatch event
     emit ControllerChanged(newController);
+
+    if (newController == address(0))
+      // slither-disable-next-line suicidal
+      selfdestruct(payable(msg.sender));
   }
 
   function notifyRewardAmount(uint256 reward)
@@ -348,12 +400,6 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
   }
 
   /**
-   * @dev We don't have any rebalancing here
-   */
-  // solhint-disable-next-line no-empty-blocks
-  function rebalance() external override onlyController {}
-
-  /**
    * @dev Added to support recovering LP Rewards from other systems to be
    * distributed to holders
    */
@@ -383,5 +429,21 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
 
     // Dispatch event
     emit RewardsDurationUpdated(rewardsDuration);
+  }
+
+  function _totalSupply() private view returns (uint256 ts) {
+    ts = 0;
+    for (uint256 i = 0; i < slotWeights.length; ++i)
+      ts += _totalSupplys[i] * slotWeights[i];
+    ts /= 1E18;
+  }
+
+  function _balance(address account) private view returns (uint256 balance) {
+    balance = 0;
+    mapping(uint256 => uint256) storage balances = _balances[account];
+
+    for (uint256 i = 0; i < slotWeights.length; ++i)
+      balance += balances[i] * slotWeights[i];
+    balance /= 1e18;
   }
 }

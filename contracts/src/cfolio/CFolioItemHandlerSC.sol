@@ -134,7 +134,7 @@ contract CFolioItemHandlerSC is CFolioItemHandlerFarm {
     //
     // NOTE: {addAssets} must only be called from Investment CFolios. This
     // call is allowed without any investment.
-    _cfolioFarm.addAssets(itemCFolio, afterBalance.sub(beforeBalance));
+    _cfolioFarm.addAssets(itemCFolio, afterBalance.sub(beforeBalance), 0);
   }
 
   /**
@@ -206,7 +206,7 @@ contract CFolioItemHandlerSC is CFolioItemHandlerFarm {
     // Record assets in Farm contract. They don't earn rewards.
     //
     // NOTE: {removeAssets} must only be called from Investment CFolios.
-    _cfolioFarm.removeAssets(itemCFolio, balanceBefore.sub(balanceAfter));
+    _cfolioFarm.removeAssets(itemCFolio, balanceBefore.sub(balanceAfter), 0);
   }
 
   /**
@@ -239,11 +239,11 @@ contract CFolioItemHandlerSC is CFolioItemHandlerFarm {
     external
     view
     override
-    returns (uint256[] memory)
+    returns (uint256[] memory result)
   {
-    uint256[] memory result = new uint256[](5);
+    result = new uint256[](5);
 
-    uint256 wrappedAmount = _cfolioFarm.balanceOf(cfolioItem);
+    uint256 wrappedAmount = _cfolioFarm.balanceOf(cfolioItem, 0);
 
     for (uint256 i = 0; i < 4; ++i) {
       result[i] = curveYDeposit.calc_withdraw_one_coin(
@@ -253,8 +253,6 @@ contract CFolioItemHandlerSC is CFolioItemHandlerFarm {
     }
 
     result[4] = wrappedAmount;
-
-    return result;
   }
 
   //////////////////////////////////////////////////////////////////////////////

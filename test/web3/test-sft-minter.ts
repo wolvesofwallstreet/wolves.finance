@@ -579,7 +579,7 @@ describe('SFT minter', function () {
     const { cfolioFarmLPContract } = contracts;
 
     // Check LP balance of investment SFT
-    const balance = await cfolioFarmLPContract.balanceOf(cfolioItemAddress1);
+    const balance = await cfolioFarmLPContract.balanceOf(cfolioItemAddress1, 0);
     chai.expect(balance).to.equal(lpBalance);
   });
 
@@ -644,7 +644,7 @@ describe('SFT minter', function () {
     const { cfolioFarmLPContract } = contracts;
 
     // Check LP balance of investment SFT
-    const balance = await cfolioFarmLPContract.balanceOf(cfolioItemAddress2);
+    const balance = await cfolioFarmLPContract.balanceOf(cfolioItemAddress2, 0);
     chai.expect(balance).to.equal(0);
   });
 });

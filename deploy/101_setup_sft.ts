@@ -22,6 +22,8 @@ const SFT_MINTER_PROXY_CONTRACT = 'WOWSSftMinterProxy';
 const SFT_MINTER_UPDATE_CONTRACT = 'WOWSSftMinterUpdate';
 const REWARD_HANDLER_CONTRACT = 'RewardHandler';
 const BOOSTER_CONTRACT = 'Booster';
+const SFT_EVALUATOR_CONTRACT = 'SFTEvaluator';
+const SFT_EVALUATOR_PROXY_CONTRACT = 'SFTEvaluatorProxy';
 
 // keccak-256("eip1967.proxy.implementation") - 1
 const UPGRADE_PROXY_IMPLEMENTATION_SLOT =
@@ -87,6 +89,11 @@ const func = async function (hardhat_re) {
   const boosterInstance = await hardhat_re.ethers.getContractAt(
     BOOSTER_CONTRACT,
     generatedAddresses.boosterProxy
+  );
+  // SFTEvaluator on SFTEvaluator proxy address
+  const SFT_EVALUATOR_INSTANCE = await hardhat_re.ethers.getContractAt(
+    SFT_EVALUATOR_CONTRACT,
+    generatedAddresses.sftEvaluatorProxy
   );
 
   //////////////////////////////////////////////////////////////////////////////
@@ -306,6 +313,84 @@ const func = async function (hardhat_re) {
         },
         'setSftHolder',
         generatedAddresses.sftHolderProxy
+      )
+    );
+  }
+
+  //
+  // 10.) Call WowsSFTMinter.sol::setSFTEvaluator(sftEvaluatorProxy)
+  //
+
+  if (
+    (await SFT_MINTER_INSTANCE.sftEvaluator()) !==
+    generatedAddresses.sftEvaluatorProxy
+  ) {
+    console.log('Setting SFT evaluator in WOWSSftMinter');
+
+    await catchUnknownSigner(
+      execute(
+        SFT_MINTER_CONTRACT,
+        {
+          from: marketingWallet,
+          log: true,
+        },
+        'setSFTEvaluator',
+        generatedAddresses.sftEvaluatorProxy
+      )
+    );
+  } else {
+    console.log('SFT evaluator already set in WOWSSftMinter');
+  }
+
+  //
+  // 11.) Check if we have to upgrade the sftEvaluator implementation
+  //
+  if (
+    (await getProxyImplementation(
+      hardhat_re,
+      generatedAddresses.sftEvaluatorProxy
+    )) !== generatedAddresses.sftEvaluator
+  ) {
+    console.log('Upgrading SFT evaluator');
+
+    await catchUnknownSigner(
+      execute(
+        SFT_EVALUATOR_PROXY_CONTRACT,
+        {
+          from: marketingWallet,
+          log: true,
+        },
+        'upgradeTo',
+        generatedAddresses.sftEvaluator
+      )
+    );
+  } else {
+    console.log('Not upgrading SFT evaluator');
+  }
+
+  //
+  // 12.) Set the SFTMinter in SFTE contract if required
+  //
+  try {
+    if (
+      (await SFT_EVALUATOR_INSTANCE.sftMinter()) !==
+      generatedAddresses.sftMinter
+    )
+      throw new Error('Needs update');
+    console.log('SFT minter already set in SFTEvaluator');
+  } catch (e) {
+    console.log('Set SFT minter in SFTE Proxy');
+
+    await catchUnknownSigner(
+      execute(
+        SFT_EVALUATOR_CONTRACT,
+        {
+          from: marketingWallet,
+          to: generatedAddresses.sftEvaluatorProxy,
+          log: true,
+        },
+        'setMinter',
+        generatedAddresses.sftMinter
       )
     );
   }

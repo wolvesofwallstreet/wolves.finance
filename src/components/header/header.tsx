@@ -146,68 +146,87 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
     const query = new URLSearchParams(location.search);
     const type = query.get('type');
     const levelId = query.get('levelId') || 0;
-    const result = [
-      /*{
+    const result = StoreClasses.store.networkName.startsWith('matic')
+      ? [
+          {
+            id: 'BOIS BOARDROOMS',
+            to: '/wolf_trade_floor-1',
+            disabled: location.pathname === '/wolf_trade_floor',
+            dropdownItems: [
+              {
+                id: t('header.yearnInvest'),
+                to: '/cfolio-invest?type=yearnInvestment',
+              },
+            ],
+          },
+          {
+            id: t('header.myPack'),
+            to: '/my?type=myPack&levelId=' + levelId,
+            disabled: location.pathname === '/my',
+          },
+        ]
+      : [
+          /*{
         id: t('header.home'),
         to: '/',
         disabled: location.pathname === '/',
       },*/
-      {
-        id: 'WOLF TRADE FLOOR',
-        to: '/wolf_trade_floor-1',
-        disabled: location.pathname === '/wolf_trade_floor',
-        dropdownItems: [
           {
-            id: t('header.wolvesCf'),
-            to: '/shop?type=wolves&levelId=' + levelId,
-            disabled: type === 'wolves',
+            id: 'WOLF TRADE FLOOR',
+            to: '/wolf_trade_floor-1',
+            disabled: location.pathname === '/wolf_trade_floor',
+            dropdownItems: [
+              {
+                id: t('header.wolvesCf'),
+                to: '/shop?type=wolves&levelId=' + levelId,
+                disabled: type === 'wolves',
+              },
+              {
+                id: t('header.buyStake'),
+                to: '/cfolio-sfts?type=lpInvestment',
+              },
+              {
+                id: t('header.stakeInvest'),
+                to: '/cfolio-invest?type=lpInvestment',
+              },
+            ],
           },
           {
-            id: t('header.buyStake'),
-            to: '/cfolio-sfts?type=lpInvestment',
+            id: 'BOIS BOARDROOMS',
+            to: '/wolf_trade_floor-1',
+            disabled: location.pathname === '/wolf_trade_floor',
+            dropdownItems: [
+              {
+                id: t('header.boisCf'),
+                to: '/shop?type=bois&levelId=' + levelId,
+                disabled: type === 'bois',
+              },
+              {
+                id: t('header.buyYearn'),
+                to: '/cfolio-sfts?type=yearnInvestment',
+              },
+              {
+                id: t('header.yearnInvest'),
+                to: '/cfolio-invest?type=yearnInvestment',
+              },
+            ],
           },
           {
-            id: t('header.stakeInvest'),
-            to: '/cfolio-invest?type=lpInvestment',
-          },
-        ],
-      },
-      {
-        id: 'BOIS BOARDROOMS',
-        to: '/wolf_trade_floor-1',
-        disabled: location.pathname === '/wolf_trade_floor',
-        dropdownItems: [
-          {
-            id: t('header.boisCf'),
-            to: '/shop?type=bois&levelId=' + levelId,
-            disabled: type === 'bois',
+            id: t('header.myPack'),
+            to: '/my?type=myPack&levelId=' + levelId,
+            disabled: location.pathname === '/my',
           },
           {
-            id: t('header.buyYearn'),
-            to: '/cfolio-sfts?type=yearnInvestment',
+            id: 'C-FOLIO MANAGER',
+            to: '/c_folio_manager',
+            disabled: location.pathname === '/c_folio_manager',
           },
           {
-            id: t('header.yearnInvest'),
-            to: '/cfolio-invest?type=yearnInvestment',
+            id: t('header.stake'),
+            to: '/stake',
+            disabled: location.pathname === '/stake',
           },
-        ],
-      },
-      {
-        id: t('header.myPack'),
-        to: '/my?type=myPack&levelId=' + levelId,
-        disabled: location.pathname === '/my',
-      },
-      {
-        id: 'C-FOLIO MANAGER',
-        to: '/c_folio_manager',
-        disabled: location.pathname === '/c_folio_manager',
-      },
-      {
-        id: t('header.stake'),
-        to: '/stake',
-        disabled: location.pathname === '/stake',
-      },
-    ];
+        ];
     return result;
   }
 

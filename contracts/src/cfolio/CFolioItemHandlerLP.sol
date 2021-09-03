@@ -68,7 +68,7 @@ contract CFolioItemHandlerLP is CFolioItemHandlerFarm {
     // Record assets in the Farm contract. They don't earn rewards.
     //
     // NOTE: {addAssets} must only be called from investment CFolios.
-    _cfolioFarm.addAssets(itemCFolio, amounts[0]);
+    _cfolioFarm.addAssets(itemCFolio, amounts[0], 0);
   }
 
   /**
@@ -84,7 +84,7 @@ contract CFolioItemHandlerLP is CFolioItemHandlerFarm {
     // Record assets in Farm contract. They don't earn rewards.
     //
     // NOTE: {removeAssets} must only be called from Investment CFolios.
-    _cfolioFarm.removeAssets(itemCFolio, amounts[0]);
+    _cfolioFarm.removeAssets(itemCFolio, amounts[0], 0);
 
     // Transfer LP token from this contract.
     stakingToken.safeTransfer(_msgSender(), amounts[0]);
@@ -114,12 +114,8 @@ contract CFolioItemHandlerLP is CFolioItemHandlerFarm {
     external
     view
     override
-    returns (uint256[] memory)
+    returns (uint256[] memory result)
   {
-    uint256[] memory result = new uint256[](1);
-
-    result[0] = _cfolioFarm.balanceOf(cfolioItem);
-
-    return result;
+    result = _cfolioFarm.balancesOf(cfolioItem);
   }
 }

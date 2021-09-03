@@ -479,7 +479,7 @@ describe('LP NFTs', function () {
     await chai
       .expect(tx)
       .to.emit(cfolioFarmLPContract, 'ShareAdded')
-      .withArgs(cryptofolioAddressWolf, lpBalance.div(2));
+      .withArgs(cryptofolioAddressWolf, lpBalance.div(2), 0);
 
     // Log gas cost
     const receipt = await (await tx).wait();
@@ -500,7 +500,8 @@ describe('LP NFTs', function () {
     await chai.expect(tx).to.emit(cfolioFarmLPContract, 'AssetAdded').withArgs(
       cryptofolioItemAddressWolfLP, // Recipient
       lpBalance, // Amount
-      lpBalance // totalAmount
+      lpBalance, // totalAmount
+      0 // slotId
     );
   });
 
@@ -550,7 +551,7 @@ describe('LP NFTs', function () {
     await chai
       .expect(tx)
       .to.emit(cfolioFarmLPContract, 'ShareRemoved')
-      .withArgs(cryptofolioAddressWolf, lpBalance.div(2));
+      .withArgs(cryptofolioAddressWolf, lpBalance.div(2), 0);
 
     // Log gas cost
     const receipt = await (await tx).wait();
