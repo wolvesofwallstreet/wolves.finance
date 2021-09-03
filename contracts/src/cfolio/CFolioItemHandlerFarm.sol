@@ -63,7 +63,7 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
   address public sftMinter;
 
   // Registered sidechains
-  mapping(address => uint256) public sideChains;
+  mapping(address => mapping(uint256 => uint256)) public sideChains;
 
   // The TradeFloor contract which provides c-folio NFTs. This TradeFloor
   // contract calls the IMinterCallback interface functions.
@@ -410,8 +410,12 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
   /**
    * @dev See {ICFolioItemHandler-addAssets}
    */
-  function addAssets(address cFolioItem, uint256 amount) external override {
-    uint256 slotId = sideChains[_msgSender()];
+  function addAssets(
+    address cFolioItem,
+    uint256 sideChainSlotId,
+    uint256 amount
+  ) external override {
+    uint256 slotId = sideChains[_msgSender()][sideChainSlotId];
     require(slotId > 0, 'CFIH: Unregistered bridge');
 
     cfolioFarm.addAssets(cFolioItem, amount, slotId);
@@ -420,12 +424,12 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
   /**
    * @dev See {ICFolioItemHandler-removeAssets}
    */
-  function removeAssets(address cFolioItem)
+  function removeAssets(address cFolioItem, uint256 sideChainSlotId)
     external
     override
     returns (uint256 amount)
   {
-    uint256 slotId = sideChains[_msgSender()];
+    uint256 slotId = sideChains[_msgSender()][sideChainSlotId];
     require(slotId > 0, 'CFIH: Unregistered bridge');
 
     amount = cfolioFarm.balanceOf(cFolioItem, slotId);
@@ -490,12 +494,13 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
     emit NewMinter(newMinter);
   }
 
-  function registerSideChain(address sideChain, uint256 slotId)
-    external
-    onlyAdmin
-  {
+  function registerSideChain(
+    address sideChain,
+    uint256 sideChainSlotId,
+    uint256 slotId
+  ) external onlyAdmin {
     require(sideChain != address(0), 'CFIH: Invalid');
-    sideChains[sideChain] = slotId;
+    sideChains[sideChain][sideChainSlotId] = slotId;
 
     // Emit event
     emit SideChainRegistered(sideChain, slotId);

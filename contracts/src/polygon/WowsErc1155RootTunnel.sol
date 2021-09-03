@@ -38,6 +38,12 @@ contract WowsERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder {
   ISFTEvaluator private immutable sftEvaluator_;
 
   //////////////////////////////////////////////////////////////////////////////
+  // state
+  //////////////////////////////////////////////////////////////////////////////
+
+  bool public mapped;
+
+  //////////////////////////////////////////////////////////////////////////////
   // Initialization
   //////////////////////////////////////////////////////////////////////////////
 
@@ -60,9 +66,13 @@ contract WowsERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder {
     sftContract_ = IWOWSERC1155(_sftContract);
     cfiBridge_ = _cfiBridge;
     sftEvaluator_ = ISFTEvaluator(_sftEvaluator);
+  }
 
-    // MAP_TOKEN, encode(rootToken,uri)
-    bytes memory message = abi.encode(MAP_TOKEN, abi.encode(_rootToken));
+  function initialize() external {
+    require(!mapped, 'RT: Already mapped');
+    mapped = true;
+
+    bytes memory message = abi.encode(MAP_TOKEN, abi.encode(rootToken_));
     _sendMessageToChild(message);
   }
 
@@ -219,7 +229,7 @@ contract WowsERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder {
     require(cfolioItem != address(0), 'RT: Invalid cfolioItem');
     address handler = IWOWSCryptofolio(cfolioItem)._tradefloors(0);
 
-    uint256 amount = ICFolioItemHandler(handler).removeAssets(cfolioItem);
+    uint256 amount = ICFolioItemHandler(handler).removeAssets(cfolioItem, 0);
     if (amount > 0) {
       // Currently only one CFIH supported
       if (updateHandler[0] == address(0)) updateHandler[0] = handler;
@@ -286,7 +296,7 @@ contract WowsERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder {
       require(cfolioItem != address(0), 'RT: Invalid cfolioItem');
       address handler = IWOWSCryptofolio(cfolioItem)._tradefloors(0);
 
-      ICFolioItemHandler(handler).addAssets(cfolioItem, amount);
+      ICFolioItemHandler(handler).addAssets(cfolioItem, 0, amount);
       // Currently only one CFIH supported
       if (updateHandler[0] == address(0)) updateHandler[0] = handler;
       else require(updateHandler[0] == handler, 'RT: Only 1 handler');

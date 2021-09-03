@@ -126,7 +126,11 @@ interface ICFolioItemHandler is ICFolioItemCallback {
    * @param cFolioItem The item which has arrived
    * @param amount The amount of tokens which arrived
    */
-  function addAssets(address cFolioItem, uint256 amount) external;
+  function addAssets(
+    address cFolioItem,
+    uint256 sideChainSlotId,
+    uint256 amount
+  ) external;
 
   /**
    * @dev Remove virtual assets from sideChain from the rewardPool
@@ -137,5 +141,7 @@ interface ICFolioItemHandler is ICFolioItemCallback {
    *
    * @param cFolioItem The item which will be bridged to sideChain
    */
-  function removeAssets(address cFolioItem) external returns (uint256);
+  function removeAssets(address cFolioItem, uint256 sideChainSlotId)
+    external
+    returns (uint256);
 }
