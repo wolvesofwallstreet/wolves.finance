@@ -269,8 +269,12 @@ describe('SFT minter', function () {
     //
 
     // Open the presale
-    await hardhat.network.provider.send('evm_increaseTime', [5 * 60]); // 5 mins
-    await hardhat.network.provider.send('evm_mine');
+    let tx = presaleContract.setTimes(
+      Math.round(Date.now() / 1000) - 120,
+      Math.round(Date.now() / 1000) + 120
+    );
+    await chai.expect(tx).to.not.be.reverted;
+
     chai.expect(await presaleContract.isOpen()).to.be.true;
 
     // Limit of 6.75 ETH
@@ -278,7 +282,7 @@ describe('SFT minter', function () {
     const options = { value: toWei(amount) };
 
     // Buy tokens and add liquidity
-    let tx = presaleContract.buyTokensAddLiquidity(
+    tx = presaleContract.buyTokensAddLiquidity(
       marketingWallet.address,
       options
     );
