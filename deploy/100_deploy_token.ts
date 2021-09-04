@@ -492,8 +492,6 @@ const func = async function (hardhat_re) {
     const WALLET_CAP = ethers.BigNumber.from('3000000000000000000'); // 3 * 1e18 Wei (3 ETH)
     const LP_ETH = 3750; // Token units
     const LP_TOKEN = 240_000; // Token units
-    const OPENING_TIME = Math.round(Date.now() / 1000) + 300; // Now + 5 min
-    const CLOSING_TIME = Math.round(Date.now() / 1000) + 600; // Now + 10 min
 
     const presaleReceipt = await deploy(PRESALE_CONTRACT, {
       from: deployer,
@@ -506,8 +504,6 @@ const func = async function (hardhat_re) {
         WALLET_CAP,
         LP_ETH,
         LP_TOKEN,
-        OPENING_TIME,
-        CLOSING_TIME,
       ],
       log: true,
       deterministicDeployment: true,

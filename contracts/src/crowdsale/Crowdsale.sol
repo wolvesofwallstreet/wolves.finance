@@ -147,8 +147,6 @@ contract Crowdsale is Context, ReentrancyGuard, ERC20Recovery {
    * @param _walletCap Max amount of wei to be contributed per wallet
    * @param _lpEth numerator of liquidity pair
    * @param _lpToken denominator of liquidity pair
-   * @param _openingTime Crowdsale opening time
-   * @param _closingTime Crowdsale closing time
    */
   constructor(
     IAddressRegistry _addressRegistry,
@@ -158,19 +156,13 @@ contract Crowdsale is Context, ReentrancyGuard, ERC20Recovery {
     uint256 _investMin,
     uint256 _walletCap,
     uint256 _lpEth,
-    uint256 _lpToken,
-    uint256 _openingTime,
-    uint256 _closingTime
+    uint256 _lpToken
   ) {
     require(_rate > 0, 'rate is 0');
     require(address(_token) != address(0), 'token is addr(0)');
     require(_cap > 0, 'cap is 0');
     require(_lpEth > 0, 'lpEth is 0');
     require(_lpToken > 0, 'lpToken is 0');
-
-    // solhint-disable-next-line not-rely-on-time
-    require(_openingTime >= block.timestamp, 'opening > now');
-    require(_closingTime > _openingTime, 'open > close');
 
     // Reverts if address is invalid
     IUniswapV2Router02 _uniV2Router = IUniswapV2Router02(
@@ -205,8 +197,6 @@ contract Crowdsale is Context, ReentrancyGuard, ERC20Recovery {
     walletCap = _walletCap;
     ethForLp = _lpEth;
     tokenForLp = _lpToken;
-    openingTime = _openingTime;
-    closingTime = _closingTime;
   }
 
   /**
@@ -460,11 +450,13 @@ contract Crowdsale is Context, ReentrancyGuard, ERC20Recovery {
    * @dev Change the closing time which gives you the possibility
    * to either shorten or enlarge the presale period
    */
-  function setClosingTime(uint256 newClosingTime) external {
+  function setTimes(uint256 newOpeningTime, uint256 newClosingTime) external {
     require(msg.sender == _wallet, 'restricted to wallet');
-    require(newClosingTime > openingTime, 'close < open');
+    require(newOpeningTime >= openingTime, 'newOpening < opening');
+    require(newClosingTime > newOpeningTime, 'close < open');
 
     closingTime = newClosingTime;
+    openingTime = newOpeningTime;
   }
 
   /**
