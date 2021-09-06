@@ -7,7 +7,6 @@ import { SafeMath } from '../../0xerc1155/utils/SafeMath.sol';
 import { FxBaseRootTunnel } from '../../polygonFx/tunnel/FxBaseRootTunnel.sol';
 
 import '../cfolio/interfaces/ICFolioItemHandler.sol';
-import '../cfolio/interfaces/ISFTEvaluator.sol';
 import '../token/interfaces/IWOWSCryptofolio.sol';
 import '../token/interfaces/IWOWSERC1155.sol';
 import '../utils/TokenIds.sol';
@@ -34,8 +33,6 @@ contract WowsERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder {
   address private immutable childToken_;
 
   IWOWSERC1155 private immutable sftContract_;
-  address private immutable cfiBridge_;
-  ISFTEvaluator private immutable sftEvaluator_;
 
   //////////////////////////////////////////////////////////////////////////////
   // Initialization
@@ -46,20 +43,15 @@ contract WowsERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder {
     address _fxRoot,
     address _rootToken,
     address _childToken,
-    address _sftContract,
-    address _cfiBridge,
-    address _sftEvaluator
+    address _sftContract
   ) FxBaseRootTunnel(_checkpointManager, _fxRoot) {
     require(_rootToken != address(0), 'RT: Invalid root');
     require(_childToken != address(0), 'RT: Invalid child');
-    require(_cfiBridge != address(0), 'RT: Invalid cfib');
 
     rootToken_ = IERC1155(_rootToken);
     childToken_ = _childToken;
 
     sftContract_ = IWOWSERC1155(_sftContract);
-    cfiBridge_ = _cfiBridge;
-    sftEvaluator_ = ISFTEvaluator(_sftEvaluator);
 
     // MAP_TOKEN, encode(rootToken,uri)
     bytes memory message = abi.encode(MAP_TOKEN, abi.encode(_rootToken));
@@ -182,15 +174,14 @@ contract WowsERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder {
       address cfolio = sftContract_.tokenIdToAddress(tokenId);
       require(cfolio != address(0), 'RT: Invalid cfolio');
 
-      (uint256[] memory items, uint256 itemsLength) = IWOWSCryptofolio(cfolio)
-        .getCryptofolio(cfiBridge_);
-      bytes memory result = abi.encodePacked(itemsLength);
+      uint256[] memory items = sftContract_.getTokenIds(cfolio);
+      bytes memory result = abi.encodePacked(items.length);
       // Loop over cfolioItems, remove share, and add them for transfer
-      for (uint256 i = 0; i < itemsLength; ++i) {
+      for (uint256 i = 0; i < items.length; ++i) {
         result = abi.encodePacked(
           result,
           items[i],
-          sftEvaluator_.getCFolioItemType(items[i]),
+          sftContract_.getCFolioItemType(items[i]),
           _removeAsset(items[i], updateHandler)
         );
       }
@@ -205,7 +196,7 @@ contract WowsERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder {
       return
         abi.encodePacked(
           data,
-          sftEvaluator_.getCFolioItemType(tokenId),
+          sftContract_.getCFolioItemType(tokenId),
           _removeAsset(tokenId, updateHandler)
         );
     }
@@ -217,7 +208,7 @@ contract WowsERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder {
   {
     address cfolioItem = sftContract_.tokenIdToAddress(tokenId);
     require(cfolioItem != address(0), 'RT: Invalid cfolioItem');
-    address handler = IWOWSCryptofolio(cfolioItem)._tradefloors(0);
+    address handler = IWOWSCryptofolio(cfolioItem).handler();
 
     uint256 amount = ICFolioItemHandler(handler).removeAssets(cfolioItem);
     if (amount > 0) {
@@ -244,12 +235,14 @@ contract WowsERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder {
       address cfolio = sftContract_.tokenIdToAddress(tokenId);
       require(cfolio != address(0), 'RT: Invalid cfolio');
 
-      (uint256[] memory items, uint256 itemCount) = IWOWSCryptofolio(cfolio)
-        .getCryptofolio(cfiBridge_);
+      uint256[] memory items = sftContract_.getTokenIds(cfolio);
 
       uint256 incomingItemCount = _getUint256(data, start++);
-      require(itemCount == incomingItemCount, 'RT: Wrong cfi count');
-      require(data.length / 32 >= start + 2 * itemCount, 'RT: data wrong');
+      require(items.length == incomingItemCount, 'RT: Wrong cfi count');
+      require(
+        data.length / 32 >= start + 2 * incomingItemCount,
+        'RT: data wrong'
+      );
 
       // Iterate through cfi's and add asset into CFIH
       // Also sum tokenIds up for a final verification step
@@ -284,7 +277,7 @@ contract WowsERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder {
     if (amount > 0) {
       address cfolioItem = sftContract_.tokenIdToAddress(tokenId);
       require(cfolioItem != address(0), 'RT: Invalid cfolioItem');
-      address handler = IWOWSCryptofolio(cfolioItem)._tradefloors(0);
+      address handler = IWOWSCryptofolio(cfolioItem).handler();
 
       ICFolioItemHandler(handler).addAssets(cfolioItem, amount);
       // Currently only one CFIH supported

@@ -12,9 +12,7 @@ import { Link } from 'react-router-dom';
 
 import BoisLogo from '../../assets/bois_shadow.png';
 import WolvesLogo from '../../assets/wolves_shadow.png';
-import {
-  StoreClasses,
-} from '../../stores/store';
+import { StoreClasses } from '../../stores/store';
 
 type PAGE1_PROPS = {
   t: TFunction;

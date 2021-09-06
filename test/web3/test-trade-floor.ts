@@ -19,7 +19,7 @@ import fs from 'fs';
 import WOWSSftMinterAbi from '../../src/abi/contracts/src/crowdsale/WOWSSftMinter.sol/WOWSSftMinter.json';
 import TradeFloorAbi from '../../src/abi/contracts/src/token/TradeFloor.sol/TradeFloor.json';
 import WOWSTokenAbi from '../../src/abi/contracts/src/token/WOWSErc20.sol/WowsToken.json';
-import WOWSERC1155Abi from '../../src/abi/contracts/src/token/WOWSErc1155.sol/WOWSERC1155.json';
+import WOWSERC1155Abi from '../../src/abi/contracts/src/token/WOWSERC1155.sol/WOWSERC1155.json';
 import { ADDRESS_ZERO } from '../utils/constants';
 import { hardhat } from '../utils/hardhat';
 
@@ -303,13 +303,12 @@ describe('Trade Floor', function () {
     );
     await chai
       .expect(tx)
-      .to.emit(sftHolderContract, 'TransferSingle')
+      .to.emit(sftHolderContract, 'SftTokenTransfer')
       .withArgs(
         marketingWallet.address,
         marketingWallet.address,
         tradeFloorContract.address,
-        wowsTokenIdWolf,
-        1
+        [wowsTokenIdWolf]
       );
 
     // Get the new minted TradeFloor tokenId
@@ -471,14 +470,10 @@ describe('Trade Floor', function () {
       );
     await chai
       .expect(tx)
-      .to.emit(sftHolderContract, 'TransferSingle')
-      .withArgs(
-        signer.address,
-        signer.address,
-        tradeFloorContract.address,
+      .to.emit(sftHolderContract, 'SftTokenTransfer')
+      .withArgs(signer.address, signer.address, tradeFloorContract.address, [
         wowsTokenIdWolf,
-        1
-      );
+      ]);
 
     // Transfer locked cryptofolio NFT back to marketing wallet
     tx = tradeFloorContract
@@ -513,6 +508,6 @@ describe('Trade Floor', function () {
       1,
       []
     );
-    await chai.expect(tx).to.be.revertedWith('CF: Only deployer');
+    await chai.expect(tx).to.be.revertedWith('CF: Only sftContract');
   });
 });

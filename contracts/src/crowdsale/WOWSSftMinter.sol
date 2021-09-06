@@ -17,7 +17,6 @@ import '../booster/interfaces/IBooster.sol';
 import '../cfolio/interfaces/ICFolioItemHandler.sol';
 import '../cfolio/interfaces/ISFTEvaluator.sol';
 import '../investment/interfaces/IRewardHandler.sol';
-import '../token/interfaces/IERC1155BurnMintable.sol';
 import '../token/interfaces/ITradeFloor.sol';
 import '../token/interfaces/IWOWSCryptofolio.sol';
 import '../token/interfaces/IWOWSERC1155.sol';
@@ -574,7 +573,7 @@ contract WOWSSftMinter is Context, AccessControl {
         address cfolio = _sftContract.tokenIdToAddress(tokenId);
         require(address(cfolio) != address(0), 'WM: Invalid cfi');
 
-        address handler = IWOWSCryptofolio(cfolio).getHandler();
+        address handler = IWOWSCryptofolio(cfolio).handler();
         amounts = ICFolioItemHandler(handler).getAmounts(cfolio);
 
         result = abi.encodePacked(
@@ -656,12 +655,9 @@ contract WOWSSftMinter is Context, AccessControl {
       _wowsToken.safeTransferFrom(_msgSender(), address(rewardHandler), price);
 
     // Mint the token
-    IERC1155BurnMintable(address(_sftContract)).mint(
-      recipient,
-      tokenId,
-      1,
-      data
-    );
+    uint256[] memory tokenIds = new uint256[](1);
+    tokenIds[0] = tokenId;
+    _sftContract.mintBatch(recipient, tokenIds, data);
 
     // Distribute the rewards
     if (price > 0) rewardHandler.distribute2(recipient, price, ALL);

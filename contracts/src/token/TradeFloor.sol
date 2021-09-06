@@ -779,7 +779,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
       address cfolio = _sftHolder.tokenIdToAddress(tokenIds[i].toSftTokenId());
       require(cfolio != address(0), 'TF: item token invalid');
 
-      address handler = IWOWSCryptofolio(cfolio).getHandler();
+      address handler = IWOWSCryptofolio(cfolio).handler();
       require(handler != address(0), 'TF: item handler invalid');
 
       hashData = ICFolioItemCallback(handler).appendHash(cfolio, hashData);

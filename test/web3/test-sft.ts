@@ -19,7 +19,7 @@ import WOWSSftMinterAbi from '../../src/abi/contracts/src/crowdsale/WOWSSftMinte
 import RewardHandlerAbi from '../../src/abi/contracts/src/investment/RewardHandler.sol/RewardHandler.json';
 import TradeFloorAbi from '../../src/abi/contracts/src/token/TradeFloor.sol/TradeFloor.json';
 import WOWSTokenAbi from '../../src/abi/contracts/src/token/WOWSErc20.sol/WowsToken.json';
-import WOWSERC1155Abi from '../../src/abi/contracts/src/token/WOWSErc1155.sol/WOWSERC1155.json';
+import WOWSERC1155Abi from '../../src/abi/contracts/src/token/WOWSERC1155.sol/WOWSERC1155.json';
 import { hardhat } from '../utils/hardhat';
 
 chai.use(solidity);
@@ -188,115 +188,6 @@ describe('SFT contracts', function () {
     chai.expect(
       await sftHolderContract.hasRole(OPERATOR_ROLE, tradeFloorContract.address)
     ).to.be.false;
-  });
-
-  it('should have a WOWS URI', async function () {
-    this.timeout(60 * 1000);
-
-    const { sftHolderContract } = await setupTest();
-
-    // Check URI of token 0x0
-    let tokenId = ethers.BigNumber.from('0x0');
-    let uri = await sftHolderContract.uri(tokenId);
-    chai.expect(uri).to.equal(METADATA_URI + '0000.json');
-
-    // Check URI of token 0x01010000
-    // (level = 0x01, card ID = 0x01, token index = 0x0000)
-    tokenId = ethers.BigNumber.from('0x01010000');
-    uri = await sftHolderContract.uri(tokenId);
-    chai.expect(uri).to.equal(METADATA_URI + '0101.json');
-
-    // Check URI of token 0x0101ffff
-    // (level = 0x01, card ID = 0x01, token index = 0xffff)
-    tokenId = ethers.BigNumber.from('0x0101ffff');
-    uri = await sftHolderContract.uri(tokenId);
-    chai.expect(uri).to.equal(METADATA_URI + '0101.json');
-
-    // Check URI of token 0xffff0000
-    // (level = 0xff, card ID = 0xff, token index = 0x0000)
-    tokenId = ethers.BigNumber.from('0xffff0000');
-    uri = await sftHolderContract.uri(tokenId);
-    chai.expect(uri).to.equal(METADATA_URI + 'FFFF.json');
-
-    // Check URI of first custom token 0x10000000
-    // (level = 0xff, card ID = 0xff, token index = 0x0000)
-    // The result should be empty because no default has been set
-    tokenId = ethers.BigNumber.from('0x100000000');
-    uri = await sftHolderContract.uri(tokenId);
-    chai.expect(uri).to.equal(METADATA_URI + '0100000000.json');
-  });
-
-  it('should have a contract metadata URI', async function () {
-    this.timeout(60 * 1000);
-
-    const { sftHolderContract } = await setupTest();
-
-    // Check contract metadata URI
-    const contractUri = await sftHolderContract.contractURI();
-    chai.expect(contractUri).to.equal(METADATA_URI + 'mainnet_contract.json');
-  });
-
-  it('should set custom default URI', async function () {
-    this.timeout(60 * 1000);
-
-    const { sftHolderContract } = await setupTest();
-
-    // Default URI of first custom token should be empty initially
-    const tokenId = ethers.BigNumber.from('0x100000000');
-    let uri = await sftHolderContract.uri(tokenId);
-    chai.expect(uri).to.equal(METADATA_URI + '0100000000.json');
-
-    // Set default URI for custom tokens
-    const referenceUri = 'New/';
-    const tx = sftHolderContract.setCustomMetadataURI(referenceUri);
-    await chai.expect(tx).to.not.be.reverted;
-
-    // Check the default URI for custom tokens
-    uri = await sftHolderContract.uri(tokenId);
-    chai.expect(uri).to.equal(referenceUri + '0100000000.json');
-  });
-
-  it('should set custom URI', async function () {
-    this.timeout(60 * 1000);
-
-    const { sftHolderContract } = await setupTest();
-
-    const DEFAULT_ADMIN_ROLE = await sftHolderContract.DEFAULT_ADMIN_ROLE();
-    const MINTER_ROLE = await sftHolderContract.MINTER_ROLE();
-
-    // Test parameters
-    const wowsReferenceUri = METADATA_URI + '0101.json';
-    const baseMetadataUri = 'New/';
-    const wowsTokenId = ethers.BigNumber.from('0x01010000');
-    const customTokenId = ethers.BigNumber.from('0x100000000');
-
-    // Check the current URI of custom token
-    let uri = await sftHolderContract.uri(customTokenId);
-    chai.expect(uri).to.equal(METADATA_URI + '0100000000.json');
-
-    // Set the URI of custom token
-    let tx = sftHolderContract.setCustomMetadataURI(baseMetadataUri);
-    await chai.expect(tx).to.not.be.reverted;
-
-    // Check the new URI of custom token
-    uri = await sftHolderContract.uri(customTokenId);
-    chai.expect(uri).to.equal(baseMetadataUri + '0100000000.json');
-
-    // Check the current URI of WOWS token
-    uri = await sftHolderContract.uri(wowsTokenId);
-    chai.expect(uri).to.equal(wowsReferenceUri);
-
-    // Check the default URI of WOWS token
-    uri = await sftHolderContract.uri(0);
-    chai.expect(uri).to.equal(METADATA_URI + '0000.json');
-
-    // Set the default URI of WOWS token
-    tx = sftHolderContract.setBaseMetadataURI(baseMetadataUri);
-    await chai.expect(tx).to.not.be.reverted;
-
-    // Check the new URI of WOWS token
-    uri = await sftHolderContract.uri(wowsTokenId);
-    chai.expect(uri).to.equal(baseMetadataUri + '0101.json');
   });
 
   it('should get token data', async function () {

@@ -28,7 +28,7 @@ import CFolioFarmAbi from '../../src/abi/contracts/src/investment/CFolioFarm.sol
 import TradeFloorAbi from '../../src/abi/contracts/src/token/TradeFloor.sol/TradeFloor.json';
 import WOWSCryptofolioAbi from '../../src/abi/contracts/src/token/WOWSCryptofolio.sol/WOWSCryptofolio.json';
 import WOWSTokenAbi from '../../src/abi/contracts/src/token/WOWSErc20.sol/WowsToken.json';
-import WOWSERC1155Abi from '../../src/abi/contracts/src/token/WOWSErc1155.sol/WOWSERC1155.json';
+import WOWSERC1155Abi from '../../src/abi/contracts/src/token/WOWSERC1155.sol/WOWSERC1155.json';
 import TestERC20MintableAbi from '../../src/abi/contracts/test/token/TestERC20Mintable.sol/TestERC20Mintable.json';
 import { ADDRESS_ZERO, HASH_MASK, MAX_UINT256 } from '../utils/constants';
 import { hardhat } from '../utils/hardhat';
@@ -831,13 +831,15 @@ describe('SC NFTs', function () {
       )})`
     );
 
-    await chai.expect(tx).to.emit(sftHolderContract, 'TransferBatch').withArgs(
-      tradeFloorContract.address, // operator
-      tradeFloorContract.address, // from
-      marketingWallet.address, // to
-      [cfolioItemTokenId], // ids
-      [1] // amounts
-    );
+    await chai
+      .expect(tx)
+      .to.emit(sftHolderContract, 'SftTokenTransfer')
+      .withArgs(
+        tradeFloorContract.address, // operator
+        tradeFloorContract.address, // from
+        marketingWallet.address, // to
+        [cfolioItemTokenId] // ids
+      );
   });
 
   it('should check wallet for investment SFT', async function () {
@@ -1296,13 +1298,12 @@ describe('SC NFTs', function () {
     );
     await chai
       .expect(tx)
-      .to.emit(sftHolderContract, 'TransferSingle')
+      .to.emit(sftHolderContract, 'SftTokenTransfer')
       .withArgs(
         marketingWallet.address,
         marketingWallet.address,
         tradeFloorContract.address,
-        wowsTokenIdBoi,
-        1
+        [wowsTokenIdBoi]
       );
 
     // Get the new minted TradeFloor tokenId
@@ -1337,6 +1338,7 @@ describe('SC NFTs', function () {
       wowsTokenIdBoiTf,
       1
     );
+    //await (await tx).wait();
     await chai.expect(tx).to.not.be.reverted;
   });
 
@@ -1384,11 +1386,9 @@ describe('SC NFTs', function () {
     const { sftHolderContract } = contracts;
 
     // Burn investment SFT
-    const tx = sftHolderContract.burn(
-      marketingWallet.address,
+    const tx = sftHolderContract.burnBatch(marketingWallet.address, [
       cfolioItemTokenId,
-      1
-    );
+    ]);
     await chai.expect(tx).to.be.revertedWith('CFIH: Not empty');
   });
 
@@ -1473,11 +1473,9 @@ describe('SC NFTs', function () {
     const { sftHolderContract } = contracts;
 
     // Burn investment SFT
-    const tx = sftHolderContract.burn(
-      marketingWallet.address,
+    const tx = sftHolderContract.burnBatch(marketingWallet.address, [
       cfolioItemTokenId,
-      1
-    );
+    ]);
     await chai.expect(tx).to.not.be.reverted;
 
     // Log gas cost
