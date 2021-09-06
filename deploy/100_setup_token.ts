@@ -209,7 +209,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 5.) Call Controller.sol::registerFarm2()
+  // 5.) Call Controller.sol::registerFarm()
   //     Parameters:
   //       * farmAddress         The UniV2StakeFarm address
   //       * rewardCap           15,000 * 1e18 Wei
@@ -242,7 +242,7 @@ const func = async function (hardhat_re) {
           from: marketingWallet,
           log: true,
         },
-        'registerFarm2',
+        'registerFarm',
         FARM_ADDRESS,
         REWARD_CAP,
         REWARD_PER_DURATION,

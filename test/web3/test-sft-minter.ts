@@ -23,7 +23,7 @@ import WOWSSftMinterAbi from '../../src/abi/contracts/src/crowdsale/WOWSSftMinte
 import CFolioFarmAbi from '../../src/abi/contracts/src/investment/CFolioFarm.sol/CFolioFarm.json';
 import WOWSCryptofolioAbi from '../../src/abi/contracts/src/token/WOWSCryptofolio.sol/WOWSCryptofolio.json';
 import WOWSTokenAbi from '../../src/abi/contracts/src/token/WOWSErc20.sol/WowsToken.json';
-import WOWSERC1155Abi from '../../src/abi/contracts/src/token/WOWSErc1155.sol/WOWSERC1155.json';
+import WOWSERC1155Abi from '../../src/abi/contracts/src/token/WOWSERC1155.sol/WOWSERC1155.json';
 import { ADDRESS_ZERO } from '../utils/constants';
 import { hardhat } from '../utils/hardhat';
 

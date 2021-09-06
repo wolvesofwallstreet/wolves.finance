@@ -22,7 +22,7 @@ import PresaleAbi from '../../src/abi/contracts/src/crowdsale/Crowdsale.sol/Crow
 import WOWSSftMinterAbi from '../../src/abi/contracts/src/crowdsale/WOWSSftMinter.sol/WOWSSftMinter.json';
 import ControllerAbi from '../../src/abi/contracts/src/investment/Controller.sol/Controller.json';
 import WOWSTokenAbi from '../../src/abi/contracts/src/token/WOWSErc20.sol/WowsToken.json';
-import WOWSERC1155Abi from '../../src/abi/contracts/src/token/WOWSErc1155.sol/WOWSERC1155.json';
+import WOWSERC1155Abi from '../../src/abi/contracts/src/token/WOWSERC1155.sol/WOWSERC1155.json';
 import { hardhat } from '../utils/hardhat';
 
 chai.use(solidity);
@@ -199,7 +199,7 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
 
   // Set test parameters
 
-  tx = controllerContract.registerFarm2(
+  tx = controllerContract.registerFarm(
     addresses.cfolioFarmLP, // Farm
     '15000000000000000000000', // Cap
     '192307692300000000000', // RewardForDuration

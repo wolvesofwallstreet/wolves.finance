@@ -22,7 +22,6 @@ const SFT_MINTER_PROXY_CONTRACT = 'WOWSSftMinterProxy';
 const SFT_MINTER_UPDATE_CONTRACT = 'WOWSSftMinterUpdate';
 const REWARD_HANDLER_CONTRACT = 'RewardHandler';
 const BOOSTER_CONTRACT = 'Booster';
-const SFT_EVALUATOR_CONTRACT = 'SFTEvaluator';
 const SFT_EVALUATOR_PROXY_CONTRACT = 'SFTEvaluatorProxy';
 
 // keccak-256("eip1967.proxy.implementation") - 1
@@ -90,11 +89,6 @@ const func = async function (hardhat_re) {
     BOOSTER_CONTRACT,
     generatedAddresses.boosterProxy
   );
-  // SFTEvaluator on SFTEvaluator proxy address
-  const SFT_EVALUATOR_INSTANCE = await hardhat_re.ethers.getContractAt(
-    SFT_EVALUATOR_CONTRACT,
-    generatedAddresses.sftEvaluatorProxy
-  );
 
   //////////////////////////////////////////////////////////////////////////////
   //
@@ -152,9 +146,12 @@ const func = async function (hardhat_re) {
   // 3.) WowsToken:: grantRole (REWARD_ROLE, WOWSSftMinter.sol)
   //
 
+  const REWARD_HANDLER_INSTANCE_REWARD_ROLE =
+    await REWARD_HANDLER_INSTANCE.REWARD_ROLE();
+
   if (
     !(await REWARD_HANDLER_INSTANCE.hasRole(
-      await REWARD_HANDLER_INSTANCE.REWARD_ROLE(),
+      REWARD_HANDLER_INSTANCE_REWARD_ROLE,
       generatedAddresses.sftMinterProxy
     ))
   ) {
@@ -166,7 +163,7 @@ const func = async function (hardhat_re) {
           log: true,
         },
         'grantRole',
-        await REWARD_HANDLER_INSTANCE.REWARD_ROLE(),
+        REWARD_HANDLER_INSTANCE_REWARD_ROLE,
         generatedAddresses.sftMinterProxy
       )
     );
@@ -298,7 +295,7 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 10.) Set sftHolderProxy address in Booster
+  // 9.) Set sftHolderProxy address in Booster
   //
   if (
     (await boosterInstance.sftHolder()) !== generatedAddresses.sftHolderProxy
@@ -332,6 +329,7 @@ const func = async function (hardhat_re) {
         SFT_MINTER_CONTRACT,
         {
           from: marketingWallet,
+          to: generatedAddresses.sftMinterProxy,
           log: true,
         },
         'setSFTEvaluator',
@@ -369,28 +367,23 @@ const func = async function (hardhat_re) {
   }
 
   //
-  // 12.) Set the SFTMinter in SFTE contract if required
+  // 12.) Call WowsERC1155.sol::setCryptofolio
   //
-  try {
-    if (
-      (await SFT_EVALUATOR_INSTANCE.sftMinter()) !==
-      generatedAddresses.sftMinter
-    )
-      throw new Error('Needs update');
-    console.log('SFT minter already set in SFTEvaluator');
-  } catch (e) {
-    console.log('Set SFT minter in SFTE Proxy');
 
+  if (
+    (await SFT_HOLDER_INSTANCE.cryptofolio()) !==
+    generatedAddresses.sftCryptofolio
+  ) {
     await catchUnknownSigner(
       execute(
-        SFT_EVALUATOR_CONTRACT,
+        SFT_HOLDER_CONTRACT,
         {
           from: marketingWallet,
-          to: generatedAddresses.sftEvaluatorProxy,
+          to: generatedAddresses.sftHolderProxy,
           log: true,
         },
-        'setMinter',
-        generatedAddresses.sftMinter
+        'setCryptofolio',
+        generatedAddresses.sftCryptofolio
       )
     );
   }

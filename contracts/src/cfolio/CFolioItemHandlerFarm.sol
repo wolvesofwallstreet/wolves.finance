@@ -506,7 +506,7 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
     for (uint256 i = 0; i < length; ++i) {
       address secondaryCFolio = _sftHolder.tokenIdToAddress(tokenIds[i]);
       require(secondaryCFolio != address(0), 'CFIH: Invalid tokenId');
-      if (IWOWSCryptofolio(secondaryCFolio).getHandler() == address(this)) {
+      if (IWOWSCryptofolio(secondaryCFolio).handler() == address(this)) {
         uint256[] memory amounts = _cfolioFarm.balancesOf(secondaryCFolio);
         for (uint256 slotId = 0; slotId < farmSlots; ++slotId)
           newRewardAmount[slotId] = newRewardAmount[slotId].add(
@@ -565,7 +565,7 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
     );
     require(cFolio != address(0), 'CFIH: Invalid cFolioTokenId');
     require(
-      IWOWSCryptofolio(cFolio).getHandler() == address(this),
+      IWOWSCryptofolio(cFolio).handler() == address(this),
       'CFIH: Not our SFT'
     );
 

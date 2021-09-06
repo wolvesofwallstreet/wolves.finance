@@ -9,7 +9,7 @@
 pragma solidity >=0.7.0 <0.8.0;
 
 /**
- * @notice Cryptofolio interface
+ * @notice Sft holder contract
  */
 interface IWOWSERC1155 {
   //////////////////////////////////////////////////////////////////////////////
@@ -67,39 +67,84 @@ interface IWOWSERC1155 {
    */
   function getCFolioItemType(uint256 tokenId) external view returns (uint256);
 
+  /**
+   * @notice Get the balance of an account's Tokens
+   * @param owner  The address of the token holder
+   * @param tokenId ID of the Token
+   * @return The _owner's balance of the token type requested
+   */
+  function balanceOf(address owner, uint256 tokenId)
+    external
+    view
+    returns (uint256);
+
+  /**
+   * @notice Get the balance of multiple account/token pairs
+   * @param owners The addresses of the token holders
+   * @param tokenIds ID of the Tokens
+   * @return       The _owner's balance of the Token types requested (i.e. balance for each (owner, id) pair)
+   */
+  function balanceOfBatch(
+    address[] calldata owners,
+    uint256[] calldata tokenIds
+  ) external view returns (uint256[] memory);
+
   //////////////////////////////////////////////////////////////////////////////
   // State modifiers
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev Set the base URI for either predefined cards
+   * @notice Mints tokenIds into 'to' account
+   * @dev Emits SftTokenTransfer Event
    *
-   * The resulting uri is baseUri+[hex(tokenId)] + '.json'. where
-   * tokenId will be reduces to upper 16 bit (>> 16) before building the hex string.
-   *
+   * Throws if sender has no MINTER_ROLE
+   * 'data' holds the CFolioItemHandler if CFI's are minted
    */
-  function setBaseMetadataURI(string calldata baseContractMetadata) external;
+  function mintBatch(
+    address to,
+    uint256[] calldata tokenIds,
+    bytes calldata data
+  ) external;
 
   /**
-   * @dev Set the base URI for custom cards
+   * @notice Burns tokenIds owned by 'account'
+   * @dev Emits SftTokenTransfer Event
    *
-   * The resulting uri is baseUri+[hex(tokenId)] + '.json'.
+   * Burns all owned CFolioItems
+   * Throws if CFolioItems have assets
    */
-  function setCustomMetadataURI(string calldata customMetadataURI) external;
+  function burnBatch(address account, uint256[] calldata tokenIds) external;
 
   /**
-   * @dev Set the base URI for cfolio cards
-   *
-   * The resulting uri is baseUri+[hex(tokenId)] + '.json'.
+   * @notice Transfers amount of an id from the from address to the 'to' address specified
+   * @dev Emits SftTokenTransfer Event
+   * Throws if 'to' is the zero address
+   * Throws if 'from' is not the current owner
+   * If 'to' is a smart contract, ERC1155TokenReceiver interface will checked
+   * @param from    Source address
+   * @param to      Target address
+   * @param tokenId ID of the token type
+   * @param amount  Transfered amount
+   * @param data    Additional data with no specified format, sent in call to `_to`
    */
-  function setCFolioMetadataURI(string calldata cfolioMetadataURI) external;
+  function safeTransferFrom(
+    address from,
+    address to,
+    uint256 tokenId,
+    uint256 amount,
+    bytes calldata data
+  ) external;
 
   /**
-   * @dev Set the contracts metadata URI
-   *
-   * @param contractMetadataURI The URI which point to the contract metadata file.
+   * @dev Batch version of {safeTransferFrom}
    */
-  function setContractMetadataURI(string calldata contractMetadataURI) external;
+  function safeBatchTransferFrom(
+    address from,
+    address to,
+    uint256[] calldata tokenIds,
+    uint256[] calldata amounts,
+    bytes calldata data
+  ) external;
 
   /**
    * @dev Each custom card has its own level. Level will be used when

@@ -125,7 +125,7 @@ contract SFTEvaluator is ISFTEvaluator, Context {
           // Secondary c-folio items have one tradefloor which is the handler
           address handler = IWOWSCryptofolio(
             _sftHolder.tokenIdToAddress(cFolioItems[i])
-          ).getHandler();
+          ).handler();
           require(
             address(handler) != address(0),
             'SFTE: invalid cfolioItemHandler'

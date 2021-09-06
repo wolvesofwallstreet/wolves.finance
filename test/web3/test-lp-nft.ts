@@ -24,7 +24,7 @@ import CFolioFarmAbi from '../../src/abi/contracts/src/investment/CFolioFarm.sol
 import TradeFloorAbi from '../../src/abi/contracts/src/token/TradeFloor.sol/TradeFloor.json';
 import WOWSCryptofolioAbi from '../../src/abi/contracts/src/token/WOWSCryptofolio.sol/WOWSCryptofolio.json';
 import WOWSTokenAbi from '../../src/abi/contracts/src/token/WOWSErc20.sol/WowsToken.json';
-import WOWSERC1155Abi from '../../src/abi/contracts/src/token/WOWSErc1155.sol/WOWSERC1155.json';
+import WOWSERC1155Abi from '../../src/abi/contracts/src/token/WOWSERC1155.sol/WOWSERC1155.json';
 import { ADDRESS_ZERO, HASH_MASK } from '../utils/constants';
 import { hardhat } from '../utils/hardhat';
 
@@ -870,7 +870,7 @@ describe('LP NFTs', function () {
   });
 
   //
-  // The LP NFT is now sitting in our wallet. Now, we transfer it into the
+  // The tradefloor LP NFT is now sitting in the wallet. Now, we transfer it into the
   // cryptofolio SFT. Like the locking procedure, this was also done
   // automatically by the crowdsale minting contract. Here we do it manually.
   //
@@ -889,7 +889,7 @@ describe('LP NFTs', function () {
       1,
       []
     );
-    await chai.expect(tx).to.be.revertedWith('CF: Only deployer');
+    await chai.expect(tx).to.be.revertedWith('CF: Only sftContract');
   });
 
   //
@@ -1055,13 +1055,12 @@ describe('LP NFTs', function () {
     );
     await chai
       .expect(tx)
-      .to.emit(sftHolderContract, 'TransferSingle')
+      .to.emit(sftHolderContract, 'SftTokenTransfer')
       .withArgs(
         marketingWallet.address,
         marketingWallet.address,
         tradeFloorContract.address,
-        wowsTokenIdWolf,
-        1
+        [wowsTokenIdWolf]
       );
 
     // Get the new minted TradeFloor tokenId
@@ -1144,11 +1143,9 @@ describe('LP NFTs', function () {
     const { sftHolderContract } = contracts;
 
     // Burn investment SFT
-    const tx = sftHolderContract.burn(
-      marketingWallet.address,
+    const tx = sftHolderContract.burnBatch(marketingWallet.address, [
       cfolioItemTokenId,
-      1
-    );
+    ]);
     await chai.expect(tx).to.be.revertedWith('CFIH: Not empty');
   });
 
@@ -1183,11 +1180,9 @@ describe('LP NFTs', function () {
     const { sftHolderContract } = contracts;
 
     // Burn investment SFT
-    const tx = sftHolderContract.burn(
-      marketingWallet.address,
+    const tx = sftHolderContract.burnBatch(marketingWallet.address, [
       cfolioItemTokenId,
-      1
-    );
+    ]);
     await chai.expect(tx).to.not.be.reverted;
 
     // Log gas cost

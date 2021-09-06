@@ -13,43 +13,16 @@ pragma solidity >=0.7.0 <0.8.0;
  */
 interface IWOWSCryptofolio {
   //////////////////////////////////////////////////////////////////////////////
-  // Initialization
+  // Getter
   //////////////////////////////////////////////////////////////////////////////
-
   /**
-   * @dev Initialize the deployed contract after creation
-   *
-   * This is a one time call which sets _deployer to msg.sender.
-   * Subsequent calls reverts.
+   * @dev Return the handler (CFIH) of the underlying NFT
    */
-  function initialize(bool isCFolio) external;
+  function handler() external view returns (address);
 
   //////////////////////////////////////////////////////////////////////////////
   // State modifiers
   //////////////////////////////////////////////////////////////////////////////
-
-  /**
-   * @dev Get the handler of the I-NFT which was previous set with setHandler
-   *
-   * Reverts if this contract is not for an I-NFT.
-   */
-  function getHandler() external view returns (address);
-
-  /**
-   * @dev Set the owner of the underlying NFT
-   *
-   * This function is called if ownership of the parent NFT has changed
-   * for cFolio
-   *
-   * The new owner gets allowance to transfer cryptofolio items. The new owner
-   * is allowed to transfer / burn cryptofolio items. Make sure that allowance
-   * is removed from previous owner.
-   *
-   * @param newOwner The new handler or owner of the underlying NFT,
-   * or address(0) if the underlying NFT is being burned
-   */
-  function setOwner(address newOwner) external;
-
   /**
    * @dev Set the handler of the underlying NFT
    *
@@ -58,15 +31,4 @@ interface IWOWSCryptofolio {
    * @param newHandler The new handler of the underlying NFT,
    */
   function setHandler(address newHandler) external;
-
-  /**
-   * @dev Allow owner (of parent NFT) to approve external operators to transfer
-   * our cryptofolio items
-   *
-   * The NFT owner is allowed to approve operator to handle cryptofolios.
-   *
-   * @param operator The operator
-   * @param allow True to approve for all NFTs, false to revoke approval
-   */
-  function setSftApproval(address operator, bool allow) external;
 }

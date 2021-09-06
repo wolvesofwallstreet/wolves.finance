@@ -182,7 +182,7 @@ contract Controller is IController, Context, Ownable {
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev registerFarm2 can be called from outside (for new Farms deployed with
+   * @dev registerFarm can be called from outside (for new Farms deployed with
    * this controller) or from transferFarm() call
    *
    * Contracts are active from the time of registering, but to provide rewards,
@@ -202,7 +202,7 @@ contract Controller is IController, Context, Ownable {
    * components (1e6 factor)
    * @param _farmEnd timestamp when farm was disabled (usually 0)
    */
-  function registerFarm2(
+  function registerFarm(
     address _farmAddress,
     uint256 _rewardCap,
     uint256 _rewardPerDuration,
@@ -271,30 +271,9 @@ contract Controller is IController, Context, Ownable {
     }
   }
 
-  /*
-   * @dev backwards compatibility, see registerFarm2
-   */
-  function registerFarm(
-    address _farmAddress,
-    uint256 _rewardCap,
-    uint256 _rewardPerDuration,
-    uint256 _rewardProvided,
-    uint32 _rewardFee
-  ) external {
-    registerFarm2(
-      _farmAddress,
-      _rewardCap,
-      _rewardPerDuration,
-      _rewardProvided,
-      _rewardFee,
-      0,
-      false
-    );
-  }
-
   /**
    * @dev Note that disabled farms can only be enabled again by calling
-   * registerFarm2() with new parameters
+   * registerFarm() with new parameters
    *
    * This function is meant to finally end a farm.
    *
@@ -498,7 +477,7 @@ contract Controller is IController, Context, Ownable {
 
     // Register this farm in the new controller
     if (_newController != address(0)) {
-      Controller(_newController).registerFarm2(
+      Controller(_newController).registerFarm(
         _farmAddress,
         farm.rewardCap,
         farm.rewardPerDuration,

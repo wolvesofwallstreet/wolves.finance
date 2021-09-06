@@ -34,20 +34,12 @@ const ADDRESS_BOOK_SFT_MINTER_PROXY_KEY =
   ethers.utils.formatBytes32String('SFT_MINTER_PROXY');
 
 // Contract ABIs
-const SFT_HOLDER_ABI = `${__dirname}/../src/abi/contracts/src/token/WOWSErc1155.sol/WOWSERC1155.json`;
+const SFT_HOLDER_ABI = `${__dirname}/../src/abi/contracts/src/token/WOWSERC1155.sol/WOWSERC1155.json`;
 const SFT_MINTER_ABI = `${__dirname}/../src/abi/contracts/src/crowdsale/WOWSSftMinter.sol/WOWSSftMinter.json`;
 
 const ADDRESS_BOOK_SFT_EVALUATOR_PROXY_KEY = ethers.utils.formatBytes32String(
   'SFT_EVALUATOR_PROXY'
 );
-
-// ERC-1155 metadata URI
-const METADATA_URI = 'https://meta.wows.finance/wolves_assets/metadata/';
-
-// Filename for contract metadata, will be prefixed with METADATA_URI
-// TODO: replace mainnet_contract.json with something from config!!!
-const CONTRACT_METADATA_NAME =
-  'https://meta.wows.finance/wolves_assets/metadata/mainnet_contract.json';
 
 // Path to address files
 const CONFIG_ADDRESSES = `${__dirname}/../src/config/addresses.json`;
@@ -135,30 +127,6 @@ const sft_func = async function (hardhat_re) {
 
   //////////////////////////////////////////////////////////////////////////////
   //
-  // Deploy SFT cryptofolio
-  //
-  //////////////////////////////////////////////////////////////////////////////
-
-  if (configAddresses.sftCryptofolio) {
-    log_step(`Using SFT cryptofolio: ${configAddresses.sftCryptofolio}`);
-    generatedAddresses.sftCryptofolio = configAddresses.sftCryptofolio;
-  } else {
-    log_step('Deploying SFT cryptofolio');
-
-    const sftCryptofolioReceipt = await deploy(SFT_CRYPTOFOLIO, {
-      from: deployer,
-      args: [],
-      log: true,
-      deterministicDeployment: true,
-    });
-
-    generatedAddresses.sftCryptofolio = sftCryptofolioReceipt.address;
-  }
-
-  const SFT_CRYPTOFOLIO_ADDRESS = generatedAddresses.sftCryptofolio;
-
-  //////////////////////////////////////////////////////////////////////////////
-  //
   // Deploy SFT holder contract
   //
   //////////////////////////////////////////////////////////////////////////////
@@ -171,7 +139,7 @@ const sft_func = async function (hardhat_re) {
 
     const sftHolderReceipt = await deploy(SFT_HOLDER_CONTRACT, {
       from: deployer,
-      args: [marketingWallet, SFT_CRYPTOFOLIO_ADDRESS],
+      args: [marketingWallet],
       log: true,
       deterministicDeployment: true,
     });
@@ -196,10 +164,6 @@ const sft_func = async function (hardhat_re) {
     const sftHolderInterface = new ethers.utils.Interface(sftHolderAbi);
     const proxyCallData = sftHolderInterface.encodeFunctionData('initialize', [
       marketingWallet,
-      METADATA_URI,
-      METADATA_URI,
-      METADATA_URI,
-      CONTRACT_METADATA_NAME,
     ]);
 
     const sftHolderProxyReceipt = await deploy(SFT_HOLDER_PROXY_CONTRACT, {
@@ -220,6 +184,28 @@ const sft_func = async function (hardhat_re) {
     ADDRESS_BOOK_SFT_HOLDER_PROXY_KEY,
     generatedAddresses.sftHolderProxy
   );
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // Deploy SFT cryptofolio
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  if (configAddresses.sftCryptofolio) {
+    log_step(`Using SFT cryptofolio: ${configAddresses.sftCryptofolio}`);
+    generatedAddresses.sftCryptofolio = configAddresses.sftCryptofolio;
+  } else {
+    log_step('Deploying SFT cryptofolio');
+
+    const sftCryptofolioReceipt = await deploy(SFT_CRYPTOFOLIO, {
+      from: deployer,
+      args: [generatedAddresses.sftHolderProxy],
+      log: true,
+      deterministicDeployment: true,
+    });
+
+    generatedAddresses.sftCryptofolio = sftCryptofolioReceipt.address;
+  }
 
   //////////////////////////////////////////////////////////////////////////////
   //
