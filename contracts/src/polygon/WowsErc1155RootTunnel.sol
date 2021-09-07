@@ -6,7 +6,6 @@ import { ERC1155Holder } from '../../0xerc1155/tokens/ERC1155/ERC1155Holder.sol'
 import { SafeMath } from '../../0xerc1155/utils/SafeMath.sol';
 import { FxBaseRootTunnel } from '../../polygonFx/tunnel/FxBaseRootTunnel.sol';
 
-import '../cfolio/interfaces/ICFolioItemHandler.sol';
 import '../token/interfaces/IWOWSCryptofolio.sol';
 import '../token/interfaces/IWOWSERC1155.sol';
 import '../utils/TokenIds.sol';
@@ -25,14 +24,14 @@ contract WowsERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder {
   bytes32 private constant WITHDRAW_BATCH = keccak256('WITHDRAW_BATCH');
   bytes32 private constant MAP_TOKEN = keccak256('MAP_TOKEN');
 
+  uint256 private constant CHAIN_ID = 1;
+
   //////////////////////////////////////////////////////////////////////////////
   // Routing
   //////////////////////////////////////////////////////////////////////////////
 
-  IERC1155 private immutable rootToken_;
+  IWOWSERC1155 private immutable rootToken_;
   address private immutable childToken_;
-
-  IWOWSERC1155 private immutable sftContract_;
 
   //////////////////////////////////////////////////////////////////////////////
   // Initialization
@@ -42,16 +41,13 @@ contract WowsERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder {
     address _checkpointManager,
     address _fxRoot,
     address _rootToken,
-    address _childToken,
-    address _sftContract
+    address _childToken
   ) FxBaseRootTunnel(_checkpointManager, _fxRoot) {
     require(_rootToken != address(0), 'RT: Invalid root');
     require(_childToken != address(0), 'RT: Invalid child');
 
-    rootToken_ = IERC1155(_rootToken);
+    rootToken_ = IWOWSERC1155(_rootToken);
     childToken_ = _childToken;
-
-    sftContract_ = IWOWSERC1155(_sftContract);
 
     // MAP_TOKEN, encode(rootToken,uri)
     bytes memory message = abi.encode(MAP_TOKEN, abi.encode(_rootToken));
@@ -63,15 +59,13 @@ contract WowsERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder {
     uint256 tokenId,
     uint256 amount
   ) public {
-    // transfer from depositor to this contract
-    rootToken_.safeTransferFrom(
-      msg.sender, // depositor
-      address(this), // manager contract
-      tokenId,
-      amount,
-      ''
-    );
+    // Validate ownership
+    require(rootToken_.balanceOf(msg.sender, tokenId) == 1, 'RT: invalid');
 
+    // Transfer from depositor to this contract
+    rootToken_.lockOnChain(tokenId, CHAIN_ID);
+
+    // Get cfolios
     bytes memory data = _getCFolio('', tokenId);
 
     // DEPOSIT, encode(rootToken, depositor, user, id, amount, extra data)
@@ -132,17 +126,20 @@ contract WowsERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder {
       address rootToken,
       address childToken,
       address user,
-      uint256 id,
+      uint256 tokenId,
       uint256 amount,
-      bytes memory data
-    ) = abi.decode(
+
+    ) = /*bytes memory data*/
+      abi.decode(
         syncData,
         (address, address, address, uint256, uint256, bytes)
       );
     require(rootToken == address(rootToken_), 'RT: Invalid root');
     require(childToken == childToken_, 'RT: Invalid child');
+    require(amount == 1, 'RT: Invalid amount');
+    require(rootToken_.balanceOf(user, tokenId) == 1, 'RT: Invalid user');
 
-    rootToken_.safeTransferFrom(address(this), user, id, amount, data);
+    rootToken_.unlockFromChain(tokenId, CHAIN_ID);
   }
 
   function _syncBatchWithdraw(bytes memory syncData) internal {
@@ -150,152 +147,50 @@ contract WowsERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder {
       address rootToken,
       address childToken,
       address user,
-      uint256[] memory ids,
+      uint256[] memory tokenIds,
       uint256[] memory amounts,
-      bytes memory data
-    ) = abi.decode(
+
+    ) = /*bytes memory data*/
+      abi.decode(
         syncData,
         (address, address, address, uint256[], uint256[], bytes)
       );
     require(rootToken == address(rootToken_), 'RT: Invalid root');
     require(childToken == childToken_, 'RT: Invalid child');
+    require(amounts.length == 0, 'RT: Invalid amounts');
 
-    rootToken_.safeBatchTransferFrom(address(this), user, ids, amounts, data);
+    for (uint256 i = 0; i < tokenIds.length; ++i) {
+      require(rootToken_.balanceOf(user, tokenIds[i]) == 1, 'RT: Invalid user');
+      rootToken_.unlockFromChain(tokenIds[i], CHAIN_ID);
+    }
   }
 
   function _getCFolio(bytes memory data, uint256 tokenId)
     private
     returns (bytes memory)
   {
-    // Collect changed CFIH's
-    address[] memory updateHandler = new address[](1);
+    rootToken_.lockOnChain(tokenId, CHAIN_ID);
 
     if (tokenId.isBaseCard()) {
-      address cfolio = sftContract_.tokenIdToAddress(tokenId);
+      address cfolio = rootToken_.tokenIdToAddress(tokenId);
       require(cfolio != address(0), 'RT: Invalid cfolio');
 
-      uint256[] memory items = sftContract_.getTokenIds(cfolio);
+      uint256[] memory items = rootToken_.getTokenIds(cfolio);
       bytes memory result = abi.encodePacked(items.length);
       // Loop over cfolioItems, remove share, and add them for transfer
       for (uint256 i = 0; i < items.length; ++i) {
+        // Lock CFI on sidechain
+        rootToken_.lockOnChain(tokenId, CHAIN_ID);
+
         result = abi.encodePacked(
           result,
           items[i],
-          sftContract_.getCFolioItemType(items[i]),
-          _removeAsset(items[i], updateHandler)
+          rootToken_.getCFolioItemType(items[i])
         );
       }
-      // Update farms after asset adding
-      for (
-        uint256 i = 0;
-        i < updateHandler.length && updateHandler[i] != address(0);
-        ++i
-      ) ICFolioItemHandler(updateHandler[i]).updateRewards(tokenId);
       return abi.encodePacked(data, result);
     } else {
-      return
-        abi.encodePacked(
-          data,
-          sftContract_.getCFolioItemType(tokenId),
-          _removeAsset(tokenId, updateHandler)
-        );
+      return abi.encodePacked(data, rootToken_.getCFolioItemType(tokenId));
     }
-  }
-
-  function _removeAsset(uint256 tokenId, address[] memory updateHandler)
-    private
-    returns (uint256)
-  {
-    address cfolioItem = sftContract_.tokenIdToAddress(tokenId);
-    require(cfolioItem != address(0), 'RT: Invalid cfolioItem');
-    address handler = IWOWSCryptofolio(cfolioItem).handler();
-
-    uint256 amount = ICFolioItemHandler(handler).removeAssets(cfolioItem);
-    if (amount > 0) {
-      // Currently only one CFIH supported
-      if (updateHandler[0] == address(0)) updateHandler[0] = handler;
-      else require(updateHandler[0] == handler, 'RT: Only 1 handler');
-    }
-    return amount;
-  }
-
-  function _parseAmounts(
-    bytes memory data,
-    uint256 tokenId,
-    uint256 start
-  ) private returns (uint256) {
-    // Collect changed CFIH's
-    address[] memory updateHandler = new address[](1);
-
-    if (tokenId.isBaseCard()) {
-      // Num | [TokenId | Amount]
-      uint256 incomingSum;
-      uint256 expectedSum;
-
-      address cfolio = sftContract_.tokenIdToAddress(tokenId);
-      require(cfolio != address(0), 'RT: Invalid cfolio');
-
-      uint256[] memory items = sftContract_.getTokenIds(cfolio);
-
-      uint256 incomingItemCount = _getUint256(data, start++);
-      require(items.length == incomingItemCount, 'RT: Wrong cfi count');
-      require(
-        data.length / 32 >= start + 2 * incomingItemCount,
-        'RT: data wrong'
-      );
-
-      // Iterate through cfi's and add asset into CFIH
-      // Also sum tokenIds up for a final verification step
-      for (uint256 i = 0; i < incomingItemCount; ++i) {
-        uint256 itemTokenId = _getUint256(data, start++);
-        uint256 amount = _getUint256(data, start++);
-        incomingSum = incomingSum.add(itemTokenId);
-        expectedSum = expectedSum.add(items[i]);
-        _addAsset(itemTokenId, amount, updateHandler);
-      }
-      // Verify that tokenId sums are equal
-      require(incomingSum == expectedSum, 'RT: Verification failed');
-      // Update farms after asset adding
-      for (
-        uint256 i = 0;
-        i < updateHandler.length && updateHandler[i] != address(0);
-        ++i
-      ) ICFolioItemHandler(updateHandler[i]).updateRewards(tokenId);
-    } else {
-      // Amount
-      require(data.length / 32 > start, 'RT: data wrong');
-      _addAsset(tokenId, _getUint256(data, start++), updateHandler);
-    }
-    return start;
-  }
-
-  function _addAsset(
-    uint256 tokenId,
-    uint256 amount,
-    address[] memory updateHandler
-  ) private {
-    if (amount > 0) {
-      address cfolioItem = sftContract_.tokenIdToAddress(tokenId);
-      require(cfolioItem != address(0), 'RT: Invalid cfolioItem');
-      address handler = IWOWSCryptofolio(cfolioItem).handler();
-
-      ICFolioItemHandler(handler).addAssets(cfolioItem, amount);
-      // Currently only one CFIH supported
-      if (updateHandler[0] == address(0)) updateHandler[0] = handler;
-      else require(updateHandler[0] == handler, 'RT: Only 1 handler');
-    }
-  }
-
-  function _getUint256(bytes memory bs, uint256 start)
-    internal
-    pure
-    returns (uint256)
-  {
-    uint256 ret;
-    // solhint-disable-next-line no-inline-assembly
-    assembly {
-      ret := mload(add(bs, add(0x20, mul(start, 0x20))))
-    }
-    return ret;
   }
 }

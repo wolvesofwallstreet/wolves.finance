@@ -27,13 +27,11 @@ contract WOWSERC1155 is IWOWSERC1155, AccessControl {
   // Constants
   //////////////////////////////////////////////////////////////////////////////
 
-  // Operator role is required to set approval for tokens. This prevents
-  // auctions like OpenSea from selling the tokens. Selling by third parties
-  // is only allowed for cryptofolios which are locked in one of our TradeFloor
-  // contracts.
-  bytes32 public constant OPERATOR_ROLE = 'OPERATOR_ROLE';
   // Role to mint new tokens
   bytes32 public constant MINTER_ROLE = 'MINTER_ROLE';
+
+  // Role which is allowed to call chain related functions
+  bytes32 public constant CHAIN_ROLE = 'CHAIN_ROLE';
 
   // Token receiver return value
   bytes4 internal constant ERC1155_BATCH_RECEIVED_VALUE = 0xbc197c81;
@@ -57,8 +55,15 @@ contract WOWSERC1155 is IWOWSERC1155, AccessControl {
     address owner; // Make sure we only mint 1
     uint64 timestamp;
     ListKey listKey; // Next tokenId in the owner linkedList
+    uint256 chains;
   }
   mapping(uint256 => TokenInfo) private _tokenInfos;
+
+  struct ExternalNft {
+    address collection;
+    uint256 tokenId;
+  }
+  mapping(uint256 => ExternalNft) public externalNfts;
 
   // Mapping tokenId -> generated address
   mapping(uint256 => address) private _tokenIdToAddress;
@@ -82,12 +87,25 @@ contract WOWSERC1155 is IWOWSERC1155, AccessControl {
   // Our master cryptofolio used for clones
   address public cryptofolio;
 
+  // On a sidechain: the only transfer target
+  address public sidechainTunnel;
+
   //////////////////////////////////////////////////////////////////////////////
   // Modifier
   //////////////////////////////////////////////////////////////////////////////
 
   modifier onlyAdmin() {
     require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'SFT: Only admin');
+    _;
+  }
+
+  modifier onlyMinter() {
+    require(hasRole(MINTER_ROLE, _msgSender()), 'SFT: Only minter');
+    _;
+  }
+
+  modifier onlyChain() {
+    require(hasRole(CHAIN_ROLE, _msgSender()), 'SFT: Only chain operator');
     _;
   }
 
@@ -108,6 +126,9 @@ contract WOWSERC1155 is IWOWSERC1155, AccessControl {
 
   // Fired if a Cryptofolio clone was set
   event CryptofolioSet(address cryptofolio);
+
+  // Fired if a SidechainTunnel was set
+  event SidechainTunnelSet(address sidechainTunnel);
 
   //////////////////////////////////////////////////////////////////////////////
   // Initialization
@@ -145,12 +166,9 @@ contract WOWSERC1155 is IWOWSERC1155, AccessControl {
     address to,
     uint256[] calldata tokenIds,
     bytes calldata data
-  ) external override {
-    // Validate access
-    require(hasRole(MINTER_ROLE, _msgSender()), 'Only minter');
-
+  ) external override onlyMinter {
     // Validate parameters
-    require(to != address(0), "Can't mint to zero address");
+    require(to != address(0), 'SFT: Zero address');
 
     _tokenTransfer(address(0), to, tokenIds, data);
   }
@@ -242,10 +260,8 @@ contract WOWSERC1155 is IWOWSERC1155, AccessControl {
   function setCustomCardLevel(uint256 tokenId, uint8 cardLevel)
     public
     override
+    onlyMinter
   {
-    // Access control
-    require(hasRole(MINTER_ROLE, _msgSender()), 'SFT: Only minter');
-
     // Validate parameter
     require(!tokenId.isCustomCard(), 'SFT: Only custom cards');
 
@@ -259,14 +275,69 @@ contract WOWSERC1155 is IWOWSERC1155, AccessControl {
   function setCFolioItemType(uint256 tokenId, uint256 cfolioItemType)
     external
     override
+    onlyMinter
   {
-    require(tokenId.isCFolioCard(), 'Invalid tokenId');
-    require(hasRole(MINTER_ROLE, _msgSender()), 'SFT: Minter only');
+    require(tokenId.isCFolioCard(), 'SFT: Invalid tokenId');
 
     _cfolioItemTypes[tokenId] = cfolioItemType;
 
     // Dispatch event
     emit UpdatedCFolioType(tokenId, cfolioItemType);
+  }
+
+  /**
+   * @dev See {IWOWSERC1155-setExternalNft}.
+   */
+  function setExternalNft(
+    uint256 tokenId,
+    address externalCollection,
+    uint256 externalTokenId
+  ) external override onlyMinter {
+    ExternalNft storage nft = externalNfts[tokenId];
+
+    nft.collection = externalCollection;
+    nft.tokenId = externalTokenId;
+  }
+
+  /**
+   * @dev See {IWOWSERC1155-deleteExternalNft}.
+   */
+  function deleteExternalNft(uint256 tokenId) external override onlyMinter {
+    delete (externalNfts[tokenId]);
+  }
+
+  /**
+   * @dev See {IWOWSERC1155-lockOnChain}.
+   */
+  function lockOnChain(uint256 tokenId, uint256 chainId)
+    external
+    override
+    onlyChain
+  {
+    TokenInfo storage info = _tokenInfos[tokenId];
+
+    // Dont allow re-lock
+    require((info.chains & (1 << chainId)) == 0, 'SFT: Already locked');
+
+    // Set state
+    info.chains |= (1 << chainId);
+  }
+
+  /**
+   * @dev See {IWOWSERC1155-unlockFromChain}.
+   */
+  function unlockFromChain(uint256 tokenId, uint256 chainId)
+    external
+    override
+    onlyChain
+  {
+    TokenInfo storage info = _tokenInfos[tokenId];
+
+    // Dont allow re-lock
+    require((info.chains & (1 << chainId)) != 0, 'SFT: Not locked');
+
+    // Set state
+    info.chains &= ~(1 << chainId);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -324,7 +395,7 @@ contract WOWSERC1155 is IWOWSERC1155, AccessControl {
     returns (uint256)
   {
     // Validate parameters
-    require(tokenId.isCFolioCard(), 'SFTE: Invalid tokenId');
+    require(tokenId.isCFolioCard(), 'SFT: Invalid tokenId');
 
     // Load state
     return _cfolioItemTypes[tokenId.toSftTokenId()];
@@ -373,6 +444,12 @@ contract WOWSERC1155 is IWOWSERC1155, AccessControl {
     emit CryptofolioSet(cryptofolio);
   }
 
+  // Set Cryptofolio clone
+  function setSideChainTunnel(address sidechainTunnel_) external onlyAdmin {
+    sidechainTunnel = sidechainTunnel_;
+    emit SidechainTunnelSet(sidechainTunnel_);
+  }
+
   //////////////////////////////////////////////////////////////////////////////
   // Internal functionality
   //////////////////////////////////////////////////////////////////////////////
@@ -387,6 +464,12 @@ contract WOWSERC1155 is IWOWSERC1155, AccessControl {
     bytes memory data
   ) private {
     require(!pause, 'SFT: Paused!');
+    require(
+      sidechainTunnel == address(0) ||
+        from == sidechainTunnel ||
+        to == sidechainTunnel,
+      'SFTE: Invalid (sct)'
+    );
 
     uint256 tokenIdsLength = tokenIds.length;
     uint256 numUniqueCFolioHandlers = 0;
@@ -401,10 +484,12 @@ contract WOWSERC1155 is IWOWSERC1155, AccessControl {
       address tokenAddress = _tokenIdToAddress[tokenId];
       TokenInfo storage tokenInfo = _tokenInfos[tokenId];
 
+      require(tokenInfo.chains == 0, 'SFT: Chain locked');
+
       // Minting
       if (from == address(0)) {
         // Validate state
-        require(tokenInfo.owner == address(0), 'Already minted');
+        require(tokenInfo.owner == address(0), 'SFT: Already minted');
 
         // solhint-disable-next-line not-rely-on-time
         tokenInfo.timestamp = uint64(block.timestamp);
@@ -462,7 +547,7 @@ contract WOWSERC1155 is IWOWSERC1155, AccessControl {
         Owned storage fromList = _owned[from];
 
         // Validate state
-        require(fromList.count > 0, 'Count mismatch');
+        require(fromList.count > 0, 'SFT: Count mismatch');
 
         ListKey storage key = fromList.listKey;
         uint256 count = fromList.count;
@@ -470,7 +555,7 @@ contract WOWSERC1155 is IWOWSERC1155, AccessControl {
         // Search the token which links to tokenId
         for (; count > 0 && key.index != tokenId; --count)
           key = _tokenInfos[key.index].listKey;
-        require(key.index == tokenId, 'Key mismatch');
+        require(key.index == tokenId, 'SFT: Key mismatch');
 
         // Unlink prev -> tokenId
         key.index = tokenInfo.listKey.index;
