@@ -160,4 +160,37 @@ interface IWOWSERC1155 {
    * sftHolder tokenId expected (without hash)
    */
   function setCFolioItemType(uint256 tokenId, uint256 cfolioItemType_) external;
+
+  /**
+   * @dev Sets external NFT for display tokenId
+   * By default NFT is rendered using our internal metadata
+   *
+   * Throws if not called from MINTER role
+   */
+  function setExternalNft(
+    uint256 tokenId,
+    address externalCollection,
+    uint256 externalTokenId
+  ) external;
+
+  /**
+   * @dev Deletes external NFT settings
+   *
+   * Throws if not called from MINTER role
+   */
+  function deleteExternalNft(uint256 tokenId) external;
+
+  /**
+   * @dev Locks tokenId on chain
+   *
+   * Throws if not called from CHAIN role
+   */
+  function lockOnChain(uint256 tokenId, uint256 chainId) external;
+
+  /**
+   * @dev Locks tokenId on chain
+   *
+   * Throws if not called from CHAIN role
+   */
+  function unlockFromChain(uint256 tokenId, uint256 chainId) external;
 }

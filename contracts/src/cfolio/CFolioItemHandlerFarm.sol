@@ -321,18 +321,6 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
   }
 
   /**
-   * @dev See {ICFolioItemHandler-updateRewards}
-   */
-  function updateRewards(uint256 tokenId) external override {
-    require(tokenId.isBaseCard(), 'CFIH: Invalid tokenId');
-
-    address cFolio = _sftHolder.tokenIdToAddress(tokenId.toSftTokenId());
-
-    require(cFolio != address(0), 'CFIH: Invalid cfolio');
-    _updateRewards(cFolio, _sftEvaluator.rewardRate(tokenId));
-  }
-
-  /**
    * @dev See {ICFolioItemHandler-getRewards}
    *
    * Note: tokenId must be a base SFT card
@@ -399,31 +387,6 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
         result = abi.encodePacked(result, share, earned);
       }
     }
-  }
-
-  /**
-   * @dev See {ICFolioItemHandler-addAssets}
-   */
-  function addAssets(address cFolioItem, uint256 amount) external override {
-    uint256 slotId = sideChains[_msgSender()];
-    require(slotId > 0, 'CFIH: Unregistered bridge');
-
-    _cfolioFarm.addAssets(cFolioItem, amount, slotId);
-  }
-
-  /**
-   * @dev See {ICFolioItemHandler-removeAssets}
-   */
-  function removeAssets(address cFolioItem)
-    external
-    override
-    returns (uint256 amount)
-  {
-    uint256 slotId = sideChains[_msgSender()];
-    require(slotId > 0, 'CFIH: Unregistered bridge');
-
-    amount = _cfolioFarm.balanceOf(cFolioItem, slotId);
-    _cfolioFarm.removeAssets(cFolioItem, amount, slotId);
   }
 
   //////////////////////////////////////////////////////////////////////////////

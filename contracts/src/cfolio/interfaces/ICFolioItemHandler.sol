@@ -60,16 +60,6 @@ interface ICFolioItemHandler is ICFolioItemCallback {
   ) external;
 
   /**
-   * @dev Updates the Farm rewards
-   *
-   * This function iterates through all CFI's and evaluates
-   * the farm share depending parameters like prowess.
-   *
-   * @param tokenId Base CFolio tokenId to update
-   */
-  function updateRewards(uint256 tokenId) external;
-
-  /**
    * @dev Get the rewards collected by an SFT base card
    *
    * Calls only allowed from sftMinter.
@@ -104,27 +94,4 @@ interface ICFolioItemHandler is ICFolioItemCallback {
     external
     view
     returns (bytes memory);
-
-  /**
-   * @dev Add virtual assets from sideChain into the rewardPool
-   *
-   * Assets are added if an cfolioItem is transfered from sideChain
-   * to this chain. The slotId is fetched from registered side chains
-   * using msg.sender
-   *
-   * @param cFolioItem The item which has arrived
-   * @param amount The amount of tokens which arrived
-   */
-  function addAssets(address cFolioItem, uint256 amount) external;
-
-  /**
-   * @dev Remove virtual assets from sideChain from the rewardPool
-   *
-   * Assets are removed if an cfolioItem is transfered from this root chain
-   * to a sideChain. The slotId is fetched from registered side chains
-   * using msg.sender
-   *
-   * @param cFolioItem The item which will be bridged to sideChain
-   */
-  function removeAssets(address cFolioItem) external returns (uint256);
 }
