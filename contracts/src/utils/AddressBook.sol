@@ -12,6 +12,7 @@ library AddressBook {
   bytes32 public constant DEPLOYER = 'DEPLOYER';
   bytes32 public constant TEAM_WALLET = 'TEAM_WALLET';
   bytes32 public constant MARKETING_WALLET = 'MARKETING_WALLET';
+  bytes32 public constant ADMIN_ACCOUNT = 'ADMIN_ACCOUNT';
   bytes32 public constant UNISWAP_V2_ROUTER02 = 'UNISWAP_V2_ROUTER02';
   bytes32 public constant WETH_WOWS_STAKE_FARM = 'WETH_WOWS_STAKE_FARM';
   bytes32 public constant WOWS_TOKEN = 'WOWS_TOKEN';
