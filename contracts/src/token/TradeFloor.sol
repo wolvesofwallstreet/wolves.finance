@@ -9,7 +9,9 @@
 pragma solidity >=0.7.0 <0.8.0;
 
 import '../../0xerc1155/interfaces/IERC20.sol';
+import '../../0xerc1155/proxy/Initializable.sol';
 import '../../0xerc1155/tokens/ERC1155/ERC1155Holder.sol';
+import '../../0xerc1155/tokens/ERC1155/ERC1155Metadata.sol';
 
 import '../token/interfaces/IWOWSCryptofolio.sol';
 import '../token/interfaces/IWOWSERC1155.sol';
@@ -18,11 +20,7 @@ import '../utils/interfaces/IAddressRegistry.sol';
 import '../utils/TokenIds.sol';
 
 import './interfaces/ICFolioItemCallback.sol';
-import './WOWSMinterPauser.sol';
-
-abstract contract OpenSeaProxyRegistry {
-  mapping(address => address) public proxies;
-}
+import './WOWSMarketMinterPauser.sol';
 
 /**
  * @dev Implementation of https://eips.ethereum.org/EIPS/eip-1155[ERC1155]
@@ -38,24 +36,15 @@ abstract contract OpenSeaProxyRegistry {
  *   - 32Bit Custom Cards
  *   - Remaining CFolio NFTs
  */
-contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
+contract TradeFloor is ERC1155Metadata, WOWSMarketMinterPauser, ERC1155Holder {
   using TokenIds for uint256;
-
-  //////////////////////////////////////////////////////////////////////////////
-  // Roles
-  //////////////////////////////////////////////////////////////////////////////
-
-  // Only OPERATORS can approve when trading is restricted
-  bytes32 public constant OPERATOR_ROLE = 'OPERATOR_ROLE';
 
   //////////////////////////////////////////////////////////////////////////////
   // Constants
   //////////////////////////////////////////////////////////////////////////////
 
-  // solhint-disable-next-line const-name-snakecase
-  string public constant name = 'Wolves of Wall Street - C-Folio NFTs';
-  // solhint-disable-next-line const-name-snakecase
-  string public constant symbol = 'WOWSCFNFT';
+  string private constant _NAME = 'Wolves of Wall Street - C-Folio NFTs';
+  string private constant _SYMBOL = 'WOWSCFNFT';
 
   //////////////////////////////////////////////////////////////////////////////
   // Modifier
@@ -106,59 +95,6 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   // Our CFolioItemBridge contract, needed to get hashed tokenId
   address private immutable _cfiBridge;
 
-  // Restrict approvals to OPERATOR_ROLE members
-  bool private _tradingRestricted;
-
-  //////////////////////////////////////////////////////////////////////////////
-  // Events
-  //////////////////////////////////////////////////////////////////////////////
-
-  /**
-   * @dev Emitted when the state of restriction has updated
-   *
-   * @param tradingRestricted True if trading has been restricted, false otherwise
-   */
-  event RestrictionUpdated(bool tradingRestricted);
-
-  //////////////////////////////////////////////////////////////////////////////
-  // OpenSea compatibility
-  //////////////////////////////////////////////////////////////////////////////
-
-  // OpenSea per-account proxy registry. Used to whitelist Approvals and save
-  // GAS.
-  OpenSeaProxyRegistry private immutable _openSeaProxyRegistry;
-  address private immutable _deployer;
-
-  // OpenSea events
-  event OwnershipTransferred(
-    address indexed previousOwner,
-    address indexed newOwner
-  );
-
-  //////////////////////////////////////////////////////////////////////////////
-  // Rarible compatibility
-  //////////////////////////////////////////////////////////////////////////////
-
-  /*
-   * bytes4(keccak256('getFeeBps(uint256)')) == 0x0ebd4c7f
-   * bytes4(keccak256('getFeeRecipients(uint256)')) == 0xb9c4d9fb
-   *
-   * => 0x0ebd4c7f ^ 0xb9c4d9fb == 0xb7799584
-   */
-  bytes4 private constant _INTERFACE_ID_FEES = 0xb7799584;
-
-  uint256 private _fee;
-  address private _feeRecipient;
-
-  // Rarible events
-  // solhint-disable-next-line event-name-camelcase
-  event CreateERC1155_v1(address indexed creator, string name, string symbol);
-  event SecondarySaleFees(
-    uint256 tokenId,
-    address payable[] recipients,
-    uint256[] bps
-  );
-
   //////////////////////////////////////////////////////////////////////////////
   // Initialization
   //////////////////////////////////////////////////////////////////////////////
@@ -170,17 +106,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
    *
    * Note: Pause operation in this context. Only calls from Proxy allowed.
    */
-  constructor(
-    IAddressRegistry addressRegistry,
-    OpenSeaProxyRegistry openSeaProxyRegistry
-  ) {
-    // Initialize {AccessControl}
-    address marketingWallet = _getAddressRegistryAddress(
-      addressRegistry,
-      AddressBook.MARKETING_WALLET
-    );
-    _setupRole(DEFAULT_ADMIN_ROLE, marketingWallet);
-
+  constructor(IAddressRegistry addressRegistry) {
     // Immutable, visible for all contexts
     _sftHolder = IWOWSERC1155(
       _getAddressRegistryAddress(addressRegistry, AddressBook.SFT_HOLDER)
@@ -191,56 +117,33 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
       addressRegistry,
       AddressBook.CFOLIOITEM_BRIDGE_PROXY
     );
-
-    // Immutable, visible for all contexts
-    _openSeaProxyRegistry = openSeaProxyRegistry;
-
-    // Immutable, visible for all contexts
-    _deployer = _getAddressRegistryAddress(
-      addressRegistry,
-      AddressBook.DEPLOYER
-    );
-
-    // Pause this instance
-    _pause(true);
   }
 
   /**
    * @dev One time contract initializer
    *
+   * @param addressRegistry Registry containing our system addresses
+   * @param openSeaProxyRegistry The OpenSea proxy registry
    * @param tokenUriPrefix The ERC-1155 metadata URI Prefix
-   * @param contractUri The contract metadata URI
+   * @param contractMetadataURI The URI for contract metadata of the storefront
    */
   function initialize(
     IAddressRegistry addressRegistry,
+    OpenSeaProxyRegistry openSeaProxyRegistry,
     string memory tokenUriPrefix,
-    string memory contractUri
-  ) public {
-    // Validate state
-    require(_feeRecipient == address(0), 'already initialized');
-
-    // Initialize {AccessControl}
-    address marketingWallet = _getAddressRegistryAddress(
+    string memory contractMetadataURI
+  ) public initializer {
+    // Initialize ancestor
+    super.initialize(
       addressRegistry,
-      AddressBook.MARKETING_WALLET
+      openSeaProxyRegistry,
+      _NAME,
+      _SYMBOL,
+      contractMetadataURI
     );
-    _setupRole(DEFAULT_ADMIN_ROLE, marketingWallet);
 
     // Initialize {ERC1155Metadata}
     _setBaseMetadataURI(tokenUriPrefix);
-    _setContractMetadataURI(contractUri);
-
-    _feeRecipient = _getAddressRegistryAddress(
-      addressRegistry,
-      AddressBook.REWARD_HANDLER
-    );
-    _fee = 1000; // 10%
-
-    // This event initializes Rarible storefront
-    emit CreateERC1155_v1(_deployer, name, symbol);
-
-    // OpenSea enable storefront editing
-    emit OwnershipTransferred(address(0), _deployer);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -266,7 +169,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   }
 
   //////////////////////////////////////////////////////////////////////////////
-  // Implementation of {IERC1155} via {WOWSMinterPauser}
+  // Implementation of {IERC1155} via {WOWSMarketMinterPauser}
   //////////////////////////////////////////////////////////////////////////////
 
   /**
@@ -309,67 +212,25 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     _onTransfer(from, to, tokenIds);
   }
 
-  /**
-   * @dev See {IERC1155-setApprovalForAll}.
-   *
-   * Override setApprovalForAll to be able to restrict to known operators.
-   */
-  function setApprovalForAll(address operator, bool approved)
-    public
-    virtual
-    override
-  {
-    // Validate access
-    require(
-      !_tradingRestricted || hasRole(OPERATOR_ROLE, operator),
-      'forbidden'
-    );
-
-    // Call ancestor
-    super.setApprovalForAll(operator, approved);
-  }
-
-  /**
-   * Override isApprovedForAll to whitelist user's OpenSea proxy accounts to enable gas-free listings.
-   */
-  function isApprovedForAll(address account, address operator)
-    public
-    view
-    override
-    returns (bool)
-  {
-    if (!_tradingRestricted && address(_openSeaProxyRegistry) != address(0)) {
-      // Whitelist OpenSea proxy contract for easy trading.
-      OpenSeaProxyRegistry proxyRegistry = OpenSeaProxyRegistry(
-        _openSeaProxyRegistry
-      );
-      if (proxyRegistry.proxies(account) == operator) {
-        return true;
-      }
-    }
-
-    // Call ancestor
-    return super.isApprovedForAll(account, operator);
-  }
-
   //////////////////////////////////////////////////////////////////////////////
-  // Implementation of {IERC1155MetadataURI} via {WOWSMinterPauser}
+  // Implementation of {IERC1155Metadata}
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev See {IERC1155MetadataURI-uri}.
+   * @dev See {IERC1155Metadata-uri}.
    *
    * Revert for unminted SFT NFTs.
    */
   function uri(uint256 tokenId) public view override returns (string memory) {
     // Validate state
     require(_tokenInfos[tokenId].minted, 'Not minted');
+
     // Load state
     return _uri(tokenId, 0);
   }
 
   //////////////////////////////////////////////////////////////////////////////
-  // Implementation of {WOWSMinterPauser}
+  // Implementation of {WOWSMarketMinterPauser}
   //////////////////////////////////////////////////////////////////////////////
 
   /**
@@ -451,6 +312,30 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   }
 
   //////////////////////////////////////////////////////////////////////////////
+  // Implementation of {ERC165}
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * @dev See {ERC165-supportsInterface}
+   *
+   * This function is necessary due to diamond inheritance.
+   */
+  function supportsInterface(bytes4 _interfaceID)
+    public
+    pure
+    virtual
+    override(ERC1155Metadata, WOWSMarket, ERC1155Holder)
+    returns (bool)
+  {
+    // Call ancestors
+    if (ERC1155Metadata.supportsInterface(_interfaceID)) return true;
+    if (WOWSMarket.supportsInterface(_interfaceID)) return true;
+    if (ERC1155Holder.supportsInterface(_interfaceID)) return true;
+
+    return false;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
   // Administrative functions
   //////////////////////////////////////////////////////////////////////////////
 
@@ -466,33 +351,6 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   }
 
   /**
-   * @dev Set contract metadata URI
-   */
-  function setContractMetadataURI(string memory newContractUri)
-    public
-    onlyAdmins
-  {
-    _setContractMetadataURI(newContractUri);
-  }
-
-  /**
-   * @dev Register interfaces
-   */
-  function supportsInterface(bytes4 _interfaceID)
-    public
-    pure
-    virtual
-    override(WOWSMinterPauser, ERC1155Holder)
-    returns (bool)
-  {
-    // Register rarible fee interface
-    if (_interfaceID == _INTERFACE_ID_FEES) {
-      return true;
-    }
-    return super.supportsInterface(_interfaceID);
-  }
-
-  /**
    * @dev Withdraw tokenAddress ERC20token to destination
    *
    * A future improvement would be to swap the token into WOWS.
@@ -505,17 +363,6 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     uint256 amountToken = IERC20(tokenAddress).balanceOf(address(this));
     if (amountToken > 0)
       IERC20(tokenAddress).transfer(_msgSender(), amountToken);
-  }
-
-  /**
-   * @dev Restrict trading to OPERATOR_ROLE (see setApprovalForAll)
-   */
-  function restrictTrading(bool restrict) external onlyAdmins {
-    // Update state
-    _tradingRestricted = restrict;
-
-    // Dispatch event
-    emit RestrictionUpdated(restrict);
   }
 
   /**
@@ -540,7 +387,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
           _relinkOwner(cfolio, address(0), cfiTokenIds[j], uint256(-1));
 
           // Transfer the SFT cFolio (currently owned by us) to cfiBridge
-          WOWSMinterPauser(address(_sftHolder)).safeTransferFrom(
+          WOWSMarketMinterPauser(address(_sftHolder)).safeTransferFrom(
             address(this),
             _cfiBridge,
             cfiTokenIds[j].toSftTokenId(),
@@ -550,55 +397,6 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
         }
       }
     }
-  }
-
-  //////////////////////////////////////////////////////////////////////////////
-  // OpenSea compatibility
-  //////////////////////////////////////////////////////////////////////////////
-
-  function isOwner() external view returns (bool) {
-    return _msgSender() == owner();
-  }
-
-  function owner() public view returns (address) {
-    return _deployer;
-  }
-
-  //////////////////////////////////////////////////////////////////////////////
-  // Rarible fees and events
-  //////////////////////////////////////////////////////////////////////////////
-
-  function setFee(uint256 fee) external onlyAdmins {
-    // Update state
-    _fee = fee;
-  }
-
-  function setFeeRecipient(address feeRecipient) external onlyAdmins {
-    // Update state
-    _feeRecipient = feeRecipient;
-  }
-
-  function getFeeRecipients(uint256)
-    public
-    view
-    returns (address payable[] memory)
-  {
-    // Return value
-    address payable[] memory recipients = new address payable[](1);
-
-    // Load state
-    recipients[0] = payable(_feeRecipient);
-    return recipients;
-  }
-
-  function getFeeBps(uint256) public view returns (uint256[] memory) {
-    // Return value
-    uint256[] memory bps = new uint256[](1);
-
-    // Load state
-    bps[0] = _fee;
-
-    return bps;
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -635,7 +433,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
         amounts[i] = 1;
       }
 
-      WOWSMinterPauser(address(_sftHolder)).safeBatchTransferFrom(
+      WOWSMarketMinterPauser(address(_sftHolder)).safeBatchTransferFrom(
         address(this),
         _msgSender(),
         sftTokenIds,
@@ -674,10 +472,9 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
 
       uint256 mintedTokenId = _hashedTokenId(tokenIds[i]);
       mintedTokenIds[i] = mintedTokenId;
-
-      // OpenSea only listens to TransferSingle event on mint
-      _mintAndEmit(sftRecipient, mintedTokenId);
     }
+    _batchMintAndEmit(sftRecipient, mintedTokenIds, amounts, data);
+
     _onTransfer(address(0), sftRecipient, mintedTokenIds);
   }
 
@@ -777,16 +574,6 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     returns (uint256)
   {
     return _sftHolder.addressToTokenId(tokenAddress);
-  }
-
-  /**
-   * @dev internal mint + event emiting
-   */
-  function _mintAndEmit(address recipient, uint256 tokenId) private {
-    _mint(recipient, tokenId, 1, '');
-
-    // Rarible needs to be informed about fees
-    emit SecondarySaleFees(tokenId, getFeeRecipients(0), getFeeBps(0));
   }
 
   /**

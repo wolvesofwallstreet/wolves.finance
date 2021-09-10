@@ -127,11 +127,7 @@ const func = async function (hardhat_re) {
 
     const tradeFloorReceipt = await deploy(TRADE_FLOOR_CONTRACT, {
       from: deployer,
-      args: [
-        ADDRESS_REGISTRY_ADDRESS,
-        configAddresses.openSeaProxyRegistry ||
-          '0x0000000000000000000000000000000000000000',
-      ],
+      args: [ADDRESS_REGISTRY_ADDRESS],
       log: true,
       deterministicDeployment: true,
     });
@@ -150,6 +146,8 @@ const func = async function (hardhat_re) {
   const tradeFloorInterface = new ethers.utils.Interface(tradeFloorAbi);
   const proxyCallData = tradeFloorInterface.encodeFunctionData('initialize', [
     ADDRESS_REGISTRY_ADDRESS,
+    configAddresses.openSeaProxyRegistry ||
+      '0x0000000000000000000000000000000000000000',
     METADATA_URI,
     CONTRACT_METADATA_URI,
   ]);
