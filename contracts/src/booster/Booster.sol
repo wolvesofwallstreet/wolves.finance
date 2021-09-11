@@ -8,7 +8,6 @@
 
 pragma solidity 0.7.6;
 
-import '../../0xerc1155/interfaces/IERC1155.sol';
 import '../../0xerc1155/utils/SafeERC20.sol';
 import '../../0xerc1155/utils/SafeMath.sol';
 import '../../0xerc1155/access/AccessControl.sol';
@@ -44,10 +43,10 @@ contract Booster is IBooster, AccessControl {
   //////////////////////////////////////////////////////////////////////////////
 
   // The rewardHandler to distribute rewards
-  IRewardHandler public rewardHandler;
+  address public override rewardHandler;
 
   // The SFT contract to validate recipients
-  IWOWSERC1155 public sftHolder;
+  address public override sftHolder;
 
   // Our timelock
   struct TimeLock {
@@ -188,7 +187,9 @@ contract Booster is IBooster, AccessControl {
     uint256 ts = _getTimestamp();
 
     for (uint256 i = 0; i < tokenIds.length; ++i) {
-      address cfolio = sftHolder.tokenIdToAddress(tokenIds[i].toSftTokenId());
+      address cfolio = IWOWSERC1155(sftHolder).tokenIdToAddress(
+        tokenIds[i].toSftTokenId()
+      );
       require(cfolio != address(0), 'B: Invalid tokenId');
 
       TimeLock storage currentLock = timeLocks[cfolio];
@@ -213,7 +214,7 @@ contract Booster is IBooster, AccessControl {
     // Validate input
     require(recipient != address(0), 'B: Invalid recipient');
 
-    if (sftHolder.addressToTokenId(recipient) != uint256(-1)) {
+    if (IWOWSERC1155(sftHolder).addressToTokenId(recipient) != uint256(-1)) {
       // Prepare locking amount into SFT
       TimeLock storage currentLock = timeLocks[recipient];
 
@@ -240,7 +241,7 @@ contract Booster is IBooster, AccessControl {
         currentLock.totalAmount = currentLock.totalAmount.add(amount);
       }
     } else {
-      rewardHandler.distribute2(recipient, amount, fee);
+      IRewardHandler(rewardHandler).distribute2(recipient, amount, fee);
     }
   }
 
@@ -302,10 +303,10 @@ contract Booster is IBooster, AccessControl {
    */
   function claimRewards(uint256 sftTokenId, bool reLock) external override {
     // Validate access
-    address cfolio = sftHolder.tokenIdToAddress(sftTokenId);
+    address cfolio = IWOWSERC1155(sftHolder).tokenIdToAddress(sftTokenId);
     require(cfolio != address(0), 'B: Invalid cfolio');
     require(
-      IERC1155(address(sftHolder)).balanceOf(_msgSender(), sftTokenId) == 1,
+      IWOWSERC1155(sftHolder).balanceOf(_msgSender(), sftTokenId) == 1,
       'B: Access denied'
     );
 
@@ -325,7 +326,11 @@ contract Booster is IBooster, AccessControl {
     if (reLock) {
       _addMore(cfolio, currentLock, ts, claimable);
     } else {
-      rewardHandler.distribute2(_msgSender(), claimable, currentLock.fee);
+      IRewardHandler(rewardHandler).distribute2(
+        _msgSender(),
+        claimable,
+        currentLock.fee
+      );
     }
   }
 
@@ -344,19 +349,23 @@ contract Booster is IBooster, AccessControl {
   /**
    * @dev Set reward handler in case it will be upgraded
    */
-  function setRewardHandler(address rewardHandler_) external onlyAdmin {
+  function setRewardHandler(address rewardHandler_)
+    external
+    override
+    onlyAdmin
+  {
     _setRewardHandler(rewardHandler_);
   }
 
   /**
    * @dev Set sftHolder contract which is deployed after Booster
    */
-  function setSftHolder(address sftHolder_) external onlyAdmin {
+  function setSftHolder(address sftHolder_) external override onlyAdmin {
     // Validate input
     require(sftHolder_ != address(0), 'B: Invalid sftHolder');
 
     // Update state
-    sftHolder = IWOWSERC1155(sftHolder_);
+    sftHolder = sftHolder_;
   }
 
   /**
@@ -398,7 +407,7 @@ contract Booster is IBooster, AccessControl {
     require(rewardHandler_ != address(0), 'B: Invalid rewardHandler');
 
     // Update state
-    rewardHandler = IRewardHandler(rewardHandler_);
+    rewardHandler = rewardHandler_;
   }
 
   /**
@@ -472,7 +481,7 @@ contract Booster is IBooster, AccessControl {
    * @dev Verify that we never exceed the token supply from tokenomics and fees
    */
   function _verifyRewardsProvided() private view {
-    uint256 externalSupply = rewardHandler.getBoosterRewards();
+    uint256 externalSupply = IRewardHandler(rewardHandler).getBoosterRewards();
 
     require(
       rewardsProvided <= externalSupply.add(MAX_TOKENOMICS_REWARDS),

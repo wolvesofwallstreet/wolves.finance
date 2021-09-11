@@ -8,16 +8,17 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
-import '@openzeppelin/contracts/access/AccessControl.sol';
-import '@openzeppelin/contracts/math/SafeMath.sol';
-import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
-import '@openzeppelin/contracts/utils/Context.sol';
+import '../../0xerc1155/access/AccessControl.sol';
+import '../../0xerc1155/utils/SafeMath.sol';
+import '../../0xerc1155/utils/SafeERC20.sol';
+import '../../0xerc1155/utils/Context.sol';
 
 import '../../interfaces/uniswap/IUniswapV2Router02.sol';
-import '../../src/investment/interfaces/IRewardHandler.sol';
-import '../../src/token/interfaces/IERC20WowsMintable.sol';
-import '../../src/utils/AddressBook.sol';
-import '../../src/utils/interfaces/IAddressRegistry.sol';
+import '../investment/interfaces/IRewardHandler.sol';
+import '../polygon/interfaces/IChildTunnel.sol';
+import '../token/interfaces/IERC20WowsMintable.sol';
+import '../utils/AddressBook.sol';
+import '../utils/interfaces/IAddressRegistry.sol';
 
 contract RewardHandler is Context, AccessControl, IRewardHandler {
   using SafeMath for uint256;
@@ -59,6 +60,9 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
 
   // Amount to distribute
   uint256 private _distributeAmount;
+
+  // IChildTunnel for internal distribution
+  IChildTunnel public childTunnel;
 
   //////////////////////////////////////////////////////////////////////////////
   // Events
@@ -341,17 +345,6 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
     );
 
     if (_distributeAmount > 0) {
-      // Load addresses
-      address marketingWallet = _addressRegistry.getRegistryEntry(
-        AddressBook.MARKETING_WALLET
-      );
-      address teamWallet = _addressRegistry.getRegistryEntry(
-        AddressBook.TEAM_WALLET
-      );
-      address booster = _addressRegistry.getRegistryEntry(
-        AddressBook.WOWS_BOOSTER_PROXY
-      );
-
       // Load state
       uint256 distributeAmount = _distributeAmount;
 
@@ -364,16 +357,24 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
         rewardToken.mint(address(this), distributeAmount.sub(balance));
 
       // Distribute the fee
+      if (address(childTunnel) == address(0)) {
+        rewardToken.safeTransfer(
+          _addressRegistry.getRegistryEntry(AddressBook.TEAM_WALLET),
+          distributeAmount.mul(FEE_TO_TEAM).div(1e6)
+        );
+
+        rewardToken.safeTransfer(
+          _addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET),
+          distributeAmount.mul(FEE_TO_MARKETING).div(1e6)
+        );
+      } else {
+        childTunnel.distribute(
+          distributeAmount.mul(FEE_TO_MARKETING + FEE_TO_TEAM).div(1e6)
+        );
+      }
+
       rewardToken.safeTransfer(
-        teamWallet,
-        distributeAmount.mul(FEE_TO_TEAM).div(1e6)
-      );
-      rewardToken.safeTransfer(
-        marketingWallet,
-        distributeAmount.mul(FEE_TO_MARKETING).div(1e6)
-      );
-      rewardToken.safeTransfer(
-        booster,
+        _addressRegistry.getRegistryEntry(AddressBook.WOWS_BOOSTER_PROXY),
         distributeAmount.mul(FEE_TO_BOOSTER).div(1e6)
       );
 

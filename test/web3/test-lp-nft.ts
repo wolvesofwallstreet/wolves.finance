@@ -725,7 +725,7 @@ describe('LP NFTs', function () {
       cfolioItemTokenId,
       [lpBalance.add(1)]
     );
-    await chai.expect(tx).to.be.revertedWith('SafeMath: subtraction overflow');
+    await chai.expect(tx).to.be.revertedWith('SafeMath#sub: UNDERFLOW');
   });
 
   it('should withdraw from CFIHLP', async function () {

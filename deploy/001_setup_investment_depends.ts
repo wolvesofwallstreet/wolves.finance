@@ -46,6 +46,9 @@ function log_step(step_string) {
  * Steps to deploy the WOWS environment
  */
 const func = async function (hardhat_re) {
+  // Check tags
+  if (!hardhat_re.network.tags.needYearn) return;
+
   const { deployments, getNamedAccounts } = hardhat_re;
 
   const { catchUnknownSigner, execute, read } = deployments;

@@ -184,7 +184,7 @@ describe('Reward handler', function () {
       amountToDistribute,
       1 * 1e7
     );
-    await chai.expect(tx).to.be.revertedWith('subtraction overflow');
+    await chai.expect(tx).to.be.revertedWith('SafeMath#sub: UNDERFLOW');
 
     // Add funds to the reward handler
     tx = rewardHandlerContract.distribute2(

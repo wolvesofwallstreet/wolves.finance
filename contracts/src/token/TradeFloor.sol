@@ -102,6 +102,8 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
 
   // Our SFT contract, needed to check for locked transfers
   IWOWSERC1155 private immutable _sftHolder;
+  // Migration!! This is the old sft contract
+  IWOWSERC1155 private immutable _sftHolderOld;
 
   // Restrict approvals to OPERATOR_ROLE members
   bool private _tradingRestricted;
@@ -169,7 +171,8 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
    */
   constructor(
     IAddressRegistry addressRegistry,
-    OpenSeaProxyRegistry openSeaProxyRegistry
+    OpenSeaProxyRegistry openSeaProxyRegistry,
+    IWOWSERC1155 sftHolderOld
   ) {
     // Initialize {AccessControl}
     _setupRole(
@@ -181,6 +184,8 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     _sftHolder = IWOWSERC1155(
       _getAddressRegistryAddress(addressRegistry, AddressBook.SFT_HOLDER_PROXY)
     );
+
+    _sftHolderOld = sftHolderOld;
 
     // Immutable, visible for all contexts
     _openSeaProxyRegistry = openSeaProxyRegistry;
@@ -570,14 +575,6 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     address to,
     uint256[] memory tokenIds
   ) private {
-    // Before all NFTs are migrated, users could have cfolioItems from this
-    // contract in cfolio. Because burning is not recorded in cfih's anymore,
-    // we have to disallow it. Next line can be removed after migration.
-    require(
-      from == address(0) || _sftHolder.addressToTokenId(from) == uint256(-1),
-      'TF: Forbidden'
-    );
-
     // Count SFT tokenIds
     uint256 length = tokenIds.length;
     // Relink owner
@@ -595,7 +592,14 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
         amounts[i] = 1;
       }
 
-      WOWSMinterPauser(address(_sftHolder)).safeBatchTransferFrom(
+      IWOWSERC1155 sftHolder = _sftHolder;
+      // Migration!!! Remove if all TF's are on new contract
+      if (
+        address(_sftHolderOld) != address(0) &&
+        _sftHolderOld.balanceOf(address(this), sftTokenIds[0]) == 1
+      ) sftHolder = _sftHolderOld;
+
+      sftHolder.safeBatchTransferFrom(
         address(this),
         _msgSender(),
         sftTokenIds,

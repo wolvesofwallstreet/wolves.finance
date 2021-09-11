@@ -179,18 +179,4 @@ interface IWOWSERC1155 {
    * Throws if not called from MINTER role
    */
   function deleteExternalNft(uint256 tokenId) external;
-
-  /**
-   * @dev Locks tokenId on chain
-   *
-   * Throws if not called from CHAIN role
-   */
-  function lockOnChain(uint256 tokenId, uint256 chainId) external;
-
-  /**
-   * @dev Locks tokenId on chain
-   *
-   * Throws if not called from CHAIN role
-   */
-  function unlockFromChain(uint256 tokenId, uint256 chainId) external;
 }
