@@ -13,14 +13,8 @@ contract ERC1155Metadata is IERC1155Metadata, ERC165 {
   // URI's default URI prefix
   string private _baseMetadataURI;
 
-  // contract metadata URL
-  string private _contractMetadataURI;
-
   // Hex numbers for creating hexadecimal tokenId
   bytes16 private constant HEX_MAP = '0123456789ABCDEF';
-
-  // bytes4(keccak256('contractURI()')) == 0xe8a3d485
-  bytes4 private constant _INTERFACE_ID_CONTRACT_URI = 0xe8a3d485;
 
   /***********************************|
   |     Metadata Public Function s    |
@@ -40,15 +34,6 @@ contract ERC1155Metadata is IERC1155Metadata, ERC165 {
     returns (string memory)
   {
     return _uri(_id, 0);
-  }
-
-  /**
-   * @notice Opensea calls this fuction to get information about how to display storefront.
-   *
-   * @return full URI to the location of the contract metadata.
-   */
-  function contractURI() public view returns (string memory) {
-    return _contractMetadataURI;
   }
 
   /***********************************|
@@ -74,16 +59,6 @@ contract ERC1155Metadata is IERC1155Metadata, ERC165 {
   }
 
   /**
-   * @notice Will update the contract metadata URI
-   * @param newContractMetadataURI New contract metadata URI
-   */
-  function _setContractMetadataURI(string memory newContractMetadataURI)
-    internal
-  {
-    _contractMetadataURI = newContractMetadataURI;
-  }
-
-  /**
    * @notice Query if a contract implements an interface
    * @param _interfaceID  The interface identifier, as specified in ERC-165
    * @return `true` if the contract implements `_interfaceID` or CONTRACT_URI
@@ -95,10 +70,7 @@ contract ERC1155Metadata is IERC1155Metadata, ERC165 {
     override
     returns (bool)
   {
-    if (
-      _interfaceID == type(IERC1155Metadata).interfaceId ||
-      _interfaceID == _INTERFACE_ID_CONTRACT_URI
-    ) {
+    if (_interfaceID == type(IERC1155Metadata).interfaceId) {
       return true;
     }
     return super.supportsInterface(_interfaceID);

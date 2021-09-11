@@ -12,8 +12,9 @@
 pragma solidity >=0.7.0 <0.8.0;
 
 import '../../0xerc1155/access/AccessControl.sol';
-import '../../0xerc1155/tokens/ERC1155/ERC1155Metadata.sol';
 import '../../0xerc1155/tokens/ERC1155/ERC1155MintBurn.sol';
+
+import './OpenSeaMetadata.sol';
 
 /**
  * @dev Partial implementation of https://eips.ethereum.org/EIPS/eip-1155[ERC1155]
@@ -26,7 +27,7 @@ contract WOWSMinterPauser is
   Context,
   AccessControl,
   ERC1155MintBurn,
-  ERC1155Metadata
+  OpenSeaMetadata
 {
   //////////////////////////////////////////////////////////////////////////////
   // Roles
@@ -233,7 +234,7 @@ contract WOWSMinterPauser is
     public
     pure
     virtual
-    override(ERC1155, ERC1155Metadata)
+    override(ERC1155, OpenSeaMetadata)
     returns (bool)
   {
     return super.supportsInterface(_interfaceID);
