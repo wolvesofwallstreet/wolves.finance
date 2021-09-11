@@ -8,11 +8,10 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
-import '@openzeppelin/contracts/GSN/Context.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/math/SafeMath.sol';
-import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
-import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
+import '../../0xerc1155/utils/Context.sol';
+import '../../0xerc1155/utils/ReentrancyGuard.sol';
+import '../../0xerc1155/utils/SafeMath.sol';
+import '../../0xerc1155/utils/SafeERC20.sol';
 
 import '../../interfaces/uniswap/IUniswapV2Factory.sol';
 import '../../interfaces/uniswap/IUniswapV2Router02.sol';
@@ -207,8 +206,7 @@ contract Crowdsale is Context, ReentrancyGuard, ERC20Recovery {
    * buyTokens directly when purchasing tokens from a contract.
    */
   receive() external payable {
-    // A payable receive() function follows the OpenZeppelin strategy, in which
-    // it is designed to buy tokens.
+    // A payable receive() function is designed to buy tokens.
     //
     // However, because we call out to uniV2Router from the crowdsale contract,
     // re-imbursement of ETH from UniswapV2Pair must not buy tokens.

@@ -8,8 +8,6 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
-import '@openzeppelin/contracts/proxy/Clones.sol';
-
 import '../../0xerc1155/access/AccessControl.sol';
 import '../../0xerc1155/interfaces/IERC1155TokenReceiver.sol';
 import '../../0xerc1155/utils/Address.sol';
@@ -17,6 +15,7 @@ import '../../0xerc1155/utils/Address.sol';
 import './interfaces/IWOWSCryptofolio.sol';
 import './interfaces/IWOWSERC1155.sol';
 import '../cfolio/interfaces/ICFolioItemHandler.sol';
+import '../utils/Clones.sol';
 import '../utils/TokenIds.sol';
 
 contract WOWSERC1155 is IWOWSERC1155, AccessControl {
@@ -55,7 +54,6 @@ contract WOWSERC1155 is IWOWSERC1155, AccessControl {
     address owner; // Make sure we only mint 1
     uint64 timestamp;
     ListKey listKey; // Next tokenId in the owner linkedList
-    uint256 chains;
   }
   mapping(uint256 => TokenInfo) private _tokenInfos;
 
@@ -86,9 +84,6 @@ contract WOWSERC1155 is IWOWSERC1155, AccessControl {
 
   // Our master cryptofolio used for clones
   address public cryptofolio;
-
-  // On a sidechain: the only transfer target
-  address public sidechainTunnel;
 
   //////////////////////////////////////////////////////////////////////////////
   // Modifier
@@ -306,40 +301,6 @@ contract WOWSERC1155 is IWOWSERC1155, AccessControl {
     delete (externalNfts[tokenId]);
   }
 
-  /**
-   * @dev See {IWOWSERC1155-lockOnChain}.
-   */
-  function lockOnChain(uint256 tokenId, uint256 chainId)
-    external
-    override
-    onlyChain
-  {
-    TokenInfo storage info = _tokenInfos[tokenId];
-
-    // Dont allow re-lock
-    require((info.chains & (1 << chainId)) == 0, 'SFT: Already locked');
-
-    // Set state
-    info.chains |= (1 << chainId);
-  }
-
-  /**
-   * @dev See {IWOWSERC1155-unlockFromChain}.
-   */
-  function unlockFromChain(uint256 tokenId, uint256 chainId)
-    external
-    override
-    onlyChain
-  {
-    TokenInfo storage info = _tokenInfos[tokenId];
-
-    // Dont allow re-lock
-    require((info.chains & (1 << chainId)) != 0, 'SFT: Not locked');
-
-    // Set state
-    info.chains &= ~(1 << chainId);
-  }
-
   //////////////////////////////////////////////////////////////////////////////
   // Getters
   //////////////////////////////////////////////////////////////////////////////
@@ -444,12 +405,6 @@ contract WOWSERC1155 is IWOWSERC1155, AccessControl {
     emit CryptofolioSet(cryptofolio);
   }
 
-  // Set Cryptofolio clone
-  function setSideChainTunnel(address sidechainTunnel_) external onlyAdmin {
-    sidechainTunnel = sidechainTunnel_;
-    emit SidechainTunnelSet(sidechainTunnel_);
-  }
-
   //////////////////////////////////////////////////////////////////////////////
   // Internal functionality
   //////////////////////////////////////////////////////////////////////////////
@@ -464,12 +419,6 @@ contract WOWSERC1155 is IWOWSERC1155, AccessControl {
     bytes memory data
   ) private {
     require(!pause, 'SFT: Paused!');
-    require(
-      sidechainTunnel == address(0) ||
-        from == sidechainTunnel ||
-        to == sidechainTunnel,
-      'SFTE: Invalid (sct)'
-    );
 
     uint256 tokenIdsLength = tokenIds.length;
     uint256 numUniqueCFolioHandlers = 0;
@@ -483,8 +432,6 @@ contract WOWSERC1155 is IWOWSERC1155, AccessControl {
       // Load state
       address tokenAddress = _tokenIdToAddress[tokenId];
       TokenInfo storage tokenInfo = _tokenInfos[tokenId];
-
-      require(tokenInfo.chains == 0, 'SFT: Chain locked');
 
       // Minting
       if (from == address(0)) {

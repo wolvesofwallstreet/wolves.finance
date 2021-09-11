@@ -60,6 +60,16 @@ interface ICFolioItemHandler is ICFolioItemCallback {
   ) external;
 
   /**
+   * @dev Update investment values from sidechain
+   *
+   * Must be called from a registered root tunnel
+   *
+   * @param tokenId cFolioItem tokenId
+   * @param amounts Investment amounts, implementation specific
+   */
+  function update(uint256 tokenId, uint256[] calldata amounts) external;
+
+  /**
    * @dev Get the rewards collected by an SFT base card
    *
    * Calls only allowed from sftMinter.

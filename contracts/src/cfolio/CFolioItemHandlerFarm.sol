@@ -8,9 +8,8 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
-import '@openzeppelin/contracts/utils/Context.sol';
-
 import '../../0xerc1155/interfaces/IERC1155.sol';
+import '../../0xerc1155/utils/Context.sol';
 import '../../0xerc1155/utils/SafeMath.sol';
 
 import '../investment/interfaces/ICFolioFarm.sol'; // WOWS rewards
@@ -22,18 +21,6 @@ import '../utils/TokenIds.sol';
 
 import './interfaces/ICFolioItemHandler.sol';
 import './interfaces/ISFTEvaluator.sol';
-
-interface ICFolioFarmDeprecated {
-  /**
-   * @dev Return invested balance of account
-   */
-  function balanceOf(address account) external view returns (uint256);
-
-  /**
-   * @dev Return pending rewards
-   */
-  function earned(address account) external view returns (uint256);
-}
 
 /**
  * @dev CFolioItemHandlerFarm manages CFolioItems, minted in the SFT contract.
@@ -59,9 +46,6 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
 
   // Route to SFT Minter. Only setup from SFT Minter allowed.
   address private immutable _sftMinter;
-
-  // Registered sidechains
-  mapping(address => uint256) public sideChains;
 
   // SFT evaluator
   ISFTEvaluator private immutable _sftEvaluator;
@@ -102,14 +86,6 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
    * @param minter The new minter
    */
   event NewMinter(address minter);
-
-  /**
-   * @dev Emitted when a new sidechain is registered
-   *
-   * @param sideChain The address of the root bridge
-   * @param slotId The slotId, 0 for disable
-   */
-  event SideChainRegistered(address sideChain, uint256 slotId);
 
   /**
    * @dev Emitted when the contract is destructed
@@ -321,6 +297,16 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
   }
 
   /**
+   * @dev See {ICFolioItemHandler-update}
+   */
+  function update(
+    uint256, /* tokenId*/
+    uint256[] calldata /* amounts*/
+  ) external pure override {
+    revert('CFIH: Not implemented');
+  }
+
+  /**
    * @dev See {ICFolioItemHandler-getRewards}
    *
    * Note: tokenId must be a base SFT card
@@ -433,17 +419,6 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
     selfdestruct(payable(_admin));
   }
 
-  function registerSideChain(address sideChain, uint256 slotId)
-    external
-    onlyAdmin
-  {
-    require(sideChain != address(0), 'CFIH: Invalid');
-    sideChains[sideChain] = slotId;
-
-    // Emit event
-    emit SideChainRegistered(sideChain, slotId);
-  }
-
   //////////////////////////////////////////////////////////////////////////////
   // Internal details
   //////////////////////////////////////////////////////////////////////////////
@@ -461,7 +436,7 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
     // fits in sensible gas limits.
     require(length <= 100, 'CFIH: Too many items');
 
-    // Get number of existing sidechain slots
+    // Get number of existing slots
     uint256 farmSlots = _cfolioFarm.slotCount();
 
     // Calculate new reward amount

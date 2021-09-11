@@ -34,12 +34,14 @@ const config = {
       default: 1,
       rinkeby: env.RINKEBY_GNOSIS_MARKETING_WALLET_ADDRESS,
       mainnet: env.MAINNET_GNOSIS_MARKETING_WALLET_ADDRESS,
+      goerli_sft: env.DEPLOYER_ADDRESS,
       mumbai: env.DEPLOYER_ADDRESS,
     },
     teamWallet: {
       default: 2,
       rinkeby: env.RINKEBY_GNOSIS_TEAM_WALLET_ADDRESS,
       mainnet: env.MAINNET_GNOSIS_TEAM_WALLET_ADDRESS,
+      goerli_sft: env.DEPLOYER_ADDRESS,
       mumbai: env.DEPLOYER_ADDRESS,
     },
     testUser: {
@@ -150,18 +152,26 @@ const config = {
       },
     ],
   },
+  // possible tags: needUniswap, needYearn, sidechain, test, stakeFarm, local
   defaultNetwork: 'hardhat',
   networks: {
     hardhat: {
-      tags: ['test', 'local'],
+      tags: ['test', 'local', 'sidechain', 'needUniswap', 'needYearn'],
       loggingEnabled: false,
     },
     localhost: {
+      tags: ['needUniswap'],
       url: 'http://localhost:8545',
     },
     goerli: {
       url: `https://goerli.infura.io/v3/${env.INFURA_API_KEY}`,
       accounts: TESTNET_ACCOUNTS,
+      gasPrice: 1500000000,
+    },
+    goerli_sft: {
+      url: `https://goerli.infura.io/v3/${env.INFURA_API_KEY}`,
+      accounts: TESTNET_ACCOUNTS,
+      gasPrice: 1500000000,
     },
     kovan: {
       url: `https://kovan.infura.io/v3/${env.INFURA_API_KEY}`,
@@ -180,9 +190,10 @@ const config = {
       accounts: TESTNET_ACCOUNTS,
     },
     mumbai: {
+      tags: ['sidechain', 'needYearn'],
       url: 'https://matic-mumbai.chainstacklabs.com',
       accounts: TESTNET_ACCOUNTS,
-      gasPrice: 1000000000,
+      gasPrice: 1500000000,
     },
   },
   etherscan: {

@@ -1,10 +1,7 @@
 /*
  * Copyright (C) 2020-2021 The Wolfpack
  * This file is part of wolves.finance - https://github.com/wolvesofwallstreet/wolves.finance
- * *
- * This file is derived from OpenZeppelin, available under the MIT
- * license. https://openzeppelin.com/contracts/
-
+ *
  * SPDX-License-Identifier: Apache-2.0 AND MIT
  * See the file LICENSES/README.md for more information.
  */
@@ -18,9 +15,6 @@ import '../../0xerc1155/tokens/ERC1155/ERC1155MintBurn.sol';
 /**
  * @dev Partial implementation of https://eips.ethereum.org/EIPS/eip-1155[ERC1155]
  * Multi Token Standard
- *
- * This contract is a replacement for the file ERC1155PresetMinterPauser.sol
- * in the OpenZeppelin project.
  */
 contract WOWSMinterPauser is
   Context,

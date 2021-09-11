@@ -8,9 +8,9 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
-import '@openzeppelin/contracts/access/AccessControl.sol';
-import '@openzeppelin/contracts/math/SafeMath.sol';
-import '@openzeppelin/contracts/token/ERC20/ERC20Capped.sol';
+import '../../0xerc1155/access/AccessControl.sol';
+import '../../0xerc1155/tokens/ERC20/ERC20.sol';
+import '../../0xerc1155/utils/SafeMath.sol';
 
 import '../../interfaces/uniswap/IUniswapV2Router02.sol';
 import '../../interfaces/uniswap/IUniswapV2Factory.sol';
@@ -22,8 +22,13 @@ import '../utils/interfaces/IAddressRegistry.sol';
 
 import './interfaces/IERC20WowsMintable.sol';
 
-contract WowsToken is IERC20WowsMintable, ERC20Capped, AccessControl {
+contract WowsToken is ERC20, IERC20WowsMintable, AccessControl {
   using SafeMath for uint256;
+
+  /**
+   * @dev The ERC 20 cap
+   */
+  uint256 public cap = MAX_SUPPLY;
 
   /**
    * @dev The ERC 20 token name used by wallets to identify the token
@@ -71,7 +76,6 @@ contract WowsToken is IERC20WowsMintable, ERC20Capped, AccessControl {
    * @param _addressRegistry registry to get required contracts
    */
   constructor(IAddressRegistry _addressRegistry)
-    ERC20Capped(MAX_SUPPLY)
     ERC20(TOKEN_NAME, TOKEN_SYMBOL)
   {
     // Initialize ERC20 base
@@ -232,6 +236,26 @@ contract WowsToken is IERC20WowsMintable, ERC20Capped, AccessControl {
 
     // Return true, if codehash != uniV2PairCodeHash
     return codeHash != _uniV2PairCodeHash;
+  }
+
+  /**
+   * @dev See {ERC20-_beforeTokenTransfer}.
+   *
+   * Requirements:
+   *
+   * - minted tokens must not cause the total supply to go over the cap.
+   */
+  function _beforeTokenTransfer(
+    address from,
+    address to,
+    uint256 amount
+  ) internal virtual override {
+    super._beforeTokenTransfer(from, to, amount);
+
+    if (from == address(0)) {
+      // When minting tokens
+      require(totalSupply().add(amount) <= cap, 'Cap exceeded');
+    }
   }
 
   function setTXWorker(address _txWorker) external {

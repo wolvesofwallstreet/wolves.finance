@@ -32,6 +32,9 @@ function log_step(step_string) {
  * Steps to deploy the WOWS environment
  */
 const func = async function (hardhat_re) {
+  // Check tags
+  if (!hardhat_re.network.tags.needUniswap) return;
+
   const { deployments, getNamedAccounts } = hardhat_re;
 
   const { deploy } = deployments;

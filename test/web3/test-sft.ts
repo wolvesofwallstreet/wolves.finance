@@ -119,7 +119,7 @@ describe('SFT contracts', function () {
 
     const DEFAULT_ADMIN_ROLE = await sftHolderContract.DEFAULT_ADMIN_ROLE();
     const MINTER_ROLE = await sftHolderContract.MINTER_ROLE();
-    const OPERATOR_ROLE = await sftHolderContract.OPERATOR_ROLE();
+    const CHAIN_ROLE = await sftHolderContract.CHAIN_ROLE();
 
     // Test deployer
     chai.expect(
@@ -127,8 +127,8 @@ describe('SFT contracts', function () {
     ).to.be.false;
     chai.expect(await sftHolderContract.hasRole(MINTER_ROLE, signer.address)).to
       .be.false;
-    chai.expect(await sftHolderContract.hasRole(OPERATOR_ROLE, signer.address))
-      .to.be.false;
+    chai.expect(await sftHolderContract.hasRole(CHAIN_ROLE, signer.address)).to
+      .be.false;
 
     // Test marketing wallet
     chai.expect(
@@ -141,7 +141,7 @@ describe('SFT contracts', function () {
       await sftHolderContract.hasRole(MINTER_ROLE, marketingWallet.address)
     ).to.be.false;
     chai.expect(
-      await sftHolderContract.hasRole(OPERATOR_ROLE, marketingWallet.address)
+      await sftHolderContract.hasRole(CHAIN_ROLE, marketingWallet.address)
     ).to.be.false;
 
     // Test SFT minter contract
@@ -155,7 +155,7 @@ describe('SFT contracts', function () {
       await sftHolderContract.hasRole(MINTER_ROLE, sftMinterContract.address)
     ).to.be.true;
     chai.expect(
-      await sftHolderContract.hasRole(OPERATOR_ROLE, sftMinterContract.address)
+      await sftHolderContract.hasRole(CHAIN_ROLE, sftMinterContract.address)
     ).to.be.false;
 
     // Test trade floor contract
@@ -169,10 +169,7 @@ describe('SFT contracts', function () {
       await sftHolderContract.hasRole(MINTER_ROLE, tradeFloorContract.address)
     ).to.be.false;
     chai.expect(
-      await sftHolderContract.hasRole(OPERATOR_ROLE, tradeFloorContract.address)
-    ).to.be.false;
-    chai.expect(
-      await sftHolderContract.hasRole(OPERATOR_ROLE, tradeFloorContract.address)
+      await sftHolderContract.hasRole(CHAIN_ROLE, tradeFloorContract.address)
     ).to.be.false;
 
     // Test trade floor proxy contract
@@ -186,7 +183,7 @@ describe('SFT contracts', function () {
       await sftHolderContract.hasRole(MINTER_ROLE, tradeFloorContract.address)
     ).to.be.false;
     chai.expect(
-      await sftHolderContract.hasRole(OPERATOR_ROLE, tradeFloorContract.address)
+      await sftHolderContract.hasRole(CHAIN_ROLE, tradeFloorContract.address)
     ).to.be.false;
   });
 

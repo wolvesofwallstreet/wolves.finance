@@ -8,7 +8,7 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '../../../0xerc1155/interfaces/IERC20.sol';
 
 interface IERC20WowsMintable is IERC20 {
   function mint(address account, uint256 amount) external returns (bool);
