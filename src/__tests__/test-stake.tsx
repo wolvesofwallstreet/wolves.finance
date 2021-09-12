@@ -9,7 +9,7 @@
 import { render, screen } from '@testing-library/react';
 
 // Import the withTranslation-less export
-import { Stake } from '../components/stake';
+import { Stake } from '../components/stake_deprecated';
 
 test('renders stake WOWS', () => {
   //display key value instead translation for tests

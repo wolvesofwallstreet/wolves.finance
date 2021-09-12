@@ -24,16 +24,20 @@ import Page1 from './components/page1';
 import Page3 from './components/page3';
 import Page4 from './components/page4';
 import { PageStatus } from './components/pageStatus';
-import Stake from './components/stake';
 import WolfToast from './components/toast/wolftoast';
 import { CONNECTION_CHANGED } from './stores/constants';
 import { ConnectResult, StoreClasses, StoreContainer } from './stores/store';
 
 type APP_STATE = {
-  network?: string;
+  isSideChain: boolean;
 };
 
 class App extends React.Component<unknown, APP_STATE> {
+  constructor(props: unknown) {
+    super(props);
+    this.state = { isSideChain: false };
+  }
+
   componentDidMount(): void {
     StoreClasses.emitter.on(CONNECTION_CHANGED, this.setNetwork);
   }
@@ -43,7 +47,8 @@ class App extends React.Component<unknown, APP_STATE> {
   }
 
   setNetwork = (result: ConnectResult): void => {
-    if (result.type === 'event') this.setState({ network: result.networkName });
+    if (result.type === 'event')
+      this.setState({ isSideChain: StoreClasses.store.isSidechain() });
   };
 
   render(): JSX.Element {
@@ -53,7 +58,7 @@ class App extends React.Component<unknown, APP_STATE> {
           <StoreContainer>
             <WolfToast />
             <Route component={Header} />
-            {this.state?.network?.startsWith('matic') ? (
+            {this.state.isSideChain ? (
               <Switch>
                 <Route path="/cfolio-invest" component={CFolioInvest} />
                 <Route
@@ -64,7 +69,6 @@ class App extends React.Component<unknown, APP_STATE> {
               </Switch>
             ) : (
               <Switch>
-                <Route path="/stake" component={Stake} />
                 <Route
                   path="/shop"
                   render={(props) => <Page3 {...props} display={'shop'} />}

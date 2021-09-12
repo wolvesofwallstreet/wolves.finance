@@ -146,41 +146,13 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
     const query = new URLSearchParams(location.search);
     const type = query.get('type');
     const levelId = query.get('levelId') || 0;
-    const result = StoreClasses.store.networkName.startsWith('matic')
+    const result = StoreClasses.store.isSidechain()
       ? [
-          {
-            id: 'BOIS BOARDROOMS',
-            to: '/wolf_trade_floor-1',
-            disabled: location.pathname === '/wolf_trade_floor',
-            dropdownItems: [
-              {
-                id: t('header.yearnInvest'),
-                to: '/cfolio-invest?type=yearnInvestment',
-              },
-            ],
-          },
-          {
-            id: t('header.myPack'),
-            to: '/my?type=myPack&levelId=' + levelId,
-            disabled: location.pathname === '/my',
-          },
-        ]
-      : [
-          /*{
-        id: t('header.home'),
-        to: '/',
-        disabled: location.pathname === '/',
-      },*/
           {
             id: 'WOLF TRADE FLOOR',
             to: '/wolf_trade_floor-1',
             disabled: location.pathname === '/wolf_trade_floor',
             dropdownItems: [
-              {
-                id: t('header.wolvesCf'),
-                to: '/shop?type=wolves&levelId=' + levelId,
-                disabled: type === 'wolves',
-              },
               {
                 id: t('header.buyStake'),
                 to: '/cfolio-sfts?type=lpInvestment',
@@ -197,11 +169,6 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
             disabled: location.pathname === '/wolf_trade_floor',
             dropdownItems: [
               {
-                id: t('header.boisCf'),
-                to: '/shop?type=bois&levelId=' + levelId,
-                disabled: type === 'bois',
-              },
-              {
                 id: t('header.buyYearn'),
                 to: '/cfolio-sfts?type=yearnInvestment',
               },
@@ -216,15 +183,41 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
             to: '/my?type=myPack&levelId=' + levelId,
             disabled: location.pathname === '/my',
           },
+        ]
+      : [
+          {
+            id: 'WOLF TRADE FLOOR',
+            to: '/wolf_trade_floor-1',
+            disabled: location.pathname === '/wolf_trade_floor',
+            dropdownItems: [
+              {
+                id: t('header.wolvesCf'),
+                to: '/shop?type=wolves&levelId=' + levelId,
+                disabled: type === 'wolves',
+              },
+            ],
+          },
+          {
+            id: 'BOIS BOARDROOMS',
+            to: '/wolf_trade_floor-1',
+            disabled: location.pathname === '/wolf_trade_floor',
+            dropdownItems: [
+              {
+                id: t('header.boisCf'),
+                to: '/shop?type=bois&levelId=' + levelId,
+                disabled: type === 'bois',
+              },
+            ],
+          },
+          {
+            id: t('header.myPack'),
+            to: '/my?type=myPack&levelId=' + levelId,
+            disabled: location.pathname === '/my',
+          },
           {
             id: 'C-FOLIO MANAGER',
             to: '/c_folio_manager',
             disabled: location.pathname === '/c_folio_manager',
-          },
-          {
-            id: t('header.stake'),
-            to: '/stake',
-            disabled: location.pathname === '/stake',
           },
         ];
     return result;
