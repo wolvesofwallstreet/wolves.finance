@@ -15,10 +15,9 @@ import CFolioItemHandlerAbi from 'abi/contracts/src/cfolio/interfaces/ICFolioIte
 import SftEvaluatorAbi from 'abi/contracts/src/cfolio/SFTEvaluator.sol/SFTEvaluator.json';
 import SFTMinterAbi from 'abi/contracts/src/crowdsale/WOWSSftMinter.sol/WOWSSftMinter.json';
 import CFolioFarmAbi from 'abi/contracts/src/investment/CFolioFarm.sol/CFolioFarm.json';
-import StakeAbi from 'abi/contracts/src/investment/UniV2StakeFarm.sol/UniV2StakeFarm.json';
 import TradeFloorAbi from 'abi/contracts/src/token/TradeFloor.sol/TradeFloor.json';
 import TokenAbi from 'abi/contracts/src/token/WOWSErc20.sol/WowsToken.json';
-import SFTHolderAbi from 'abi/contracts/src/token/WOWSErc1155.sol/WOWSERC1155.json';
+import SFTHolderAbi from 'abi/contracts/src/token/WOWSERC1155.sol/WOWSERC1155.json';
 import { ethers } from 'ethers';
 import Emitter from 'events';
 import Dispatcher from 'flux';
@@ -49,11 +48,7 @@ import {
   SFT_REWARD,
   SFT_UNLOCK,
   SFT_UPGRADE,
-  STAKE_ADD,
-  STAKE_CLAIM,
-  STAKE_EXIT,
   STAKE_LP_AVAILABLE,
-  STAKE_STATE,
 } from './constants';
 
 const emitter = new Emitter.EventEmitter();
@@ -92,24 +87,25 @@ type ChainAddresses = {
   rpcEndpoint?: string;
   wssEndpoint?: string;
   token: string;
-  stakeFarm: string;
+  uniV2Pair: string;
+  stakeFarm?: string;
   sftMinterProxy: string;
   sftHolderProxy: string;
   boosterProxy: string;
   tradeFloorProxy: string;
   sftEvaluatorProxy: string;
-  cfolioFarmLP: string;
-  cfolioItemHandlerLPProxy: string;
-  cfolioFarmSC: string;
-  cfiBridgeProxy: string;
-  cfolioItemHandlerSCProxy: string;
+  cfolioFarmLP?: string;
+  cfolioItemHandlerLPProxy?: string;
+  cfolioFarmSC?: string;
+  cfiBridgeProxy?: string;
+  cfolioItemHandlerSCProxy?: string;
   uniDaiWeth: string;
-  daiToken: string;
-  tusdToken: string;
-  usdcToken: string;
-  usdtToken: string;
-  curveYToken: string;
-  curveYDeposit: string;
+  daiToken?: string;
+  tusdToken?: string;
+  usdcToken?: string;
+  usdtToken?: string;
+  curveYToken?: string;
+  curveYDeposit?: string;
 };
 interface IIndexable {
   [key: number]: ChainAddresses;
@@ -251,7 +247,6 @@ class Store {
 
   sftHolderContractRO?: ethers.Contract;
   sftMintContractRO?: ethers.Contract;
-  stakeContractRO?: ethers.Contract;
   tradeFloorContractRO?: ethers.Contract;
   lpContractRO?: ethers.Contract;
   uniDaiWethPairContractRO?: ethers.Contract;
@@ -412,18 +407,6 @@ class Store {
           this._doRevokeApproval(_payload.content);
           break;
         /** Staking */
-        case STAKE_ADD:
-          this._doStakeAdd(_payload.content);
-          break;
-        case STAKE_CLAIM:
-          this._doStakeClaim(_payload.content);
-          break;
-        case STAKE_EXIT:
-          this._doStakeExit(_payload.content);
-          break;
-        case STAKE_STATE:
-          this._getStakeState(_payload.content);
-          break;
         case STAKE_LP_AVAILABLE:
           this._getPoolTokenAmount(_payload.content);
           break;
@@ -500,6 +483,10 @@ class Store {
   getEndpoint(wss: boolean): string | undefined {
     const chainAddresses = this._getChainAddresses();
     return wss ? chainAddresses?.wssEndpoint : chainAddresses?.rpcEndpoint;
+  }
+
+  isSidechain(): boolean {
+    return this.networkName.startsWith('matic');
   }
 
   connect = async () => {
@@ -600,7 +587,6 @@ class Store {
   };
 
   close = async () => {
-    this.stakeContractRO = undefined;
     this.sftHolderContractRO?.removeAllListeners();
     this.sftHolderContractRO = undefined;
     this.sftMintContractRO = undefined;
@@ -803,13 +789,8 @@ class Store {
 
     if (chainAddresses) {
       this.tokenContractAddress = chainAddresses.token;
-      this.stakeContractRO = new ethers.Contract(
-        chainAddresses.stakeFarm,
-        StakeAbi,
-        provider
-      );
       this.lpContractRO = new ethers.Contract(
-        await this.stakeContractRO.stakingToken(),
+        chainAddresses.uniV2Pair,
         UniV2PairAbi,
         provider
       );
@@ -836,8 +817,8 @@ class Store {
         );
       }
 
-      this.cfolioFarmLpAddress = chainAddresses.cfolioFarmLP;
-      this.cfolioFarmScAddress = chainAddresses.cfolioFarmSC;
+      this.cfolioFarmLpAddress = chainAddresses.cfolioFarmLP || '';
+      this.cfolioFarmScAddress = chainAddresses.cfolioFarmSC || '';
 
       if (chainAddresses.uniDaiWeth !== '') {
         this.uniDaiWethPairContractRO = new ethers.Contract(
@@ -847,7 +828,7 @@ class Store {
         );
       } else this.uniDaiWethPairContractRO = undefined;
 
-      if (chainAddresses.curveYDeposit !== '') {
+      if (chainAddresses.curveYDeposit) {
         this.curveYDepositContractRO = new ethers.Contract(
           chainAddresses.curveYDeposit,
           CurveYDepositAbi,
@@ -945,41 +926,6 @@ class Store {
       emitter.emit(STAKE_LP_AVAILABLE, {
         error: e.message,
       } as TokenContractResult);
-    }
-  };
-
-  _getStakeState = async (payloadContent: PayloadContent | undefined) => {
-    try {
-      const result: ethers.BigNumber[] | undefined =
-        await this.stakeContractRO?.getUIData(
-          this.address === '' ? Store.nullAddress : this.address
-        );
-
-      if (result) {
-        const stakeInfo: StakeResult = {
-          error: undefined,
-          state: {
-            poolSupply: this.fromWei(result[0]),
-            reserve0: this.fromWei(result[1]),
-            reserve1: this.fromWei(result[2]),
-            priceReserve0: this.fromWei(result[3]),
-            stakeSupply: this.fromWei(result[4]),
-            stakeSupplyUser: this.fromWei(result[5]),
-            rewardsDuration: result[6].toNumber(),
-            rewardPerDuration: this.fromWei(result[7]),
-            earned: this.fromWei(result[8]),
-          },
-        };
-        if (this.uniDaiWethPairContractRO) {
-          const reserves = await this.uniDaiWethPairContractRO.getReserves();
-          stakeInfo.state.priceReserve0 = reserves.reserve0.div(
-            reserves.reserve1
-          );
-        }
-        emitter.emit(STAKE_STATE, stakeInfo);
-      }
-    } catch (e) {
-      emitter.emit(STAKE_STATE, { error: e.message });
     }
   };
 
@@ -1458,130 +1404,6 @@ class Store {
   }
 
   /************** TX ****************/
-
-  _doStakeAdd = async (payloadContent: PayloadContent) => {
-    const { amount } = payloadContent;
-
-    try {
-      if (!amount) {
-        throw new Error('Invalid amount');
-      }
-
-      if (!this.lpContractRO || !this.stakeContractRO || !this.ethersSigner) {
-        throw new Error('Invalid contract');
-      }
-
-      let stakeAmount = this.toWei(amount);
-      // Fix math inaccuraties
-      const available: ethers.BigNumber = await this.lpContractRO.balanceOf(
-        this.address
-      );
-      if (
-        (available.gt(stakeAmount) && available.sub(stakeAmount).lt(1000)) ||
-        (available.lt(stakeAmount) && stakeAmount.sub(available).lt(1000))
-      )
-        stakeAmount = available;
-
-      if (stakeAmount > available) {
-        throw new Error('Insufficient LP token');
-      }
-
-      const allowance = await this.lpContractRO.allowance(
-        this.address,
-        this.stakeContractRO.address
-      );
-
-      if (allowance.lt(stakeAmount)) {
-        const lpContract = this.lpContractRO.connect(this.ethersSigner);
-        const tx = await lpContract.approve(
-          this.stakeContractRO.address,
-          this._checkUnlimited('WETH/WOWS LP', stakeAmount)
-        );
-        emitter.emit(STAKE_ADD, {
-          status: 'approve',
-          tx: tx?.hash,
-        } as StatusResult);
-
-        await tx.wait();
-      }
-
-      const stakeContract = this.stakeContractRO.connect(this.ethersSigner);
-      const tx: ethers.ContractTransaction | undefined =
-        await stakeContract?.stake(stakeAmount);
-      emitter.emit(STAKE_ADD, {
-        status: 'tx',
-        tx: tx?.hash,
-      } as StatusResult);
-
-      await tx?.wait();
-      emitter.emit(STAKE_ADD, {
-        status: 'success',
-        tx: tx?.hash,
-      } as StatusResult);
-    } catch (e) {
-      emitter.emit(STAKE_ADD, {
-        status: 'error',
-        errorMessage: e.error ? e.error.message : e.message,
-      } as StatusResult);
-    }
-  };
-
-  _doStakeClaim = async (payloadContent: PayloadContent) => {
-    try {
-      if (!this.stakeContractRO || !this.ethersSigner) {
-        throw new Error('Invalid contract');
-      }
-
-      const stakeContract = this.stakeContractRO.connect(this.ethersSigner);
-      const tx: ethers.ContractTransaction | undefined =
-        await stakeContract.getReward();
-      emitter.emit(STAKE_CLAIM, {
-        status: 'tx',
-        type: STAKE_CLAIM,
-        tx: tx?.hash,
-      } as StatusResult);
-
-      await tx?.wait();
-      emitter.emit(STAKE_CLAIM, {
-        status: 'success',
-        type: STAKE_CLAIM,
-        tx: tx?.hash,
-      } as StatusResult);
-    } catch (e) {
-      emitter.emit(STAKE_CLAIM, {
-        status: 'error',
-        type: STAKE_CLAIM,
-        errorMessage: e.error ? e.error.message : e.message,
-      } as StatusResult);
-    }
-  };
-
-  _doStakeExit = async (payloadContent: PayloadContent) => {
-    try {
-      if (!this.stakeContractRO || !this.ethersSigner) {
-        throw new Error('Invalid contract');
-      }
-
-      const stakeContract = this.stakeContractRO.connect(this.ethersSigner);
-      const tx: ethers.ContractTransaction | undefined =
-        await stakeContract.exit();
-      emitter.emit(STAKE_EXIT, {
-        status: 'tx',
-        tx: tx?.hash,
-      } as StatusResult);
-
-      await tx?.wait();
-      emitter.emit(STAKE_EXIT, {
-        status: 'success',
-        tx: tx?.hash,
-      } as StatusResult);
-    } catch (e) {
-      emitter.emit(STAKE_EXIT, {
-        status: 'error',
-        errorMessage: e.error ? e.error.message : e.message,
-      } as StatusResult);
-    }
-  };
 
   _doSftBuy = async (payloadContent: PayloadContent) => {
     const { amount, id } = payloadContent;
