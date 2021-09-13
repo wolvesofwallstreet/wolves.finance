@@ -4,6 +4,7 @@
     "uniV2Factory": "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f",
     "uniV2Router": "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
     "addressRegistry": "",
+    "addressRegistryOld": "",
     "token": "0x672EF7E4Fe230B5cA1466C5fDD40588d30FdF90a",
     "uniV2Pair": "0xDf21bb85a5BFb606bfCa4562aA8CEA2017622415",
     "rewardHandler": "",
@@ -22,7 +23,11 @@
     "sftEvaluator": "",
     "sftEvaluatorProxy": "",
     "openSeaProxyRegistry": "0xa5409ec958c83c3f309868babaca7c86dcb077c1",
-    "uniDaiWeth": "0xA478c2975Ab1Ea89e8196811F51A7B7Ade33eB11"
+    "uniDaiWeth": "0xA478c2975Ab1Ea89e8196811F51A7B7Ade33eB11",
+    "p_checkpointManager": "0x86e4dc95c7fbdbf52e33d563bbdb00823894c287",
+    "p_fxRoot": "0xfe5e5D361b2ad62c541bAb87C45a0B9B018389a2",
+    "p_fxChild": "0x8397259c983751DAf40400790063935a11afa28a",
+    "p_sftHolderProxy": ""
   },
   "4": {
     "weth": "0xc778417E063141139Fce010982780140Aa0cD5Ab",
@@ -55,6 +60,7 @@
     "uniV2Factory": "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f",
     "uniV2Router": "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
     "addressRegistry": "0xfEf1F573121B4418012d144534506Ad35EF4B81A",
+    "addressRegistryOld": "",
     "token": "0x30f41216f7dEAC80948284907A73d7E8Be95fB8F",
     "uniV2Pair": "0x55685d1695CD67FA1e1264070C1741976fA99022",
     "rewardHandler": "0xFBE8e1cCEe4654A81D4A5ec92ccEA5a1050e51d2",
@@ -73,7 +79,11 @@
     "tradeFloorProxy": "0x11a7150a7FF792EB002327Abd73671142a017E30",
     "presale": "0x0256B5409B5a5238a2009D3aCA2876D95CEFB665",
     "openSeaProxyRegistry": "",
-    "uniDaiWeth": "0x186b57aFFE222D6176347D338Ed66Ea2e20D630d"
+    "uniDaiWeth": "0x186b57aFFE222D6176347D338Ed66Ea2e20D630d",
+    "p_checkpointManager": "0x2890bA17EfE978480615e330ecB65333b880928e",
+    "p_fxRoot": "0x3d1d3E34f7fB6D26245E6640E1c50710eFFf15bA",
+    "p_fxChild": "0xCf73231F28B7331BBe3124B907840A94851f9f11",
+    "p_sftHolderProxy": ""
   },
   "80001": {
     "wssEndpoint": "wss://ws-matic-mumbai.chainstacklabs.com",

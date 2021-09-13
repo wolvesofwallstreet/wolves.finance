@@ -208,9 +208,14 @@ contract WOWSERC1155 is IWOWSERC1155, AccessControl {
     bytes calldata data
   ) external override {
     require(from != address(0) && to != address(0), 'SFT: Null address');
-    require(tokenIds.length == amounts.length, 'SFT: Length mismatch');
-    for (uint256 i = 0; i < amounts.length; ++i)
-      require(amounts[i] == 1, 'SFT: Wrong amount');
+    require(
+      amounts.length == 0 || tokenIds.length == amounts.length,
+      'SFT: Length mismatch'
+    );
+    if (amounts.length > 0) {
+      for (uint256 i = 0; i < amounts.length; ++i)
+        require(amounts[i] == 1, 'SFT: Wrong amount');
+    }
 
     _tokenTransfer(from, to, tokenIds, data);
   }
@@ -440,6 +445,7 @@ contract WOWSERC1155 is IWOWSERC1155, AccessControl {
 
         // solhint-disable-next-line not-rely-on-time
         tokenInfo.timestamp = uint64(block.timestamp);
+
         // Create a new WOWSCryptofolio by cloning masterTokenReceiver
         // The clone itself is a minimal delegate proxy.
         if (tokenAddress == address(0)) {
@@ -450,6 +456,9 @@ contract WOWSERC1155 is IWOWSERC1155, AccessControl {
             address handler = _getAddress(data);
             require(handler != address(0), 'SFT: Invalid address');
             IWOWSCryptofolio(tokenAddress).setHandler(handler);
+          } else if (data.length >= 32) {
+            //Migration / Bridge
+            (tokenInfo.timestamp) = abi.decode(data, (uint64));
           }
         }
         _addressToTokenId[tokenAddress] = tokenId;

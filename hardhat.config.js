@@ -152,7 +152,7 @@ const config = {
       },
     ],
   },
-  // possible tags: needUniswap, needYearn, sidechain, test, stakeFarm, local
+  // possible tags: needUniswap, needYearn, sidechain, rootchain, test, stakeFarm, local
   defaultNetwork: 'hardhat',
   networks: {
     hardhat: {
@@ -169,6 +169,7 @@ const config = {
       gasPrice: 1500000000,
     },
     goerli_sft: {
+      tags: ['rootchain'],
       url: `https://goerli.infura.io/v3/${env.INFURA_API_KEY}`,
       accounts: TESTNET_ACCOUNTS,
       gasPrice: 1500000000,
@@ -186,6 +187,7 @@ const config = {
       accounts: TESTNET_ACCOUNTS,
     },
     mainnet: {
+      tags: ['rootchain'],
       url: `https://mainnet.infura.io/v3/${env.INFURA_API_KEY}`,
       accounts: TESTNET_ACCOUNTS,
     },

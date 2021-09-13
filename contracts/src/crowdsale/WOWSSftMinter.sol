@@ -13,6 +13,8 @@ import '../../0xerc1155/interfaces/IERC20.sol';
 import '../../0xerc1155/utils/SafeERC20.sol';
 import '../../0xerc1155/utils/Context.sol';
 
+import './interfaces/IWOWSSftMinter.sol';
+
 import '../booster/interfaces/IBooster.sol';
 import '../cfolio/interfaces/ICFolioItemHandler.sol';
 import '../cfolio/interfaces/ISFTEvaluator.sol';
@@ -24,9 +26,15 @@ import '../utils/AddressBook.sol';
 import '../utils/interfaces/IAddressRegistry.sol';
 import '../utils/TokenIds.sol';
 
-contract WOWSSftMinter is Context, AccessControl {
+contract WOWSSftMinter is Context, AccessControl, IWOWSSftMinter {
   using TokenIds for uint256;
   using SafeERC20 for IERC20;
+
+  //////////////////////////////////////////////////////////////////////////////
+  // CONSTANTS
+  //////////////////////////////////////////////////////////////////////////////
+
+  bytes32 public constant CUSTOM_MINTER_ROLE = bytes32('CUSTOM_MINTER');
 
   //////////////////////////////////////////////////////////////////////////////
   // State
@@ -74,6 +82,9 @@ contract WOWSSftMinter is Context, AccessControl {
   // SFTEvaluator to store the cfolioItemType
   ISFTEvaluator public sftEvaluator;
 
+  // SFTEvaluator to store the cfolioItemType
+  address public childTunnel;
+
   // 1.0 of the rewards go to distribution
   uint32 private constant ALL = 1 * 1e6;
 
@@ -107,6 +118,14 @@ contract WOWSSftMinter is Context, AccessControl {
 
   modifier onlyAdmin() {
     require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'WM: Only admin');
+    _;
+  }
+
+  modifier onlyCustomMinter() {
+    require(
+      hasRole(CUSTOM_MINTER_ROLE, _msgSender()),
+      'WM: Only custom minter'
+    );
     _;
   }
 
@@ -227,6 +246,17 @@ contract WOWSSftMinter is Context, AccessControl {
   }
 
   /**
+   * @dev Set child tunnel
+   */
+  function setChildTunnel(address childTunnel_) external onlyAdmin {
+    // Validate parameters
+    require(childTunnel_ != address(0), 'WM: Invalid CT');
+
+    // Update state
+    childTunnel = childTunnel_;
+  }
+
+  /**
    * @dev Set the limitations, the price and the handlers for CFolioItem SFT's
    */
   function setCFolioSpec(
@@ -290,6 +320,7 @@ contract WOWSSftMinter is Context, AccessControl {
   ) external {
     // Validate parameters
     require(recipient != address(0), 'WM: Invalid recipient');
+    require(childTunnel == address(0), 'WM: Only rootchain');
 
     // Load state
     uint256 price = _baseLevelData[level].price;
@@ -297,7 +328,7 @@ contract WOWSSftMinter is Context, AccessControl {
 
     // Validate state
     require(price > 0, 'WM: No price available');
-    require(minted < _baseLevelData[level].cap, 'WM: No price available');
+    require(minted < _baseLevelData[level].cap, 'WM: Sold out');
 
     // Calculate the tokenId
     uint256 baseTokenId = ((uint256(level) << 8) | cardId) << 16;
@@ -313,7 +344,10 @@ contract WOWSSftMinter is Context, AccessControl {
    *
    * Approval of WOWS token required before the call.
    */
-  function mintCustomSFT(address recipient, uint8 level) external {
+  function mintCustomSFT(address recipient, uint8 level)
+    external
+    onlyCustomMinter
+  {
     // Validate parameters
     require(recipient != address(0), 'WM: Invalid recipient');
 
@@ -350,10 +384,7 @@ contract WOWSSftMinter is Context, AccessControl {
     uint256 cfolioItemType,
     uint256 sftTokenId,
     uint256[] calldata investAmounts
-  ) external {
-    // Validate state
-    require(address(sftEvaluator) != address(0), 'WM: SFTE not set');
-
+  ) external override returns (uint256 tokenId) {
     // Load state
     CFolioItemSft storage sftData = cfolioItemSfts[cfolioItemType];
 
@@ -371,7 +402,7 @@ contract WOWSSftMinter is Context, AccessControl {
       require(recipient != address(0), 'WM: Bad baseId');
     }
 
-    uint256 tokenId = nextCFolioItemNft++;
+    tokenId = nextCFolioItemNft++;
     require(tokenId.isCFolioCard(), 'WM: Invalid cfiId');
 
     _sftContract.setCFolioItemType(tokenId, cfolioItemType);
@@ -383,7 +414,7 @@ contract WOWSSftMinter is Context, AccessControl {
     _mint(
       recipient,
       tokenId,
-      sftData.price,
+      msg.sender == childTunnel ? 0 : sftData.price,
       cfolioItemType,
       abi.encodePacked(handler)
     );

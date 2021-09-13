@@ -31,6 +31,9 @@ const TRADE_FLOOR_CONTRACT = 'TradeFloor';
 const CFOLIO_FARM_CONTRACT = 'CFolioFarm';
 const CFOLIO_ITEM_HANDLER_LP_CONTRACT = 'CFolioItemHandlerLP';
 const CFOLIO_ITEM_HANDLER_SC_CONTRACT = 'CFolioItemHandlerSC';
+const POLYGON_ROOT_TUNNEL_CONTRACT = 'WOWSERC1155RootTunnel';
+const POLYGON_CHILD_TUNNEL_CONTRACT = 'WOWSERC1155ChildTunnel';
+const MIGRATE_V2_CONTRACT = 'MigrateV2';
 
 // Deployed contract aliases
 const BOOSTER_PROXY_CONTRACT = 'BoosterProxy';
@@ -41,6 +44,8 @@ const CFOLIO_FARM_LP_CONTRACT = 'CFolioFarmLP';
 const CFOLIO_FARM_SC_CONTRACT = 'CFolioFarmSC';
 const CFOLIO_ITEM_HANDLER_LP_PROXY_CONTRACT = 'CFolioItemHandlerLPProxy';
 const CFOLIO_ITEM_HANDLER_SC_PROXY_CONTRACT = 'CFolioItemHandlerSCProxy';
+const POLYGON_ROOT_TUNNEL_PROXY_CONTRACT = 'PolygonRootTunnelProxy';
+const POLYGON_CHILD_TUNNEL_PROXY_CONTRACT = 'PolygonChildTunnelProxy';
 
 // Path to address files
 const CONFIG_ADDRESSES = `${__dirname}/../src/config/addresses.json`;
@@ -93,6 +98,7 @@ const SFT_HOLDER_ABI = `${__dirname}/../src/abi/contracts/src/token/WOWSERC1155.
 const SFT_MINTER_ABI = `${__dirname}/../src/abi/contracts/src/crowdsale/WOWSSftMinter.sol/WOWSSftMinter.json`;
 const TRADE_FLOOR_ABI = `${__dirname}/../src/abi/contracts/src/token/TradeFloor.sol/TradeFloor.json`;
 const CFOLIO_ITEM_HANDLER_SC_ABI = `${__dirname}/../src/abi/contracts/src/cfolio/CFolioItemHandlerSC.sol/CFolioItemHandlerSC.json`;
+const POLYGON_ROOT_TUNNEL_ABI = `${__dirname}/../src/abi/contracts/src/polygon/WOWSERC1155RootTunnel.sol/WOWSERC1155RootTunnel.json`;
 
 // Useful constants
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
@@ -1084,6 +1090,176 @@ const func = async function (hardhat_re) {
 
       generatedAddresses.cfolioItemHandlerSCProxy =
         cfolioItemHandlerSCProxyReceipt.address;
+    }
+  }
+
+  if (hardhat_re.network.tags.sidechain && !hardhat_re.network.tags.test) {
+    //////////////////////////////////////////////////////////////////////////////
+    //
+    // Deploy PolygonChildTunnel
+    //
+    //////////////////////////////////////////////////////////////////////////////
+
+    if (configAddresses.polygonChildTunnel) {
+      log_step(
+        `Using PolygonChildTunnel contract: ${configAddresses.polygonChildTunnel}`
+      );
+      generatedAddresses.polygonChildTunnel =
+        configAddresses.polygonChildTunnel;
+    } else {
+      log_step('Deploying PolygonChildTunnel contract');
+
+      const polygonChildTunnelContractReceipt = await deploy(
+        POLYGON_CHILD_TUNNEL_CONTRACT,
+        {
+          from: deployer,
+          args: [
+            configAddresses.fxChild,
+            generatedAddresses.sftHolderProxy,
+            generatedAddresses.sftMinterProxy,
+            generatedAddresses.boosterProxy,
+          ],
+          log: true,
+          deterministicDeployment: true,
+        }
+      );
+
+      generatedAddresses.polygonChildTunnel =
+        polygonChildTunnelContractReceipt.address;
+    }
+
+    //////////////////////////////////////////////////////////////////////////////
+    //
+    // Deploy PolygonChildTunnelProxy
+    //
+    //////////////////////////////////////////////////////////////////////////////
+
+    if (configAddresses.polygonChildTunnelProxy) {
+      log_step(
+        `Using PolygonChildTunnel proxy: ${configAddresses.polygonChildTunnelProxy}`
+      );
+      generatedAddresses.polygonChildTunnelProxy =
+        configAddresses.polygonChildTunnelProxy;
+    } else {
+      log_step('Deploying PolygonChildTunnel proxy');
+      const polygonChildTunnelProxyReceipt = await deploy(
+        POLYGON_CHILD_TUNNEL_PROXY_CONTRACT,
+        {
+          contract: UPGRADE_PROXY_CONTRACT,
+          from: deployer,
+          args: [
+            ADDRESS_REGISTRY_ADDRESS,
+            generatedAddresses.polygonChildTunnel,
+            [],
+          ],
+          log: true,
+          deterministicDeployment: true,
+        }
+      );
+
+      generatedAddresses.polygonChildTunnelProxy =
+        polygonChildTunnelProxyReceipt.address;
+    }
+  } else if (hardhat_re.network.tags.rootchain) {
+    //////////////////////////////////////////////////////////////////////////////
+    //
+    // Deploy Migrator
+    //
+    //////////////////////////////////////////////////////////////////////////////
+
+    if (configAddresses.migratorV2) {
+      log_step(`Using MigratorV2 contract: ${configAddresses.migratorV2}`);
+      generatedAddresses.migratorV2 = configAddresses.migratorV2;
+    } else {
+      log_step('Deploying MigratorV2 contract');
+
+      const migratorV2ContractReceipt = await deploy(MIGRATE_V2_CONTRACT, {
+        from: deployer,
+        args: [configAddresses.addressRegistryOld, ADDRESS_REGISTRY_ADDRESS],
+        log: true,
+        deterministicDeployment: true,
+      });
+
+      generatedAddresses.migratorV2 = migratorV2ContractReceipt.address;
+    }
+
+    //////////////////////////////////////////////////////////////////////////////
+    //
+    // Deploy PolygonRootTunnel
+    //
+    //////////////////////////////////////////////////////////////////////////////
+
+    if (configAddresses.polygonRootTunnel) {
+      log_step(
+        `Using PolygonRootTunnel contract: ${configAddresses.polygonRootTunnel}`
+      );
+      generatedAddresses.polygonRootTunnel = configAddresses.polygonRootTunnel;
+    } else {
+      log_step('Deploying PolygonRootTunnel contract');
+
+      const polygonRootTunnelContractReceipt = await deploy(
+        POLYGON_ROOT_TUNNEL_CONTRACT,
+        {
+          from: deployer,
+          args: [
+            configAddresses.p_checkpointManager,
+            configAddresses.p_fxRoot,
+            generatedAddresses.sftHolderProxy,
+            configAddresses.p_sftHolderProxy,
+            generatedAddresses.migratorV2,
+          ],
+          log: true,
+          deterministicDeployment: true,
+        }
+      );
+
+      generatedAddresses.polygonRootTunnel =
+        polygonRootTunnelContractReceipt.address;
+    }
+
+    //////////////////////////////////////////////////////////////////////////////
+    //
+    // Deploy PolygonRootTunnelProxy
+    //
+    //////////////////////////////////////////////////////////////////////////////
+
+    if (configAddresses.polygonRootTunnelProxy) {
+      log_step(
+        `Using PolygonRootTunnel proxy: ${configAddresses.polygonRootTunnelProxy}`
+      );
+      generatedAddresses.polygonRootTunnelProxy =
+        configAddresses.polygonRootTunnelProxy;
+    } else {
+      log_step('Deploying PolygonRootTunnel proxy');
+
+      const polygonRootTunnelAbi = JSON.parse(
+        fs.readFileSync(POLYGON_ROOT_TUNNEL_ABI)
+      );
+      const polygonRootTunnelInterface = new ethers.utils.Interface(
+        polygonRootTunnelAbi
+      );
+      const proxyCallData = polygonRootTunnelInterface.encodeFunctionData(
+        'initialize',
+        []
+      );
+
+      const polygonRootTunnelProxyReceipt = await deploy(
+        POLYGON_ROOT_TUNNEL_PROXY_CONTRACT,
+        {
+          contract: UPGRADE_PROXY_CONTRACT,
+          from: deployer,
+          args: [
+            ADDRESS_REGISTRY_ADDRESS,
+            generatedAddresses.polygonRootTunnel,
+            proxyCallData,
+          ],
+          log: true,
+          deterministicDeployment: true,
+        }
+      );
+
+      generatedAddresses.polygonRootTunnelProxy =
+        polygonRootTunnelProxyReceipt.address;
     }
   }
 
