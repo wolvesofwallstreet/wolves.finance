@@ -5,13 +5,14 @@ import { IERC1155 } from '../../0xerc1155/interfaces/IERC1155.sol';
 import { ERC1155Holder } from '../../0xerc1155/tokens/ERC1155/ERC1155Holder.sol';
 import { SafeMath } from '../../0xerc1155/utils/SafeMath.sol';
 import { FxBaseRootTunnel } from '../../polygonFx/tunnel/FxBaseRootTunnel.sol';
-import { ISFTEvaluator } from '../cfolio/interfaces/ISFTEvaluator.sol';
+
+import { IRootTunnel } from './interfaces/IRootTunnel.sol';
 
 import '../token/interfaces/IWOWSCryptofolio.sol';
 import '../token/interfaces/IWOWSERC1155.sol';
 import '../utils/TokenIds.sol';
 
-contract WowsERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder {
+contract WOWSERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder, IRootTunnel {
   using TokenIds for uint256;
   using SafeMath for uint256;
 
@@ -21,6 +22,8 @@ contract WowsERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder {
 
   bytes32 private constant DEPOSIT = keccak256('DEPOSIT');
   bytes32 private constant DEPOSIT_BATCH = keccak256('DEPOSIT_BATCH');
+  bytes32 private constant MIGRATE = keccak256('MIGRATE');
+  bytes32 private constant MIGRATE_BATCH = keccak256('MIGRATE_BATCH');
   bytes32 private constant WITHDRAW = keccak256('WITHDRAW');
   bytes32 private constant WITHDRAW_BATCH = keccak256('WITHDRAW_BATCH');
   bytes32 private constant MAP_TOKEN = keccak256('MAP_TOKEN');
@@ -33,7 +36,8 @@ contract WowsERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder {
 
   IWOWSERC1155 private immutable rootToken_;
   address private immutable childToken_;
-  ISFTEvaluator private immutable sftEvaluator_;
+
+  address private immutable migrator_;
 
   //////////////////////////////////////////////////////////////////////////////
   // Modifier
@@ -53,19 +57,28 @@ contract WowsERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder {
     address _fxRoot,
     address _rootToken,
     address _childToken,
-    ISFTEvaluator _sftEvaluator
+    address _migrator
   ) FxBaseRootTunnel(_checkpointManager, _fxRoot) {
     require(_rootToken != address(0), 'RT: Invalid root');
     require(_childToken != address(0), 'RT: Invalid child');
 
     rootToken_ = IWOWSERC1155(_rootToken);
     childToken_ = _childToken;
-    sftEvaluator_ = _sftEvaluator;
+    migrator_ = _migrator;
+  }
 
+  /**
+   * @dev Called from proxy
+   */
+  function initialize() external {
     // MAP_TOKEN, encode(rootToken,uri)
-    bytes memory message = abi.encode(MAP_TOKEN, abi.encode(_rootToken));
+    bytes memory message = abi.encode(MAP_TOKEN, abi.encode(rootToken_));
     _sendMessageToChild(message);
   }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Implementation
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
    * @dev See {IERC1155TokenReceiver-onERC1155Received}
@@ -75,15 +88,22 @@ contract WowsERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder {
     address from,
     uint256 tokenId,
     uint256 amount,
-    bytes calldata // data
+    bytes calldata data
   ) public override onlyRootToken returns (bytes4) {
     // Get cfolios
-    bytes memory data = _getTokenData('', tokenId);
+    bytes memory msgData;
 
-    // DEPOSIT, encode(rootToken, depositor, user, id, amount, extra data)
+    if (operator == migrator_) {
+      msgData = data;
+    } else {
+      require(tokenId.isBaseCard(), 'RT: Only basecard');
+      msgData = _getTokenData('', tokenId);
+    }
+
+    // DEPOSIT, encode(rootToken, depositor, user, id, extra data)
     bytes memory message = abi.encode(
-      DEPOSIT,
-      abi.encode(address(rootToken_), operator, from, tokenId, amount, data)
+      (operator == migrator_) ? MIGRATE : DEPOSIT,
+      abi.encode(address(rootToken_), operator, from, tokenId, msgData)
     );
     _sendMessageToChild(message);
 
@@ -99,22 +119,58 @@ contract WowsERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder {
     address from,
     uint256[] calldata tokenIds,
     uint256[] calldata amounts,
-    bytes calldata // data
+    bytes calldata data
   ) public override onlyRootToken returns (bytes4) {
-    bytes memory data;
-    for (uint256 i = 0; i < tokenIds.length; ++i)
-      data = _getTokenData(data, tokenIds[i]);
+    bytes32 cmd = DEPOSIT_BATCH;
+    bytes memory msgData;
+    if (operator != migrator_) {
+      for (uint256 i = 0; i < tokenIds.length; ++i) {
+        msgData = _getTokenData(data, tokenIds[i]);
+        require(tokenIds[i].isBaseCard(), 'RT: Only basecard');
+      }
+    } else {
+      msgData = data;
+      cmd = MIGRATE_BATCH;
+    }
 
-    // DEPOSIT_BATCH, encode(rootToken, depositor, user, id, amount, extra data)
+    // DEPOSIT_BATCH, encode(rootToken, depositor, user, ids, extra data)
     bytes memory message = abi.encode(
-      DEPOSIT_BATCH,
-      abi.encode(address(rootToken_), operator, from, tokenIds, amounts, data)
+      cmd,
+      abi.encode(address(rootToken_), operator, from, tokenIds, msgData)
     );
     _sendMessageToChild(message);
 
     // Call ancestor
     return
       super.onERC1155BatchReceived(operator, from, tokenIds, amounts, data);
+  }
+
+  function mintCFolioItems(address to, bytes memory cfolioTypes)
+    external
+    override
+  {
+    require(msg.sender == migrator_, 'RT: Forbidden (MC)');
+    require(
+      cfolioTypes.length > 0 && (cfolioTypes.length % 32) == 0,
+      'RT: Invalid length'
+    );
+
+    uint256 numTypes = cfolioTypes.length / 32;
+    uint256[] memory dummyTokenIds = new uint256[](numTypes);
+    for (uint256 i = 0; i < numTypes; ++i) dummyTokenIds[i] = uint256(-1);
+
+    // MIGRATE_BATCH, encode(rootToken, depositor, user, ids, extra data)
+    bytes memory message = abi.encode(
+      MIGRATE_BATCH,
+      abi.encode(
+        address(rootToken_),
+        msg.sender,
+        to,
+        dummyTokenIds,
+        cfolioTypes
+      )
+    );
+    _sendMessageToChild(message);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -142,16 +198,12 @@ contract WowsERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder {
       address childToken,
       address user,
       uint256 tokenId,
-      uint256 amount,
       bytes memory data
-    ) = abi.decode(
-        syncData,
-        (address, address, address, uint256, uint256, bytes)
-      );
+    ) = abi.decode(syncData, (address, address, address, uint256, bytes));
     require(rootToken == address(rootToken_), 'RT: Invalid root');
     require(childToken == childToken_, 'RT: Invalid child');
 
-    rootToken_.safeTransferFrom(address(this), user, tokenId, amount, data);
+    rootToken_.safeTransferFrom(address(this), user, tokenId, 1, data);
   }
 
   function _syncBatchWithdraw(bytes memory syncData) internal {
@@ -160,12 +212,8 @@ contract WowsERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder {
       address childToken,
       address user,
       uint256[] memory tokenIds,
-      uint256[] memory amounts,
       bytes memory data
-    ) = abi.decode(
-        syncData,
-        (address, address, address, uint256[], uint256[], bytes)
-      );
+    ) = abi.decode(syncData, (address, address, address, uint256[], bytes));
     require(rootToken == address(rootToken_), 'RT: Invalid root');
     require(childToken == childToken_, 'RT: Invalid child');
 
@@ -173,7 +221,7 @@ contract WowsERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder {
       address(this),
       user,
       tokenIds,
-      amounts,
+      new uint256[](0),
       data
     );
   }
@@ -183,11 +231,8 @@ contract WowsERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder {
     view
     returns (bytes memory)
   {
-    (uint256 mintTimestamp, ) = rootToken_.getTokenData(tokenId);
-    uint256 prowess = tokenId.isBaseCard()
-      ? sftEvaluator_.rewardRate(tokenId)
-      : 0;
+    (uint64 mintTimestamp, ) = rootToken_.getTokenData(tokenId);
 
-    return abi.encodePacked(data, mintTimestamp, prowess);
+    return abi.encode(data, mintTimestamp);
   }
 }

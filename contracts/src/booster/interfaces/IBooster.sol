@@ -43,6 +43,16 @@ interface IBooster {
     );
 
   /**
+   * @dev Create a booster pool from v1 specs
+   *
+   * @param tokenId The SFT tokenId
+   * @param data list of uint256's: total, pending, provided, apr, end, fee
+   */
+  function migrateCreatePool(uint256 tokenId, bytes memory data)
+    external
+    returns (bytes memory rData);
+
+  /**
    * @dev Handles farm distribution, only callable from controller
    *
    * If recipient is booster contract, amount is temporarily stored and locked

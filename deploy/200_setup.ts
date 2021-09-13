@@ -25,6 +25,7 @@ const SFT_MINTER_UPDATE_CONTRACT = 'WOWSSftMinterUpdate';
 const SFT_EVALUATOR_PROXY_CONTRACT = 'SFTEvaluatorProxy';
 const CFOLIO_ITEM_HANDLER_LP_CONTRACT = 'CFolioItemHandlerLP';
 const CFOLIO_ITEM_HANDLER_SC_CONTRACT = 'CFolioItemHandlerSC';
+const MIGRATE_V2_CONTRACT = 'MigrateV2';
 
 // Deployed contract aliases
 const BOOSTER_PROXY_CONTRACT = 'BoosterProxy';
@@ -35,6 +36,8 @@ const CFOLIO_FARM_LP_CONTRACT = 'CFolioFarmLP';
 const CFOLIO_FARM_SC_CONTRACT = 'CFolioFarmSC';
 const CFOLIO_ITEM_HANDLER_LP_PROXY_CONTRACT = 'CFolioItemHandlerLPProxy';
 const CFOLIO_ITEM_HANDLER_SC_PROXY_CONTRACT = 'CFolioItemHandlerSCProxy';
+const POLYGON_ROOT_TUNNEL_PROXY_CONTRACT = 'PolygonRootTunnelProxy';
+const POLYGON_CHILD_TUNNEL_PROXY_CONTRACT = 'PolygonChildTunnelProxy';
 
 // Path to generated addresses file
 const CONFIG_ADDRESSES = `${__dirname}/../src/config/addresses.json`;
@@ -1138,7 +1141,128 @@ const func = async function (hardhat_re) {
       console.log('Not upgrading CFIHSC');
     }
   }
-};
+
+  //////////////////////////////////////////////////////////////////////////////
+  // POLYGON
+  //////////////////////////////////////////////////////////////////////////////
+
+  if (hardhat_re.network.tags.sidechain && !hardhat_re.network.tags.test) {
+    //
+    // Check if we have to upgrade the polygonChildTunnel implementation
+    //
+    if (
+      (await getProxyImplementation(
+        hardhat_re,
+        generatedAddresses.polygonChildTunnelProxy
+      )) !== generatedAddresses.polygonChildTunnel
+    ) {
+      await catchUnknownSigner(
+        execute(
+          POLYGON_CHILD_TUNNEL_PROXY_CONTRACT,
+          {
+            from: marketingWallet,
+            log: true,
+          },
+          'upgradeTo',
+          generatedAddresses.polygonChildTunnel
+        )
+      );
+    }
+
+    //
+    // Allow polygonChildTunnel to mint SFT
+    //
+    if (
+      !(await sftHolderInstance.hasRole(
+        SFT_HOLDER_MINTER_ROLE,
+        generatedAddresses.polygonChildTunnelProxy
+      ))
+    ) {
+      await catchUnknownSigner(
+        execute(
+          SFT_HOLDER_CONTRACT,
+          {
+            from: marketingWallet,
+            to: generatedAddresses.sftHolderProxy,
+            log: true,
+          },
+          'grantRole',
+          SFT_HOLDER_MINTER_ROLE,
+          generatedAddresses.polygonChildTunnelProxy
+        )
+      );
+    }
+  } else if (hardhat_re.network.tags.rootchain) {
+    //
+    // Check if we have to upgrade the polygonRootTunnel implementation
+    //
+    if (
+      (await getProxyImplementation(
+        hardhat_re,
+        generatedAddresses.polygonRootTunnelProxy
+      )) !== generatedAddresses.polygonRootTunnel
+    ) {
+      await catchUnknownSigner(
+        execute(
+          POLYGON_ROOT_TUNNEL_PROXY_CONTRACT,
+          {
+            from: marketingWallet,
+            log: true,
+          },
+          'upgradeTo',
+          generatedAddresses.polygonRootTunnel
+        )
+      );
+    }
+
+    //
+    // Allow MigratorV2 to mint SFT
+    //
+    if (
+      !(await sftHolderInstance.hasRole(
+        SFT_HOLDER_MINTER_ROLE,
+        generatedAddresses.migratorV2
+      ))
+    ) {
+      await catchUnknownSigner(
+        execute(
+          SFT_HOLDER_CONTRACT,
+          {
+            from: marketingWallet,
+            to: generatedAddresses.sftHolderProxy,
+            log: true,
+          },
+          'grantRole',
+          SFT_HOLDER_MINTER_ROLE,
+          generatedAddresses.migratorV2
+        )
+      );
+    }
+
+    //
+    // Set MigratorV2 rootTunnel
+    //
+    const migratorV2Instance = await hardhat_re.ethers.getContract(
+      MIGRATE_V2_CONTRACT
+    );
+    if (
+      (await migratorV2Instance.rootTunnel()) !==
+      generatedAddresses.polygonRootTunnelProxy
+    ) {
+      await catchUnknownSigner(
+        execute(
+          MIGRATE_V2_CONTRACT,
+          {
+            from: marketingWallet,
+            log: true,
+          },
+          'setRootTunnel',
+          generatedAddresses.polygonRootTunnelProxy
+        )
+      );
+    }
+  }
+}; // func
 
 module.exports = func;
 module.exports.tags = ['Setup'];

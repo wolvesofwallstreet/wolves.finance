@@ -28,6 +28,7 @@ contract Booster is IBooster, AccessControl {
   //////////////////////////////////////////////////////////////////////////////
 
   bytes32 public constant CONTROLLER_ROLE = bytes32('CONTROLLER');
+  bytes32 public constant MIGRATOR_ROLE = bytes32('MIGRATOR');
 
   // 30 days in seconds multiplied by 10 (10% per month)
   uint256 private constant MONTHLY_REWARD = 25920000;
@@ -332,6 +333,33 @@ contract Booster is IBooster, AccessControl {
         currentLock.fee
       );
     }
+  }
+
+  function migrateCreatePool(uint256 tokenId, bytes memory data)
+    external
+    override
+    returns (bytes memory rData)
+  {
+    require(hasRole(MIGRATOR_ROLE, _msgSender()), 'B: Forbidden');
+
+    address cfolio = IWOWSERC1155(sftHolder).tokenIdToAddress(tokenId);
+    require(cfolio != address(0), 'B: Invalid cfolio');
+
+    TimeLock storage currentLock = timeLocks[cfolio];
+    require(currentLock.end == 0, 'B: Lock existent');
+
+    (
+      currentLock.totalAmount,
+      currentLock.pendingAmount,
+      currentLock.providedAmount,
+      currentLock.apr,
+      currentLock.end,
+      currentLock.fee,
+      rData
+    ) = abi.decode(
+      data,
+      (uint256, uint256, uint256, uint256, uint256, uint32, bytes)
+    );
   }
 
   //////////////////////////////////////////////////////////////////////////////
