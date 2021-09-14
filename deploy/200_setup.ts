@@ -1334,6 +1334,32 @@ const func = async function (hardhat_re) {
       );
     }
 
+    // MigratorV2 needs MIGRATOR role in old Booster
+    const oldBoosterInstance = await hardhat_re.ethers.getContract(
+      BOOSTER_CONTRACT,
+      configAddresses.oldBoosterProxy
+    );
+    if (
+      !(await oldBoosterInstance.hasRole(
+        BOOSTER_MIGRATOR_ROLE,
+        generatedAddresses.migratorV2
+      ))
+    ) {
+      await catchUnknownSigner(
+        execute(
+          BOOSTER_CONTRACT,
+          {
+            from: marketingWallet,
+            to: configAddresses.oldBoosterProxy,
+            log: true,
+          },
+          'grantRole',
+          BOOSTER_MIGRATOR_ROLE,
+          generatedAddresses.migratorV2
+        )
+      );
+    }
+
     //
     // Set MigratorV2 rootTunnel
     //
