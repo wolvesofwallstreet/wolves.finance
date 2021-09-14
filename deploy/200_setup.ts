@@ -23,6 +23,7 @@ const SFT_HOLDER_CONTRACT = 'WOWSERC1155';
 const SFT_MINTER_CONTRACT = 'WOWSSftMinter';
 const SFT_MINTER_UPDATE_CONTRACT = 'WOWSSftMinterUpdate';
 const SFT_EVALUATOR_PROXY_CONTRACT = 'SFTEvaluatorProxy';
+const TRADE_FLOOR_CONTRACT = 'TradeFloor';
 const CFOLIO_ITEM_HANDLER_LP_CONTRACT = 'CFolioItemHandlerLP';
 const CFOLIO_ITEM_HANDLER_SC_CONTRACT = 'CFolioItemHandlerSC';
 const POLYGON_ROOT_TUNNEL_CONTRACT = 'WOWSERC1155RootTunnel';
@@ -848,6 +849,27 @@ const func = async function (hardhat_re) {
         },
         'upgradeTo',
         generatedAddresses.tradeFloor
+      )
+    );
+  }
+
+  //
+  // Destruct implementation
+  //
+  if (
+    configAddresses.tradeFloorUpdate &&
+    configAddresses.tradeFloorUpdate !== generatedAddresses.tradeFloor
+  ) {
+    console.log('Destruct old TradeFloor implementation');
+
+    await catchUnknownSigner(
+      execute(
+        TRADE_FLOOR_CONTRACT,
+        {
+          from: marketingWallet,
+          log: true,
+        },
+        'destructContract'
       )
     );
   }

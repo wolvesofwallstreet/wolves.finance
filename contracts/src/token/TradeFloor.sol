@@ -61,7 +61,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   // Modifier
   //////////////////////////////////////////////////////////////////////////////
 
-  modifier onlyAdmins() {
+  modifier onlyAdmin() {
     require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admin');
     _;
   }
@@ -456,7 +456,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
    */
   function setBaseMetadataURI(string memory baseMetadataURI)
     external
-    onlyAdmins
+    onlyAdmin
   {
     // Set state
     _setBaseMetadataURI(baseMetadataURI);
@@ -467,7 +467,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
    */
   function setContractMetadataURI(string memory newContractUri)
     public
-    onlyAdmins
+    onlyAdmin
   {
     _setContractMetadataURI(newContractUri);
   }
@@ -497,7 +497,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
    * @param tokenAddress the address of the token to transfer. Cannot be
    * rewardToken.
    */
-  function collectGarbage(address tokenAddress) external onlyAdmins {
+  function collectGarbage(address tokenAddress) external onlyAdmin {
     // Transfer token to msg.sender
     uint256 amountToken = IERC20(tokenAddress).balanceOf(address(this));
     if (amountToken > 0)
@@ -507,12 +507,20 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   /**
    * @dev Restrict trading to OPERATOR_ROLE (see setApprovalForAll)
    */
-  function restrictTrading(bool restrict) external onlyAdmins {
+  function restrictTrading(bool restrict) external onlyAdmin {
     // Update state
     _tradingRestricted = restrict;
 
     // Dispatch event
     emit RestrictionUpdated(restrict);
+  }
+
+  /**
+   * @dev Self destruct implementation contract
+   */
+  function destructContract(address payable newContract) external onlyAdmin {
+    // slither-disable-next-line suicidal
+    selfdestruct(newContract);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -531,12 +539,12 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   // Rarible fees and events
   //////////////////////////////////////////////////////////////////////////////
 
-  function setFee(uint256 fee) external onlyAdmins {
+  function setFee(uint256 fee) external onlyAdmin {
     // Update state
     _fee = fee;
   }
 
-  function setFeeRecipient(address feeRecipient) external onlyAdmins {
+  function setFeeRecipient(address feeRecipient) external onlyAdmin {
     // Update state
     _feeRecipient = feeRecipient;
   }
