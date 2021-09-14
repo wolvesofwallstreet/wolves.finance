@@ -18,7 +18,7 @@ abstract contract FxBaseChildTunnel is IFxMessageProcessor {
   event MessageSent(bytes message);
 
   // fx child
-  address public fxChild;
+  address public immutable fxChild;
 
   // fx root tunnel
   address public fxRootTunnel;

@@ -1222,6 +1222,7 @@ const func = async function (hardhat_re) {
           args: [
             configAddresses.p_checkpointManager,
             configAddresses.p_fxRoot,
+            configAddresses.p_childTunnel,
             generatedAddresses.sftHolderProxy,
             configAddresses.p_sftHolderProxy,
             generatedAddresses.migratorV2,

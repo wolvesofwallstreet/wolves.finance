@@ -35,26 +35,22 @@ abstract contract FxBaseRootTunnel {
     0x8c5261668696ce22758910d05bab8f186d6eb247ceac2af2e82c7dc17669b036;
 
   // state sender contract
-  IFxStateSender public fxRoot;
+  IFxStateSender public immutable fxRoot;
   // root chain manager
-  ICheckpointManager public checkpointManager;
+  ICheckpointManager public immutable checkpointManager;
   // child tunnel contract which receives and sends messages
-  address public fxChildTunnel;
+  address public immutable fxChildTunnel;
 
   // storage to avoid duplicate exits
   mapping(bytes32 => bool) public processedExits;
 
-  constructor(address _checkpointManager, address _fxRoot) {
+  constructor(
+    address _checkpointManager,
+    address _fxRoot,
+    address _fxChildTunnel
+  ) {
     checkpointManager = ICheckpointManager(_checkpointManager);
     fxRoot = IFxStateSender(_fxRoot);
-  }
-
-  // set fxChildTunnel if not set already
-  function setFxChildTunnel(address _fxChildTunnel) public {
-    require(
-      fxChildTunnel == address(0x0),
-      'FxBaseRootTunnel: CHILD_TUNNEL_ALREADY_SET'
-    );
     fxChildTunnel = _fxChildTunnel;
   }
 
