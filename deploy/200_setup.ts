@@ -100,7 +100,7 @@ const func = async function (hardhat_re) {
     SFT_HOLDER_CONTRACT,
     generatedAddresses.sftHolderProxy
   );
-  const sftMinterInstance = await hardhat_re.ethers.getContract(
+  const sftMinterInstance = await hardhat_re.ethers.getContractAt(
     SFT_MINTER_CONTRACT,
     generatedAddresses.sftMinterProxy
   );
@@ -905,8 +905,8 @@ const func = async function (hardhat_re) {
     //
 
     if (
-      (await cFolioFarmLPInstance.owner()).toLowerCase() !==
-      generatedAddresses.cfolioItemHandlerLPProxy.toLowerCase()
+      (await cFolioFarmLPInstance.owner()) !==
+      generatedAddresses.cfolioItemHandlerLPProxy
     ) {
       console.log('Transfering ownership of CFolioFarmLP to CFIHLP');
 
@@ -930,8 +930,8 @@ const func = async function (hardhat_re) {
     //
 
     if (
-      (await cFolioFarmSCInstance.owner()).toLowerCase() !==
-      generatedAddresses.cfolioItemHandlerSCProxy.toLowerCase()
+      (await cFolioFarmSCInstance.owner()) !==
+      generatedAddresses.cfolioItemHandlerSCProxy
     ) {
       console.log('Transfering ownership of CFolioFarmSC to CFIHSC');
 
@@ -1239,7 +1239,7 @@ const func = async function (hardhat_re) {
     // Set rewardHandler in ChildTunnel
     //
 
-    const polygonChildTunnelInstance = await hardhat_re.ethers.getContract(
+    const polygonChildTunnelInstance = await hardhat_re.ethers.getContractAt(
       POLYGON_CHILD_TUNNEL_CONTRACT,
       generatedAddresses.polygonChildTunnelProxy
     );
@@ -1324,6 +1324,7 @@ const func = async function (hardhat_re) {
           POLYGON_CHILD_TUNNEL_CONTRACT,
           {
             from: marketingWallet,
+            to: configAddresses.polygonChildTunnelUpdate,
             log: true,
           },
           'destructContract'
@@ -1380,9 +1381,9 @@ const func = async function (hardhat_re) {
     }
 
     // MigratorV2 needs MIGRATOR role in old Booster
-    const oldBoosterInstance = await hardhat_re.ethers.getContract(
+    const oldBoosterInstance = await hardhat_re.ethers.getContractAt(
       BOOSTER_CONTRACT,
-      configAddresses.oldBoosterProxy
+      configAddresses.boosterProxyOld
     );
     if (
       !(await oldBoosterInstance.hasRole(
@@ -1395,7 +1396,7 @@ const func = async function (hardhat_re) {
           BOOSTER_CONTRACT,
           {
             from: marketingWallet,
-            to: configAddresses.oldBoosterProxy,
+            to: configAddresses.boosterProxyOld,
             log: true,
           },
           'grantRole',
@@ -1433,7 +1434,7 @@ const func = async function (hardhat_re) {
     // Set rewardHandler in RootTunnel
     //
 
-    const polygonRootTunnelInstance = await hardhat_re.ethers.getContract(
+    const polygonRootTunnelInstance = await hardhat_re.ethers.getContractAt(
       POLYGON_ROOT_TUNNEL_CONTRACT,
       generatedAddresses.polygonRootTunnelProxy
     );
@@ -1495,6 +1496,7 @@ const func = async function (hardhat_re) {
           POLYGON_ROOT_TUNNEL_CONTRACT,
           {
             from: marketingWallet,
+            to: configAddresses.polygonRootTunnelUpdate,
             log: true,
           },
           'destructContract'

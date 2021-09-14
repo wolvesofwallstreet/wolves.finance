@@ -69,11 +69,12 @@ contract WOWSERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder, IRootTunnel {
   constructor(
     address _checkpointManager,
     address _fxRoot,
+    address _childTunnel,
     address _rootToken,
     address _childToken,
     address _migrator,
     address _admin
-  ) FxBaseRootTunnel(_checkpointManager, _fxRoot) {
+  ) FxBaseRootTunnel(_checkpointManager, _fxRoot, _childTunnel) {
     require(_rootToken != address(0), 'RT: Invalid root');
     require(_childToken != address(0), 'RT: Invalid child');
 
@@ -90,6 +91,10 @@ contract WOWSERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder, IRootTunnel {
     require(address(rewardHandler) == address(0), 'RT: Initialized');
 
     rewardHandler = IRewardHandler(_rewardHandler);
+
+    // MAP_TOKEN, encode(rootToken,uri)
+    bytes memory message = abi.encode(MAP_TOKEN, abi.encode(rootToken_));
+    _sendMessageToChild(message);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -201,15 +206,6 @@ contract WOWSERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder, IRootTunnel {
   function destructContract() external onlyAdmin {
     // slither-disable-next-line suicidal
     selfdestruct(payable(admin_));
-  }
-
-  /**
-   * @dev call initial MapToken
-   */
-  function mapToken() external onlyAdmin {
-    // MAP_TOKEN, encode(rootToken,uri)
-    bytes memory message = abi.encode(MAP_TOKEN, abi.encode(rootToken_));
-    _sendMessageToChild(message);
   }
 
   //////////////////////////////////////////////////////////////////////////////
