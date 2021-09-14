@@ -59,10 +59,10 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
   IAddressRegistry private immutable _addressRegistry;
 
   // Amount to distribute
-  uint256 private _distributeAmount;
+  uint256 private _distributeAmount = 0;
 
   // IChildTunnel for internal distribution
-  IChildTunnel public childTunnel;
+  IChildTunnel public childTunnel = IChildTunnel(address(0));
 
   //////////////////////////////////////////////////////////////////////////////
   // Events
