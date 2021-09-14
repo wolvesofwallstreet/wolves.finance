@@ -124,7 +124,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
     let { levelId } = this.state;
 
     const query = new URLSearchParams(location.search);
-    const newType = query.get('type') as QueryType;
+    const newType = (query.get('type') as QueryType) || 'myPack';
 
     if (newType !== type) {
       this.setState({ type: newType });

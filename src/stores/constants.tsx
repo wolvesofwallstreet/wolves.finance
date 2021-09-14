@@ -27,6 +27,7 @@ export const SFT_REWARD = 'SFT_REWARD'; // REQUEST REWARD INFO
 export const SFT_CLAIM = 'SFT_CLAIM'; // Claim all SFT rewards
 export const SFT_CLAIM_BOOSTER = 'SFT_CLAIM_BOOSTER'; // Claim all SFT rewards from booster
 export const SFT_UPGRADE = 'SFT_UPGRADE'; // Upgrade Reward Share
+export const SFT_MIGRATE = 'SFT_MIGRATE'; // Migrate to v2
 
 export const CFOLIO_ITEM_BUY = 'CFOLIO_ITEM_BUY'; // Buy (mint) cfolioItem
 export const CFOLIO_ITEM_DEPOSIT = 'CFOLIO_ITEM_DEPOSIT'; // Add investment into existing CFI

@@ -20,6 +20,7 @@ import {
   SFT_CLAIM,
   SFT_CLAIM_BOOSTER,
   SFT_LOCK,
+  SFT_MIGRATE,
   SFT_REWARD,
   SFT_UNLOCK,
   SFT_UPGRADE,
@@ -341,6 +342,22 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     }
   }
 
+  _onMigrate(): void {
+    if (this.state.currentIndex >= 0 && this.state.cards) {
+      const current = this.renderList[this.state.currentIndex];
+      if (current.tokenId) {
+        const payload = {
+          type: SFT_MIGRATE,
+          content: {
+            id: current.tokenId,
+          },
+        };
+        this.setState({ txPending: true });
+        StoreClasses.dispatcher.dispatch(payload);
+      }
+    }
+  }
+
   _onClaim(): void {
     const payload: Payload = {
       type: SFT_CLAIM,
@@ -437,18 +454,18 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       ? 4
       : (currentLevel as CARD_LEVEL)?.levelId ?? 0;
 
-    const getButtonText = (s: string): string =>
+    const getButtonText = (s: string): { l: string; d: boolean } =>
       !isWalletConnected
-        ? t('header.connectWallet').toString()
+        ? { l: t('header.connectWallet').toString(), d: true }
         : noQuantity
-        ? t('page4.noQuantity').toString()
+        ? { l: t('page4.noQuantity').toString(), d: true }
         : txPending
-        ? t('page4.txPending')
+        ? { l: t('page4.txPending'), d: true }
         : currentRender?.tokenId === undefined
-        ? t('page4.buy', { name: s }).toString()
+        ? { l: t('page4.buy', { name: s }).toString(), d: false }
         : currentRender?.sft?.locked ?? currentRender?.cfi?.locked
-        ? t('page4.unlock', { name: s }).toString()
-        : t('page4.lock', { name: s }).toString();
+        ? { l: t('page4.unlock', { name: s }).toString(), d: false }
+        : { l: t('page4.lock', { name: s }).toString(), d: true };
 
     // Create Navigation Links
     let prevUrl: string | undefined, nextUrl: string | undefined;
@@ -488,15 +505,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         ? 4
         : 0;
 
-    let price,
-      quantity,
-      autoUpgrade,
-      profitReward,
-      autoUpgradeText,
-      apr,
-      apy,
-      investment,
-      share;
+    let price, quantity, autoUpgrade, profitReward, apr, apy, investment, share;
     let locked = false;
     if (currentRender?.cfi && currentCard) {
       quantity = (currentCard as CFOLIO_ITEM).maxMintable;
@@ -517,13 +526,6 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         if (profitReward === (currentLevel as CARD_LEVEL).profitReward) {
           autoUpgrade =
             60 * 86400 + currentRender.sft?.mintTimestamp - Date.now() / 1000;
-          const upgradeReward = (currentLevel as CARD_LEVEL).upgradeReward;
-          autoUpgradeText = txPending
-            ? t('page4.txPending')
-            : autoUpgrade <= 0
-            ? `UPGRADE TO ${upgradeReward} PROWESS NOW`
-            : `UPGRADE TO ${upgradeReward} PROWESS IN ` +
-              remainingFromSecs(autoUpgrade);
         } else {
           autoUpgrade = undefined;
         }
@@ -720,6 +722,8 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       }
     }
 
+    const buttonText = getButtonText(currentCard?.name ?? '');
+
     return (
       <div
         id="top"
@@ -890,23 +894,6 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                           </h3>
                         </li>
                       )}
-                      {autoUpgrade && (
-                        <li>
-                          {typeof autoUpgrade !== 'number' ? (
-                            <h3 className="no-margin">
-                              {t('page.autoUpgrade')}: {autoUpgrade}
-                            </h3>
-                          ) : (
-                            <input
-                              className="wolves-btn tk-grotesk-lightbold font-16 mt-1"
-                              type="button"
-                              value={autoUpgradeText}
-                              disabled={autoUpgrade > 0 || txPending}
-                              onClick={() => this._onUpgrade()}
-                            />
-                          )}
-                        </li>
-                      )}
                       {price && (
                         <li>
                           <h3 className="no-margin">
@@ -948,8 +935,14 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                     <input
                       className="wolves-btn mt-1"
                       type="button"
-                      value={getButtonText(currentCard.name)}
-                      disabled={!isWalletConnected || noQuantity || txPending}
+                      value={`Migrate ${currentCard.name} to V2`}
+                      onClick={() => this._onMigrate()}
+                    />
+                    <input
+                      className="wolves-btn mt-1"
+                      type="button"
+                      value={buttonText.l}
+                      disabled={buttonText.d}
                       onClick={() => this._onBuy()}
                     />
                   </div>

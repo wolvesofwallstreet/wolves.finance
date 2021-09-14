@@ -12,7 +12,7 @@ import { ethers } from 'ethers';
 import React from 'react';
 import { Modal } from 'react-bootstrap';
 import { TFunction, withTranslation } from 'react-i18next';
-import { Link, RouteComponentProps } from 'react-router-dom';
+import { RouteComponentProps } from 'react-router-dom';
 
 //import CoverLogo from '../../assets/COVER_LOGO_SMALL.png';
 import WalletLogo from '../../assets/openwallet_low.png';
@@ -174,18 +174,22 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
           cards.cards[sft.levelId].cards[sft.cardId].url
             .replace('{res}', '300')
             .replace('.mp4', '.mp4.jpg') || '';
-        newImages.push({
-          url,
-          tokenId: sft.tokenId,
-          cfolioItems: this._cfolioItemsForSlider(sft),
-          sft,
-        });
+        const cfis = this._cfolioItemsForSlider(sft);
+        if (cfis.v)
+          newImages.push({
+            url,
+            tokenId: sft.tokenId,
+            cfolioItems: cfis.is,
+            sft,
+          });
       } else if (sft.isWallet) {
-        newImages.push({
-          url: WalletLogo,
-          cfolioItems: this._cfolioItemsForSlider(sft),
-          sft,
-        });
+        const cfis = this._cfolioItemsForSlider(sft);
+        if (cfis.v)
+          newImages.push({
+            url: WalletLogo,
+            cfolioItems: cfis.is,
+            sft,
+          });
       }
     });
 
@@ -194,19 +198,22 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
     this._updateCFolioItems();
   }
 
-  _cfolioItemsForSlider(sft: SFT): IMAGE_SLIDER_CFOLIO[] {
+  _cfolioItemsForSlider(sft: SFT): { is: IMAGE_SLIDER_CFOLIO[]; v: boolean } {
     const cfolioItems = StoreClasses.store.getAssets().cfolioItems;
     const result: IMAGE_SLIDER_CFOLIO[] = [];
+    let hasValid = false;
     sft.cfolioItems.forEach((cfi) => {
+      const disabled =
+        (sft.isWallet && cfi.locked) ||
+        cfolioItems[cfi.levelId].type !== this.displayType;
+      if (!disabled) hasValid = true;
       result.push({
         name: cfolioItems[cfi.levelId].cards[cfi.cardId].name,
         tokenId: cfi.tokenId,
-        disabled:
-          (sft.isWallet && cfi.locked) ||
-          cfolioItems[cfi.levelId].type !== this.displayType,
+        disabled,
       });
     });
-    return result;
+    return { is: result, v: hasValid };
   }
 
   _updateCFolioItems() {
@@ -236,11 +243,11 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
           );
         }
         // Get all New cards
-        cfiRender.push(
+        /*cfiRender.push(
           ...this.cfolioItems.cards.map((_, index) => {
             return { index };
           })
-        );
+        );*/
       }
     }
     this.setState({ cfiRender });
@@ -393,13 +400,6 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
               >
                 &lt;{t('page.previousCard')}
               </span>
-
-              <Link
-                to={`/cfolio-sfts?type=${this.displayType}`}
-                className={`link _btn _btn_effect tk-vincente-lightbold font-24 single-line c-pointer `}
-              >
-                BACK TO I-NFTs
-              </Link>
 
               <span
                 className={`link _btn _btn_effect tk-vincente-lightbold font-24 single-line ${

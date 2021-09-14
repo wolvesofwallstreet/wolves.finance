@@ -46,7 +46,7 @@ function StakeLP({
   beforeBuy,
   t,
 }: PROPS): JSX.Element {
-  const [tabOption, setTabOption] = useState(0);
+  const [tabOption, setTabOption] = useState(1);
   const [investAmount, setInvestAmount] = useState(0);
   const [hasSft, setHasSft] = useState(false);
   const [inputVal, setInputVal] = useState(0);
@@ -90,7 +90,7 @@ function StakeLP({
   }, []);
 
   useEffect(() => {
-    setTabOption(0);
+    setTabOption(1);
   }, [cfolioItem]);
 
   const renderSpan = (id: number, caption: string) => {
@@ -100,9 +100,7 @@ function StakeLP({
       </div>
     ) : (
       <div>
-        <span className="c-pointer" onClick={() => setTabOption(id)}>
-          {caption}
-        </span>
+        <span>{caption}</span>
       </div>
     );
   };
@@ -110,8 +108,8 @@ function StakeLP({
   const spanText = cfolioItem
     ? 'STAKE MORE'
     : sft?.isWallet
-    ? 'ADD "STAKE I-NFT" INTO MY WALLET'
-    : 'ADD "STAKE I-NFT" INTO MY C-FOLIO';
+    ? 'BUY "STAKE I-NFT" INTO MY WALLET'
+    : 'BUY "STAKE I-NFT" INTO MY C-FOLIO';
 
   const handleBuy = () => {
     if (!beforeBuy(handleBuy)) return;
@@ -189,19 +187,6 @@ function StakeLP({
         }
         cb={(n) => setInputVal(n)}
       />
-      <span className="d-block left mt-1 font-14">
-        <a
-          target="_blank"
-          rel="noreferrer"
-          href={
-            'https://app.uniswap.org/#/add/v2/ETH/' +
-            StoreClasses.store._getTokenContractAddress()
-          }
-        >
-          <u>GET UNI-V2 WOWS/ETH LP TOKENS HERE</u>
-        </a>
-      </span>
-
       <button
         className={'wolves-btn white-border mt-2'}
         onClick={handleBuy}

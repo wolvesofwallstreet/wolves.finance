@@ -48,6 +48,7 @@ import {
   SFT_CLAIM,
   SFT_CLAIM_BOOSTER,
   SFT_LOCK,
+  SFT_MIGRATE,
   SFT_REWARD,
   SFT_UNLOCK,
   SFT_UPGRADE,
@@ -110,6 +111,7 @@ type ChainAddresses = {
   usdtToken: string;
   curveYToken: string;
   curveYDeposit: string;
+  migrateTarget: string;
 };
 interface IIndexable {
   [key: number]: ChainAddresses;
@@ -258,6 +260,7 @@ class Store {
 
   cfolioFarmLpAddress = '';
   cfolioFarmScAddress = '';
+  migrateTarget = '';
 
   static nullAddress = '0x0000000000000000000000000000000000000000';
   static BASE_CARD_MAX = ethers.BigNumber.from('0xFFFFFFFFFFFFFFFF');
@@ -438,6 +441,9 @@ class Store {
           break;
         case SFT_LOCK:
           this._doSftLock(_payload.content);
+          break;
+        case SFT_MIGRATE:
+          this._doSftMigrate(_payload.content);
           break;
         case SFT_REWARD:
           this._getSftRewards(_payload.content);
@@ -820,6 +826,7 @@ class Store {
 
       this.cfolioFarmLpAddress = chainAddresses.cfolioFarmLP;
       this.cfolioFarmScAddress = chainAddresses.cfolioFarmSC;
+      this.migrateTarget = chainAddresses.migrateTarget;
 
       if (chainAddresses.uniDaiWeth !== '') {
         this.uniDaiWethPairContractRO = new ethers.Contract(
@@ -1667,6 +1674,58 @@ class Store {
       emitter.emit(SFT_LOCK, {
         status: 'error',
         type: SFT_LOCK,
+        errorMessage: e.error ? e.error.message : e.message,
+      } as StatusResult);
+    }
+  };
+
+  _doSftMigrate = async (payloadContent: PayloadContent) => {
+    const { id } = payloadContent;
+    if (id === undefined) {
+      emitter.emit(SFT_MIGRATE, {
+        status: 'error',
+        errorMessage: 'Invalid id',
+      } as StatusResult);
+      return;
+    }
+
+    if (
+      !this.sftHolderContractRO ||
+      !this.ethersProvider ||
+      !this.migrateTarget
+    ) {
+      emitter.emit(SFT_MIGRATE, {
+        status: 'error',
+        errorMessage: 'Invalid contract state',
+      } as StatusResult);
+      return;
+    }
+
+    const sftHolderContract = this.sftHolderContractRO.connect(
+      this.ethersProvider.getSigner(this.accountId)
+    );
+    try {
+      const tx: ethers.ContractTransaction =
+        await sftHolderContract.safeTransferFrom(
+          this.address,
+          this.migrateTarget,
+          id,
+          1,
+          []
+        );
+      emitter.emit(SFT_MIGRATE, {
+        status: 'tx',
+        tx: tx?.hash,
+      } as StatusResult);
+
+      await tx.wait();
+      emitter.emit(SFT_MIGRATE, {
+        status: 'success',
+        tx: tx?.hash,
+      } as StatusResult);
+    } catch (e) {
+      emitter.emit(SFT_MIGRATE, {
+        status: 'error',
         errorMessage: e.error ? e.error.message : e.message,
       } as StatusResult);
     }

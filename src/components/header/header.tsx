@@ -144,28 +144,13 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
   _getNavItems(): NAVITEM[] {
     const { location, t } = this.props;
     const query = new URLSearchParams(location.search);
-    const type = query.get('type');
     const levelId = query.get('levelId') || 0;
     const result = [
-      /*{
-        id: t('header.home'),
-        to: '/',
-        disabled: location.pathname === '/',
-      },*/
       {
         id: 'WOLF TRADE FLOOR',
         to: '/wolf_trade_floor-1',
         disabled: location.pathname === '/wolf_trade_floor',
         dropdownItems: [
-          {
-            id: t('header.wolvesCf'),
-            to: '/shop?type=wolves&levelId=' + levelId,
-            disabled: type === 'wolves',
-          },
-          {
-            id: t('header.buyStake'),
-            to: '/cfolio-sfts?type=lpInvestment',
-          },
           {
             id: t('header.stakeInvest'),
             to: '/cfolio-invest?type=lpInvestment',
@@ -177,15 +162,6 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
         to: '/wolf_trade_floor-1',
         disabled: location.pathname === '/wolf_trade_floor',
         dropdownItems: [
-          {
-            id: t('header.boisCf'),
-            to: '/shop?type=bois&levelId=' + levelId,
-            disabled: type === 'bois',
-          },
-          {
-            id: t('header.buyYearn'),
-            to: '/cfolio-sfts?type=yearnInvestment',
-          },
           {
             id: t('header.yearnInvest'),
             to: '/cfolio-invest?type=yearnInvestment',

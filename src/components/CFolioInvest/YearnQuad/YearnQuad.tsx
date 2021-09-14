@@ -44,7 +44,7 @@ function YearnQuad({
   beforeBuy,
   t,
 }: PROPS): JSX.Element {
-  const [tabOption, setTabOption] = useState(0);
+  const [tabOption, setTabOption] = useState(1);
   const [currencyIndex, setCurrencyIndex] = useState(0);
   const [checkedIndex, setCheckedIndex] = useState(-1);
   const [inputVals, setInputVals] = useState([0, 0, 0, 0, 0]);
@@ -96,7 +96,7 @@ function YearnQuad({
   }, []);
 
   useEffect(() => {
-    setTabOption(0);
+    setTabOption(1);
   }, [cfolioItem]);
 
   useEffect(() => {
@@ -174,9 +174,7 @@ function YearnQuad({
       </div>
     ) : (
       <div>
-        <span className="c-pointer" onClick={() => setTabOption(id)}>
-          {caption}
-        </span>
+        <span>{caption}</span>
       </div>
     );
   };

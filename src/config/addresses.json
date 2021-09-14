@@ -35,7 +35,8 @@
     "curveYSwap": "0x45F783CCE6B7FF23B2ab2D70e416cdb7D6055f51",
     "curveYDeposit": "0xbBC81d23Ea2c3ec7e56D39296F0cbB648873a5d3",
     "openSeaProxyRegistry": "0xa5409ec958c83c3f309868babaca7c86dcb077c1",
-    "uniDaiWeth": "0xA478c2975Ab1Ea89e8196811F51A7B7Ade33eB11"
+    "uniDaiWeth": "0xA478c2975Ab1Ea89e8196811F51A7B7Ade33eB11",
+    "migrateTarget": ""
   },
   "4": {
     "weth": "0xc778417E063141139Fce010982780140Aa0cD5Ab",
@@ -82,7 +83,8 @@
     "curveYSwap": "0xf8EB0884B9bA5990d809d28d8d3773b2ada26D34",
     "curveYDeposit": "0xd53aECF9FEC8a9908ffe66B849A0F61da40A839F",
     "openSeaProxyRegistry": "0xf57b2c51ded3a29e6891aba85459d600256cf317",
-    "uniDaiWeth": "0x03E6c12eF405AC3F642B9184eDed8E1322de1a9e"
+    "uniDaiWeth": "0x03E6c12eF405AC3F642B9184eDed8E1322de1a9e",
+    "migrateTarget": ""
   },
   "5": {
     "weth": "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6",
@@ -129,6 +131,7 @@
     "curveYSwap": "0xeEa82930accc6abf28d981DA93208afFbEE16c09",
     "curveYDeposit": "0x0BFdCc518B3DB2FAE38bAd5C1Fe488d4ec7b4994",
     "openSeaProxyRegistry": "",
-    "uniDaiWeth": "0x186b57aFFE222D6176347D338Ed66Ea2e20D630d"
+    "uniDaiWeth": "0x186b57aFFE222D6176347D338Ed66Ea2e20D630d",
+    "migrateTarget": ""
   }
 }

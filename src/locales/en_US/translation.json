@@ -78,7 +78,7 @@
     "buy": "BUY \"{{name}}\"",
     "lock": "LOCK \"{{name}}\"",
     "unlock": "UNLOCK \"{{name}}\"",
-    "claim": "CLAIM {{amount}} WOWS REWARDS",
+    "claim": "CLAIM {{amount}} WOWS REWARDS ...",
     "lockWows": "LOCK {{amount}} WOWS REWARDS",
     "relockWows": "RELOCK {{amount}} WOWS REWARDS",
     "noQuantity": "NO CARDS AVAILABLE",

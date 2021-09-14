@@ -16,11 +16,9 @@ import React from 'react';
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
 
 import CFolioInvest from './components/CFolioInvest';
-import CFolioItemSfts from './components/CFolioItemSfts';
 import CFolioManager from './components/CFolioManager/CFolioManager';
 import Footer from './components/footer';
 import Header from './components/header';
-import Page1 from './components/page1';
 import Page3 from './components/page3';
 import Page4 from './components/page4';
 import { PageStatus } from './components/pageStatus';
@@ -38,22 +36,11 @@ class App extends React.Component {
             <Route component={Header} />
             <Switch>
               <Route path="/stake" component={Stake} />
-              <Route
-                path="/shop"
-                render={(props) => <Page3 {...props} display={'shop'} />}
-              />
-              <Route
-                path="/my"
-                render={(props) => <Page3 {...props} display={'my'} />}
-              />
               <Route path="/detail" component={Page4} />
               <Route path="/status" component={PageStatus} />
-
-              <Route path="/cfolio-sfts" component={CFolioItemSfts} />
               <Route path="/cfolio-invest" component={CFolioInvest} />
-
               <Route path="/c_folio_manager" component={CFolioManager} />
-              <Route component={Page1} />
+              <Route render={(props) => <Page3 {...props} display={'my'} />} />
             </Switch>
             <Footer />
           </StoreContainer>
