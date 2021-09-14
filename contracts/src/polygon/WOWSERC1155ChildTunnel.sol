@@ -8,10 +8,16 @@ import { IWOWSERC1155 } from '../token/interfaces/IWOWSERC1155.sol';
 import { FxBaseChildTunnel } from '../../polygonFx/tunnel/FxBaseChildTunnel.sol';
 import { IBooster } from '../booster/interfaces/IBooster.sol';
 
+import { IChildTunnel } from './interfaces/IChildTunnel.sol';
+
 import '../crowdsale/interfaces/IWOWSSftMinter.sol';
 import '../utils/TokenIds.sol';
 
-contract WOWSERC1155ChildTunnel is FxBaseChildTunnel, ERC1155Holder {
+contract WOWSERC1155ChildTunnel is
+  FxBaseChildTunnel,
+  ERC1155Holder,
+  IChildTunnel
+{
   using Address for address;
   using TokenIds for uint256;
 
@@ -23,6 +29,7 @@ contract WOWSERC1155ChildTunnel is FxBaseChildTunnel, ERC1155Holder {
   bytes32 public constant DEPOSIT_BATCH = keccak256('DEPOSIT_BATCH');
   bytes32 private constant MIGRATE = keccak256('MIGRATE');
   bytes32 private constant MIGRATE_BATCH = keccak256('MIGRATE_BATCH');
+  bytes32 private constant DISTRIBUTE = keccak256('DISTRIBUTE');
   bytes32 public constant WITHDRAW = keccak256('WITHDRAW');
   bytes32 public constant WITHDRAW_BATCH = keccak256('WITHDRAW_BATCH');
   bytes32 public constant MAP_TOKEN = keccak256('MAP_TOKEN');
@@ -34,19 +41,31 @@ contract WOWSERC1155ChildTunnel is FxBaseChildTunnel, ERC1155Holder {
   IWOWSERC1155 private immutable childToken_;
   IWOWSSftMinter private immutable sftMinter_;
   IBooster private immutable booster_;
+  address private immutable admin_;
 
   //////////////////////////////////////////////////////////////////////////////
   // State
   //////////////////////////////////////////////////////////////////////////////
 
   address public rootToken;
+  address public rewardHandler;
 
   //////////////////////////////////////////////////////////////////////////////
   // Modifier
   //////////////////////////////////////////////////////////////////////////////
 
+  modifier onlyAdmin() {
+    require(msg.sender == admin_, 'CT: Only admin');
+    _;
+  }
+
   modifier onlyChildToken() {
-    require(msg.sender == address(childToken_), 'CF: Only from child');
+    require(msg.sender == address(childToken_), 'CT: Only child');
+    _;
+  }
+
+  modifier onlyRewardHandler() {
+    require(msg.sender == rewardHandler, 'CT: Only rewardHandler');
     _;
   }
 
@@ -64,12 +83,31 @@ contract WOWSERC1155ChildTunnel is FxBaseChildTunnel, ERC1155Holder {
     address _fxChild,
     address _token,
     address _sftMinter,
-    address _booster
+    address _booster,
+    address _admin
   ) FxBaseChildTunnel(_fxChild) {
     require(_token.isContract(), 'CT: Not a contract');
     childToken_ = IWOWSERC1155(_token);
     sftMinter_ = IWOWSSftMinter(_sftMinter);
     booster_ = IBooster(_booster);
+    admin_ = _admin;
+  }
+
+  /**
+   * @dev Called from proxy
+   */
+  function initialize(address _rewardHandler) external {
+    require(rewardHandler == address(0), 'CT: Initialized');
+
+    rewardHandler = _rewardHandler;
+  }
+
+  /**
+   * @dev Destruct implementation
+   */
+  function destructContract() external onlyAdmin {
+    // slither-disable-next-line suicidal
+    selfdestruct(payable(admin_));
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -124,6 +162,23 @@ contract WOWSERC1155ChildTunnel is FxBaseChildTunnel, ERC1155Holder {
     // Call ancestor
     return
       super.onERC1155BatchReceived(operator, from, tokenIds, amounts, data);
+  }
+
+  /**
+   * @dev See {IChildTunnel-distribute}
+   */
+  function distribute(uint256 amount) external override onlyRewardHandler {
+    bytes memory message = abi.encode(
+      DISTRIBUTE,
+      abi.encode(rootToken, childToken_, amount)
+    );
+    _sendMessageToRoot(message);
+  }
+
+  function setRewardHandler(address newRewardHandler) external onlyAdmin {
+    require(newRewardHandler != address(0), 'CT: Zero address');
+
+    rewardHandler = newRewardHandler;
   }
 
   //////////////////////////////////////////////////////////////////////////////
