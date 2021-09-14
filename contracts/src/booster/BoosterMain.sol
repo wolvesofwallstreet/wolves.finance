@@ -136,7 +136,7 @@ contract BoosterMain is IBooster, AccessControl {
   function migrateCreatePool(
     uint256, /* tokenId*/
     bytes memory /* data*/
-  ) external override {}
+  ) external override returns (bytes memory) {}
 
   //////////////////////////////////////////////////////////////////////////////
   // Maintanance functions

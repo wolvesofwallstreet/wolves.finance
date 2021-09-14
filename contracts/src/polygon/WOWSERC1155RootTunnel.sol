@@ -8,6 +8,7 @@ import { FxBaseRootTunnel } from '../../polygonFx/tunnel/FxBaseRootTunnel.sol';
 
 import { IRootTunnel } from './interfaces/IRootTunnel.sol';
 
+import { IRewardHandler } from '../investment/interfaces/IRewardHandler.sol';
 import '../token/interfaces/IWOWSCryptofolio.sol';
 import '../token/interfaces/IWOWSERC1155.sol';
 import '../utils/TokenIds.sol';
@@ -24,6 +25,7 @@ contract WOWSERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder, IRootTunnel {
   bytes32 private constant DEPOSIT_BATCH = keccak256('DEPOSIT_BATCH');
   bytes32 private constant MIGRATE = keccak256('MIGRATE');
   bytes32 private constant MIGRATE_BATCH = keccak256('MIGRATE_BATCH');
+  bytes32 private constant DISTRIBUTE = keccak256('DISTRIBUTE');
   bytes32 private constant WITHDRAW = keccak256('WITHDRAW');
   bytes32 private constant WITHDRAW_BATCH = keccak256('WITHDRAW_BATCH');
   bytes32 private constant MAP_TOKEN = keccak256('MAP_TOKEN');
@@ -38,13 +40,25 @@ contract WOWSERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder, IRootTunnel {
   address private immutable childToken_;
 
   address private immutable migrator_;
+  address private immutable admin_;
+
+  //////////////////////////////////////////////////////////////////////////////
+  // State
+  //////////////////////////////////////////////////////////////////////////////
+
+  IRewardHandler public rewardHandler;
 
   //////////////////////////////////////////////////////////////////////////////
   // Modifier
   //////////////////////////////////////////////////////////////////////////////
 
+  modifier onlyAdmin() {
+    require(msg.sender == admin_, 'RT: Only admin');
+    _;
+  }
+
   modifier onlyRootToken() {
-    require(msg.sender == address(rootToken_), 'CF: Only from root');
+    require(msg.sender == address(rootToken_), 'RT: Only from root');
     _;
   }
 
@@ -57,7 +71,8 @@ contract WOWSERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder, IRootTunnel {
     address _fxRoot,
     address _rootToken,
     address _childToken,
-    address _migrator
+    address _migrator,
+    address _admin
   ) FxBaseRootTunnel(_checkpointManager, _fxRoot) {
     require(_rootToken != address(0), 'RT: Invalid root');
     require(_childToken != address(0), 'RT: Invalid child');
@@ -65,12 +80,16 @@ contract WOWSERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder, IRootTunnel {
     rootToken_ = IWOWSERC1155(_rootToken);
     childToken_ = _childToken;
     migrator_ = _migrator;
+    admin_ = _admin;
   }
 
   /**
    * @dev Called from proxy
    */
-  function initialize() external {
+  function initialize(address _rewardHandler) external {
+    require(address(rewardHandler) == address(0), 'RT: Initialized');
+
+    rewardHandler = IRewardHandler(_rewardHandler);
     // MAP_TOKEN, encode(rootToken,uri)
     bytes memory message = abi.encode(MAP_TOKEN, abi.encode(rootToken_));
     _sendMessageToChild(message);
@@ -173,6 +192,20 @@ contract WOWSERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder, IRootTunnel {
     _sendMessageToChild(message);
   }
 
+  function setRewardHandler(address newRewardHandler) external onlyAdmin {
+    require(newRewardHandler != address(0), 'RT: Zero address');
+
+    rewardHandler = IRewardHandler(newRewardHandler);
+  }
+
+  /**
+   * @dev Destruct implementation
+   */
+  function destructContract() external onlyAdmin {
+    // slither-disable-next-line suicidal
+    selfdestruct(payable(admin_));
+  }
+
   //////////////////////////////////////////////////////////////////////////////
   // Internal
   //////////////////////////////////////////////////////////////////////////////
@@ -224,6 +257,17 @@ contract WOWSERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder, IRootTunnel {
       new uint256[](0),
       data
     );
+  }
+
+  function _syncDistribute(bytes memory syncData) internal {
+    (address rootToken, address childToken, uint256 amount) = abi.decode(
+      syncData,
+      (address, address, uint256)
+    );
+    require(rootToken == address(rootToken_), 'RT: Invalid root');
+    require(childToken == childToken_, 'RT: Invalid child');
+
+    rewardHandler.distribute2(address(rewardHandler), amount, uint32(1e6));
   }
 
   function _getTokenData(bytes memory data, uint256 tokenId)

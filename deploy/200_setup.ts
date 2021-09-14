@@ -25,6 +25,8 @@ const SFT_MINTER_UPDATE_CONTRACT = 'WOWSSftMinterUpdate';
 const SFT_EVALUATOR_PROXY_CONTRACT = 'SFTEvaluatorProxy';
 const CFOLIO_ITEM_HANDLER_LP_CONTRACT = 'CFolioItemHandlerLP';
 const CFOLIO_ITEM_HANDLER_SC_CONTRACT = 'CFolioItemHandlerSC';
+const POLYGON_ROOT_TUNNEL_CONTRACT = 'WOWSERC1155RootTunnel';
+const POLYGON_CHILD_TUNNEL_CONTRACT = 'WOWSERC1155ChildTunnel';
 const MIGRATE_V2_CONTRACT = 'MigrateV2';
 
 // Deployed contract aliases
@@ -342,6 +344,7 @@ const func = async function (hardhat_re) {
   }
 
   const BOOSTER_CONTROLLER_ROLE = await boosterInstance.CONTROLLER_ROLE();
+  const BOOSTER_MIGRATOR_ROLE = await boosterInstance.MIGRATOR_ROLE();
 
   //
   // Revoke CONTROLLER role in Booster for controller)
@@ -1192,6 +1195,98 @@ const func = async function (hardhat_re) {
         )
       );
     }
+
+    //
+    // Set rewardHandler in ChildTunnel
+    //
+    const polygonChildTunnelInstance = await hardhat_re.ethers.getContract(
+      POLYGON_CHILD_TUNNEL_CONTRACT,
+      generatedAddresses.polygonChildTunnelProxy
+    );
+    if (
+      (await polygonChildTunnelInstance.rewardHandler()) !==
+      generatedAddresses.rewardHandler
+    ) {
+      await catchUnknownSigner(
+        execute(
+          POLYGON_CHILD_TUNNEL_CONTRACT,
+          {
+            from: marketingWallet,
+            to: generatedAddresses.polygonChildTunnelProxy,
+            log: true,
+          },
+          'setRewardHandler',
+          generatedAddresses.rewardHandler
+        )
+      );
+    }
+
+    //
+    // Set ChildTunnel in WOWSMinter
+    //
+    if (
+      (await sftMinterInstance.childTunnel()) !==
+      generatedAddresses.polygonChildTunnelProxy
+    ) {
+      await catchUnknownSigner(
+        execute(
+          SFT_MINTER_CONTRACT,
+          {
+            from: marketingWallet,
+            to: generatedAddresses.sftMinterProxy,
+            log: true,
+          },
+          'setChildTunnel',
+          generatedAddresses.polygonChildTunnelProxy
+        )
+      );
+    }
+
+    //
+    // Grand MIGRATOR_ROLE in BOOSTER
+    //
+    if (
+      !(await boosterInstance.hasRole(
+        BOOSTER_MIGRATOR_ROLE,
+        generatedAddresses.polygonChildTunnelProxy
+      ))
+    ) {
+      await catchUnknownSigner(
+        execute(
+          BOOSTER_CONTRACT,
+          {
+            from: marketingWallet,
+            to: generatedAddresses.boosterProxy,
+            log: true,
+          },
+          'grantRole',
+          BOOSTER_MIGRATOR_ROLE,
+          generatedAddresses.polygonChildTunnelProxy
+        )
+      );
+    }
+
+    //
+    // Destruct implementation
+    //
+    if (
+      configAddresses.polygonChildTunnelUpdate &&
+      configAddresses.polygonChildTunnelUpdate !==
+        generatedAddresses.polygonChildTunnel
+    ) {
+      console.log('Destruct old PolygonChildTunnel implementation');
+
+      await catchUnknownSigner(
+        execute(
+          POLYGON_CHILD_TUNNEL_CONTRACT,
+          {
+            from: marketingWallet,
+            log: true,
+          },
+          'destructContract'
+        )
+      );
+    }
   } else if (hardhat_re.network.tags.rootchain) {
     //
     // Check if we have to upgrade the polygonRootTunnel implementation
@@ -1258,6 +1353,76 @@ const func = async function (hardhat_re) {
           },
           'setRootTunnel',
           generatedAddresses.polygonRootTunnelProxy
+        )
+      );
+    }
+
+    //
+    // Set rewardHandler in RootTunnel
+    //
+    const polygonRootTunnelInstance = await hardhat_re.ethers.getContract(
+      POLYGON_ROOT_TUNNEL_CONTRACT,
+      generatedAddresses.polygonRootTunnelProxy
+    );
+    if (
+      (await polygonRootTunnelInstance.rewardHandler()) !==
+      generatedAddresses.rewardHandler
+    ) {
+      await catchUnknownSigner(
+        execute(
+          POLYGON_ROOT_TUNNEL_CONTRACT,
+          {
+            from: marketingWallet,
+            to: generatedAddresses.polygonRootTunnelProxy,
+            log: true,
+          },
+          'setRewardHandler',
+          generatedAddresses.rewardHandler
+        )
+      );
+    }
+
+    //
+    // Grant reward Role in RewardHandler
+    //
+    if (
+      !(await rewardHandlerInstance.hasRole(
+        REWARD_HANDLER_REWARD_ROLE,
+        generatedAddresses.polygonRootTunnelProxy
+      ))
+    ) {
+      await catchUnknownSigner(
+        execute(
+          REWARD_HANDLER_CONTRACT,
+          {
+            from: marketingWallet,
+            log: true,
+          },
+          'grantRole',
+          REWARD_HANDLER_REWARD_ROLE,
+          generatedAddresses.polygonRootTunnelProxy
+        )
+      );
+    }
+
+    //
+    // Destruct implementation
+    //
+    if (
+      configAddresses.polygonRootTunnelUpdate &&
+      configAddresses.polygonRootTunnelUpdate !==
+        generatedAddresses.polygonRootTunnel
+    ) {
+      console.log('Destruct old PolygonRootTunnel implementation');
+
+      await catchUnknownSigner(
+        execute(
+          POLYGON_ROOT_TUNNEL_CONTRACT,
+          {
+            from: marketingWallet,
+            log: true,
+          },
+          'destructContract'
         )
       );
     }

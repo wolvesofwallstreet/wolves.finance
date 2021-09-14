@@ -352,13 +352,11 @@ contract Booster is IBooster, AccessControl {
       currentLock.totalAmount,
       currentLock.pendingAmount,
       currentLock.providedAmount,
-      currentLock.apr,
-      currentLock.end,
-      currentLock.fee,
       rData
-    ) = abi.decode(
-      data,
-      (uint256, uint256, uint256, uint256, uint256, uint32, bytes)
+    ) = abi.decode(data, (uint256, uint256, uint256, bytes));
+    (currentLock.apr, currentLock.end, currentLock.fee, rData) = abi.decode(
+      rData,
+      (uint256, uint256, uint32, bytes)
     );
   }
 

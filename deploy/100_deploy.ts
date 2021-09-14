@@ -99,7 +99,7 @@ const SFT_MINTER_ABI = `${__dirname}/../src/abi/contracts/src/crowdsale/WOWSSftM
 const TRADE_FLOOR_ABI = `${__dirname}/../src/abi/contracts/src/token/TradeFloor.sol/TradeFloor.json`;
 const CFOLIO_ITEM_HANDLER_SC_ABI = `${__dirname}/../src/abi/contracts/src/cfolio/CFolioItemHandlerSC.sol/CFolioItemHandlerSC.json`;
 const POLYGON_ROOT_TUNNEL_ABI = `${__dirname}/../src/abi/contracts/src/polygon/WOWSERC1155RootTunnel.sol/WOWSERC1155RootTunnel.json`;
-
+const POLYGON_CHILD_TUNNEL_ABI = `${__dirname}/../src/abi/contracts/src/polygon/WOWSERC1155ChildTunnel.sol/WOWSERC1155ChildTunnel.json`;
 // Useful constants
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 
@@ -1118,6 +1118,7 @@ const func = async function (hardhat_re) {
             generatedAddresses.sftHolderProxy,
             generatedAddresses.sftMinterProxy,
             generatedAddresses.boosterProxy,
+            marketingWallet,
           ],
           log: true,
           deterministicDeployment: true,
@@ -1142,6 +1143,18 @@ const func = async function (hardhat_re) {
         configAddresses.polygonChildTunnelProxy;
     } else {
       log_step('Deploying PolygonChildTunnel proxy');
+
+      const polygonChildTunnelAbi = JSON.parse(
+        fs.readFileSync(POLYGON_CHILD_TUNNEL_ABI)
+      );
+      const polygonChildTunnelInterface = new ethers.utils.Interface(
+        polygonChildTunnelAbi
+      );
+      const proxyCallData = polygonChildTunnelInterface.encodeFunctionData(
+        'initialize',
+        [generatedAddresses.rewardHandler]
+      );
+
       const polygonChildTunnelProxyReceipt = await deploy(
         POLYGON_CHILD_TUNNEL_PROXY_CONTRACT,
         {
@@ -1150,7 +1163,7 @@ const func = async function (hardhat_re) {
           args: [
             ADDRESS_REGISTRY_ADDRESS,
             generatedAddresses.polygonChildTunnel,
-            [],
+            proxyCallData,
           ],
           log: true,
           deterministicDeployment: true,
@@ -1207,6 +1220,7 @@ const func = async function (hardhat_re) {
             generatedAddresses.sftHolderProxy,
             configAddresses.p_sftHolderProxy,
             generatedAddresses.migratorV2,
+            marketingWallet,
           ],
           log: true,
           deterministicDeployment: true,
@@ -1240,7 +1254,7 @@ const func = async function (hardhat_re) {
       );
       const proxyCallData = polygonRootTunnelInterface.encodeFunctionData(
         'initialize',
-        []
+        [generatedAddresses.rewardHandler]
       );
 
       const polygonRootTunnelProxyReceipt = await deploy(
