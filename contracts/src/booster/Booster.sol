@@ -69,7 +69,7 @@ contract Booster is IBooster, AccessControl {
   RewardDefinition[] public rewardDefinitions;
 
   // Overall provided rewards
-  uint256 public rewardsProvided;
+  uint256 public rewardsProvided = 0;
 
   //////////////////////////////////////////////////////////////////////////////
   // Modifiers

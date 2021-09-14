@@ -88,6 +88,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     bool minted; // Make sure we only mint 1
     ListKey listKey; // Next tokenId in the owner linkedList
   }
+  // slither-disable-next-line uninitialized-state
   mapping(uint256 => TokenInfo) private _tokenInfos;
 
   // Mapping owner -> first owned token
@@ -98,6 +99,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     uint256 count;
     ListKey listKey; // First tokenId in linked list
   }
+  // slither-disable-next-line uninitialized-state
   mapping(address => Owned) private _owned;
 
   // Our SFT contract, needed to check for locked transfers
@@ -106,7 +108,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   IWOWSERC1155 private immutable _sftHolderOld;
 
   // Restrict approvals to OPERATOR_ROLE members
-  bool private _tradingRestricted;
+  bool private _tradingRestricted = false;
 
   //////////////////////////////////////////////////////////////////////////////
   // Events
