@@ -28,7 +28,7 @@ const CFOLIO_ITEM_HANDLER_LP_CONTRACT = 'CFolioItemHandlerLP';
 const CFOLIO_ITEM_HANDLER_SC_CONTRACT = 'CFolioItemHandlerSC';
 const POLYGON_ROOT_TUNNEL_CONTRACT = 'WOWSERC1155RootTunnel';
 const POLYGON_CHILD_TUNNEL_CONTRACT = 'WOWSERC1155ChildTunnel';
-const MIGRATE_V2_CONTRACT = 'MigrateV2';
+const MIGRATE_V2_CONTRACT = 'MigrateToV2';
 
 // Deployed contract aliases
 const BOOSTER_PROXY_CONTRACT = 'BoosterProxy';
@@ -65,9 +65,9 @@ async function getProxyImplementation(hre, contractAddress) {
     contractAddress,
     UPGRADE_PROXY_IMPLEMENTATION_SLOT
   );
-  return hre.ethers.utils.getAddress(
-    hre.ethers.BigNumber.from(data).toHexString()
-  );
+  let hex = hre.ethers.BigNumber.from(data).toHexString();
+  hex = '0x' + hex.substr(2).padStart(40, '0');
+  return hre.ethers.utils.getAddress(hex);
 }
 
 /**
@@ -93,7 +93,6 @@ const func = async function (hardhat_re) {
   const generatedAddresses = generatedNetworks[chainId] || {};
 
   // Load deployed contract instances
-  const tokenInstance = await hardhat_re.ethers.getContract(TOKEN_CONTRACT);
   const rewardHandlerInstance = await hardhat_re.ethers.getContract(
     REWARD_HANDLER_CONTRACT
   );
@@ -117,43 +116,46 @@ const func = async function (hardhat_re) {
 
   log_step('Marketing wallet calls');
 
-  const TOKEN_MINTER_ROLE = await tokenInstance.MINTER_ROLE();
   const REWARD_HANDLER_REWARD_ROLE = await rewardHandlerInstance.REWARD_ROLE();
 
-  //
-  // Call WOWSErc20.sol::grantRole(WOWSErc20.sol.MINTER_ROLE(), rewardHandler)
-  // This is to allow rewardhandler to call into WOWSErc20.sol to distribute
-  // rewards.
-  //
-  if (
-    !(await tokenInstance.hasRole(
-      TOKEN_MINTER_ROLE,
-      generatedAddresses.rewardHandler
-    ))
-  ) {
-    console.log('Grant minter role to reward handler');
+  if (!hardhat_re.network.tags.sidechain || hardhat_re.network.tags.test) {
+    const tokenInstance = await hardhat_re.ethers.getContract(TOKEN_CONTRACT);
+    const TOKEN_MINTER_ROLE = await tokenInstance.MINTER_ROLE();
 
-    await catchUnknownSigner(
-      execute(
-        TOKEN_CONTRACT,
-        {
-          from: marketingWallet,
-          log: true,
-        },
-        'grantRole',
+    //
+    // Call WOWSErc20.sol::grantRole(WOWSErc20.sol.MINTER_ROLE(), rewardHandler)
+    // This is to allow rewardhandler to call into WOWSErc20.sol to distribute
+    // rewards.
+    //
+
+    if (
+      !(await tokenInstance.hasRole(
         TOKEN_MINTER_ROLE,
         generatedAddresses.rewardHandler
-      )
-    );
-  } else {
-    console.log('Minter role already granted to reward handler');
-  }
+      ))
+    ) {
+      console.log('Grant minter role to reward handler');
 
-  //
-  // Call WOWSErc20.sol::grantRole(WOWSErc20.sol.MINTER_ROLE(), Crowdsale.sol)
-  //
+      await catchUnknownSigner(
+        execute(
+          TOKEN_CONTRACT,
+          {
+            from: marketingWallet,
+            log: true,
+          },
+          'grantRole',
+          TOKEN_MINTER_ROLE,
+          generatedAddresses.rewardHandler
+        )
+      );
+    } else {
+      console.log('Minter role already granted to reward handler');
+    }
 
-  if (!hardhat_re.network.tags.sidechain || hardhat_re.network.tags.test) {
+    //
+    // Call WOWSErc20.sol::grantRole(WOWSErc20.sol.MINTER_ROLE(), Crowdsale.sol)
+    //
+
     if (
       !(await tokenInstance.hasRole(
         TOKEN_MINTER_ROLE,
@@ -177,11 +179,43 @@ const func = async function (hardhat_re) {
     } else {
       console.log('Minter role already granted to crowdsale');
     }
+
+    //
+    // Revoke old rewardHandler MINTER_ROLE
+    //
+
+    if (
+      configAddresses.rewardHandlerUpdate &&
+      configAddresses.rewardHandlerUpdate !==
+        generatedAddresses.rewardHandler &&
+      (await tokenInstance.hasRole(
+        TOKEN_MINTER_ROLE,
+        configAddresses.rewardHandlerUpdate
+      ))
+    ) {
+      console.log('Revoke minter role from old reward handler');
+
+      await catchUnknownSigner(
+        execute(
+          TOKEN_CONTRACT,
+          {
+            from: marketingWallet,
+            log: true,
+          },
+          'revokeRole',
+          TOKEN_MINTER_ROLE,
+          configAddresses.rewardHandlerUpdate
+        )
+      );
+    } else {
+      console.log('Minter role not set for old reward handler');
+    }
   }
 
   //
   //  Terminate old rewardHandler
   //
+
   if (
     configAddresses.rewardHandlerUpdate &&
     configAddresses.rewardHandlerUpdate !== generatedAddresses.rewardHandler
@@ -199,35 +233,6 @@ const func = async function (hardhat_re) {
         false // Should be set to true if verified
       )
     );
-  }
-
-  //
-  // Revoke old rewardHandler MINTER_ROLE
-  //
-  if (
-    configAddresses.rewardHandlerUpdate &&
-    configAddresses.rewardHandlerUpdate !== generatedAddresses.rewardHandler &&
-    (await tokenInstance.hasRole(
-      TOKEN_MINTER_ROLE,
-      configAddresses.rewardHandlerUpdate
-    ))
-  ) {
-    console.log('Revoke minter role from old reward handler');
-
-    await catchUnknownSigner(
-      execute(
-        TOKEN_CONTRACT,
-        {
-          from: marketingWallet,
-          log: true,
-        },
-        'revokeRole',
-        TOKEN_MINTER_ROLE,
-        configAddresses.rewardHandlerUpdate
-      )
-    );
-  } else {
-    console.log('Minter role not set for old reward handler');
   }
 
   //
@@ -350,6 +355,7 @@ const func = async function (hardhat_re) {
   //
   // Revoke CONTROLLER role in Booster for controller)
   //
+
   if (
     configAddresses.controllerUpdate &&
     configAddresses.controllerUpdate !== generatedAddresses.controller &&
@@ -376,6 +382,7 @@ const func = async function (hardhat_re) {
   //
   // Grant CONTROLLER_ROLE in Booster for new controller
   //
+
   if (
     !(await boosterInstance.hasRole(
       BOOSTER_CONTROLLER_ROLE,
@@ -476,6 +483,7 @@ const func = async function (hardhat_re) {
   // If we have a Controller Upgrade, call OldController::transferAllFarms(newController)
   // !! In deployments a ControllerUpdate.json file is expected with the old Controller
   //
+
   if (
     configAddresses.controllerUpdate &&
     configAddresses.controllerUpdate !== generatedAddresses.controller
@@ -566,6 +574,7 @@ const func = async function (hardhat_re) {
   //
   // Check if we have to upgrade the sftHolder implementation
   //
+
   if (
     (await getProxyImplementation(
       hardhat_re,
@@ -588,6 +597,7 @@ const func = async function (hardhat_re) {
   //
   // Check if we have to upgrade the sftMinter implementation
   //
+
   if (
     (await getProxyImplementation(
       hardhat_re,
@@ -684,6 +694,7 @@ const func = async function (hardhat_re) {
   //
   // Call WowsERC1155.sol::grantRole(MINTER_ROLE, WOWSSftMinter.sol)
   //
+
   const SFT_HOLDER_MINTER_ROLE = await sftHolderInstance.MINTER_ROLE();
 
   if (
@@ -760,6 +771,7 @@ const func = async function (hardhat_re) {
   //
   // Check if we have to upgrade the sftEvaluator implementation
   //
+
   if (
     (await getProxyImplementation(
       hardhat_re,
@@ -804,6 +816,7 @@ const func = async function (hardhat_re) {
       )
     );
   }
+
   //
   // Call WOWSSftMinter.sol::setTradeFloor(TradeFloorProxy)
   //
@@ -856,6 +869,7 @@ const func = async function (hardhat_re) {
   //
   // Destruct implementation
   //
+
   if (
     configAddresses.tradeFloorUpdate &&
     configAddresses.tradeFloorUpdate !== generatedAddresses.tradeFloor
@@ -1130,6 +1144,7 @@ const func = async function (hardhat_re) {
     //
     // Check if we have to upgrade the cfolioItemHandlerSC implementation
     //
+
     if (
       (oldImplAddress = await getProxyImplementation(
         hardhat_re,
@@ -1175,6 +1190,7 @@ const func = async function (hardhat_re) {
     //
     // Check if we have to upgrade the polygonChildTunnel implementation
     //
+
     if (
       (await getProxyImplementation(
         hardhat_re,
@@ -1197,6 +1213,7 @@ const func = async function (hardhat_re) {
     //
     // Allow polygonChildTunnel to mint SFT
     //
+
     if (
       !(await sftHolderInstance.hasRole(
         SFT_HOLDER_MINTER_ROLE,
@@ -1221,6 +1238,7 @@ const func = async function (hardhat_re) {
     //
     // Set rewardHandler in ChildTunnel
     //
+
     const polygonChildTunnelInstance = await hardhat_re.ethers.getContract(
       POLYGON_CHILD_TUNNEL_CONTRACT,
       generatedAddresses.polygonChildTunnelProxy
@@ -1246,6 +1264,7 @@ const func = async function (hardhat_re) {
     //
     // Set ChildTunnel in WOWSMinter
     //
+
     if (
       (await sftMinterInstance.childTunnel()) !==
       generatedAddresses.polygonChildTunnelProxy
@@ -1267,6 +1286,7 @@ const func = async function (hardhat_re) {
     //
     // Grand MIGRATOR_ROLE in BOOSTER
     //
+
     if (
       !(await boosterInstance.hasRole(
         BOOSTER_MIGRATOR_ROLE,
@@ -1291,6 +1311,7 @@ const func = async function (hardhat_re) {
     //
     // Destruct implementation
     //
+
     if (
       configAddresses.polygonChildTunnelUpdate &&
       configAddresses.polygonChildTunnelUpdate !==
@@ -1313,6 +1334,7 @@ const func = async function (hardhat_re) {
     //
     // Check if we have to upgrade the polygonRootTunnel implementation
     //
+
     if (
       (await getProxyImplementation(
         hardhat_re,
@@ -1335,6 +1357,7 @@ const func = async function (hardhat_re) {
     //
     // Allow MigratorV2 to mint SFT
     //
+
     if (
       !(await sftHolderInstance.hasRole(
         SFT_HOLDER_MINTER_ROLE,
@@ -1385,6 +1408,7 @@ const func = async function (hardhat_re) {
     //
     // Set MigratorV2 rootTunnel
     //
+
     const migratorV2Instance = await hardhat_re.ethers.getContract(
       MIGRATE_V2_CONTRACT
     );
@@ -1408,6 +1432,7 @@ const func = async function (hardhat_re) {
     //
     // Set rewardHandler in RootTunnel
     //
+
     const polygonRootTunnelInstance = await hardhat_re.ethers.getContract(
       POLYGON_ROOT_TUNNEL_CONTRACT,
       generatedAddresses.polygonRootTunnelProxy
@@ -1433,6 +1458,7 @@ const func = async function (hardhat_re) {
     //
     // Grant reward Role in RewardHandler
     //
+
     if (
       !(await rewardHandlerInstance.hasRole(
         REWARD_HANDLER_REWARD_ROLE,
@@ -1456,6 +1482,7 @@ const func = async function (hardhat_re) {
     //
     // Destruct implementation
     //
+
     if (
       configAddresses.polygonRootTunnelUpdate &&
       configAddresses.polygonRootTunnelUpdate !==

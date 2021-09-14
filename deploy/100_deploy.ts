@@ -33,7 +33,7 @@ const CFOLIO_ITEM_HANDLER_LP_CONTRACT = 'CFolioItemHandlerLP';
 const CFOLIO_ITEM_HANDLER_SC_CONTRACT = 'CFolioItemHandlerSC';
 const POLYGON_ROOT_TUNNEL_CONTRACT = 'WOWSERC1155RootTunnel';
 const POLYGON_CHILD_TUNNEL_CONTRACT = 'WOWSERC1155ChildTunnel';
-const MIGRATE_V2_CONTRACT = 'MigrateV2';
+const MIGRATE_V2_CONTRACT = 'MigrateToV2';
 
 // Deployed contract aliases
 const BOOSTER_PROXY_CONTRACT = 'BoosterProxy';
@@ -218,12 +218,13 @@ const func = async function (hardhat_re) {
   log_step('Setting addresses in address registry');
 
   // Transfer predefined dependency addresses
-  if (!generatedAddresses.uniV2Router)
+  if (!hardhat_re.network.tags.needUniswap) {
     generatedAddresses.uniV2Router = configAddresses.uniV2Router;
-  if (!generatedAddresses.curveYToken)
+  }
+  if (!hardhat_re.network.tags.needYearn) {
     generatedAddresses.curveYToken = configAddresses.curveYToken;
-  if (!generatedAddresses.curveYDeposit)
     generatedAddresses.curveYDeposit = configAddresses.curveYDeposit;
+  }
 
   await setRegistryKey(
     deployer,
@@ -253,27 +254,31 @@ const func = async function (hardhat_re) {
     ADDRESS_BOOK_ADMIN_ACCOUNT_KEY,
     marketingWallet
   );
-  await setRegistryKey(
-    deployer,
-    execute,
-    ADDRESS_REGISTRY_INSTANCE,
-    ADDRESS_BOOK_UNISWAP_V2_ROUTER02_KEY,
-    generatedAddresses.uniV2Router
-  );
-  await setRegistryKey(
-    deployer,
-    execute,
-    ADDRESS_REGISTRY_INSTANCE,
-    ADDRESS_BOOK_CURVE_Y_TOKEN_KEY,
-    generatedAddresses.curveYToken
-  );
-  await setRegistryKey(
-    deployer,
-    execute,
-    ADDRESS_REGISTRY_INSTANCE,
-    ADDRESS_BOOK_CURVE_Y_DEPOSIT_KEY,
-    generatedAddresses.curveYDeposit
-  );
+  if (generatedAddresses.uniV2Router) {
+    await setRegistryKey(
+      deployer,
+      execute,
+      ADDRESS_REGISTRY_INSTANCE,
+      ADDRESS_BOOK_UNISWAP_V2_ROUTER02_KEY,
+      generatedAddresses.uniV2Router
+    );
+  }
+  if (generatedAddresses.curveYToken) {
+    await setRegistryKey(
+      deployer,
+      execute,
+      ADDRESS_REGISTRY_INSTANCE,
+      ADDRESS_BOOK_CURVE_Y_TOKEN_KEY,
+      generatedAddresses.curveYToken
+    );
+    await setRegistryKey(
+      deployer,
+      execute,
+      ADDRESS_REGISTRY_INSTANCE,
+      ADDRESS_BOOK_CURVE_Y_DEPOSIT_KEY,
+      generatedAddresses.curveYDeposit
+    );
+  }
 
   //////////////////////////////////////////////////////////////////////////////
   //
@@ -1114,7 +1119,7 @@ const func = async function (hardhat_re) {
         {
           from: deployer,
           args: [
-            configAddresses.fxChild,
+            configAddresses.p_fxChild,
             generatedAddresses.sftHolderProxy,
             generatedAddresses.sftMinterProxy,
             generatedAddresses.boosterProxy,
