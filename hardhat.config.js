@@ -34,11 +34,13 @@ const config = {
       default: 1,
       rinkeby: env.RINKEBY_GNOSIS_MARKETING_WALLET_ADDRESS,
       mainnet: env.MAINNET_GNOSIS_MARKETING_WALLET_ADDRESS,
+      goerli: env.DEPLOYER_ADDRESS,
     },
     teamWallet: {
       default: 2,
       rinkeby: env.RINKEBY_GNOSIS_TEAM_WALLET_ADDRESS,
       mainnet: env.MAINNET_GNOSIS_TEAM_WALLET_ADDRESS,
+      goerli: env.DEPLOYER_ADDRESS,
     },
     testUser: {
       default: 3,
