@@ -23,6 +23,7 @@ interface IWOWSSftMinter {
    * Investments may be zero if the user is just buying an SFT.
    */
   function mintCFolioItemSFT(
+    address recipient,
     uint256 cfolioItemType,
     uint256 sftTokenId,
     uint256[] calldata investAmounts

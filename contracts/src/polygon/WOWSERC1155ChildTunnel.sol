@@ -317,7 +317,12 @@ contract WOWSERC1155ChildTunnel is
       uint256 numCfis = _getUint256(data, dataIndex++);
       for (uint256 i = 0; i < numCfis; ++i) {
         uint256 cfiType = _getUint256(data, dataIndex++);
-        tokenId = sftMinter_.mintCFolioItemSFT(cfiType, tokenId, noInvest);
+        tokenId = sftMinter_.mintCFolioItemSFT(
+          user,
+          cfiType,
+          tokenId,
+          noInvest
+        );
       }
       uint256 hasBooster = _getUint256(data, dataIndex++);
       if (hasBooster > 0) {
@@ -325,8 +330,12 @@ contract WOWSERC1155ChildTunnel is
       }
     } else {
       uint256 cfiType = _getUint256(data, dataIndex++);
-      tokenId = sftMinter_.mintCFolioItemSFT(cfiType, uint256(-1), noInvest);
-      childToken_.safeTransferFrom(address(this), user, tokenId, 1, '');
+      tokenId = sftMinter_.mintCFolioItemSFT(
+        user,
+        cfiType,
+        uint256(-1),
+        noInvest
+      );
     }
     return dataIndex;
   }

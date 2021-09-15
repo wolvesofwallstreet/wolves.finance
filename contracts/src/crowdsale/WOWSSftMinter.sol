@@ -399,6 +399,7 @@ contract WOWSSftMinter is Context, AccessControl, IWOWSSftMinter {
    * Investments may be zero if the user is just buying an SFT.
    */
   function mintCFolioItemSFT(
+    address recipient,
     uint256 cfolioItemType,
     uint256 sftTokenId,
     uint256[] calldata investAmounts
@@ -409,15 +410,14 @@ contract WOWSSftMinter is Context, AccessControl, IWOWSSftMinter {
     // Validate state
     require(sftData.numMinted < sftData.maxMintable, 'WM: Sold out (CFI)');
 
-    // Mint by default to sender
-    address recipient = _msgSender();
-
     if (sftTokenId != uint256(-1)) {
       require(sftTokenId.isBaseCard(), 'WM: Invalid baseId');
 
       // Get the CFolio contract address, it will be the final recipient
       recipient = _sftContract.tokenIdToAddress(sftTokenId);
       require(recipient != address(0), 'WM: Bad baseId');
+    } else if (investAmounts.length > 0) {
+      require(recipient == _msgSender(), 'WM: Invalid recipient');
     }
 
     tokenId = nextCFolioItemNft++;
