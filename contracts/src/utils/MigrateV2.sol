@@ -174,34 +174,15 @@ contract MigrateToV2 is ERC1155Holder {
     uint256 amount,
     bytes calldata data
   ) public override onlyOldSftContract returns (bytes4) {
-    bool yCrvBulkWithdraw = abi.decode(data, (bool));
+    bool yCrvBulkWithdraw = data.length >= 32
+      ? abi.decode(data, (bool))
+      : false;
     require(amount == 1, 'M: Invalid amount');
 
-    (bytes memory migrateData, bool needBridge) = _processMigration(
-      from,
-      tokenId,
-      yCrvBulkWithdraw
-    );
+    uint256[] memory oneTokenIds = new uint256[](1);
+    oneTokenIds[0] = tokenId;
 
-    // Investment should be pulled out of old contract, burn old cfolio
-    _sftContractOld.burn(from, tokenId, amount);
-
-    if (tokenId.isBaseCard()) {
-      uint256[] memory tokenIds = new uint256[](1);
-      tokenIds[0] = tokenId;
-      if (needBridge) {
-        _sftContract.mintBatch(
-          address(rootTunnel),
-          tokenIds,
-          abi.encode(from, migrateData)
-        );
-      } else {
-        _sftContract.mintBatch(from, tokenIds, migrateData);
-        _sftEvaluator.setRewardRate(tokenId, false);
-      }
-    } else {
-      rootTunnel.mintCFolioItems(from, migrateData);
-    }
+    _processTokenId(from, oneTokenIds, yCrvBulkWithdraw);
 
     // Call ancestor
     return super.onERC1155Received(operator, from, tokenId, amount, data);
@@ -217,6 +198,22 @@ contract MigrateToV2 is ERC1155Holder {
     uint256[] calldata amounts,
     bytes calldata data
   ) public override onlyOldSftContract returns (bytes4) {
+    require(tokenIds.length == amounts.length, 'M: Invalid length');
+
+    bool yCrvBulkWithdraw = data.length >= 32
+      ? abi.decode(data, (bool))
+      : false;
+
+    uint256[] memory oneTokenIds = new uint256[](1);
+
+    for (uint256 i = 0; i < tokenIds.length; ++i) {
+      require(amounts[i] == 1, 'M: Invalid amount');
+
+      oneTokenIds[0] = tokenIds[0];
+
+      _processTokenId(from, oneTokenIds, yCrvBulkWithdraw);
+    }
+
     // Call ancestor
     return
       super.onERC1155BatchReceived(operator, from, tokenIds, amounts, data);
@@ -285,6 +282,36 @@ contract MigrateToV2 is ERC1155Holder {
   // INTERNAL IMPLEMENTATION
   //////////////////////////////////////////////////////////////////////////////
 
+  function _processTokenId(
+    address from,
+    uint256[] memory oneTokenIds,
+    bool yCrvBulk
+  ) private {
+    (bytes memory migrateData, bool needBridge) = _processMigration(
+      from,
+      oneTokenIds[0],
+      yCrvBulk
+    );
+
+    // Investment should be pulled out of old contract, burn old cfolio
+    _sftContractOld.burn(address(this), oneTokenIds[0], 1);
+
+    if (oneTokenIds[0].isBaseCard()) {
+      if (needBridge) {
+        _sftContract.mintBatch(
+          address(rootTunnel),
+          oneTokenIds,
+          abi.encode(from, migrateData)
+        );
+      } else {
+        _sftContract.mintBatch(from, oneTokenIds, migrateData);
+        _sftEvaluator.setRewardRate(oneTokenIds[0], false);
+      }
+    } else {
+      rootTunnel.mintCFolioItems(from, migrateData);
+    }
+  }
+
   function _processMigration(
     address from,
     uint256 tokenId,
@@ -302,10 +329,24 @@ contract MigrateToV2 is ERC1155Holder {
       result = abi.encode(mintTimestamp, idsLength);
       needBridge = idsLength > 0;
 
+      address cfiHandler = address(0);
+
       for (uint256 i = 0; i < idsLength; ++i) {
         uint256 cfiType = _sftEvaluatorOld.getCFolioItemType(tokenIds[i]);
-        _removeInvestment(from, tokenId, tokenIds[i], cfiType, yCrvBulk);
+        // Note: we assume that all I-NFT's have same handler!
+        cfiHandler = _removeInvestment(
+          from,
+          tokenId,
+          tokenIds[i],
+          cfiType,
+          yCrvBulk
+        );
         result = abi.encode(result, cfiType);
+      }
+
+      if (cfiHandler != address(0)) {
+        // Transfer rewards to callers wallet
+        ICFolioItemHandler(cfiHandler).getRewards(address(this), from, tokenId);
       }
 
       // Booster Pool
@@ -330,13 +371,10 @@ contract MigrateToV2 is ERC1155Holder {
     uint256 tokenId,
     uint256 cfiType,
     bool yCrvBulk
-  ) private {
+  ) private returns (address handler) {
     address cfolioItem = _sftContractOld.tokenIdToAddress(tokenId);
     require(cfolioItem != address(0), 'M: Invalid cfi');
-    address handler = IWOWSCryptofolioOld(cfolioItem)._tradefloors(0);
-
-    // Transfer rewards to callers wallet
-    ICFolioItemHandler(handler).getRewards(address(this), from, tokenId);
+    handler = IWOWSCryptofolioOld(cfolioItem)._tradefloors(0);
 
     uint256[] memory amounts = ICFolioItemHandler(handler).getAmounts(
       cfolioItem
@@ -366,5 +404,7 @@ contract MigrateToV2 is ERC1155Holder {
         _uniV2LPToken.safeTransfer(from, amounts[0]);
       }
     }
+
+    return handler;
   }
-}
+} // Contract

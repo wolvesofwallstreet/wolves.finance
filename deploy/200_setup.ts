@@ -1416,7 +1416,7 @@ const func = async function (hardhat_re) {
     if (
       !(await oldBoosterInstance.hasRole(
         BOOSTER_MIGRATOR_ROLE,
-        generatedAddresses.migratorV2
+        generatedAddresses.migratorV2Proxy
       ))
     ) {
       await catchUnknownSigner(
