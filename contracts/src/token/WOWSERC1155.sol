@@ -458,7 +458,7 @@ contract WOWSERC1155 is IWOWSERC1155, AccessControl {
             IWOWSCryptofolio(tokenAddress).setHandler(handler);
           } else if (data.length >= 32) {
             //Migration / Bridge
-            (tokenInfo.timestamp) = abi.decode(data, (uint64));
+            tokenInfo.timestamp = uint64(_getUint256(data));
           }
         }
         _addressToTokenId[tokenAddress] = tokenId;
@@ -581,6 +581,16 @@ contract WOWSERC1155 is IWOWSERC1155, AccessControl {
     // solhint-disable-next-line no-inline-assembly
     assembly {
       addr := mload(add(data, 20))
+    }
+  }
+
+  /**
+   * @dev Get the uint256 from the user data parameter
+   */
+  function _getUint256(bytes memory data) public pure returns (uint256 val) {
+    // solhint-disable-next-line no-inline-assembly
+    assembly {
+      val := mload(add(data, 0x20))
     }
   }
 

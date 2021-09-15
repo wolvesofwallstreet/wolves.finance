@@ -110,11 +110,11 @@ contract WOWSERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder, IRootTunnel {
     // Get cfolios
     bytes memory msgData;
 
-    if (operator == migrator_) {
-      msgData = data;
-    } else {
+    if (operator != migrator_) {
       require(tokenId.isBaseCard(), 'RT: Only basecard');
       msgData = _getTokenData('', tokenId);
+    } else {
+      msgData = data;
     }
 
     // DEPOSIT, encode(rootToken, depositor, user, id, extra data)
@@ -139,11 +139,11 @@ contract WOWSERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder, IRootTunnel {
     bytes calldata data
   ) public override onlyRootToken returns (bytes4) {
     bytes32 cmd = DEPOSIT_BATCH;
-    bytes memory msgData;
+    bytes memory msgData = '';
     if (operator != migrator_) {
       for (uint256 i = 0; i < tokenIds.length; ++i) {
-        msgData = _getTokenData(data, tokenIds[i]);
         require(tokenIds[i].isBaseCard(), 'RT: Only basecard');
+        msgData = _getTokenData(msgData, tokenIds[i]);
       }
     } else {
       msgData = data;
@@ -284,6 +284,7 @@ contract WOWSERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder, IRootTunnel {
   {
     (uint64 mintTimestamp, ) = rootToken_.getTokenData(tokenId);
 
-    return abi.encode(data, mintTimestamp);
+    // Return timestam + 0 cfi's + hasLock false
+    return abi.encodePacked(data, uint256(mintTimestamp));
   }
 }

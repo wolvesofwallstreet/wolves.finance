@@ -251,6 +251,7 @@ contract WOWSERC1155ChildTunnel is
 
     require(_rootToken == rootToken, 'CT: Invalid rootToken');
     uint256[] memory oneTokenIds = new uint256[](1);
+    uint256 dataIndex = 0;
 
     for (uint256 i = 0; i < tokenIds.length; ++i) {
       require(data.length > 0, 'CT: Length mismatch (DB)');
@@ -258,9 +259,12 @@ contract WOWSERC1155ChildTunnel is
         childToken_.safeTransferFrom(address(this), user, tokenIds[i], 1, '');
       } else {
         oneTokenIds[0] = tokenIds[i];
-        childToken_.mintBatch(user, oneTokenIds, data);
+        childToken_.mintBatch(
+          user,
+          oneTokenIds,
+          abi.encodePacked(_getUint256(data, dataIndex++))
+        );
       }
-      (, data) = abi.decode(data, (uint64, bytes));
     }
   }
 
@@ -274,7 +278,7 @@ contract WOWSERC1155ChildTunnel is
     ) = abi.decode(syncData, (address, address, address, uint256, bytes));
     require(_rootToken == rootToken, 'CT: Invalid rootToken');
 
-    _migrateTokenId(tokenId, user, data);
+    _migrateTokenId(tokenId, user, data, 0);
   }
 
   function _syncMigrateBatch(bytes memory syncData) internal {
@@ -287,42 +291,57 @@ contract WOWSERC1155ChildTunnel is
     ) = abi.decode(syncData, (address, address, address, uint256[], bytes));
     require(_rootToken == rootToken, 'CT: Invalid rootToken');
 
+    uint256 dataIndex = 0;
     for (uint256 i = 0; i < tokenIds.length; ++i) {
-      data = _migrateTokenId(tokenIds[i], user, data);
+      dataIndex = _migrateTokenId(tokenIds[i], user, data, dataIndex);
     }
   }
 
   function _migrateTokenId(
     uint256 tokenId,
     address user,
-    bytes memory data
-  ) private returns (bytes memory rData) {
+    bytes memory data,
+    uint256 dataIndex
+  ) private returns (uint256) {
     uint256[] memory noInvest = new uint256[](0);
-    uint256 cfiType;
 
     if (tokenId.isBaseCard()) {
       uint256[] memory oneTokenIds = new uint256[](1);
       oneTokenIds[0] = tokenId;
-      childToken_.mintBatch(user, oneTokenIds, data);
-
-      uint256 numCfis;
-      bool hasBooster;
-      (, numCfis, hasBooster, rData) = abi.decode(
-        data,
-        (uint64, uint256, bool, bytes)
+      childToken_.mintBatch(
+        user,
+        oneTokenIds,
+        abi.encodePacked(_getUint256(data, dataIndex++))
       );
+
+      uint256 numCfis = _getUint256(data, dataIndex++);
       for (uint256 i = 0; i < numCfis; ++i) {
-        (cfiType, rData) = abi.decode(rData, (uint256, bytes));
+        uint256 cfiType = _getUint256(data, dataIndex++);
         tokenId = sftMinter_.mintCFolioItemSFT(cfiType, tokenId, noInvest);
       }
-      // And finally Booster
-      if (hasBooster) {
-        rData = booster_.migrateCreatePool(tokenId, rData);
+      uint256 hasBooster = _getUint256(data, dataIndex++);
+      if (hasBooster > 0) {
+        dataIndex = booster_.migrateCreatePool(tokenId, data, dataIndex);
       }
     } else {
-      (cfiType, rData) = abi.decode(data, (uint256, bytes));
+      uint256 cfiType = _getUint256(data, dataIndex++);
       tokenId = sftMinter_.mintCFolioItemSFT(cfiType, uint256(-1), noInvest);
       childToken_.safeTransferFrom(address(this), user, tokenId, 1, '');
+    }
+    return dataIndex;
+  }
+
+  /**
+   * @dev Get the uint256 from the user data parameter
+   */
+  function _getUint256(bytes memory data, uint256 index)
+    private
+    pure
+    returns (uint256 val)
+  {
+    // solhint-disable-next-line no-inline-assembly
+    assembly {
+      val := mload(add(data, mul(0x20, add(index, 1))))
     }
   }
 }

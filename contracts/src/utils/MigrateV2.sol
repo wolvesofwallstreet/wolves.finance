@@ -298,11 +298,7 @@ contract MigrateToV2 is ERC1155Holder {
 
     if (oneTokenIds[0].isBaseCard()) {
       if (needBridge) {
-        _sftContract.mintBatch(
-          address(rootTunnel),
-          oneTokenIds,
-          abi.encode(from, migrateData)
-        );
+        _sftContract.mintBatch(address(rootTunnel), oneTokenIds, migrateData);
       } else {
         _sftContract.mintBatch(from, oneTokenIds, migrateData);
         _sftEvaluator.setRewardRate(oneTokenIds[0], false);
@@ -326,7 +322,7 @@ contract MigrateToV2 is ERC1155Holder {
         cfolio
       ).getCryptofolio(_cfiBridgeOld);
 
-      result = abi.encode(mintTimestamp, idsLength);
+      result = abi.encodePacked(uint256(mintTimestamp), idsLength);
       needBridge = idsLength > 0;
 
       address cfiHandler = address(0);
@@ -341,7 +337,7 @@ contract MigrateToV2 is ERC1155Holder {
           cfiType,
           yCrvBulk
         );
-        result = abi.encode(result, cfiType);
+        result = abi.encodePacked(result, cfiType);
       }
 
       if (cfiHandler != address(0)) {
@@ -353,15 +349,15 @@ contract MigrateToV2 is ERC1155Holder {
       (bool hasBoosterPool, bytes memory data) = _boosterOld.migrateDeletePool(
         tokenId
       );
-      result = abi.encode(result, hasBoosterPool);
+      result = abi.encodePacked(result, uint256(hasBoosterPool ? 1 : 0));
       if (hasBoosterPool) {
-        result = abi.encode(result, data);
+        result = abi.encodePacked(result, data.length, data);
         needBridge = true;
       }
     } else {
       uint256 cfiType = _sftEvaluatorOld.getCFolioItemType(tokenId);
       _removeInvestment(from, uint256(-1), tokenId, cfiType, yCrvBulk);
-      result = abi.encode(cfiType);
+      result = abi.encodePacked(cfiType);
     }
   }
 

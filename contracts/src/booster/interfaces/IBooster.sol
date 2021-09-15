@@ -48,9 +48,11 @@ interface IBooster {
    * @param tokenId The SFT tokenId
    * @param data list of uint256's: total, pending, provided, apr, end, fee
    */
-  function migrateCreatePool(uint256 tokenId, bytes memory data)
-    external
-    returns (bytes memory rData);
+  function migrateCreatePool(
+    uint256 tokenId,
+    bytes memory data,
+    uint256 dataIndex
+  ) external returns (uint256);
 
   /**
    * @dev Handles farm distribution, only callable from controller

@@ -335,11 +335,11 @@ contract Booster is IBooster, AccessControl {
     }
   }
 
-  function migrateCreatePool(uint256 tokenId, bytes memory data)
-    external
-    override
-    returns (bytes memory rData)
-  {
+  function migrateCreatePool(
+    uint256 tokenId,
+    bytes memory data,
+    uint256 dataIndex
+  ) external override returns (uint256) {
     require(hasRole(MIGRATOR_ROLE, _msgSender()), 'B: Forbidden');
 
     address cfolio = IWOWSERC1155(sftHolder).tokenIdToAddress(tokenId);
@@ -348,16 +348,14 @@ contract Booster is IBooster, AccessControl {
     TimeLock storage currentLock = timeLocks[cfolio];
     require(currentLock.end == 0, 'B: Lock existent');
 
-    (
-      currentLock.totalAmount,
-      currentLock.pendingAmount,
-      currentLock.providedAmount,
-      rData
-    ) = abi.decode(data, (uint256, uint256, uint256, bytes));
-    (currentLock.apr, currentLock.end, currentLock.fee, rData) = abi.decode(
-      rData,
-      (uint256, uint256, uint32, bytes)
-    );
+    currentLock.totalAmount = _getUint256(data, dataIndex++);
+    currentLock.pendingAmount = _getUint256(data, dataIndex++);
+    currentLock.providedAmount = _getUint256(data, dataIndex++);
+    currentLock.apr = _getUint256(data, dataIndex++);
+    currentLock.end = _getUint256(data, dataIndex++);
+    currentLock.fee = uint32(_getUint256(data, dataIndex++));
+
+    return dataIndex;
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -513,5 +511,19 @@ contract Booster is IBooster, AccessControl {
       rewardsProvided <= externalSupply.add(MAX_TOKENOMICS_REWARDS),
       'B: Cap reached'
     );
+  }
+
+  /**
+   * @dev Get the uint256 from the user data parameter
+   */
+  function _getUint256(bytes memory data, uint256 index)
+    private
+    pure
+    returns (uint256 val)
+  {
+    // solhint-disable-next-line no-inline-assembly
+    assembly {
+      val := mload(add(data, mul(0x20, add(index, 1))))
+    }
   }
 }
