@@ -21,7 +21,6 @@ const CONTROLLER_CONTRACT = 'Controller';
 const UNIV2_STAKE_FARM_CONTRACT = 'UniV2StakeFarm';
 const SFT_HOLDER_CONTRACT = 'WOWSERC1155';
 const SFT_MINTER_CONTRACT = 'WOWSSftMinter';
-const SFT_MINTER_UPDATE_CONTRACT = 'WOWSSftMinterUpdate';
 const SFT_EVALUATOR_PROXY_CONTRACT = 'SFTEvaluatorProxy';
 const TRADE_FLOOR_CONTRACT = 'TradeFloor';
 const CFOLIO_ITEM_HANDLER_LP_CONTRACT = 'CFolioItemHandlerLP';
@@ -736,9 +735,10 @@ const func = async function (hardhat_re) {
     // Old contracts don't have destructContract
     await catchUnknownSigner(
       execute(
-        SFT_MINTER_UPDATE_CONTRACT,
+        SFT_MINTER_CONTRACT,
         {
           from: marketingWallet,
+          to: configAddresses.sftMinterUpdate,
           log: true,
         },
         'destructContract'
