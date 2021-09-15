@@ -91,10 +91,6 @@ contract WOWSERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder, IRootTunnel {
     require(address(rewardHandler) == address(0), 'RT: Initialized');
 
     rewardHandler = IRewardHandler(_rewardHandler);
-
-    // MAP_TOKEN, encode(rootToken,uri)
-    bytes memory message = abi.encode(MAP_TOKEN, abi.encode(rootToken_));
-    _sendMessageToChild(message);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -206,6 +202,15 @@ contract WOWSERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder, IRootTunnel {
   function destructContract() external onlyAdmin {
     // slither-disable-next-line suicidal
     selfdestruct(payable(admin_));
+  }
+
+  /**
+   * @dev One time MAP_TOKEN call
+   */
+  function mapToken() external onlyAdmin {
+    // MAP_TOKEN, rootToken
+    bytes memory message = abi.encode(MAP_TOKEN, rootToken_);
+    _sendMessageToChild(message);
   }
 
   //////////////////////////////////////////////////////////////////////////////
