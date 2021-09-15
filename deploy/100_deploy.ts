@@ -46,6 +46,7 @@ const CFOLIO_ITEM_HANDLER_LP_PROXY_CONTRACT = 'CFolioItemHandlerLPProxy';
 const CFOLIO_ITEM_HANDLER_SC_PROXY_CONTRACT = 'CFolioItemHandlerSCProxy';
 const POLYGON_ROOT_TUNNEL_PROXY_CONTRACT = 'PolygonRootTunnelProxy';
 const POLYGON_CHILD_TUNNEL_PROXY_CONTRACT = 'PolygonChildTunnelProxy';
+const MIGRATE_V2_PROXY_CONTRACT = 'MigrateToV2Proxy';
 
 // Path to address files
 const CONFIG_ADDRESSES = `${__dirname}/../src/config/addresses.json`;
@@ -100,6 +101,7 @@ const TRADE_FLOOR_ABI = `${__dirname}/../src/abi/contracts/src/token/TradeFloor.
 const CFOLIO_ITEM_HANDLER_SC_ABI = `${__dirname}/../src/abi/contracts/src/cfolio/CFolioItemHandlerSC.sol/CFolioItemHandlerSC.json`;
 const POLYGON_ROOT_TUNNEL_ABI = `${__dirname}/../src/abi/contracts/src/polygon/WOWSERC1155RootTunnel.sol/WOWSERC1155RootTunnel.json`;
 const POLYGON_CHILD_TUNNEL_ABI = `${__dirname}/../src/abi/contracts/src/polygon/WOWSERC1155ChildTunnel.sol/WOWSERC1155ChildTunnel.json`;
+
 // Useful constants
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 
@@ -1203,6 +1205,29 @@ const func = async function (hardhat_re) {
 
     //////////////////////////////////////////////////////////////////////////////
     //
+    // Deploy PolygonRootTunnelProxy
+    //
+    //////////////////////////////////////////////////////////////////////////////
+
+    if (configAddresses.migratorV2Proxy) {
+      log_step(`Using MigratorV2 proxy: ${configAddresses.migratorV2Proxy}`);
+      generatedAddresses.migratorV2Proxy = configAddresses.migratorV2Proxy;
+    } else {
+      log_step('Deploying MigratorV2 proxy');
+
+      const migratorV2ProxyReceipt = await deploy(MIGRATE_V2_PROXY_CONTRACT, {
+        contract: UPGRADE_PROXY_CONTRACT,
+        from: deployer,
+        args: [ADDRESS_REGISTRY_ADDRESS, generatedAddresses.migratorV2, []],
+        log: true,
+        deterministicDeployment: true,
+      });
+
+      generatedAddresses.migratorV2Proxy = migratorV2ProxyReceipt.address;
+    }
+
+    //////////////////////////////////////////////////////////////////////////////
+    //
     // Deploy PolygonRootTunnel
     //
     //////////////////////////////////////////////////////////////////////////////
@@ -1225,7 +1250,7 @@ const func = async function (hardhat_re) {
             configAddresses.p_childTunnel,
             generatedAddresses.sftHolderProxy,
             configAddresses.p_sftHolderProxy,
-            generatedAddresses.migratorV2,
+            generatedAddresses.migratorV2Proxy,
             marketingWallet,
           ],
           log: true,

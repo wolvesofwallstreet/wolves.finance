@@ -41,6 +41,10 @@ const CFOLIO_ITEM_HANDLER_LP_PROXY_CONTRACT = 'CFolioItemHandlerLPProxy';
 const CFOLIO_ITEM_HANDLER_SC_PROXY_CONTRACT = 'CFolioItemHandlerSCProxy';
 const POLYGON_ROOT_TUNNEL_PROXY_CONTRACT = 'PolygonRootTunnelProxy';
 const POLYGON_CHILD_TUNNEL_PROXY_CONTRACT = 'PolygonChildTunnelProxy';
+const MIGRATE_V2_PROXY_CONTRACT = 'MigrateToV2Proxy';
+
+// Useful constants
+const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 
 // Path to generated addresses file
 const CONFIG_ADDRESSES = `${__dirname}/../src/config/addresses.json`;
@@ -663,7 +667,8 @@ const func = async function (hardhat_re) {
             '4500000000000000000',
             '2500000000000000000',
             '4500000000000000000',
-          ]
+          ],
+          configAddresses.sftHolderOld || ADDRESS_ZERO
         )
       );
     }
@@ -1356,13 +1361,36 @@ const func = async function (hardhat_re) {
     }
 
     //
+    // Check if we have to upgrade the migratorV2 implementation
+    //
+
+    if (
+      (await getProxyImplementation(
+        hardhat_re,
+        generatedAddresses.migratorV2Proxy
+      )) !== generatedAddresses.migratorV2
+    ) {
+      await catchUnknownSigner(
+        execute(
+          MIGRATE_V2_PROXY_CONTRACT,
+          {
+            from: marketingWallet,
+            log: true,
+          },
+          'upgradeTo',
+          generatedAddresses.migratorV2
+        )
+      );
+    }
+
+    //
     // Allow MigratorV2 to mint SFT
     //
 
     if (
       !(await sftHolderInstance.hasRole(
         SFT_HOLDER_MINTER_ROLE,
-        generatedAddresses.migratorV2
+        generatedAddresses.migratorV2Proxy
       ))
     ) {
       await catchUnknownSigner(
@@ -1375,7 +1403,7 @@ const func = async function (hardhat_re) {
           },
           'grantRole',
           SFT_HOLDER_MINTER_ROLE,
-          generatedAddresses.migratorV2
+          generatedAddresses.migratorV2Proxy
         )
       );
     }
@@ -1401,7 +1429,7 @@ const func = async function (hardhat_re) {
           },
           'grantRole',
           BOOSTER_MIGRATOR_ROLE,
-          generatedAddresses.migratorV2
+          generatedAddresses.migratorV2Proxy
         )
       );
     }
@@ -1410,8 +1438,9 @@ const func = async function (hardhat_re) {
     // Set MigratorV2 rootTunnel
     //
 
-    const migratorV2Instance = await hardhat_re.ethers.getContract(
-      MIGRATE_V2_CONTRACT
+    const migratorV2Instance = await hardhat_re.ethers.getContractAt(
+      MIGRATE_V2_CONTRACT,
+      generatedAddresses.migratorV2Proxy
     );
     if (
       (await migratorV2Instance.rootTunnel()) !==
@@ -1422,6 +1451,7 @@ const func = async function (hardhat_re) {
           MIGRATE_V2_CONTRACT,
           {
             from: marketingWallet,
+            to: generatedAddresses.migratorV2Proxy,
             log: true,
           },
           'setRootTunnel',
@@ -1481,7 +1511,7 @@ const func = async function (hardhat_re) {
     }
 
     //
-    // Destruct implementation
+    // Destruct rootTunnel implementation
     //
 
     if (
@@ -1497,6 +1527,29 @@ const func = async function (hardhat_re) {
           {
             from: marketingWallet,
             to: configAddresses.polygonRootTunnelUpdate,
+            log: true,
+          },
+          'destructContract'
+        )
+      );
+    }
+
+    //
+    // Destruct migratorV2 implementation
+    //
+
+    if (
+      configAddresses.migratorV2Update &&
+      configAddresses.migratorV2Update !== generatedAddresses.migratorV2
+    ) {
+      console.log('Destruct old MigratorV2 implementation');
+
+      await catchUnknownSigner(
+        execute(
+          MIGRATE_V2_CONTRACT,
+          {
+            from: marketingWallet,
+            to: configAddresses.migratorV2Update,
             log: true,
           },
           'destructContract'

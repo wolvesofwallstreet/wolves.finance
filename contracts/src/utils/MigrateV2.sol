@@ -264,10 +264,21 @@ contract MigrateToV2 is ERC1155Holder {
   // Maintanance
   //////////////////////////////////////////////////////////////////////////////
 
+  /**
+   * @dev Set the Root Tunnel which is deployed after Migrate
+   */
   function setRootTunnel(address rootTunnel_) external onlyAdmin {
     require(rootTunnel_ != address(0), 'M: Zero address');
 
     rootTunnel = IRootTunnel(rootTunnel_);
+  }
+
+  /**
+   * @dev Destruct implementation
+   */
+  function destructContract() external onlyAdmin {
+    // slither-disable-next-line suicidal
+    selfdestruct(payable(_admin));
   }
 
   //////////////////////////////////////////////////////////////////////////////
