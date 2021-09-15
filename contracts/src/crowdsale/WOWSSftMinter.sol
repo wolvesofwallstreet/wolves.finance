@@ -26,6 +26,13 @@ import '../utils/AddressBook.sol';
 import '../utils/interfaces/IAddressRegistry.sol';
 import '../utils/TokenIds.sol';
 
+interface IOldWOWSERC1155 {
+  function getCardData(uint8 level, uint8 cardId)
+    external
+    view
+    returns (uint16 cap, uint16 minted);
+}
+
 contract WOWSSftMinter is Context, AccessControl, IWOWSSftMinter {
   using TokenIds for uint256;
   using SafeERC20 for IERC20;
@@ -192,7 +199,8 @@ contract WOWSSftMinter is Context, AccessControl, IWOWSSftMinter {
   function setBaseSpec(
     uint16[] calldata levels,
     uint16[] calldata caps,
-    uint256[] calldata prices
+    uint256[] calldata prices,
+    IOldWOWSERC1155 oldSftContract
   ) external onlyAdmin {
     // Validate parameters
     require(
@@ -204,6 +212,16 @@ contract WOWSSftMinter is Context, AccessControl, IWOWSSftMinter {
     for (uint256 i = 0; i < levels.length; ++i) {
       _baseLevelData[levels[i]].cap = caps[i];
       _baseLevelData[levels[i]].price = prices[i];
+      if (address(oldSftContract) != address(0)) {
+        // 4 cards per level in the v1 system
+        for (uint24 j = 0; j < 4; ++j) {
+          uint24 bcm = (uint24(levels[i]) << 8) | j;
+          (, _baseCardsMinted[bcm]) = oldSftContract.getCardData(
+            uint8(levels[i]),
+            uint8(j)
+          );
+        }
+      }
     }
   }
 
