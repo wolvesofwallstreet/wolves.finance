@@ -395,13 +395,13 @@ contract Booster is IBooster, AccessControl {
 
     hasPool = currentLock.totalAmount > 0 || currentLock.pendingAmount > 0;
     if (hasPool) {
-      data = abi.encode(
+      data = abi.encodePacked(
         currentLock.totalAmount,
         currentLock.providedAmount,
         currentLock.pendingAmount,
         currentLock.apr,
         currentLock.end,
-        currentLock.fee
+        uint256(currentLock.fee)
       );
       delete (timeLocks[cfolio]);
     } else data = '';
