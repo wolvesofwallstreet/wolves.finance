@@ -61,7 +61,13 @@ interface IWOWSCryptofolioOld {
 interface IBoosterOld {
   function migrateDeletePool(uint256 tokenId)
     external
-    returns (bool hasPool, bytes memory data);
+    returns (uint256 hasPool, bytes memory data);
+
+  function claimRewards(uint256 sftTokenId, bool reLock) external;
+}
+
+interface IMinterOld {
+  function claimSFTRewards(uint256 sftTokenId, uint256 lockPeriod) external;
 }
 
 /**
@@ -84,6 +90,7 @@ contract MigrateToV2 is ERC1155Holder {
   // CONSTANTS
   //////////////////////////////////////////////////////////////////////////////
 
+  bytes32 public constant SFT_MINTER = 'SFT_MINTER';
   bytes32 public constant SFT_HOLDER = 'SFT_HOLDER';
   bytes32 public constant CFOLIOITEM_BRIDGE_PROXY = 'CFOLIOITEM_BRIDGE_PROXY';
   uint256 public constant BULK_START = 0;
@@ -96,6 +103,8 @@ contract MigrateToV2 is ERC1155Holder {
   ISFTEvaluatorOld private immutable _sftEvaluatorOld;
   address private immutable _cfiBridgeOld;
   IBoosterOld private immutable _boosterOld;
+  IMinterOld private immutable _sftMinterOld;
+
   IERC20 private immutable _yCrvToken;
   ICurveFiDepositY private immutable _curveYDeposit;
 
@@ -103,6 +112,7 @@ contract MigrateToV2 is ERC1155Holder {
   address private immutable _admin;
   IERC20 private immutable _uniV2LPToken;
   ISFTEvaluator private immutable _sftEvaluator;
+  IERC20 private immutable _wowsToken;
 
   //////////////////////////////////////////////////////////////////////////////
   // State
@@ -145,6 +155,7 @@ contract MigrateToV2 is ERC1155Holder {
     _sftEvaluator = ISFTEvaluator(
       reg.getRegistryEntry(AddressBook.SFT_EVALUATOR_PROXY)
     );
+    _wowsToken = IERC20(reg.getRegistryEntry(AddressBook.WOWS_TOKEN));
 
     _sftContractOld = IWOWSERC1155Old(regOld.getRegistryEntry(SFT_HOLDER));
     _sftEvaluatorOld = ISFTEvaluatorOld(
@@ -154,6 +165,8 @@ contract MigrateToV2 is ERC1155Holder {
     _boosterOld = IBoosterOld(
       regOld.getRegistryEntry(AddressBook.WOWS_BOOSTER_PROXY)
     );
+    _sftMinterOld = IMinterOld(regOld.getRegistryEntry(SFT_HOLDER));
+
     _yCrvToken = IERC20(regOld.getRegistryEntry(AddressBook.CURVE_Y_TOKEN));
     _curveYDeposit = ICurveFiDepositY(
       regOld.getRegistryEntry(AddressBook.CURVE_Y_DEPOSIT)
@@ -325,32 +338,33 @@ contract MigrateToV2 is ERC1155Holder {
       result = abi.encodePacked(uint256(mintTimestamp), idsLength);
       needBridge = idsLength > 0;
 
-      address cfiHandler = address(0);
-
       for (uint256 i = 0; i < idsLength; ++i) {
         uint256 cfiType = _sftEvaluatorOld.getCFolioItemType(tokenIds[i]);
-        // Note: we assume that all I-NFT's have same handler!
-        cfiHandler = _removeInvestment(
-          from,
-          tokenId,
-          tokenIds[i],
-          cfiType,
-          yCrvBulk
-        );
+        _removeInvestment(from, tokenId, tokenIds[i], cfiType, yCrvBulk);
         result = abi.encodePacked(result, cfiType);
       }
 
-      if (cfiHandler != address(0)) {
-        // Transfer rewards to callers wallet
-        ICFolioItemHandler(cfiHandler).getRewards(address(this), from, tokenId);
-      }
-
       // Booster Pool
-      (bool hasBoosterPool, bytes memory data) = _boosterOld.migrateDeletePool(
-        tokenId
-      );
-      result = abi.encodePacked(result, uint256(hasBoosterPool ? 1 : 0));
-      if (hasBoosterPool) {
+      (uint256 hasBoosterPool, bytes memory data) = _boosterOld
+        .migrateDeletePool(tokenId);
+
+      if ((hasBoosterPool & 1) != 0) {
+        // Acive timelock, use it
+        _sftMinterOld.claimSFTRewards(tokenId, 1);
+      } else {
+        // No active booster Pool
+        uint256 balance = _wowsToken.balanceOf(address(this));
+        _sftMinterOld.claimSFTRewards(tokenId, 0);
+        if ((hasBoosterPool & 2) != 0) {
+          _boosterOld.claimRewards(tokenId, false);
+        }
+        balance = _wowsToken.balanceOf(address(this)).sub(balance);
+        if (balance > 0) {
+          _wowsToken.safeTransfer(from, balance);
+        }
+      }
+      result = abi.encodePacked(result, hasBoosterPool & 1);
+      if ((hasBoosterPool & 1) != 0) {
         result = abi.encodePacked(result, data.length, data);
         needBridge = true;
       }
@@ -367,10 +381,10 @@ contract MigrateToV2 is ERC1155Holder {
     uint256 tokenId,
     uint256 cfiType,
     bool yCrvBulk
-  ) private returns (address handler) {
+  ) private {
     address cfolioItem = _sftContractOld.tokenIdToAddress(tokenId);
     require(cfolioItem != address(0), 'M: Invalid cfi');
-    handler = IWOWSCryptofolioOld(cfolioItem)._tradefloors(0);
+    address handler = IWOWSCryptofolioOld(cfolioItem)._tradefloors(0);
 
     uint256[] memory amounts = ICFolioItemHandler(handler).getAmounts(
       cfolioItem
@@ -400,7 +414,5 @@ contract MigrateToV2 is ERC1155Holder {
         _uniV2LPToken.safeTransfer(from, amounts[0]);
       }
     }
-
-    return handler;
   }
 } // Contract

@@ -325,6 +325,7 @@ contract Booster is IBooster, AccessControl {
 
     // Update state
     if (reLock) {
+      require(currentLock.end > 0, 'B: Not open');
       _addMore(cfolio, currentLock, ts, claimable);
     } else {
       IRewardHandler(rewardHandler).distribute2(
