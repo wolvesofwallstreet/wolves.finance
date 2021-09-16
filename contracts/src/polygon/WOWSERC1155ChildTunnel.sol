@@ -268,7 +268,7 @@ contract WOWSERC1155ChildTunnel is
     }
   }
 
-  function _syncMigrate(bytes memory syncData) internal {
+  function _syncMigrate(bytes memory syncData) public {
     (
       address _rootToken, /*address depositor*/
       ,
@@ -282,7 +282,7 @@ contract WOWSERC1155ChildTunnel is
     _migrateTokenId(tokenId, user, data, 1);
   }
 
-  function _syncMigrateBatch(bytes memory syncData) internal {
+  function _syncMigrateBatch(bytes memory syncData) public {
     (
       address _rootToken, /*address depositor */
       ,

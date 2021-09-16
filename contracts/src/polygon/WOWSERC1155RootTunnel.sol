@@ -207,6 +207,16 @@ contract WOWSERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder, IRootTunnel {
     _sendMessageToChild(message);
   }
 
+  /**
+   * @dev In case of failure, transfer tokenId back
+   */
+  function emergencyTransferToken(address to, uint256 tokenId)
+    external
+    onlyAdmin
+  {
+    rootToken_.safeTransferFrom(address(this), to, tokenId, 1, '');
+  }
+
   //////////////////////////////////////////////////////////////////////////////
   // Internal
   //////////////////////////////////////////////////////////////////////////////

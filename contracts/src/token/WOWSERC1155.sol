@@ -125,6 +125,9 @@ contract WOWSERC1155 is IWOWSERC1155, AccessControl {
   // Fired if a SidechainTunnel was set
   event SidechainTunnelSet(address sidechainTunnel);
 
+  // Fired if we selfdestruct contract
+  event Destruct();
+
   //////////////////////////////////////////////////////////////////////////////
   // Initialization
   //////////////////////////////////////////////////////////////////////////////
@@ -408,6 +411,20 @@ contract WOWSERC1155 is IWOWSERC1155, AccessControl {
   function setCryptofolio(address newCryptofolio) external onlyAdmin {
     cryptofolio = newCryptofolio;
     emit CryptofolioSet(cryptofolio);
+  }
+
+  /**
+   * @dev destruct old implementation
+   */
+  function destructContract() external onlyAdmin {
+    emit Destruct();
+
+    // Disable high-impact Slither detector "suicidal" here. Slither explains
+    // that "WOWSSftMinter.destructContract() allows anyone to destruct the
+    // contract", which is not the case due to the {Ownable-onlyOwner} modifier.
+    //
+    // slither-disable-next-line suicidal
+    selfdestruct(_msgSender());
   }
 
   //////////////////////////////////////////////////////////////////////////////

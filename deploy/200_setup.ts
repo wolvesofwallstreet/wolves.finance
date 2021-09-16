@@ -598,6 +598,36 @@ const func = async function (hardhat_re) {
   }
 
   //
+  // Destruct old SFTHolder implementation
+  //
+
+  try {
+    if (
+      configAddresses.sftHolderUpdate &&
+      configAddresses.sftHolderUpdate !== generatedAddresses.sftHolder
+    ) {
+      console.log('Destruct old SFTHolder');
+
+      // Old contracts don't have destructContract
+      await catchUnknownSigner(
+        execute(
+          SFT_HOLDER_CONTRACT,
+          {
+            from: marketingWallet,
+            to: configAddresses.sftHolderUpdate,
+            log: true,
+          },
+          'destructContract'
+        )
+      );
+    } else {
+      console.log('Not destructing old SFTHolder');
+    }
+  } catch (e) {
+    console.log(e);
+  }
+
+  //
   // Check if we have to upgrade the sftMinter implementation
   //
 
