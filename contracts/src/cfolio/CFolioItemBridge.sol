@@ -146,11 +146,28 @@ contract CFolioItemBridge is ICFolioItemBridge, Context, ERC1155Holder {
 
     // Transfer
     uint256 length = tokenIds.length;
+    uint256 newLength = 0;
     for (uint256 i = 0; i < length; ++i) {
-      require(_owners[tokenIds[i]] == from, 'CFIB: Not owner');
-      _owners[tokenIds[i]] = address(0);
+      if (amounts[i] > 0) {
+        require(_owners[tokenIds[i]] == from, 'CFIB: Not owner');
+        _owners[tokenIds[i]] = address(0);
+        ++newLength;
+      }
     }
-    _onTransfer(_msgSender(), from, address(0), tokenIds, amounts);
+    if (newLength < length) {
+      uint256[] memory newTokenIds = new uint256[](newLength);
+      uint256[] memory newAmounts = new uint256[](newLength);
+      newLength = 0;
+      for (uint256 i = 0; i < length; ++i) {
+        if (amounts[i] > 0) {
+          newTokenIds[newLength] = tokenIds[i];
+          newAmounts[newLength++] = amounts[i];
+        }
+      }
+      _onTransfer(_msgSender(), from, address(0), newTokenIds, newAmounts);
+    } else {
+      _onTransfer(_msgSender(), from, address(0), tokenIds, amounts);
+    }
   }
 
   /**
