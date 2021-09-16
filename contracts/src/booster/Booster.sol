@@ -324,6 +324,7 @@ contract Booster is IBooster, AccessControl {
 
     // Update state
     if (reLock) {
+      require(currentLock.end > 0, 'B: Not open');
       _addMore(cfolio, currentLock, ts, claimable);
     } else {
       rewardHandler.distribute2(_msgSender(), claimable, currentLock.fee);
@@ -381,10 +382,13 @@ contract Booster is IBooster, AccessControl {
 
   /**
    * @dev Get pool data and free memory (migration)
+   *
+   * @return hasPool Bitmask 1: is active 2: hasPending
+   * @return data encoded pool descriptors
    */
   function migrateDeletePool(uint256 tokenId)
     external
-    returns (bool hasPool, bytes memory data)
+    returns (uint256 hasPool, bytes memory data)
   {
     require(hasRole(MIGRATOR_ROLE, msg.sender), 'B: Only migrator');
 
@@ -393,8 +397,12 @@ contract Booster is IBooster, AccessControl {
 
     TimeLock storage currentLock = timeLocks[cfolio];
 
-    hasPool = currentLock.totalAmount > 0 || currentLock.pendingAmount > 0;
-    if (hasPool) {
+    _updatePendingRewards(currentLock, _getTimestamp());
+
+    hasPool = currentLock.end > 0 ? 1 : 0;
+    if (currentLock.pendingAmount > 0) hasPool |= 2;
+
+    if ((hasPool & 1) != 0) {
       data = abi.encodePacked(
         currentLock.totalAmount,
         currentLock.providedAmount,
