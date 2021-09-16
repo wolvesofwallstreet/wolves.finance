@@ -165,7 +165,7 @@ contract MigrateToV2 is ERC1155Holder {
     _boosterOld = IBoosterOld(
       regOld.getRegistryEntry(AddressBook.WOWS_BOOSTER_PROXY)
     );
-    _sftMinterOld = IMinterOld(regOld.getRegistryEntry(SFT_HOLDER));
+    _sftMinterOld = IMinterOld(regOld.getRegistryEntry(SFT_MINTER));
 
     _yCrvToken = IERC20(regOld.getRegistryEntry(AddressBook.CURVE_Y_TOKEN));
     _curveYDeposit = ICurveFiDepositY(
