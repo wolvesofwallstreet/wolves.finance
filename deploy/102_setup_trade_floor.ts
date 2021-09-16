@@ -121,7 +121,7 @@ const func = async function (hardhat_re) {
   //
   // 3.) Check if we have to upgrade the tradeFloor implementation
   //
-  if (
+  /*if (
     (await getProxyImplementation(
       hardhat_re,
       generatedAddresses.tradeFloorProxy
@@ -138,7 +138,7 @@ const func = async function (hardhat_re) {
         generatedAddresses.tradeFloor
       )
     );
-  }
+  }*/
 };
 
 module.exports = func;
