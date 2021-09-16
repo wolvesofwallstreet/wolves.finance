@@ -8,13 +8,13 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
-import '../../0xerc1155/interfaces/IERC1155.sol';
 import '../../0xerc1155/tokens/ERC1155/ERC1155Holder.sol';
 import '../../0xerc1155/utils/Address.sol';
 import '../../0xerc1155/utils/Context.sol';
 
 import '../token/interfaces/IWOWSCryptofolio.sol';
 import '../token/interfaces/IWOWSERC1155.sol';
+import '../token/interfaces/IERC1155BurnMintable.sol';
 import '../utils/AddressBook.sol';
 import '../utils/interfaces/IAddressRegistry.sol';
 import '../utils/TokenIds.sol';
@@ -126,7 +126,7 @@ contract CFolioItemBridge is ICFolioItemBridge, Context, ERC1155Holder {
       require(_owners[tokenIds[i]] == from, 'CFIB: Not owner');
       _owners[tokenIds[i]] = to;
     }
-    _onTransfer(address(this), from, to, tokenIds, amounts);
+    _onTransfer(_msgSender(), from, to, tokenIds, amounts);
   }
 
   /**
@@ -150,7 +150,7 @@ contract CFolioItemBridge is ICFolioItemBridge, Context, ERC1155Holder {
       require(_owners[tokenIds[i]] == from, 'CFIB: Not owner');
       _owners[tokenIds[i]] = address(0);
     }
-    _onTransfer(address(this), from, address(0), tokenIds, amounts);
+    _onTransfer(_msgSender(), from, address(0), tokenIds, amounts);
   }
 
   /**
@@ -304,14 +304,24 @@ contract CFolioItemBridge is ICFolioItemBridge, Context, ERC1155Holder {
     }
 
     // On Burn we need to transfer SFT ownership back
+    // In case the call originates from cfolio itself, we burn the token
     if (to == address(0)) {
-      IERC1155(address(_sftHolder)).safeBatchTransferFrom(
-        address(this),
-        _msgSender(),
-        tokenIds,
-        amounts,
-        ''
-      );
+      if (from == operator) {
+        // The call origins from Cryptofolio burn, don't transfer
+        IERC1155BurnMintable(address(_sftHolder)).burnBatch(
+          address(this),
+          tokenIds,
+          amounts
+        );
+      } else {
+        IERC1155BurnMintable(address(_sftHolder)).safeBatchTransferFrom(
+          address(this),
+          from,
+          tokenIds,
+          amounts,
+          ''
+        );
+      }
     } else if (to.isContract()) {
       bytes4 retval = IERC1155TokenReceiver(to).onERC1155BatchReceived(
         _msgSender(),
