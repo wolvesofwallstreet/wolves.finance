@@ -58,11 +58,11 @@
     ]
   },
   {
-    "type": "yearnInvestment",
-    "token": "yCrv",
-    "title": " WELCOME TO THE YEARN CRV POOL I-NFTs",
-    "shortDescription": "YEARN I-NFTs FOR YOUR LENDING FOR DAI / USDT / USDC / TUSD",
-    "description": "This \"YEARN I-NFT\" allows you to invest DAI, USDT, USDC and TUSD stable coins for lending with your fellow business Bois. You can sell this investment NFT with or without its added value at any point currently on any third party platform, and on ours when this is launched.",
+    "type": "stableInvestment",
+    "token": "aCrv",
+    "title": " WELCOME TO THE AAVE CRV POOL I-NFTs",
+    "shortDescription": "AAVE I-NFTs FOR YOUR LENDING FOR DAI / USDT / USDC",
+    "description": "This \"AAVE I-NFT\" allows you to invest DAI, USDT and USDC stable coins for lending with your fellow business Bois. You can sell this investment NFT with or without its added value at any point currently on any third party platform, and on ours when this is launched.",
     "constraints": "bois",
     "cards": [
       {

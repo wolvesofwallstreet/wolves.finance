@@ -13,7 +13,7 @@ import './components/theme/button/wolve_button.css';
 import './components/theme/form/input/wolve_input.css';
 
 import React from 'react';
-import { BrowserRouter, Redirect, Route, Switch } from 'react-router-dom';
+import { BrowserRouter, Route, Switch } from 'react-router-dom';
 
 import CFolioInvest from './components/CFolioInvest';
 import CFolioItemSfts from './components/CFolioItemSfts';
@@ -58,35 +58,24 @@ class App extends React.Component<unknown, APP_STATE> {
           <StoreContainer>
             <WolfToast />
             <Route component={Header} />
-            {this.state.isSideChain ? (
-              <Switch>
-                <Route path="/cfolio-invest" component={CFolioInvest} />
-                <Route
-                  path="/my"
-                  render={(props) => <Page3 {...props} display={'my'} />}
-                />
-                <Redirect to="/my?type=myPack&levelId=0" />
-              </Switch>
-            ) : (
-              <Switch>
+            <Switch>
+              {!this.state.isSideChain && (
                 <Route
                   path="/shop"
                   render={(props) => <Page3 {...props} display={'shop'} />}
                 />
-                <Route
-                  path="/my"
-                  render={(props) => <Page3 {...props} display={'my'} />}
-                />
-                <Route path="/detail" component={Page4} />
-                <Route path="/status" component={PageStatus} />
-
-                <Route path="/cfolio-sfts" component={CFolioItemSfts} />
-                <Route path="/cfolio-invest" component={CFolioInvest} />
-
-                <Route path="/c_folio_manager" component={CFolioManager} />
-                <Route component={Page1} />
-              </Switch>
-            )}
+              )}
+              <Route
+                path="/my"
+                render={(props) => <Page3 {...props} display={'my'} />}
+              />
+              <Route path="/detail" component={Page4} />
+              <Route path="/status" component={PageStatus} />
+              <Route path="/cfolio-sfts" component={CFolioItemSfts} />
+              <Route path="/cfolio-invest" component={CFolioInvest} />
+              <Route path="/c_folio_manager" component={CFolioManager} />
+              <Route component={Page1} />
+            </Switch>
             <Footer />
           </StoreContainer>
         </BrowserRouter>

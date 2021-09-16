@@ -484,7 +484,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         : `/shop?type=${type}&levelId=${levelId}`;
 
     const assetIndex =
-      currentLevel?.type === 'bois' || currentLevel?.type === 'yearnInvestment'
+      currentLevel?.type === 'bois' || currentLevel?.type === 'stableInvestment'
         ? 4
         : 0;
 

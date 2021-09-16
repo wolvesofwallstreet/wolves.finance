@@ -27,15 +27,17 @@ function Page1(props: PAGE1_PROPS) {
         <div className="page1-title-box-text">
           <h2 className="tk-vincente-bold no-margin">{t('page1.head1')}</h2>
           <h3 className="tk-aktiv-grotesk-condensed">{t('page1.head2')}</h3>
-          <a
-            id="wows-link"
-            className="wolves-btn tk-grotesk-bold mt-1"
-            target="_blank"
-            rel="noreferrer"
-            href={`https://app.uniswap.org/#/swap?inputCurrency=ETH&outputCurrency=${StoreClasses.store._getTokenContractAddress()}&use=v2`}
-          >
-            BUY WOWS ON UNISWAP V.2
-          </a>
+          {!StoreClasses.store.isSidechain() && (
+            <a
+              id="wows-link"
+              className="wolves-btn tk-grotesk-bold mt-1"
+              target="_blank"
+              rel="noreferrer"
+              href={`https://app.uniswap.org/#/swap?inputCurrency=ETH&outputCurrency=${StoreClasses.store._getTokenContractAddress()}&use=v2`}
+            >
+              BUY WOWS ON UNISWAP V.2
+            </a>
+          )}
         </div>
       </div>
       {/************** Left ************/}
@@ -48,7 +50,13 @@ function Page1(props: PAGE1_PROPS) {
         <div className="page1-img-box">
           <span className="page1-line-h" />
           <span className="page1-dot" />
-          <Link to="/shop?type=wolves">
+          <Link
+            to={
+              StoreClasses.store.isSidechain()
+                ? '/cfolio-sfts?type=lpInvestment'
+                : '/shop?type=wolves'
+            }
+          >
             <img src={WolvesLogo} width="200px" alt="Wolves" />
           </Link>
         </div>
@@ -67,7 +75,13 @@ function Page1(props: PAGE1_PROPS) {
           <h1 className="tk-vincente-bold">{t('page1.bois2')}</h1>
         </div>
         <div className="page1-img-box">
-          <Link to="/shop?type=bois">
+          <Link
+            to={
+              StoreClasses.store.isSidechain()
+                ? '/cfolio-sfts?type=stableInvestment'
+                : '/shop?type=bois'
+            }
+          >
             <img src={BoisLogo} width="200px" alt="Wolves" />
           </Link>
         </div>
