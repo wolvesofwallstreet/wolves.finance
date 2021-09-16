@@ -230,6 +230,20 @@ type ASSETS = {
 const readUint256 = (s: string, i: number) =>
   ethers.BigNumber.from('0x' + s.substr(i * 64 + 2, 64));
 
+class AsyncLock {
+  disable: () => void;
+  promise: Promise<void>;
+  constructor() {
+    this.disable = () => {
+      if (!this) alert('');
+    };
+    this.promise = Promise.resolve();
+  }
+  enable() {
+    this.promise = new Promise((resolve) => (this.disable = resolve));
+  }
+}
+
 class Store {
   web3Modal: Web3Modal;
   /* Provider */
@@ -270,6 +284,7 @@ class Store {
   eventBlockNumber = 0;
   lastAprTime = 0;
   eventsSuspended = false;
+  lock = new AsyncLock();
 
   dispatchQueue: Payload[] = [];
 
@@ -671,10 +686,7 @@ class Store {
       this.eventBlockNumber = blockNumber;
       if (!this.eventsSuspended) this._resolveDQ();
     });
-    this.sftHolderContractRO?.on('TransferSingle', (operator, from, to) =>
-      handleTransfer(operator, from, to, true)
-    );
-    this.sftHolderContractRO?.on('TransferBatch', (operator, from, to) =>
+    this.sftHolderContractRO?.on('SftTokenTransfer', (operator, from, to) =>
       handleTransfer(operator, from, to, true)
     );
     this.tradeFloorContractRO?.on('TransferSingle', (operator, from, to) =>
@@ -713,6 +725,8 @@ class Store {
   }
 
   _launchEventProvider = async () => {
+    await this.lock.promise;
+    this.lock.enable();
     try {
       if (
         !this.eventProvider ||
@@ -774,6 +788,7 @@ class Store {
         this.eventProvider = undefined;
       }
     }
+    this.lock.disable();
   };
 
   /******************** Contracts *********************/
