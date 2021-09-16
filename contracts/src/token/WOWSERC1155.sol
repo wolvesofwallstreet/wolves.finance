@@ -425,13 +425,13 @@ contract WOWSERC1155 is IWOWSERC1155, AccessControl {
   ) private {
     require(!pause, 'SFT: Paused!');
 
-    uint256 tokenIdsLength = tokenIds.length;
     uint256 numUniqueCFolioHandlers = 0;
-    address[] memory uniqueCFolioHandlers = new address[](tokenIdsLength);
-    address[] memory cFolioHandlers = new address[](tokenIdsLength);
+    address[] memory uniqueCFolioHandlers = new address[](tokenIds.length);
+    address[] memory cFolioHandlers = new address[](tokenIds.length);
     uint256 toTokenId = to == address(0) ? uint256(-1) : addressToTokenId(to);
+    uint256 timestampPosition = 1;
 
-    for (uint256 i = 0; i < tokenIdsLength; ++i) {
+    for (uint256 i = 0; i < tokenIds.length; ++i) {
       uint256 tokenId = tokenIds[i];
 
       // Load state
@@ -456,9 +456,10 @@ contract WOWSERC1155 is IWOWSERC1155, AccessControl {
             address handler = _getAddress(data);
             require(handler != address(0), 'SFT: Invalid address');
             IWOWSCryptofolio(tokenAddress).setHandler(handler);
-          } else if (data.length >= 32) {
-            //Migration / Bridge
-            tokenInfo.timestamp = uint64(_getUint256(data));
+          } else if (data.length >= 64) {
+            //Migration / Bridge. First uint is recipient
+            tokenInfo.timestamp = uint64(_getUint256(data, timestampPosition));
+            timestampPosition = _nextTimestamp(data, timestampPosition);
           }
         }
         _addressToTokenId[tokenAddress] = tokenId;
@@ -587,10 +588,14 @@ contract WOWSERC1155 is IWOWSERC1155, AccessControl {
   /**
    * @dev Get the uint256 from the user data parameter
    */
-  function _getUint256(bytes memory data) public pure returns (uint256 val) {
+  function _getUint256(bytes memory data, uint256 index)
+    private
+    pure
+    returns (uint256 val)
+  {
     // solhint-disable-next-line no-inline-assembly
     assembly {
-      val := mload(add(data, 0x20))
+      val := mload(add(data, mul(0x20, add(index, 1))))
     }
   }
 
@@ -613,5 +618,19 @@ contract WOWSERC1155 is IWOWSERC1155, AccessControl {
     uint256 tokenId = addressToTokenId(cfolio);
     if (tokenId == uint256(-1)) return address(0);
     return _tokenInfos[tokenId].owner;
+  }
+
+  /**
+   * @dev Skip migrationdata until next timestamp
+   */
+  function _nextTimestamp(bytes memory data, uint256 currentIndex)
+    private
+    pure
+    returns (uint256 newIndex)
+  {
+    // Skip CFolioItems
+    newIndex = currentIndex + _getUint256(data, currentIndex + 1) + 2;
+    // Skip BoosterData
+    if (_getUint256(data, newIndex++) > 0) newIndex += 6;
   }
 }

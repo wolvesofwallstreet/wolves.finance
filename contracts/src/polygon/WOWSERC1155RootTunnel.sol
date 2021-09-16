@@ -162,17 +162,11 @@ contract WOWSERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder, IRootTunnel {
       super.onERC1155BatchReceived(operator, from, tokenIds, amounts, data);
   }
 
-  function mintCFolioItems(address to, bytes memory cfolioTypes)
-    external
-    override
-  {
+  function mintCFolioItems(bytes memory data) external override {
     require(msg.sender == migrator_, 'RT: Forbidden (MC)');
-    require(
-      cfolioTypes.length > 0 && (cfolioTypes.length % 32) == 0,
-      'RT: Invalid length'
-    );
+    require(data.length > 32 && (data.length % 32) == 0, 'RT: Invalid length');
 
-    uint256 numTypes = cfolioTypes.length / 32;
+    uint256 numTypes = data.length / 32 - 1;
     uint256[] memory dummyTokenIds = new uint256[](numTypes);
     for (uint256 i = 0; i < numTypes; ++i) dummyTokenIds[i] = uint256(-1);
 
@@ -182,9 +176,9 @@ contract WOWSERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder, IRootTunnel {
       abi.encode(
         address(rootToken_),
         msg.sender,
-        to,
+        address(0), // recipient is in cfolioTypes
         dummyTokenIds,
-        cfolioTypes
+        data
       )
     );
     _sendMessageToChild(message);

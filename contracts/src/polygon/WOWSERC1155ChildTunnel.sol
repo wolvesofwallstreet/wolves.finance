@@ -272,26 +272,28 @@ contract WOWSERC1155ChildTunnel is
     (
       address _rootToken, /*address depositor*/
       ,
-      address user,
+      ,
       uint256 tokenId,
       bytes memory data
     ) = abi.decode(syncData, (address, address, address, uint256, bytes));
     require(_rootToken == rootToken, 'CT: Invalid rootToken');
 
-    _migrateTokenId(tokenId, user, data, 0);
+    address user = address(_getUint256(data, 0));
+    _migrateTokenId(tokenId, user, data, 1);
   }
 
   function _syncMigrateBatch(bytes memory syncData) internal {
     (
       address _rootToken, /*address depositor */
       ,
-      address user,
+      ,
       uint256[] memory tokenIds,
       bytes memory data
     ) = abi.decode(syncData, (address, address, address, uint256[], bytes));
     require(_rootToken == rootToken, 'CT: Invalid rootToken');
 
     uint256 dataIndex = 0;
+    address user = address(_getUint256(data, dataIndex++));
     for (uint256 i = 0; i < tokenIds.length; ++i) {
       dataIndex = _migrateTokenId(tokenIds[i], user, data, dataIndex);
     }
@@ -311,7 +313,7 @@ contract WOWSERC1155ChildTunnel is
       childToken_.mintBatch(
         user,
         oneTokenIds,
-        abi.encodePacked(_getUint256(data, dataIndex++))
+        abi.encodePacked(uint256(0), _getUint256(data, dataIndex++))
       );
 
       uint256 numCfis = _getUint256(data, dataIndex++);

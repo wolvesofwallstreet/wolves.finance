@@ -13,5 +13,5 @@ pragma solidity 0.7.6;
  */
 interface IRootTunnel {
   // One way mint / migration only
-  function mintCFolioItems(address to, bytes memory cfolioTypes) external;
+  function mintCFolioItems(bytes memory data) external;
 }
