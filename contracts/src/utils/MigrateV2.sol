@@ -59,9 +59,13 @@ interface IWOWSCryptofolioOld {
 }
 
 interface IBoosterOld {
-  function migrateDeletePool(uint256 tokenId)
+  function migrateInitialize(address cfolio)
     external
-    returns (uint256 hasPool, bytes memory data);
+    returns (uint256 poolState);
+
+  function migrateDeletePool(uint256 poolState, address cfolio)
+    external
+    returns (bytes memory data);
 
   function claimRewards(uint256 sftTokenId, bool reLock) external;
 }
@@ -347,17 +351,16 @@ contract MigrateToV2 is ERC1155Holder {
       }
 
       // Booster Pool
-      (uint256 hasBoosterPool, bytes memory data) = _boosterOld
-        .migrateDeletePool(tokenId);
+      uint256 poolState = _boosterOld.migrateInitialize(cfolio);
 
-      if ((hasBoosterPool & 1) != 0) {
-        // Acive timelock, use it
+      if ((poolState & 1) != 0) {
+        // Acive booster pool, claim rewards into it
         _sftMinterOld.claimSFTRewards(tokenId, 1);
       } else {
-        // No active booster Pool
+        // No active booster Pool, claim everything into users wallet
         uint256 balance = _wowsToken.balanceOf(address(this));
         _sftMinterOld.claimSFTRewards(tokenId, 0);
-        if ((hasBoosterPool & 2) != 0) {
+        if ((poolState & 2) != 0) {
           _boosterOld.claimRewards(tokenId, false);
         }
         balance = _wowsToken.balanceOf(address(this)).sub(balance);
@@ -365,9 +368,12 @@ contract MigrateToV2 is ERC1155Holder {
           _wowsToken.safeTransfer(from, balance);
         }
       }
-      result = abi.encodePacked(result, hasBoosterPool & 1);
-      if ((hasBoosterPool & 1) != 0) {
-        result = abi.encodePacked(result, data.length, data);
+      result = abi.encodePacked(result, poolState & 1);
+
+      bytes memory poolData = _boosterOld.migrateDeletePool(poolState, cfolio);
+      if ((poolState & 1) != 0) {
+        // We have an active booster pool -> bridge
+        result = abi.encodePacked(result, poolData.length, poolData);
         needBridge = true;
       }
     } else {
