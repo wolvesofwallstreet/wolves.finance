@@ -109,6 +109,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     StoreClasses.emitter.on(SFT_CLAIM, this.onSFTTransaction);
     StoreClasses.emitter.on(SFT_CLAIM_BOOSTER, this.onSFTTransaction);
     StoreClasses.emitter.on(SFT_LOCK, this.onSFTTransaction);
+    StoreClasses.emitter.on(SFT_MIGRATE, this.onSFTTransaction);
     StoreClasses.emitter.on(SFT_UNLOCK, this.onSFTTransaction);
     StoreClasses.emitter.on(SFT_UPGRADE, this.onSFTTransaction);
   }
@@ -124,6 +125,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
   componentWillUnmount(): void {
     StoreClasses.emitter.off(SFT_UPGRADE, this.onSFTTransaction);
     StoreClasses.emitter.off(SFT_UNLOCK, this.onSFTTransaction);
+    StoreClasses.emitter.off(SFT_MIGRATE, this.onSFTTransaction);
     StoreClasses.emitter.off(SFT_LOCK, this.onSFTTransaction);
     StoreClasses.emitter.off(SFT_CLAIM_BOOSTER, this.onSFTTransaction);
     StoreClasses.emitter.off(SFT_CLAIM, this.onSFTTransaction);
