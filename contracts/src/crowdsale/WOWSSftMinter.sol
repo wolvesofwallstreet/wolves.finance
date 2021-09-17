@@ -226,6 +226,18 @@ contract WOWSSftMinter is Context, AccessControl, IWOWSSftMinter {
   }
 
   /**
+   * @dev Only needed during migration to fix possible burn leaks in v1
+   */
+  function setMinted(
+    uint8 level,
+    uint8 cardId,
+    uint16 minted
+  ) external onlyAdmin {
+    uint24 bcm = (uint24(level) << 8) | cardId;
+    _baseCardsMinted[bcm] = minted;
+  }
+
+  /**
    * @dev Set new reward handler
    *
    * RewardHandler is by concept upgradeable / see investment::Controller.sol.
