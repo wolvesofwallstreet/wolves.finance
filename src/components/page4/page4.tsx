@@ -723,6 +723,9 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     }
 
     const buttonText = getButtonText(currentCard?.name ?? '');
+    const migrateText = txPending
+      ? { l: t('page4.txPending'), d: true }
+      : { l: `Migrate ${currentCard?.name} to V2`, d: false };
 
     return (
       <div
@@ -935,7 +938,8 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                     <input
                       className="wolves-btn mt-1"
                       type="button"
-                      value={`Migrate ${currentCard.name} to V2`}
+                      value={migrateText.l}
+                      disabled={migrateText.d}
                       onClick={() => this._onMigrate()}
                     />
                     <input
