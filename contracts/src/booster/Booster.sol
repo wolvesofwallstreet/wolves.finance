@@ -381,28 +381,37 @@ contract Booster is IBooster, AccessControl {
   }
 
   /**
-   * @dev Get pool data and free memory (migration)
+   * @dev Initiates migrate, and returns state
    *
-   * @return hasPool Bitmask 1: is active 2: hasPending
-   * @return data encoded pool descriptors
+   * @return poolState Bitmask 1: pool is active 2: pool hasPending
    */
-  function migrateDeletePool(uint256 tokenId)
+  function migrateInitialize(address cfolio)
     external
-    returns (uint256 hasPool, bytes memory data)
+    returns (uint256 poolState)
   {
     require(hasRole(MIGRATOR_ROLE, msg.sender), 'B: Only migrator');
-
-    address cfolio = sftHolder.tokenIdToAddress(tokenId);
-    require(cfolio != address(0), 'B: Invalid cfolio');
 
     TimeLock storage currentLock = timeLocks[cfolio];
 
     _updatePendingRewards(currentLock, _getTimestamp());
 
-    hasPool = currentLock.end > 0 ? 1 : 0;
-    if (currentLock.pendingAmount > 0) hasPool |= 2;
+    poolState = currentLock.end > 0 ? 1 : 0;
+    if (currentLock.pendingAmount > 0) poolState |= 2;
+  }
 
-    if ((hasPool & 1) != 0) {
+  /**
+   * @dev Get pool data and free memory (migration step 2)
+   *
+   * @return data encoded pool descriptors
+   */
+  function migrateDeletePool(uint256 poolState, address cfolio)
+    external
+    returns (bytes memory data)
+  {
+    require(hasRole(MIGRATOR_ROLE, msg.sender), 'B: Only migrator');
+
+    if ((poolState & 1) != 0) {
+      TimeLock storage currentLock = timeLocks[cfolio];
       data = abi.encodePacked(
         currentLock.totalAmount,
         currentLock.providedAmount,
@@ -411,8 +420,9 @@ contract Booster is IBooster, AccessControl {
         currentLock.end,
         uint256(currentLock.fee)
       );
-      delete (timeLocks[cfolio]);
     } else data = '';
+
+    if (poolState != 0) delete (timeLocks[cfolio]);
   }
 
   //////////////////////////////////////////////////////////////////////////////
