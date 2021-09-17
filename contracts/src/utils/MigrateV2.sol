@@ -373,7 +373,7 @@ contract MigrateToV2 is ERC1155Holder {
       bytes memory poolData = _boosterOld.migrateDeletePool(poolState, cfolio);
       if ((poolState & 1) != 0) {
         // We have an active booster pool -> bridge
-        result = abi.encodePacked(result, poolData.length, poolData);
+        result = abi.encodePacked(result, poolData);
         needBridge = true;
       }
     } else {

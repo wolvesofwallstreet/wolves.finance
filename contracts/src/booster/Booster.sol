@@ -355,6 +355,7 @@ contract Booster is IBooster, AccessControl {
     currentLock.apr = _getUint256(data, dataIndex++);
     currentLock.end = _getUint256(data, dataIndex++);
     currentLock.fee = uint32(_getUint256(data, dataIndex++));
+    currentLock.last = _getTimestamp();
 
     return dataIndex;
   }
