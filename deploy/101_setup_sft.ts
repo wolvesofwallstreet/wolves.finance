@@ -218,7 +218,7 @@ const func = async function (hardhat_re) {
   // 6.) Call WowsERC1155.sol::grantRole(MINTER_ROLE, WOWSSftMinter.sol)
   //
 
-  if (
+  /*if (
     !(await SFT_HOLDER_INSTANCE.hasRole(
       await SFT_HOLDER_INSTANCE.MINTER_ROLE(),
       generatedAddresses.sftMinter
@@ -236,7 +236,7 @@ const func = async function (hardhat_re) {
         generatedAddresses.sftMinter
       )
     );
-  }
+  }*/
 
   //
   // 6.) Call WowsERC1155.sol::grantRole(TRADEFLOOR_ROLE, CFolioItemBridgeProxy)
