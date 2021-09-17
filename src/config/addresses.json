@@ -89,7 +89,7 @@
   "5": {
     "openSeaProxyRegistry": "",
     "uniDaiWeth": "0x186b57aFFE222D6176347D338Ed66Ea2e20D630d",
-    "migrateTarget": "0xfb743dAF4E478c7c3C50CC38E17c5f16647E7a43",
+    "migrateTarget": "0x42C9f867afeCe0d4B8627E5491ff8b68b8982119",
     "weth": "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6",
     "uniV2Factory": "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f",
     "uniV2Router": "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
