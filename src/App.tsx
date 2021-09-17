@@ -47,8 +47,9 @@ class App extends React.Component<unknown, APP_STATE> {
   }
 
   setNetwork = (result: ConnectResult): void => {
-    if (result.type === 'event')
+    if (result.type === 'prod' && result.address !== '') {
       this.setState({ isSideChain: StoreClasses.store.isSidechain() });
+    }
   };
 
   render(): JSX.Element {
