@@ -137,5 +137,8 @@
     "cfolioItemHandlerSCProxy": "0xcB41DaCB2664Ff223Ec08a06a7735C35C5c7A845",
     "polygonChildTunnel": "0x5cF742D42ebbC3f8eA4c11bAb6C200C246499BEe",
     "polygonChildTunnelProxy": "0x440b98eFB05347180586690Bf07220c88821e1Af"
+  },
+  "137": {
+    "tradeFloorProxy": "0x7C621229fB0293ef8A4f5cAa79a8bB4D60BF5ca4"
   }
 }
