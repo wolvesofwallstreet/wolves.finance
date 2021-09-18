@@ -112,7 +112,8 @@ contract WOWSERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder, IRootTunnel {
 
     if (operator != migrator_) {
       require(tokenId.isBaseCard(), 'RT: Only basecard');
-      msgData = _getTokenData('', tokenId);
+      msgData = abi.encodePacked(uint256(from));
+      msgData = _getTokenData(msgData, tokenId);
     } else {
       msgData = data;
     }
@@ -141,6 +142,7 @@ contract WOWSERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder, IRootTunnel {
     bytes32 cmd = DEPOSIT_BATCH;
     bytes memory msgData = '';
     if (operator != migrator_) {
+      msgData = abi.encodePacked(uint256(from));
       for (uint256 i = 0; i < tokenIds.length; ++i) {
         require(tokenIds[i].isBaseCard(), 'RT: Only basecard');
         msgData = _getTokenData(msgData, tokenIds[i]);
@@ -288,7 +290,8 @@ contract WOWSERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder, IRootTunnel {
   {
     (uint64 mintTimestamp, ) = rootToken_.getTokenData(tokenId);
 
-    // Return timestam + 0 cfi's + hasLock false
-    return abi.encodePacked(data, uint256(mintTimestamp));
+    // Return timestamp + 0 cfolios + no booster lock
+    return
+      abi.encodePacked(data, uint256(mintTimestamp), uint256(0), uint256(0));
   }
 }

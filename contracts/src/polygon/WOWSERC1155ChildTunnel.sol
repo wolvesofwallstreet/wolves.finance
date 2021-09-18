@@ -251,7 +251,6 @@ contract WOWSERC1155ChildTunnel is
 
     require(_rootToken == rootToken, 'CT: Invalid rootToken');
     uint256[] memory oneTokenIds = new uint256[](1);
-    uint256 dataIndex = 0;
 
     for (uint256 i = 0; i < tokenIds.length; ++i) {
       require(data.length > 0, 'CT: Length mismatch (DB)');
@@ -259,11 +258,7 @@ contract WOWSERC1155ChildTunnel is
         childToken_.safeTransferFrom(address(this), user, tokenIds[i], 1, '');
       } else {
         oneTokenIds[0] = tokenIds[i];
-        childToken_.mintBatch(
-          user,
-          oneTokenIds,
-          abi.encodePacked(_getUint256(data, dataIndex++))
-        );
+        childToken_.mintBatch(user, oneTokenIds, data);
       }
     }
   }
