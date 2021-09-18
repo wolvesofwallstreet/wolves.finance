@@ -309,14 +309,12 @@ contract MigrateToV2 is ERC1155Holder {
       oneTokenIds[0],
       yCrvBulk
     );
-    // We do single token migration.....
-    migrateData = abi.encodePacked(uint256(from), migrateData);
-
     // Investment should be pulled out of old contract, burn old cfolio
     _sftContractOld.burn(address(this), oneTokenIds[0], 1);
 
     if (oneTokenIds[0].isBaseCard()) {
       if (needBridge) {
+        migrateData = abi.encodePacked(migrateData, uint256(from));
         _sftContract.mintBatch(address(rootTunnel), oneTokenIds, migrateData);
       } else {
         _sftContract.mintBatch(from, oneTokenIds, migrateData);

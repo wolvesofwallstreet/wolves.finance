@@ -446,7 +446,6 @@ contract WOWSERC1155 is IWOWSERC1155, AccessControl {
     address[] memory uniqueCFolioHandlers = new address[](tokenIds.length);
     address[] memory cFolioHandlers = new address[](tokenIds.length);
     uint256 toTokenId = to == address(0) ? uint256(-1) : addressToTokenId(to);
-    uint256 timestampPosition = 1;
 
     for (uint256 i = 0; i < tokenIds.length; ++i) {
       uint256 tokenId = tokenIds[i];
@@ -473,10 +472,9 @@ contract WOWSERC1155 is IWOWSERC1155, AccessControl {
             address handler = _getAddress(data);
             require(handler != address(0), 'SFT: Invalid address');
             IWOWSCryptofolio(tokenAddress).setHandler(handler);
-          } else if (data.length > timestampPosition * 32 + 96) {
+          } else if (data.length > i * 32) {
             //Migration / Bridge. First uint is recipient
-            tokenInfo.timestamp = uint64(_getUint256(data, timestampPosition));
-            timestampPosition = _nextTimestamp(data, timestampPosition);
+            tokenInfo.timestamp = uint64(_getUint256(data, i));
           }
         }
         _addressToTokenId[tokenAddress] = tokenId;
@@ -635,19 +633,5 @@ contract WOWSERC1155 is IWOWSERC1155, AccessControl {
     uint256 tokenId = addressToTokenId(cfolio);
     if (tokenId == uint256(-1)) return address(0);
     return _tokenInfos[tokenId].owner;
-  }
-
-  /**
-   * @dev Skip migrationdata until next timestamp
-   */
-  function _nextTimestamp(bytes memory data, uint256 currentIndex)
-    private
-    pure
-    returns (uint256 newIndex)
-  {
-    // Skip CFolioItems
-    newIndex = currentIndex + _getUint256(data, currentIndex + 1) + 2;
-    // Skip BoosterData
-    if (_getUint256(data, newIndex++) > 0) newIndex += 6;
   }
 }

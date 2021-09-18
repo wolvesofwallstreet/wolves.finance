@@ -74,6 +74,18 @@ contract WOWSERC1155ChildTunnel is
   //////////////////////////////////////////////////////////////////////////////
 
   event TokenMapped(address indexed rootToken, address indexed childToken);
+  event TokenReceived(
+    address indexed to,
+    address indexed depositor,
+    uint256 tokenId,
+    bytes data
+  );
+  event TokensReceived(
+    address indexed to,
+    address indexed depositor,
+    uint256[] tokenIds,
+    bytes data
+  );
 
   //////////////////////////////////////////////////////////////////////////////
   // Initialization
@@ -222,8 +234,8 @@ contract WOWSERC1155ChildTunnel is
 
   function _syncDeposit(bytes memory syncData) internal {
     (
-      address _rootToken, /*address depositor*/
-      ,
+      address _rootToken,
+      address depositor,
       address user,
       uint256 tokenId,
       bytes memory data
@@ -238,12 +250,13 @@ contract WOWSERC1155ChildTunnel is
       tokenIds[0] = tokenId;
       childToken_.mintBatch(user, tokenIds, data);
     }
+    emit TokenReceived(user, depositor, tokenId, data);
   }
 
   function _syncDepositBatch(bytes memory syncData) internal {
     (
-      address _rootToken, /*address depositor */
-      ,
+      address _rootToken,
+      address depositor,
       address user,
       uint256[] memory tokenIds,
       bytes memory data
@@ -258,40 +271,54 @@ contract WOWSERC1155ChildTunnel is
         childToken_.safeTransferFrom(address(this), user, tokenIds[i], 1, '');
       } else {
         oneTokenIds[0] = tokenIds[i];
-        childToken_.mintBatch(user, oneTokenIds, data);
+        childToken_.mintBatch(
+          user,
+          oneTokenIds,
+          abi.encodePacked(_getUint256(data, i))
+        );
       }
     }
+    emit TokensReceived(user, depositor, tokenIds, data);
   }
 
   function _syncMigrate(bytes memory syncData) internal {
     (
-      address _rootToken, /*address depositor*/
-      ,
+      address _rootToken,
+      address depositor,
       ,
       uint256 tokenId,
       bytes memory data
     ) = abi.decode(syncData, (address, address, address, uint256, bytes));
     require(_rootToken == rootToken, 'CT: Invalid rootToken');
+    require(data.length > 32, 'CT: Data missing');
 
-    address user = address(_getUint256(data, 0));
-    _migrateTokenId(tokenId, user, data, 1);
+    // User is the last uint256
+    address user = address(_getUint256(data, (data.length / 32) - 1));
+
+    _migrateTokenId(tokenId, user, data, 0);
+
+    emit TokenReceived(user, depositor, tokenId, data);
   }
 
   function _syncMigrateBatch(bytes memory syncData) internal {
     (
-      address _rootToken, /*address depositor */
-      ,
+      address _rootToken,
+      address depositor,
       ,
       uint256[] memory tokenIds,
       bytes memory data
     ) = abi.decode(syncData, (address, address, address, uint256[], bytes));
     require(_rootToken == rootToken, 'CT: Invalid rootToken');
+    require(data.length > 32, 'CT: Data missing');
+
+    // User is the last uint256
+    address user = address(_getUint256(data, (data.length / 32) - 1));
 
     uint256 dataIndex = 0;
-    address user = address(_getUint256(data, dataIndex++));
     for (uint256 i = 0; i < tokenIds.length; ++i) {
       dataIndex = _migrateTokenId(tokenIds[i], user, data, dataIndex);
     }
+    emit TokensReceived(user, depositor, tokenIds, data);
   }
 
   function _migrateTokenId(
@@ -308,7 +335,7 @@ contract WOWSERC1155ChildTunnel is
       childToken_.mintBatch(
         user,
         oneTokenIds,
-        abi.encodePacked(uint256(0), _getUint256(data, dataIndex++))
+        abi.encodePacked(_getUint256(data, dataIndex++))
       );
 
       uint256 numCfis = _getUint256(data, dataIndex++);
