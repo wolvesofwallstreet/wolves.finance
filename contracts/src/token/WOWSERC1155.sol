@@ -473,7 +473,7 @@ contract WOWSERC1155 is IWOWSERC1155, AccessControl {
             address handler = _getAddress(data);
             require(handler != address(0), 'SFT: Invalid address');
             IWOWSCryptofolio(tokenAddress).setHandler(handler);
-          } else if (data.length >= 64) {
+          } else if (data.length > timestampPosition * 32 + 96) {
             //Migration / Bridge. First uint is recipient
             tokenInfo.timestamp = uint64(_getUint256(data, timestampPosition));
             timestampPosition = _nextTimestamp(data, timestampPosition);

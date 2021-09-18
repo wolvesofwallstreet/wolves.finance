@@ -91,7 +91,7 @@
     "presale": "0x0256B5409B5a5238a2009D3aCA2876D95CEFB665",
     "migratorV2": "0x8Ef455061f362b5e58d7Bb1db8a690E3089290fB",
     "migratorV2Proxy": "0x42C9f867afeCe0d4B8627E5491ff8b68b8982119",
-    "polygonRootTunnel": "0xf4517CFB8884E6E0CEC3AE2b3EA92Bf9D198a3ac",
+    "polygonRootTunnel": "0x2380A1f50f25a7F7a674B8fa6a8f0424ee457742",
     "polygonRootTunnelProxy": "0xc39883499A1AeEC24d01F3AB2d44C63F670d20E6"
   },
   "80001": {
@@ -139,7 +139,7 @@
     "cfolioFarmSC": "0xf9ba64aAe2Ca14F8c5d6a785B5Dd9F1f52c09Bb9",
     "cfolioItemHandlerSC": "0xB262A7a49D278Bd14b52259a6374E79F556c48A3",
     "cfolioItemHandlerSCProxy": "0xcB41DaCB2664Ff223Ec08a06a7735C35C5c7A845",
-    "polygonChildTunnel": "0x5cF742D42ebbC3f8eA4c11bAb6C200C246499BEe",
+    "polygonChildTunnel": "0x3350BE4c080236Cdd47a4635166DA43c44f9a615",
     "polygonChildTunnelProxy": "0x440b98eFB05347180586690Bf07220c88821e1Af"
   },
   "137": {
