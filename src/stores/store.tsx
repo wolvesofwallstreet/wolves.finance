@@ -46,6 +46,7 @@ import {
   SFT_CLAIM_BOOSTER,
   SFT_LOCK,
   SFT_REWARD,
+  SFT_TRANSFER,
   SFT_UNLOCK,
   SFT_UPGRADE,
   STAKE_LP_AVAILABLE,
@@ -61,6 +62,7 @@ type PayloadContent = {
   id?: ethers.BigNumber;
   type?: number;
   filter?: Array<string>;
+  address?: string;
 };
 
 type PayloadContentCFolioItem = {
@@ -99,6 +101,7 @@ type ChainAddresses = {
   cfolioFarmSC?: string;
   cfiBridgeProxy?: string;
   cfolioItemHandlerSCProxy?: string;
+  bridgeTarget: string;
   uniDaiWeth: string;
   daiToken?: string;
   tusdToken?: string;
@@ -268,6 +271,7 @@ class Store {
 
   cfolioFarmLpAddress = '';
   cfolioFarmScAddress = '';
+  bridgeTargetAddress = '';
 
   static nullAddress = '0x0000000000000000000000000000000000000000';
   static BASE_CARD_MAX = ethers.BigNumber.from('0xFFFFFFFFFFFFFFFF');
@@ -435,6 +439,9 @@ class Store {
         case SFT_CLAIM_BOOSTER:
           this._doSftClaimBooster(_payload.content);
           break;
+        case SFT_TRANSFER:
+          this._doSftTransfer(_payload.content);
+          break;
         case SFT_LOCK:
           this._doSftLock(_payload.content);
           break;
@@ -502,6 +509,12 @@ class Store {
 
   isSidechain(): boolean {
     return this.networkName.startsWith('matic');
+  }
+
+  getBridgeTarget(): { name: string; address: string } {
+    return this.networkName.startsWith('matic')
+      ? { name: 'ETHEREUM', address: this.bridgeTargetAddress }
+      : { name: 'POLYGON', address: this.bridgeTargetAddress };
   }
 
   connect = async () => {
@@ -922,6 +935,7 @@ class Store {
           signer
         );
       }
+      this.bridgeTargetAddress = chainAddresses.bridgeTarget;
 
       return true;
     }
@@ -1551,6 +1565,54 @@ class Store {
     }
   };
 
+  _doSftTransfer = async (payloadContent: PayloadContent) => {
+    const { id, address } = payloadContent;
+    if (id === undefined || !address) {
+      emitter.emit(SFT_TRANSFER, {
+        status: 'error',
+        errorMessage: 'Invalid input',
+      } as StatusResult);
+      return;
+    }
+
+    if (!this.sftHolderContractRO || !this.ethersProvider) {
+      emitter.emit(SFT_TRANSFER, {
+        status: 'error',
+        errorMessage: 'Invalid contract state',
+      } as StatusResult);
+      return;
+    }
+
+    const sftHolderContract = this.sftHolderContractRO.connect(
+      this.ethersProvider.getSigner(this.accountId)
+    );
+    try {
+      const tx: ethers.ContractTransaction =
+        await sftHolderContract.safeTransferFrom(
+          this.address,
+          address,
+          id,
+          1,
+          []
+        );
+      emitter.emit(SFT_TRANSFER, {
+        status: 'tx',
+        tx: tx?.hash,
+      } as StatusResult);
+
+      await tx.wait();
+      emitter.emit(SFT_TRANSFER, {
+        status: 'success',
+        tx: tx?.hash,
+      } as StatusResult);
+    } catch (e) {
+      emitter.emit(SFT_TRANSFER, {
+        status: 'error',
+        errorMessage: e.error ? e.error.message : e.message,
+      } as StatusResult);
+    }
+  };
+
   _doSftUnlock = async (payloadContent: PayloadContent) => {
     const { id } = payloadContent;
     if (id === undefined) {
@@ -1670,23 +1732,21 @@ class Store {
         tx: tx.hash,
       } as StatusResult);
 
-      this.ethersProvider?.once(
-        tx.hash,
-        (receipt: ethers.providers.TransactionReceipt) => {
-          emitter.emit(CFOLIO_ITEM_BUY, {
-            status: 'success',
-            tx: tx?.hash,
-          } as StatusResult);
+      await tx.wait();
 
-          // There is no transfer with our address emitted,
-          // in case of valid SFT: Request an tokenId update
-          if (!sftTokenId.eq(BIGNUMBER_MAX))
-            this._addDQ(tx?.blockNumber ?? 0, {
-              type: ASSETS_STATE,
-              content: { filter: ['tokens', 'balances'] },
-            } as Payload);
-        }
-      );
+      emitter.emit(CFOLIO_ITEM_BUY, {
+        status: 'success',
+        tx: tx?.hash,
+      } as StatusResult);
+
+      // There is no transfer with our address emitted,
+      // in case of valid SFT: Request an tokenId update
+      if (!sftTokenId.eq(BIGNUMBER_MAX)) {
+        this._addDQ(tx?.blockNumber ?? 0, {
+          type: ASSETS_STATE,
+          content: { filter: ['tokens', 'balances'] },
+        } as Payload);
+      }
     } catch (e) {
       console.log(e);
       emitter.emit(CFOLIO_ITEM_BUY, {
@@ -1737,17 +1797,13 @@ class Store {
         tx: tx?.hash,
       } as StatusResult);
 
-      //await tx?.wait();
-      this.ethersProvider?.once(
-        tx.hash,
-        (receipt: ethers.providers.TransactionReceipt) => {
-          emitter.emit(CFOLIO_ITEM_DEPOSIT, {
-            status: 'success',
-            tx: tx?.hash,
-          } as StatusResult);
-          this._setCFolioAmount(receipt, sftTokenId, cfolioTokenId);
-        }
-      );
+      const receipt = await tx.wait();
+      emitter.emit(CFOLIO_ITEM_DEPOSIT, {
+        status: 'success',
+        tx: tx?.hash,
+      } as StatusResult);
+
+      this._setCFolioAmount(receipt, sftTokenId, cfolioTokenId);
     } catch (e) {
       console.log(e);
       emitter.emit(CFOLIO_ITEM_DEPOSIT, {
@@ -1961,17 +2017,14 @@ class Store {
         tx: tx?.hash,
       } as StatusResult);
 
-      //await tx?.wait();
-      this.ethersProvider?.once(
-        tx.hash,
-        (receipt: ethers.providers.TransactionReceipt) => {
-          emitter.emit(CFOLIO_ITEM_WITHDRAW, {
-            status: 'success',
-            tx: receipt.transactionHash,
-          } as StatusResult);
-          this._setCFolioAmount(receipt, sftTokenId, cfolioTokenId);
-        }
-      );
+      const receipt = await tx?.wait();
+
+      emitter.emit(CFOLIO_ITEM_WITHDRAW, {
+        status: 'success',
+        tx: receipt.transactionHash,
+      } as StatusResult);
+
+      this._setCFolioAmount(receipt, sftTokenId, cfolioTokenId);
     } catch (e) {
       console.log(e);
       emitter.emit(CFOLIO_ITEM_WITHDRAW, {
@@ -2054,15 +2107,11 @@ class Store {
           tx: tx.hash,
         } as StatusResult);
 
-        this.ethersProvider?.once(
-          tx.hash,
-          (receipt: ethers.providers.TransactionReceipt) => {
-            emitter.emit(CFOLIO_ITEM_UNLOCK_TRANSFER, {
-              status: 'success',
-              tx: receipt.transactionHash,
-            } as StatusResult);
-          }
-        );
+        await tx.wait();
+        emitter.emit(CFOLIO_ITEM_UNLOCK_TRANSFER, {
+          status: 'success',
+          tx: tx.hash,
+        } as StatusResult);
       }
     } catch (e) {
       console.log(e);
@@ -2094,20 +2143,16 @@ class Store {
         tx: tx.hash,
       } as StatusResult);
 
-      this.ethersProvider?.once(
-        tx.hash,
-        (receipt: ethers.providers.TransactionReceipt) => {
-          emitter.emit(SFT_CLAIM, {
-            status: 'success',
-            type: SFT_CLAIM,
-            tx: tx.hash,
-          } as StatusResult);
-          this._addDQ(tx.blockNumber ?? 0, {
-            type: SFT_REWARD,
-            content: {},
-          } as Payload);
-        }
-      );
+      await tx.wait();
+      emitter.emit(SFT_CLAIM, {
+        status: 'success',
+        type: SFT_CLAIM,
+        tx: tx.hash,
+      } as StatusResult);
+      this._addDQ(tx.blockNumber ?? 0, {
+        type: SFT_REWARD,
+        content: {},
+      } as Payload);
     } catch (e) {
       emitter.emit(SFT_CLAIM, {
         status: 'error',
@@ -2169,16 +2214,14 @@ class Store {
         tx: tx.hash,
       } as StatusResult);
 
-      this.ethersProvider?.once(
-        tx.hash,
-        (receipt: ethers.providers.TransactionReceipt) => {
-          this._setRewardRate(receipt);
-          emitter.emit(SFT_UPGRADE, {
-            status: 'success',
-            tx: tx?.hash,
-          } as StatusResult);
-        }
-      );
+      const receipt = await tx.wait();
+
+      this._setRewardRate(receipt);
+
+      emitter.emit(SFT_UPGRADE, {
+        status: 'success',
+        tx: tx?.hash,
+      } as StatusResult);
     } catch (e) {
       emitter.emit(SFT_UPGRADE, {
         status: 'error',
@@ -2213,20 +2256,18 @@ class Store {
         tx: tx.hash,
       } as StatusResult);
 
-      this.ethersProvider?.once(
-        tx.hash,
-        (receipt: ethers.providers.TransactionReceipt) => {
-          emitter.emit(REVOKE_APPROVAL, {
-            status: 'success',
-            type: currency,
-            tx: tx.hash,
-          } as StatusResult);
-          dispatcher.dispatch({
-            type: ASSETS_STATE,
-            content: { filter: ['allowance'] },
-          } as Payload);
-        }
-      );
+      await tx.wait();
+
+      emitter.emit(REVOKE_APPROVAL, {
+        status: 'success',
+        type: currency,
+        tx: tx.hash,
+      } as StatusResult);
+
+      dispatcher.dispatch({
+        type: ASSETS_STATE,
+        content: { filter: ['allowance'] },
+      } as Payload);
     } catch (e) {
       emitter.emit(REVOKE_APPROVAL, {
         status: 'error',

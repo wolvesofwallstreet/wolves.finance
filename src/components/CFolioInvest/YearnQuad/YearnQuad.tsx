@@ -184,8 +184,8 @@ function YearnQuad({
   const spanText = cfolioItem
     ? 'DEPOSIT MORE'
     : sft?.isWallet
-    ? `ADD "${investCurrency} I-NFT" INTO MY WALLET`
-    : `ADD "${investCurrency} I-NFT" INTO MY C-FOLIO`;
+    ? `BUY "${investCurrency} I-NFT" INTO MY WALLET`
+    : `BUY "${investCurrency} I-NFT" INTO MY C-FOLIO`;
 
   const hideModal = () => showModal(false);
 

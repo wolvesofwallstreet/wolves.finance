@@ -40,6 +40,7 @@ import {
   CFOLIO_ITEM,
   CFOLIO_ITEMS,
 } from '../types/cards';
+import Transfer from './Transfer/Transfer';
 
 type PAGE4_PROPS = {
   t: TFunction;
@@ -59,6 +60,7 @@ type PAGE4_STATE = {
   currentIndex: number;
   selectedCFolio: number;
   modalOpen: boolean;
+  transferOpen: boolean;
   boosterExistingValue: number;
   boosterNewValue: number;
   boosterRelock: number;
@@ -71,6 +73,7 @@ const INITIAL_PAGE4_STATE: PAGE4_STATE = {
   currentIndex: -1,
   selectedCFolio: -1,
   modalOpen: false,
+  transferOpen: false,
   boosterExistingValue: 1,
   boosterNewValue: 15552000,
   boosterRelock: 1,
@@ -406,6 +409,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       txPending,
       type,
       modalOpen,
+      transferOpen,
       boosterExistingValue,
       boosterNewValue,
       boosterRelock,
@@ -550,7 +554,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       (currentRender.sft.cfolioItems.length > 0 || claimableAmount > 0)
         ? !isWalletConnected
           ? { l: t('header.connectWallet').toString(), d: true }
-          : txPending && !modalOpen
+          : txPending && !modalOpen && !transferOpen
           ? { l: t('page4.txPending'), d: true }
           : {
               l: t('page4.claim', {
@@ -637,7 +641,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       selectedCFolio < 0 ? 'card-visual' : 'card-visual monochrome';
 
     const hideCB = () => {
-      this.setState({ modalOpen: false });
+      this.setState({ modalOpen: false, transferOpen: false });
     };
 
     const boosterState = (value: number, n: number): string => {
@@ -719,6 +723,11 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
             };
       }
     }
+
+    const transferButtonText =
+      txPending && !transferOpen && !modalOpen
+        ? { l: t('page4.txPending'), d: true }
+        : { l: t('page4.transfer', { name: currentCard?.name }), d: false };
 
     return (
       <div
@@ -948,6 +957,13 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                     <input
                       className="wolves-btn mt-1"
                       type="button"
+                      value={transferButtonText.l}
+                      disabled={transferButtonText.d}
+                      onClick={() => this.setState({ transferOpen: true })}
+                    />
+                    <input
+                      className="wolves-btn mt-1"
+                      type="button"
                       value={getButtonText(currentCard.name)}
                       disabled={!isWalletConnected || noQuantity || txPending}
                       onClick={() => this._onBuy()}
@@ -1093,6 +1109,16 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
             </Modal.Body>
           </Modal>
         )}
+        {transferOpen &&
+          !currentRender?.sft?.locked &&
+          currentRender?.tokenId && (
+            <Transfer
+              tokenId={currentRender.tokenId}
+              name={currentCard?.name ?? 'UNKNOWN'}
+              show={true}
+              hideCB={hideCB}
+            />
+          )}
       </div>
     );
   }
