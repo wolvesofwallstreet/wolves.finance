@@ -123,7 +123,7 @@ class CFolioManager extends React.Component<PROPS, STATE> {
     const result: IMAGE[] = [];
     tokenIds.forEach((sft, tokenIdIdx) => {
       if (pred(sft)) {
-        if (sft.isStockCard && !sft.locked) {
+        if (sft.isStockCard && !sft.status) {
           if (!pred2 || pred2(sft.levelId, sft.cardId)) {
             const url =
               this.cards?.cards[sft.levelId].cards[sft.cardId].url

@@ -24,6 +24,7 @@ import {
   Payload,
   SFT,
   SFTCHILD,
+  SFTS,
   StoreClasses,
 } from '../../stores/store';
 import { CARDS } from '../types/cards';
@@ -170,7 +171,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
                   isBaseCard: true,
                   isStockCard: true,
                   isWallet: false,
-                  locked: false,
+                  status: SFTS.UNLOCKED,
                   rewardRate: 0,
                   rewardShare: 0,
                   rewardEarned: 0,
@@ -217,7 +218,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
           if (this.walletTokenIds.length > 0) {
             this.levelFilter |= 1 << 4;
           }
-          if (hasCFolioItems) {
+          if (hasCFolioItems && StoreClasses.store.isSidechain()) {
             this.progessStart = new Date();
             this.progressInterval = window.setInterval(
               this._ticker.bind(this),
@@ -269,10 +270,12 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
   }
 
   _updateRewards = async () => {
-    StoreClasses.dispatcher.dispatch({
-      type: SFT_REWARD,
-      content: {},
-    } as Payload);
+    if (StoreClasses.store.isSidechain()) {
+      StoreClasses.dispatcher.dispatch({
+        type: SFT_REWARD,
+        content: {},
+      } as Payload);
+    }
   };
 
   render(): JSX.Element {

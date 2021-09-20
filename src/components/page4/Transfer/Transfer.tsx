@@ -46,7 +46,10 @@ function Transfer({ hideCB, name, show, tokenId, t }: PROPS): JSX.Element {
 
   useEffect(() => {
     const resetTx = (result: StatusResult) => {
-      if (['success', 'error'].includes(result.status)) setTXRunning(false);
+      if (['success', 'error'].includes(result.status)) {
+        setTXRunning(false);
+        if (result.status === 'success') hideCB();
+      }
     };
 
     StoreClasses.emitter.on(SFT_TRANSFER, resetTx);
@@ -56,7 +59,7 @@ function Transfer({ hideCB, name, show, tokenId, t }: PROPS): JSX.Element {
     return () => {
       StoreClasses.emitter.off(SFT_TRANSFER, resetTx);
     };
-  }, []);
+  }, [hideCB]);
 
   const transferState = (n: number): string => {
     return tOption === n ? 'active' : 'select';

@@ -15,6 +15,7 @@ import CFolioItemHandlerAbi from 'abi/contracts/src/cfolio/interfaces/ICFolioIte
 import SftEvaluatorAbi from 'abi/contracts/src/cfolio/SFTEvaluator.sol/SFTEvaluator.json';
 import SFTMinterAbi from 'abi/contracts/src/crowdsale/WOWSSftMinter.sol/WOWSSftMinter.json';
 import CFolioFarmAbi from 'abi/contracts/src/investment/CFolioFarm.sol/CFolioFarm.json';
+import RootTunnelAbi from 'abi/contracts/src/polygon/WOWSERC1155RootTunnel.sol/WOWSERC1155RootTunnel.json';
 import TradeFloorAbi from 'abi/contracts/src/token/TradeFloor.sol/TradeFloor.json';
 import TokenAbi from 'abi/contracts/src/token/WOWSErc20.sol/WowsToken.json';
 import SFTHolderAbi from 'abi/contracts/src/token/WOWSERC1155.sol/WOWSERC1155.json';
@@ -45,12 +46,14 @@ import {
   SFT_CLAIM,
   SFT_CLAIM_BOOSTER,
   SFT_LOCK,
+  SFT_PROOF,
   SFT_REWARD,
   SFT_TRANSFER,
   SFT_UNLOCK,
   SFT_UPGRADE,
   STAKE_LP_AVAILABLE,
 } from './constants';
+import { MessageProof } from './polygon';
 
 const emitter = new Emitter.EventEmitter();
 const dispatcher = new Dispatcher.Dispatcher();
@@ -159,6 +162,13 @@ export type StakeResult = {
   };
 };
 
+export enum SFTS {
+  UNLOCKED,
+  LOCKED,
+  BRIDGE_PENDING,
+  BRIDGE_READY,
+}
+
 export type SFTCHILD = {
   tokenId: ethers.BigNumber;
   levelId: number;
@@ -182,7 +192,7 @@ export type SFT = {
   isBaseCard: boolean;
   isStockCard: boolean;
   isWallet: boolean;
-  locked: boolean;
+  status: SFTS;
   rewardRate: number;
   rewardShare: number;
   rewardEarned: number;
@@ -291,6 +301,8 @@ class Store {
   lock = new AsyncLock();
 
   dispatchQueue: Payload[] = [];
+
+  polygonBridge?: MessageProof;
 
   assets = {
     balances: {
@@ -542,6 +554,13 @@ class Store {
       if (await this._setupContracts(ethersProvider)) this._emitNetworkChange();
       this.ethersProvider = ethersProvider;
       this.ethersSigner = ethersProvider.getSigner(this.accountId);
+
+      // Enable MessageProof for bidging back from Polygon
+      if (this.chainId === 1 || this.chainId === 5)
+        this.polygonBridge = new MessageProof(
+          this.eventProvider ?? ethersProvider,
+          this.chainId
+        );
     } catch (e) {
       console.log(e);
       await this.disconnect(true);
@@ -549,6 +568,7 @@ class Store {
   };
 
   autoconnect = async () => {
+    if (this.address) alert('Conneted');
     const query = new URLSearchParams(window.location.search);
     const defaultChain = query.get('chainId');
     const defaultAccountId = query.get('accountId');
@@ -606,6 +626,7 @@ class Store {
       this.sftEvaluatorContract = undefined;
       this.boosterContract = undefined;
       this.ethersSigner = undefined;
+      this.polygonBridge = undefined;
     }
     this.address = '';
     if (clearCache) {
@@ -717,11 +738,6 @@ class Store {
   }
 
   _emitNetworkChange() {
-    emitter.emit(CONNECTION_CHANGED, {
-      type: 'prod',
-      address: this.address,
-      networkName: this.networkName,
-    } as ConnectResult);
     // Request new SFT List
     if (this.address !== '')
       dispatcher.dispatch({
@@ -735,6 +751,11 @@ class Store {
       this.assets.userSFT = [];
       emitter.emit(ASSETS_STATE, { status: 'tokens' } as AssetStateresult);
     }
+    emitter.emit(CONNECTION_CHANGED, {
+      type: 'prod',
+      address: this.address,
+      networkName: this.networkName,
+    } as ConnectResult);
   }
 
   _launchEventProvider = async () => {
@@ -1054,7 +1075,10 @@ class Store {
             isBaseCard: bn.mask(128).lte(Store.BASE_CARD_MAX),
             isStockCard: bn.mask(128).lte(Store.STOCK_CARD_MAX),
             isWallet: false,
-            locked: result[1].find((b) => b.eq(bn)) !== undefined,
+            status:
+              result[1].find((b) => b.eq(bn)) !== undefined
+                ? SFTS.LOCKED
+                : SFTS.UNLOCKED,
             rewardRate: 0,
             rewardShare: 0,
             rewardEarned: 0,
@@ -1082,7 +1106,7 @@ class Store {
         isBaseCard: false,
         isStockCard: false,
         isWallet: true,
-        locked: false,
+        status: SFTS.UNLOCKED,
         rewardRate: 0,
         rewardShare: 0,
         rewardEarned: 0,
@@ -1600,13 +1624,65 @@ class Store {
         tx: tx?.hash,
       } as StatusResult);
 
-      await tx.wait();
+      const receipt = await tx.wait();
+
+      if (address === this.bridgeTargetAddress) {
+        await MessageProof.insertItem(this.address, this.chainId, id, receipt);
+      }
+
       emitter.emit(SFT_TRANSFER, {
         status: 'success',
         tx: tx?.hash,
       } as StatusResult);
     } catch (e) {
       emitter.emit(SFT_TRANSFER, {
+        status: 'error',
+        errorMessage: e.error ? e.error.message : e.message,
+      } as StatusResult);
+    }
+  };
+
+  _doSftMessageProof = async (payloadContent: PayloadContent) => {
+    const { id } = payloadContent;
+    if (id === undefined) {
+      emitter.emit(SFT_PROOF, {
+        status: 'error',
+        errorMessage: 'Invalid input',
+      } as StatusResult);
+      return;
+    }
+
+    if (!this.ethersSigner || !this.polygonBridge) {
+      emitter.emit(SFT_PROOF, {
+        status: 'error',
+        errorMessage: 'Invalid contract state',
+      } as StatusResult);
+      return;
+    }
+    try {
+      const proof = await this.polygonBridge.processPending(id);
+      const contract = new ethers.Contract(
+        this.bridgeTargetAddress,
+        RootTunnelAbi,
+        this.ethersSigner
+      );
+      const tx = contract.receiveMessage(proof);
+
+      emitter.emit(SFT_PROOF, {
+        status: 'tx',
+        tx: tx.hash,
+      } as StatusResult);
+
+      await tx.wait();
+
+      emitter.emit(SFT_PROOF, {
+        status: 'success',
+        tx: tx.hash,
+      } as StatusResult);
+
+      this.polygonBridge?.removeItem(id);
+    } catch (e) {
+      emitter.emit(SFT_PROOF, {
         status: 'error',
         errorMessage: e.error ? e.error.message : e.message,
       } as StatusResult);

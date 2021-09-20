@@ -21,6 +21,7 @@ import {
   AssetStateresult,
   SFT,
   SFTCHILD,
+  SFTS,
   StoreClasses,
 } from '../../stores/store';
 import {
@@ -167,7 +168,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
     tokenIds.forEach((sft, tokenIdIdx) => {
       if (
         sft.isStockCard &&
-        !sft.locked &&
+        sft.status === SFTS.UNLOCKED &&
         (allowedLevel & (1 << cards.cards[sft.levelId].chainRef)) !== 0
       ) {
         const url =

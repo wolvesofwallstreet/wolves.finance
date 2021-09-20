@@ -21,13 +21,14 @@ export const STAKE_STATE = 'STAKE_STATE'; // request Stake information
 export const STAKE_LP_AVAILABLE = 'STAKE_LP_AVAILABLE'; // Available LP token
 
 export const SFT_BUY = 'SFT_BUY'; // Buy (mint) an SFT with given level / class
-export const SFT_LOCK = 'SFT_LOCK'; // Transfer SFT to TradingFloor contract
-export const SFT_UNLOCK = 'SFT_UNLOCK'; // Burn NFT, transfer SFT back
-export const SFT_REWARD = 'SFT_REWARD'; // REQUEST REWARD INFO
 export const SFT_CLAIM = 'SFT_CLAIM'; // Claim all SFT rewards
 export const SFT_CLAIM_BOOSTER = 'SFT_CLAIM_BOOSTER'; // Claim all SFT rewards from booster
-export const SFT_UPGRADE = 'SFT_UPGRADE'; // Upgrade Reward Share
+export const SFT_LOCK = 'SFT_LOCK'; // Transfer SFT to TradingFloor contract
+export const SFT_PROOF = 'SFT_PROOF'; // Fire the Polygon Burn Proof
+export const SFT_REWARD = 'SFT_REWARD'; // REQUEST REWARD INFO
 export const SFT_TRANSFER = 'SFT_TRANSFER'; // Transfer / bridge
+export const SFT_UNLOCK = 'SFT_UNLOCK'; // Burn NFT, transfer SFT back
+export const SFT_UPGRADE = 'SFT_UPGRADE'; // Upgrade Reward Share
 
 export const CFOLIO_ITEM_BUY = 'CFOLIO_ITEM_BUY'; // Buy (mint) cfolioItem
 export const CFOLIO_ITEM_DEPOSIT = 'CFOLIO_ITEM_DEPOSIT'; // Add investment into existing CFI

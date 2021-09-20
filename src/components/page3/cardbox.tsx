@@ -11,7 +11,13 @@ import { TFunction } from 'i18next';
 import { RefObject, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
-import { BIGNUMBER_MAX, SFT, SFTCHILD, StoreClasses } from '../../stores/store';
+import {
+  BIGNUMBER_MAX,
+  SFT,
+  SFTCHILD,
+  SFTS,
+  StoreClasses,
+} from '../../stores/store';
 
 type CARDBOX_PROPS = {
   sft?: SFT;
@@ -62,7 +68,7 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
     minted = card.minted;
     price = level.price;
     prowess = sft.rewardRate;
-    locked = sft.locked;
+    locked = sft.status === SFTS.LOCKED;
   } else if (cfolio) {
     const level = assets.cfolioItems[cfolio.levelId];
     const card = level.cards[cfolio.cardId];
@@ -175,7 +181,7 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
               {t('page.price')}: {price} WOWS{' '}
             </span>
           </>
-        ) : sft ? (
+        ) : sft && StoreClasses.store.isSidechain() ? (
           <>
             <span className="tk-grotesk-lightbold font-14 ellipsis">
               {t('page.prowess')}: {prowess / 10000}%
@@ -185,11 +191,13 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
             </span>
           </>
         ) : (
-          <>
-            <span className="tk-grotesk-lightbold font-14 ellipsis">
-              {t('page.investment')}: {investment}
-            </span>
-          </>
+          StoreClasses.store.isSidechain() && (
+            <>
+              <span className="tk-grotesk-lightbold font-14 ellipsis">
+                {t('page.investment')}: {investment}
+              </span>
+            </>
+          )
         )}
       </div>
     </div>

@@ -20,6 +20,7 @@ import {
   SFT_CLAIM,
   SFT_CLAIM_BOOSTER,
   SFT_LOCK,
+  SFT_PROOF,
   SFT_REWARD,
   SFT_UNLOCK,
   SFT_UPGRADE,
@@ -29,6 +30,7 @@ import {
   Payload,
   SFT,
   SFTCHILD,
+  SFTS,
   StatusResult,
   StoreClasses,
 } from '../../stores/store';
@@ -324,7 +326,9 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         type:
           current.tokenId === undefined
             ? SFT_BUY
-            : current.sft?.locked ?? current.cfi?.locked
+            : current.sft && current.sft.status > SFTS.LOCKED
+            ? SFT_PROOF
+            : current.sft?.status ?? current.cfi?.locked
             ? SFT_UNLOCK
             : SFT_LOCK,
         content: {},
@@ -441,18 +445,28 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       ? 4
       : (currentLevel as CARD_LEVEL)?.levelId ?? 0;
 
-    const getButtonText = (s: string): string =>
-      !isWalletConnected
-        ? t('header.connectWallet').toString()
-        : noQuantity
-        ? t('page4.noQuantity').toString()
-        : txPending
-        ? t('page4.txPending')
-        : currentRender?.tokenId === undefined
-        ? t('page4.buy', { name: s }).toString()
-        : currentRender?.sft?.locked ?? currentRender?.cfi?.locked
-        ? t('page4.unlock', { name: s }).toString()
-        : t('page4.lock', { name: s }).toString();
+    const buttonText = !isWalletConnected
+      ? { l: t('header.connectWallet').toString(), d: true }
+      : noQuantity
+      ? { l: t('page4.noQuantity').toString(), d: true }
+      : txPending
+      ? { l: t('page4.txPending'), d: true }
+      : currentRender?.tokenId === undefined
+      ? { l: t('page4.buy', { name: currentCard?.name }).toString(), d: false }
+      : currentRender?.sft && currentRender?.sft.status > SFTS.UNLOCKED
+      ? {
+          l: t('page4.proof', { name: currentCard?.name }).toString(),
+          d: currentRender.sft.status === SFTS.BRIDGE_PENDING,
+        }
+      : currentRender?.sft?.status ?? currentRender?.cfi?.locked
+      ? {
+          l: t('page4.unlock', { name: currentCard?.name }).toString(),
+          d: false,
+        }
+      : {
+          l: t('page4.lock', { name: currentCard?.name }).toString(),
+          d: false,
+        };
 
     // Create Navigation Links
     let prevUrl: string | undefined, nextUrl: string | undefined;
@@ -532,7 +546,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
           autoUpgrade = undefined;
         }
       }
-      locked = currentRender.sft?.locked ?? false;
+      locked = currentRender.sft?.status === SFTS.LOCKED ?? false;
       if (profitReward && currentLevel) {
         const rewardIndex = currentLevel.type === 'wolves' ? 0 : 1;
         const rewardInfo =
@@ -954,18 +968,20 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                           )}
                       </span>
                     )}
+                    {currentRender?.sft && !currentRender?.sft?.status && (
+                      <input
+                        className="wolves-btn mt-1"
+                        type="button"
+                        value={transferButtonText.l}
+                        disabled={transferButtonText.d}
+                        onClick={() => this.setState({ transferOpen: true })}
+                      />
+                    )}
                     <input
                       className="wolves-btn mt-1"
                       type="button"
-                      value={transferButtonText.l}
-                      disabled={transferButtonText.d}
-                      onClick={() => this.setState({ transferOpen: true })}
-                    />
-                    <input
-                      className="wolves-btn mt-1"
-                      type="button"
-                      value={getButtonText(currentCard.name)}
-                      disabled={!isWalletConnected || noQuantity || txPending}
+                      value={buttonText.l}
+                      disabled={buttonText.d}
                       onClick={() => this._onBuy()}
                     />
                   </div>
@@ -1110,7 +1126,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
           </Modal>
         )}
         {transferOpen &&
-          !currentRender?.sft?.locked &&
+          !currentRender?.sft?.status &&
           currentRender?.tokenId && (
             <Transfer
               tokenId={currentRender.tokenId}
