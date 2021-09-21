@@ -466,7 +466,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       ? { l: t('page4.txPending'), d: true }
       : currentRender?.tokenId === undefined
       ? { l: t('page4.buy', { name: currentCard?.name }).toString(), d: false }
-      : sftStatus > SFTS.UNLOCKED
+      : sftStatus > SFTS.LOCKED
       ? {
           l: t('page4.proof', { name: currentCard?.name }).toString(),
           d: sftStatus === SFTS.BRIDGE_PENDING,
@@ -881,7 +881,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                       </h3>
                     )}
                     <p className="font-16">{currentCard.description}</p>
-                    {currentRender?.sft && sftStatus <= SFTS.BRIDGE_PENDING && (
+                    {currentRender?.sft && sftStatus < SFTS.BRIDGE_PENDING && (
                       <p className="font-14">
                         {t(
                           sftStatus > 0

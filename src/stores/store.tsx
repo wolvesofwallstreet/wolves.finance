@@ -515,6 +515,15 @@ class Store {
     return this.assets;
   };
 
+  handleBridgeChange = (accounts: Set<string>) => {
+    if (accounts.has(this.address)) {
+      dispatcher.dispatch({
+        type: ASSETS_STATE,
+        content: { filter: ['tokens'] },
+      } as Payload);
+    }
+  };
+
   /*********************** NETWORK ******************/
 
   getEndpoint(wss: boolean): string | undefined {
@@ -562,7 +571,8 @@ class Store {
       if (this.chainId === 1 || this.chainId === 5)
         this.polygonBridge = new MessageProof(
           this.eventProvider ?? ethersProvider,
-          this.chainId
+          this.chainId,
+          this.handleBridgeChange
         );
     } catch (e) {
       console.log(e);
@@ -1680,7 +1690,6 @@ class Store {
         RootTunnelAbi,
         this.ethersSigner
       );
-      console.log(proof);
       const tx = await contract.receiveMessage(proof);
 
       emitter.emit(SFT_PROOF, {

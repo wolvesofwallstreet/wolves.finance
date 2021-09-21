@@ -122,7 +122,7 @@ type PendingItem = {
   tokenId: string;
   txHash: string; // Child chain TX hash
   txBlockNumber: number; // Child chain block number
-  account?: string;
+  account: string;
   pending: boolean;
 };
 
@@ -180,11 +180,16 @@ export class MessageProof {
   localStorageKey: string;
   pendingItems: PendingItem[] = [];
   newBlockFilter: ethers.EventFilter;
+  changeHandler: (accounts: Set<string>) => void;
 
   static LSKMUMBAI = 'mumbai_goerli_bridge';
   static LSKMATIC = 'matic_mainnet_bridge';
 
-  constructor(ethereumProvider: ethers.providers.Provider, chainId: number) {
+  constructor(
+    ethereumProvider: ethers.providers.Provider,
+    chainId: number,
+    cb: (accounts: Set<string>) => void
+  ) {
     if (chainId === 5) {
       this.provider = new ethers.providers.WebSocketProvider(
         'wss://ws-matic-mumbai.chainstacklabs.com'
@@ -217,6 +222,8 @@ export class MessageProof {
     this.newBlockFilter = this.checkPointManager.filters.NewHeaderBlock();
 
     this._setup();
+
+    this.changeHandler = cb;
   }
 
   static async insertItem(
@@ -274,7 +281,7 @@ export class MessageProof {
       .map((item) => {
         return {
           tokenId: ethers.BigNumber.from(item.tokenId),
-          available: item.headerBlockId !== 0,
+          available: item.headerBlockId > 0,
         };
       });
   }
@@ -414,7 +421,7 @@ export class MessageProof {
     eventLogs?: ethers.providers.Log[]
   ): Promise<void> {
     let piIndex = 0;
-    let hasChanges = false;
+    const changedAccounts: Set<string> = new Set();
     let logs = eventLogs;
     if (!logs) {
       if (!scanStart) {
@@ -436,9 +443,10 @@ export class MessageProof {
         this.pendingItems[piIndex].txBlockNumber >= parsed.args.start &&
         this.pendingItems[piIndex].txBlockNumber <= parsed.args.end
       ) {
-        this.pendingItems[piIndex].headerBlockId = parsed.args.headerBlockId;
+        this.pendingItems[piIndex].headerBlockId =
+          parsed.args.headerBlockId.toNumber();
+        changedAccounts.add(this.pendingItems[piIndex].account);
         ++piIndex;
-        hasChanges = true;
       }
       if (piIndex >= this.pendingItems.length) break;
     }
@@ -448,11 +456,12 @@ export class MessageProof {
         this._onNewHeaderBlock
       );
     }
-    if (hasChanges) {
+    if (changedAccounts.size > 0) {
       window.localStorage.setItem(
         this.localStorageKey,
         JSON.stringify(this.pendingItems)
       );
+      this.changeHandler(changedAccounts);
     }
   }
 
