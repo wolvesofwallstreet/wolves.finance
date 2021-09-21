@@ -77,7 +77,7 @@ function Transfer({ hideCB, name, show, tokenId, t }: PROPS): JSX.Element {
       : { l: t('page4.transferTo', { name: bridgeTarget.name }), d: false };
 
   return (
-    <Modal show={show} onHide={hideCB} animation={false}>
+    <Modal show={show} onHide={hideCB} animation={false} backdrop={true}>
       <Modal.Header closeButton>
         <Modal.Title>Transfer {name}</Modal.Title>
       </Modal.Header>

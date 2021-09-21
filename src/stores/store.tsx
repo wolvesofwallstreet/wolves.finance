@@ -608,7 +608,7 @@ class Store {
     });
 
     provider.on('accountsChanged', async (accounts: string[]) => {
-      if (this.address !== Store.nullAddress && accounts[0] !== this.address) {
+      if (this.address !== '' && accounts[0] !== this.address) {
         this.address = ethers.utils.getAddress(accounts[0]);
         this._emitNetworkChange();
       }
@@ -616,6 +616,7 @@ class Store {
 
     provider.on('chainChanged', async (chainId: number) => {
       if (chainId !== this.chainId) {
+        this.chainId = chainId;
         await this.connect();
       }
     });
@@ -644,8 +645,8 @@ class Store {
     this.address = '';
     if (clearCache) {
       this.web3Modal.clearCachedProvider();
+      this._emitNetworkChange();
     }
-    this._emitNetworkChange();
   };
 
   close = async () => {
@@ -752,12 +753,12 @@ class Store {
 
   _emitNetworkChange() {
     // Request new SFT List
-    if (this.address !== '')
+    if (this.address) {
       dispatcher.dispatch({
         type: ASSETS_STATE,
         content: { filter: ['tokens', 'balances', 'rewards'] },
       } as Payload);
-    else {
+    } else {
       for (const [, value] of Object.entries(this.assets.balances)) {
         value.value = 0;
       }

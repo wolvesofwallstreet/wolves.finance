@@ -126,6 +126,8 @@ type PendingItem = {
   pending: boolean;
 };
 
+type CB_FUNC = (accounts: Set<string>) => void;
+
 class MerkleTree {
   leaves: Buffer[];
   layers: Buffer[][];
@@ -180,7 +182,7 @@ export class MessageProof {
   localStorageKey: string;
   pendingItems: PendingItem[] = [];
   newBlockFilter: ethers.EventFilter;
-  changeHandler: (accounts: Set<string>) => void;
+  changeHandler?: CB_FUNC;
 
   static LSKMUMBAI = 'mumbai_goerli_bridge';
   static LSKMATIC = 'matic_mainnet_bridge';
@@ -188,7 +190,7 @@ export class MessageProof {
   constructor(
     ethereumProvider: ethers.providers.Provider,
     chainId: number,
-    cb: (accounts: Set<string>) => void
+    cb: CB_FUNC
   ) {
     if (chainId === 5) {
       this.provider = new ethers.providers.WebSocketProvider(
@@ -221,9 +223,7 @@ export class MessageProof {
 
     this.newBlockFilter = this.checkPointManager.filters.NewHeaderBlock();
 
-    this._setup();
-
-    this.changeHandler = cb;
+    this._setup(cb);
   }
 
   static async insertItem(
@@ -290,7 +290,7 @@ export class MessageProof {
     this._findHeaderBlockNumber(0, 0, [result]);
   };
 
-  async _setup(): Promise<void> {
+  async _setup(cb: CB_FUNC): Promise<void> {
     if (this.pendingItems.length > 0) {
       // Get the last ChildBlock in checkPointManager
       const lastChildBlock = (
@@ -309,7 +309,7 @@ export class MessageProof {
         }
       }
       if (scanHeaderFrom) {
-        this._findHeaderBlockNumber(scanHeaderFrom, scanHeaderTo);
+        await this._findHeaderBlockNumber(scanHeaderFrom, scanHeaderTo);
       }
       if (
         this.pendingItems[this.pendingItems.length - 1].txBlockNumber >
@@ -321,6 +321,7 @@ export class MessageProof {
         );
       }
     }
+    this.changeHandler = cb;
   }
 
   processPending(tokenId: ethers.BigNumber): Promise<string> {
@@ -440,12 +441,16 @@ export class MessageProof {
       const parsed = this.checkPointManager.interface.parseLog(log);
       while (
         piIndex < this.pendingItems.length &&
-        this.pendingItems[piIndex].txBlockNumber >= parsed.args.start &&
         this.pendingItems[piIndex].txBlockNumber <= parsed.args.end
       ) {
-        this.pendingItems[piIndex].headerBlockId =
-          parsed.args.headerBlockId.toNumber();
-        changedAccounts.add(this.pendingItems[piIndex].account);
+        if (
+          !this.pendingItems[piIndex].headerBlockId &&
+          this.pendingItems[piIndex].txBlockNumber >= parsed.args.start
+        ) {
+          this.pendingItems[piIndex].headerBlockId =
+            parsed.args.headerBlockId.toNumber();
+          changedAccounts.add(this.pendingItems[piIndex].account);
+        }
         ++piIndex;
       }
       if (piIndex >= this.pendingItems.length) break;
@@ -461,7 +466,7 @@ export class MessageProof {
         this.localStorageKey,
         JSON.stringify(this.pendingItems)
       );
-      this.changeHandler(changedAccounts);
+      if (this.changeHandler) this.changeHandler(changedAccounts);
     }
   }
 
