@@ -40,7 +40,6 @@ import {
   CFOLIO_ITEM_UNLOCK_TRANSFER,
   CFOLIO_ITEM_WITHDRAW,
   CONNECTION_CHANGED,
-  NEW_BLOCK,
   REVOKE_APPROVAL,
   SFT_BUY,
   SFT_CLAIM,
@@ -295,7 +294,6 @@ class Store {
   chainId = 0;
   address = '';
   tokenContractAddress = Store.nullAddress;
-  eventBlockNumber = 0;
   lastAprTime = 0;
   eventsSuspended = false;
   lock = new AsyncLock();
@@ -680,7 +678,7 @@ class Store {
   };
 
   _addDQ = async (block: number, payload: Payload) => {
-    if (this.eventsSuspended || block > this.eventBlockNumber) {
+    if (this.eventsSuspended) {
       if (
         !this.dispatchQueue.find(
           (elem) => JSON.stringify(elem) === JSON.stringify(payload)
@@ -693,13 +691,15 @@ class Store {
   };
 
   _resolveDQ = () => {
-    this.dispatchQueue.forEach((payload) => dispatcher.dispatch(payload));
-    this.dispatchQueue = [];
-    if (this.lastAprTime + 300000 < Date.now()) {
-      this.lastAprTime = Date.now();
-      this._updatePoolAPR();
+    if (this.eventsSuspended) {
+      this.dispatchQueue.forEach((payload) => dispatcher.dispatch(payload));
+      this.dispatchQueue = [];
+      /*if (this.lastAprTime + 300000 < Date.now()) {
+        this.lastAprTime = Date.now();
+        this._updatePoolAPR();
+      }*/
+      this.eventsSuspended = false;
     }
-    this.eventsSuspended = false;
   };
 
   _setupEvents(): boolean {
@@ -728,12 +728,6 @@ class Store {
       }
     };
 
-    // Our Block ticker
-    this.eventProvider?.on('block', (blockNumber) => {
-      emitter.emit(NEW_BLOCK, { blockNumber });
-      this.eventBlockNumber = blockNumber;
-      if (!this.eventsSuspended) this._resolveDQ();
-    });
     this.sftHolderContractRO?.on('SftTokenTransfer', (operator, from, to) =>
       handleTransfer(operator, from, to, true)
     );
@@ -1534,6 +1528,7 @@ class Store {
         await tx.wait();
       }
 
+      this.eventsSuspended = true;
       const tx: ethers.ContractTransaction | undefined =
         await sftMintContract?.mintWowsSFT(
           this.address,
@@ -1556,6 +1551,7 @@ class Store {
         errorMessage: e.error ? e.error.message : e.message,
       } as StatusResult);
     }
+    this._resolveDQ();
   };
 
   _doSftLock = async (payloadContent: PayloadContent) => {
@@ -1587,6 +1583,7 @@ class Store {
     );
 
     try {
+      this.eventsSuspended = true;
       const tx: ethers.ContractTransaction =
         await sftHolderContract.safeTransferFrom(
           this.address,
@@ -1612,6 +1609,7 @@ class Store {
         errorMessage: e.error ? e.error.message : e.message,
       } as StatusResult);
     }
+    this._resolveDQ();
   };
 
   _doSftTransfer = async (payloadContent: PayloadContent) => {
@@ -1632,10 +1630,11 @@ class Store {
       return;
     }
 
-    const sftHolderContract = this.sftHolderContractRO.connect(
-      this.ethersProvider.getSigner(this.accountId)
-    );
     try {
+      const sftHolderContract = this.sftHolderContractRO.connect(
+        this.ethersProvider.getSigner(this.accountId)
+      );
+      this.eventsSuspended = true;
       const tx: ethers.ContractTransaction =
         await sftHolderContract.safeTransferFrom(
           this.address,
@@ -1665,6 +1664,7 @@ class Store {
         errorMessage: e.error ? e.error.message : e.message,
       } as StatusResult);
     }
+    this._resolveDQ();
   };
 
   _doSftMessageProof = async (payloadContent: PayloadContent) => {
@@ -1738,6 +1738,7 @@ class Store {
         this.ethersSigner
       );
 
+      this.eventsSuspended = true;
       const tx: ethers.ContractTransaction = await tradeFloorContract.burn(
         this.address,
         id,
@@ -1759,6 +1760,7 @@ class Store {
         errorMessage: e.error ? e.error.message : e.message,
       } as StatusResult);
     }
+    this._resolveDQ();
   };
 
   _doCFolioItemBuy = async (payloadContent: PayloadContentCFolioItem) => {
@@ -1822,6 +1824,7 @@ class Store {
         options = { gasLimit: gasEstimation.toNumber() + additionalGas };
       }
 
+      this.eventsSuspended = true;
       const tx: ethers.ContractTransaction =
         await sftMintContract.mintCFolioItemSFT(
           cfolioType,
@@ -1856,6 +1859,7 @@ class Store {
         errorMessage: e.error ? e.error.message : e.message,
       } as StatusResult);
     }
+    this._resolveDQ();
   };
 
   _doCFolioItemDeposit = async (payloadContent: PayloadContentCFolioItem) => {
@@ -2140,7 +2144,6 @@ class Store {
     payloadContent: PayloadContentCFolioItemLT
   ) => {
     const { src, dst, lockedCFIs, transferCFIs } = payloadContent;
-    this.eventsSuspended = true;
 
     try {
       if (
@@ -2162,6 +2165,8 @@ class Store {
           throw new Error('Cannot get cfolio address');
         }
       }
+
+      this.eventsSuspended = true;
 
       if (lockedCFIs.length > 0) {
         if (src !== BIGNUMBER_MAX) {
