@@ -51,7 +51,7 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
     price,
     minted,
     prowess,
-    locked,
+    status,
     investment;
   if (sft) {
     const level = assets.cards.cards[sft.levelId];
@@ -68,7 +68,7 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
     minted = card.minted;
     price = level.price;
     prowess = sft.rewardRate;
-    locked = sft.status === SFTS.LOCKED;
+    status = sft.status;
   } else if (cfolio) {
     const level = assets.cfolioItems[cfolio.levelId];
     const card = level.cards[cfolio.cardId];
@@ -84,7 +84,7 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
     minted = card.minted;
     price = card.price;
     prowess = 0;
-    locked = cfolio.locked;
+    status = cfolio.status;
     investment =
       cfolio.assets[0].toFixed(6) +
       ' ' +
@@ -149,7 +149,9 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
             alt={name}
           />
         )}
-        {locked && <div className={'locked'} />}
+        {status > 0 && (
+          <div className={status > SFTS.LOCKED ? 'bridged' : 'locked'} />
+        )}
         {renderCFolioItems()}
       </Link>
       <div className="wrapper">

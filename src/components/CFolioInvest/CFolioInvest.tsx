@@ -203,7 +203,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
         name: cfolioItems[cfi.levelId].cards[cfi.cardId].name,
         tokenId: cfi.tokenId,
         disabled:
-          (sft.isWallet && cfi.locked) ||
+          (sft.isWallet && cfi.status > 0) ||
           cfolioItems[cfi.levelId].type !== this.displayType,
       });
     });
@@ -230,7 +230,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
             (cfolioItem) => {
               if (
                 cfolioItems[cfolioItem.levelId].type === this.displayType &&
-                (!isWallet || !cfolioItem.locked)
+                (!isWallet || cfolioItem.status === 0)
               )
                 cfiRender.push({ cfolioItem, index: cfolioItem.cardId });
             }

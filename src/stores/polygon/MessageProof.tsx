@@ -117,12 +117,13 @@ type RawBlock = {
 };
 
 type PendingItem = {
-  minBlock: number; // The blocknumber on the root chain at create tie
-  exactBlock: number; // The exact block number (checkpointed)
+  rootBlock: number; // The blocknumber on the root chain at create tie
+  headerBlockId: number; // The header blockId (checkpointed)
   tokenId: string;
   txHash: string; // Child chain TX hash
   txBlockNumber: number; // Child chain block number
   account?: string;
+  pending: boolean;
 };
 
 class MerkleTree {
@@ -238,12 +239,13 @@ export class MessageProof {
       const items = window.localStorage.getItem(localStorageId);
       const pIs: PendingItem[] = items ? JSON.parse(items) : [];
       pIs.push({
-        minBlock: await provider.getBlockNumber(),
-        exactBlock: 0,
+        rootBlock: await provider.getBlockNumber(),
+        headerBlockId: 0,
         tokenId: tokenId.toHexString(),
         txHash: receipt.transactionHash,
         txBlockNumber: receipt.blockNumber,
         account,
+        pending: false,
       });
       window.localStorage.setItem(localStorageId, JSON.stringify(pIs));
     }
@@ -266,11 +268,13 @@ export class MessageProof {
     account: string
   ): { tokenId: ethers.BigNumber; available: boolean }[] {
     return this.pendingItems
-      .filter((item) => !item.account || item.account === account)
+      .filter(
+        (item) => !item.pending && (!item.account || item.account === account)
+      )
       .map((item) => {
         return {
           tokenId: ethers.BigNumber.from(item.tokenId),
-          available: item.exactBlock !== 0,
+          available: item.headerBlockId !== 0,
         };
       });
   }
@@ -288,20 +292,22 @@ export class MessageProof {
 
       // Run throu pendingItems and look which are ready
       let scanHeaderFrom,
-        scanHeaderTo = 0,
-        needListener;
+        scanHeaderTo = 0;
       for (const pI of this.pendingItems) {
-        if (!pI.exactBlock) {
+        if (!pI.headerBlockId) {
           if (pI.txBlockNumber <= lastChildBlock) {
-            if (!scanHeaderFrom) scanHeaderFrom = pI.minBlock;
-            scanHeaderTo = pI.minBlock;
-          } else if (pI.txBlockNumber > lastChildBlock) needListener = true;
+            if (!scanHeaderFrom) scanHeaderFrom = pI.rootBlock;
+            scanHeaderTo = pI.rootBlock;
+          }
         }
       }
       if (scanHeaderFrom) {
         this._findHeaderBlockNumber(scanHeaderFrom, scanHeaderTo);
       }
-      if (needListener) {
+      if (
+        this.pendingItems[this.pendingItems.length - 1].txBlockNumber >
+        lastChildBlock
+      ) {
         this.checkPointManager.provider.on(
           this.newBlockFilter,
           this._onNewHeaderBlock
@@ -313,12 +319,22 @@ export class MessageProof {
   processPending(tokenId: ethers.BigNumber): Promise<string> {
     const tokenIdHex = tokenId.toHexString();
     const item = this.pendingItems.find((item) => item.tokenId === tokenIdHex);
-    if (!item || !item.exactBlock) throw new Error('TokenId invalid');
+    if (!item || !item.headerBlockId) throw new Error('TokenId invalid');
+    item.pending = true;
 
-    return this.buildPayloadForExit(item.exactBlock, item.txHash);
+    return this.buildPayloadForExit(item.headerBlockId, item.txHash);
   }
 
-  async buildPayloadForExit(ethBlock: number, txHash: string): Promise<string> {
+  resetPending(tokenId: ethers.BigNumber): void {
+    const tokenIdHex = tokenId.toHexString();
+    const item = this.pendingItems.find((item) => item.tokenId === tokenIdHex);
+    if (item) item.pending = false;
+  }
+
+  async buildPayloadForExit(
+    headerBlockId: number,
+    txHash: string
+  ): Promise<string> {
     if (!this.checkPointManager || !this.provider) return '';
 
     // Get the last ChildBlock in checkPointManager
@@ -335,7 +351,7 @@ export class MessageProof {
       throw new Error('Not yet checkpointed');
 
     const headerBlock: HeaderBlock = await this.checkPointManager.headerBlocks(
-      ethBlock
+      headerBlockId
     );
 
     const blockProof = await this._buildBlockProof(
@@ -351,7 +367,7 @@ export class MessageProof {
     });
 
     return this._encodePayload(
-      ethBlock,
+      headerBlockId,
       blockProof,
       receipt.blockNumber,
       parseInt(block.timestamp),
@@ -393,25 +409,26 @@ export class MessageProof {
   }
 
   async _findHeaderBlockNumber(
-    startNumber: number,
-    endNumber: number,
+    scanStart: number,
+    scanEnd: number,
     eventLogs?: ethers.providers.Log[]
   ): Promise<void> {
+    let piIndex = 0;
+    let hasChanges = false;
     let logs = eventLogs;
     if (!logs) {
-      if (!startNumber) {
+      if (!scanStart) {
         // TODO: Find start eth block by timestamp
         throw new Error('Historical scan not yet mplemented');
       }
       const filter = {
         ...this.checkPointManager.filters.NewHeaderBlock(),
-        fromBlock: startNumber,
-        toBlock: endNumber + 1000,
+        fromBlock: scanStart,
+        toBlock: scanEnd + 1000,
       };
       logs = await this.checkPointManager.provider.getLogs(filter);
     }
 
-    let piIndex = 0;
     for (const log of logs) {
       const parsed = this.checkPointManager.interface.parseLog(log);
       while (
@@ -419,21 +436,24 @@ export class MessageProof {
         this.pendingItems[piIndex].txBlockNumber >= parsed.args.start &&
         this.pendingItems[piIndex].txBlockNumber <= parsed.args.end
       ) {
-        this.pendingItems[piIndex].exactBlock = log.blockNumber;
+        this.pendingItems[piIndex].headerBlockId = parsed.args.headerBlockId;
         ++piIndex;
+        hasChanges = true;
       }
       if (piIndex >= this.pendingItems.length) break;
     }
-    if (piIndex >= this.pendingItems.length)
+    if (piIndex >= this.pendingItems.length) {
       this.checkPointManager.provider.off(
         this.newBlockFilter,
         this._onNewHeaderBlock
       );
-
-    window.localStorage.setItem(
-      this.localStorageKey,
-      JSON.stringify(this.pendingItems)
-    );
+    }
+    if (hasChanges) {
+      window.localStorage.setItem(
+        this.localStorageKey,
+        JSON.stringify(this.pendingItems)
+      );
+    }
   }
 
   async _buildBlockProof(

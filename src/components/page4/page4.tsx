@@ -113,6 +113,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     StoreClasses.emitter.on(SFT_CLAIM, this.onSFTTransaction);
     StoreClasses.emitter.on(SFT_CLAIM_BOOSTER, this.onSFTTransaction);
     StoreClasses.emitter.on(SFT_LOCK, this.onSFTTransaction);
+    StoreClasses.emitter.on(SFT_PROOF, this.onSFTTransaction);
     StoreClasses.emitter.on(SFT_UNLOCK, this.onSFTTransaction);
     StoreClasses.emitter.on(SFT_UPGRADE, this.onSFTTransaction);
   }
@@ -128,6 +129,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
   componentWillUnmount(): void {
     StoreClasses.emitter.off(SFT_UPGRADE, this.onSFTTransaction);
     StoreClasses.emitter.off(SFT_UNLOCK, this.onSFTTransaction);
+    StoreClasses.emitter.off(SFT_PROOF, this.onSFTTransaction);
     StoreClasses.emitter.off(SFT_LOCK, this.onSFTTransaction);
     StoreClasses.emitter.off(SFT_CLAIM_BOOSTER, this.onSFTTransaction);
     StoreClasses.emitter.off(SFT_CLAIM, this.onSFTTransaction);
@@ -322,13 +324,18 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
   _onBuy(): void {
     if (this.state.currentIndex >= 0 && this.state.cards) {
       const current = this.renderList[this.state.currentIndex];
+      const status = current.sft
+        ? current.sft.status
+        : current.cfi
+        ? current.cfi.status
+        : 0;
       const payload = {
         type:
           current.tokenId === undefined
             ? SFT_BUY
-            : current.sft && current.sft.status > SFTS.LOCKED
+            : status > SFTS.LOCKED
             ? SFT_PROOF
-            : current.sft?.status ?? current.cfi?.locked
+            : status > 0
             ? SFT_UNLOCK
             : SFT_LOCK,
         content: {},
@@ -445,6 +452,12 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       ? 4
       : (currentLevel as CARD_LEVEL)?.levelId ?? 0;
 
+    const sftStatus = currentRender?.sft
+      ? currentRender.sft.status
+      : currentRender?.cfi
+      ? currentRender.cfi.status
+      : 0;
+
     const buttonText = !isWalletConnected
       ? { l: t('header.connectWallet').toString(), d: true }
       : noQuantity
@@ -453,12 +466,12 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       ? { l: t('page4.txPending'), d: true }
       : currentRender?.tokenId === undefined
       ? { l: t('page4.buy', { name: currentCard?.name }).toString(), d: false }
-      : currentRender?.sft && currentRender?.sft.status > SFTS.UNLOCKED
+      : sftStatus > SFTS.UNLOCKED
       ? {
           l: t('page4.proof', { name: currentCard?.name }).toString(),
-          d: currentRender.sft.status === SFTS.BRIDGE_PENDING,
+          d: sftStatus === SFTS.BRIDGE_PENDING,
         }
-      : currentRender?.sft?.status ?? currentRender?.cfi?.locked
+      : sftStatus > 0
       ? {
           l: t('page4.unlock', { name: currentCard?.name }).toString(),
           d: false,
@@ -515,10 +528,8 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       apy,
       investment,
       share;
-    let locked = false;
     if (currentRender?.cfi && currentCard) {
       quantity = (currentCard as CFOLIO_ITEM).maxMintable;
-      locked = currentRender.cfi.locked;
       investment =
         currentRender?.cfi.assets[assetIndex].toFixed(6) +
         ' ' +
@@ -532,7 +543,10 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         : (currentLevel as CARD_LEVEL).profitReward;
       if (!currentRender?.sft) price = (currentLevel as CARD_LEVEL).price;
       if (autoUpgrade && currentRender.sft) {
-        if (profitReward === (currentLevel as CARD_LEVEL).profitReward) {
+        if (
+          sftStatus === 0 &&
+          profitReward === (currentLevel as CARD_LEVEL).profitReward
+        ) {
           autoUpgrade =
             60 * 86400 + currentRender.sft?.mintTimestamp - Date.now() / 1000;
           const upgradeReward = (currentLevel as CARD_LEVEL).upgradeReward;
@@ -546,7 +560,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
           autoUpgrade = undefined;
         }
       }
-      locked = currentRender.sft?.status === SFTS.LOCKED ?? false;
+
       if (profitReward && currentLevel) {
         const rewardIndex = currentLevel.type === 'wolves' ? 0 : 1;
         const rewardInfo =
@@ -574,7 +588,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
               l: t('page4.claim', {
                 amount: claimableAmount.toFixed(6),
               }).toString(),
-              d: locked || claimableAmount === 0,
+              d: sftStatus > 0 || claimableAmount === 0,
             }
         : undefined;
 
@@ -827,7 +841,11 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                       alt={currentCard.name}
                     />
                   ))}
-                {locked && <div className={'locked'} />}
+                {sftStatus > 0 && (
+                  <div
+                    className={sftStatus > SFTS.LOCKED ? 'bridged' : 'locked'}
+                  />
+                )}
                 {renderCFolioItems()}
               </div>
             </div>
@@ -863,14 +881,22 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                       </h3>
                     )}
                     <p className="font-16">{currentCard.description}</p>
-                    {currentRender?.sft && (
+                    {currentRender?.sft && sftStatus <= SFTS.BRIDGE_PENDING && (
                       <p className="font-14">
-                        {t(locked ? 'page4.lockedSft' : 'page4.unlockedSft')}
+                        {t(
+                          sftStatus > 0
+                            ? 'page4.lockedSft'
+                            : 'page4.unlockedSft'
+                        )}
                       </p>
                     )}
                     {currentRender?.cfi && (
                       <p className="font-14">
-                        {t(locked ? 'page4.lockedCfi' : 'page4.unlockedCfi')}
+                        {t(
+                          sftStatus > 0
+                            ? 'page4.lockedCfi'
+                            : 'page4.unlockedCfi'
+                        )}
                       </p>
                     )}
                     <ul className="tk-vincente-lightbold font-24 rarity-box">

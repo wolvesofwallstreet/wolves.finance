@@ -173,7 +173,7 @@ export type SFTCHILD = {
   tokenId: ethers.BigNumber;
   levelId: number;
   cardId: number;
-  locked: boolean;
+  status: SFTS;
   type: number;
   assets: number[];
 };
@@ -451,14 +451,17 @@ class Store {
         case SFT_CLAIM_BOOSTER:
           this._doSftClaimBooster(_payload.content);
           break;
-        case SFT_TRANSFER:
-          this._doSftTransfer(_payload.content);
-          break;
         case SFT_LOCK:
           this._doSftLock(_payload.content);
           break;
         case SFT_REWARD:
           this._getSftRewards(_payload.content);
+          break;
+        case SFT_PROOF:
+          this._doSftMessageProof(_payload.content);
+          break;
+        case SFT_TRANSFER:
+          this._doSftTransfer(_payload.content);
           break;
         case ASSETS_STATE:
           if (_payload.content.filter?.includes('cards'))
@@ -1053,8 +1056,13 @@ class Store {
       const result: [ethers.BigNumber[], ethers.BigNumber[]] =
         await this.sftMintContractRO.getTokenIds(this.address);
 
+      const bridgeToken = this.polygonBridge
+        ? this.polygonBridge.getTokenIds(this.address)
+        : [];
+
       const mergeList = result[0].map((t) => t);
       mergeList.push(...result[1]);
+      mergeList.push(...bridgeToken.map((item) => item.tokenId));
 
       const newUserSFT: SFT[] = mergeList
         .filter((n) => n.mask(128).lte(Store.BASE_CARD_MAX))
@@ -1068,6 +1076,7 @@ class Store {
                 (c) => c.chainRef === (cr & 0xff)
               )) >= 0
           );
+          const bridgeItem = bridgeToken.find((item) => item.tokenId.eq(bn));
           return {
             tokenId: bn,
             levelId: levelIndex,
@@ -1075,10 +1084,13 @@ class Store {
             isBaseCard: bn.mask(128).lte(Store.BASE_CARD_MAX),
             isStockCard: bn.mask(128).lte(Store.STOCK_CARD_MAX),
             isWallet: false,
-            status:
-              result[1].find((b) => b.eq(bn)) !== undefined
-                ? SFTS.LOCKED
-                : SFTS.UNLOCKED,
+            status: bridgeItem
+              ? bridgeItem.available
+                ? SFTS.BRIDGE_READY
+                : SFTS.BRIDGE_PENDING
+              : result[1].find((b) => b.eq(bn)) !== undefined
+              ? SFTS.LOCKED
+              : SFTS.UNLOCKED,
             rewardRate: 0,
             rewardShare: 0,
             rewardEarned: 0,
@@ -1151,9 +1163,11 @@ class Store {
               tokenId: childId,
               levelId: -1,
               cardId: -1,
-              locked:
+              status:
                 destinationId === 0 &&
-                result[1].find((b) => b.eq(childId)) !== undefined,
+                result[1].find((b) => b.eq(childId)) !== undefined
+                  ? SFTS.LOCKED
+                  : SFTS.UNLOCKED,
               type: readUint256(result2, readIndex++).toNumber(),
               assets: [],
             };
@@ -1666,7 +1680,8 @@ class Store {
         RootTunnelAbi,
         this.ethersSigner
       );
-      const tx = contract.receiveMessage(proof);
+      console.log(proof);
+      const tx = await contract.receiveMessage(proof);
 
       emitter.emit(SFT_PROOF, {
         status: 'tx',
@@ -1682,6 +1697,7 @@ class Store {
 
       this.polygonBridge?.removeItem(id);
     } catch (e) {
+      this.polygonBridge?.resetPending(id);
       emitter.emit(SFT_PROOF, {
         status: 'error',
         errorMessage: e.error ? e.error.message : e.message,

@@ -179,7 +179,7 @@ class CFolioManager extends React.Component<PROPS, STATE> {
         if (cfiCard) {
           this.sliderImagesMiddleAll.push({
             url: cfiCard?.url.replace('{res}', '300'),
-            locked: cfi.locked,
+            locked: cfi.status > 0,
             constraints: cat?.constraints,
             cfolioItem: cfiCard,
             tokenId: cfi.tokenId,

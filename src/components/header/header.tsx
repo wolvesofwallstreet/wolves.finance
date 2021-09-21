@@ -219,11 +219,6 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
             to: '/my?type=myPack&levelId=' + levelId,
             disabled: location.pathname === '/my',
           },
-          {
-            id: 'C-FOLIO MANAGER',
-            to: '/c_folio_manager',
-            disabled: location.pathname === '/c_folio_manager',
-          },
         ];
     return result;
   }
