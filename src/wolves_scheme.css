@@ -123,13 +123,13 @@ a.wolves-btn:hover {
   display: block;
   height: 2px;
   background-color: whitesmoke;
-  animation: progressBar 30s linear;
+  animation: progressBar 30s steps(30, end);
   animation-fill-mode: both;
   animation-iteration-count: infinite;
-  -webkit-animation: progressBar 30s linear;
+  -webkit-animation: progressBar 30s steps(30, end);
   -webkit-animation-fill-mode: both;
   -webkit-animation-iteration-count: infinite;
-  -moz-animation: progressBar 30s linear;
+  -moz-animation: progressBar 30s steps(30, end);
   -moz-animation-fill-mode: both;
   -moz-animation-iteration-count: infinite;
 }

@@ -649,16 +649,26 @@ class Store {
   };
 
   close = async () => {
-    this.sftHolderContractRO?.removeAllListeners();
-    this.sftHolderContractRO = undefined;
-    this.sftMintContractRO = undefined;
-    this.tradeFloorContractRO?.removeAllListeners();
-    this.tradeFloorContractRO = undefined;
-    this.lpContractRO = undefined;
-    this.uniDaiWethPairContractRO = undefined;
+    try {
+      this.sftHolderContractRO?.removeAllListeners();
+      this.sftHolderContractRO = undefined;
+      this.sftMintContractRO = undefined;
+      this.tradeFloorContractRO?.removeAllListeners();
+      this.tradeFloorContractRO = undefined;
+      this.lpContractRO?.removeAllListeners();
+      this.lpContractRO = undefined;
+      this.uniDaiWethPairContractRO = undefined;
+    } catch (e) {
+      console.log(e);
+    }
+    console.log('Disconnect due to WS close');
     await this.disconnect(false);
     if (this.eventProvider) {
-      this.eventProvider?.removeAllListeners();
+      try {
+        this.eventProvider?.removeAllListeners();
+      } catch (e) {
+        console.log(e);
+      }
       if (this.isWSEventProvider) {
         const wsEventProvider = this
           .eventProvider as ethers.providers.WebSocketProvider;
@@ -707,6 +717,7 @@ class Store {
     this.eventProvider?.removeAllListeners();
     this.sftHolderContractRO?.removeAllListeners();
     this.tradeFloorContractRO?.removeAllListeners();
+    this.lpContractRO?.removeAllListeners();
 
     const handleTransfer = (
       operator: string,
@@ -817,14 +828,14 @@ class Store {
           address: '',
           networkName: this.networkName,
         } as ConnectResult);
+        if (this.assets.cfolioItems.length > 0) {
+          dispatcher.dispatch({
+            type: ASSETS_STATE,
+            content: { filter: ['cards'] },
+          } as Payload);
+        }
+        this._setupEvents();
       }
-      if (this.assets.cfolioItems.length > 0) {
-        dispatcher.dispatch({
-          type: ASSETS_STATE,
-          content: { filter: ['cards'] },
-        } as Payload);
-      }
-      this._setupEvents();
     } catch (e) {
       console.log(e);
       if (this.eventProvider) {
@@ -1842,6 +1853,7 @@ class Store {
       if (additionalGas) {
         const gasEstimation: ethers.BigNumber =
           await sftMintContract.estimateGas.mintCFolioItemSFT(
+            this.address,
             cfolioType,
             sftTokenId,
             investWeiAmounts
@@ -1852,6 +1864,7 @@ class Store {
       this.eventsSuspended = true;
       const tx: ethers.ContractTransaction =
         await sftMintContract.mintCFolioItemSFT(
+          this.address,
           cfolioType,
           sftTokenId,
           investWeiAmounts,
