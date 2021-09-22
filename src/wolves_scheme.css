@@ -118,3 +118,50 @@ a.wolves-btn:hover {
 .wolves-text-shaddow {
   text-shadow: 2px 2px 2px #e7b198;
 }
+
+.info-progress {
+  display: block;
+  height: 2px;
+  background-color: whitesmoke;
+  animation: progressBar 30s linear;
+  animation-fill-mode: both;
+  animation-iteration-count: infinite;
+  -webkit-animation: progressBar 30s linear;
+  -webkit-animation-fill-mode: both;
+  -webkit-animation-iteration-count: infinite;
+  -moz-animation: progressBar 30s linear;
+  -moz-animation-fill-mode: both;
+  -moz-animation-iteration-count: infinite;
+}
+
+.info-progress.absolute {
+  position: absolute;
+  bottom: 2px;
+}
+
+@keyframes progressBar {
+  0% {
+    width: calc(100% - 4px);
+  }
+  100% {
+    width: 0;
+  }
+}
+
+@-webkit-keyframes progressBar {
+  0% {
+    width: calc(100% - 4px);
+  }
+  100% {
+    width: 0;
+  }
+}
+
+@-moz-keyframes progressBar {
+  0% {
+    width: calc(100% - 4px);
+  }
+  100% {
+    width: 0;
+  }
+}
