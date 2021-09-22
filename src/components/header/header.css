@@ -56,10 +56,12 @@
 }
 
 .dp-conn-container {
-  margin: 4px auto;
+  margin: 0px auto;
   min-width: 140px;
+  min-height: 72px;
   color: white;
   font-size: 12px;
+  display: flex;
 }
 
 .dp-conn-btn {
@@ -133,4 +135,33 @@
   color: var(--wolves-orange);
   background-color: transparent;
   cursor: auto;
+}
+
+.dp-chain-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  margin-right: 16px;
+  min-height: 100%;
+}
+
+.dp-chain-container .icon {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  background-size: cover;
+  cursor: pointer;
+}
+
+.dp-chain-container .polygon {
+  background-image: url(../../assets/polygon.png);
+}
+
+.dp-chain-container .ethereum {
+  background-image: url(../../assets/ethereum.png);
+}
+
+.dp-chain-container .selected {
+  border: 1px solid var(--wolves-orange);
+  cursor: default;
 }

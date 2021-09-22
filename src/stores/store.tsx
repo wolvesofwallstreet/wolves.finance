@@ -514,6 +514,7 @@ class Store {
   };
 
   handleBridgeChange = (accounts: Set<string>) => {
+    console.log('Brige:', accounts);
     if (accounts.has(this.address)) {
       dispatcher.dispatch({
         type: ASSETS_STATE,
@@ -831,6 +832,27 @@ class Store {
       }
     }
     this.lock.disable();
+  };
+
+  switchChain = async (chain: string) => {
+    if (window.ethereum) {
+      let newChain = 0;
+      if (chain === 'polygon') {
+        newChain = this.chainId === 1 ? 137 : 80001;
+      } else {
+        newChain = this.chainId === 137 ? 1 : 5;
+      }
+      if (newChain) {
+        try {
+          await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: '0x' + newChain.toString(16) }],
+          });
+        } catch (e) {
+          console.log(e);
+        }
+      }
+    }
   };
 
   /******************** Contracts *********************/
@@ -1691,6 +1713,8 @@ class Store {
         RootTunnelAbi,
         this.ethersSigner
       );
+
+      this.eventsSuspended = true;
       const tx = await contract.receiveMessage(proof);
 
       emitter.emit(SFT_PROOF, {
@@ -1713,6 +1737,7 @@ class Store {
         errorMessage: e.error ? e.error.message : e.message,
       } as StatusResult);
     }
+    this._resolveDQ();
   };
 
   _doSftUnlock = async (payloadContent: PayloadContent) => {

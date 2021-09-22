@@ -226,6 +226,7 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
   render(): ReactNode {
     const shortAddress = this._shortAddress();
     const navItems = this._getNavItems();
+    const isSidechain = StoreClasses.store.isSidechain();
     return (
       <Navbar bg="wolf" variant="dark" expand="md">
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
@@ -257,24 +258,36 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
         </Navbar.Collapse>
 
         <div className="dp-conn-container">
-          <Form onSubmit={this.handleSubmit}>
-            <input
-              className="wolves-btn dp-conn-btn"
-              type="submit"
-              value={shortAddress}
+          <div className="dp-chain-container">
+            <span
+              className={`icon ethereum${isSidechain ? '' : ' selected'}`}
+              onClick={() => StoreClasses.store.switchChain('ethereum')}
             />
-          </Form>
-          {this.state.wowsPrice !== undefined && (
-            <span className="dp-conn-price">
-              1 WOWS &asymp; ${this.state.wowsPrice.toFixed(0)}
-            </span>
-          )}
-          <br />
-          {this.state.wowsAmount !== undefined && (
-            <span className="dp-conn-price">
-              My WOWS: {this.state.wowsAmount.toFixed(2)}
-            </span>
-          )}
+            <span
+              className={`icon polygon${isSidechain ? ' selected' : ''}`}
+              onClick={() => StoreClasses.store.switchChain('polygon')}
+            />
+          </div>
+          <div>
+            <Form onSubmit={this.handleSubmit}>
+              <input
+                className="wolves-btn dp-conn-btn"
+                type="submit"
+                value={shortAddress}
+              />
+            </Form>
+            {this.state.wowsPrice !== undefined && (
+              <span className="dp-conn-price">
+                1 WOWS &asymp; ${this.state.wowsPrice.toFixed(0)}
+              </span>
+            )}
+            <br />
+            {this.state.wowsAmount !== undefined && (
+              <span className="dp-conn-price">
+                My WOWS: {this.state.wowsAmount.toFixed(2)}
+              </span>
+            )}
+          </div>
         </div>
       </Navbar>
     );
