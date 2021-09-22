@@ -89,7 +89,7 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
 
   handleSubmit(event: React.FormEvent<HTMLFormElement>): void {
     if (this.store.isConnected()) {
-      this.store.disconnect(true);
+      this.store.disconnect(true, true);
     } else {
       this.store.connect();
     }

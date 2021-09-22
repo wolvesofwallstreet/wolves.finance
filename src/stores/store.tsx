@@ -543,7 +543,7 @@ class Store {
   connect = async () => {
     try {
       if (this.ethersProvider) {
-        await this.disconnect(false);
+        await this.disconnect(false, false);
       }
 
       let ethersProvider: ethers.providers.JsonRpcProvider;
@@ -575,7 +575,7 @@ class Store {
         );
     } catch (e) {
       console.log(e);
-      await this.disconnect(true);
+      await this.disconnect(true, true);
     }
   };
 
@@ -598,12 +598,8 @@ class Store {
       return;
     }
 
-    provider.on('close', () => {
-      this.disconnect(true);
-    });
-
     provider.on('disconnect', () => {
-      this.disconnect(true);
+      this.disconnect(false, true);
     });
 
     provider.on('accountsChanged', async (accounts: string[]) => {
@@ -619,16 +615,9 @@ class Store {
         await this.connect();
       }
     });
-
-    provider.on('networkChanged', async () => {
-      if (this.ethersProvider) {
-        const network = await this.ethersProvider.getNetwork();
-        if (network.chainId !== this.chainId) await this.connect();
-      }
-    });
   };
 
-  disconnect = async (clearCache: boolean) => {
+  disconnect = async (clearCache: boolean, fireEvent: boolean) => {
     if (this.ethersProvider) {
       localStorage.removeItem('walletconnect');
       this.ethersProvider.removeAllListeners();
@@ -644,6 +633,8 @@ class Store {
     this.address = '';
     if (clearCache) {
       this.web3Modal.clearCachedProvider();
+    }
+    if (fireEvent) {
       this._emitNetworkChange();
     }
   };
@@ -662,7 +653,7 @@ class Store {
       console.log(e);
     }
     console.log('Disconnect due to WS close');
-    await this.disconnect(false);
+    await this.disconnect(false, true);
     if (this.eventProvider) {
       try {
         this.eventProvider?.removeAllListeners();
@@ -1922,6 +1913,7 @@ class Store {
       if (additionalGas) {
         const gasEstimation: ethers.BigNumber =
           await cfihContract.estimateGas.deposit(
+            this.address,
             sftTokenId,
             cfolioTokenId,
             investWeiAmounts
