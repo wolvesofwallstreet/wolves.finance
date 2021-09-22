@@ -44,6 +44,9 @@ const MIGRATE_V2_PROXY_CONTRACT = 'MigrateToV2Proxy';
 
 // Useful constants
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
+const BIGNUMBER_MAX = etheres.BigNumber.from(
+  '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
+);
 
 // Path to generated addresses file
 const CONFIG_ADDRESSES = `${__dirname}/../src/config/addresses.json`;
@@ -212,6 +215,62 @@ const func = async function (hardhat_re) {
       );
     } else {
       console.log('Minter role not set for old reward handler');
+    }
+  } else {
+    // Sidechain
+
+    //
+    // Let rewardhandler transfer token on sidechain (instead mint)
+    //
+
+    if (
+      configAddresses.rewardHandlerUpdate &&
+      configAddresses.rewardHandlerUpdate !== configAddresses.rewardHandler &&
+      (
+        await tokenInstance.allowance(
+          marketingWallet,
+          configAddresses.rewardHandler
+        )
+      ).gt(0)
+    ) {
+      await catchUnknownSigner(
+        execute(
+          TOKEN_CONTRACT,
+          {
+            from: marketingWallet,
+            log: false,
+          },
+          'approve',
+          configAddresses.rewardHandlerUpdate,
+          0
+        )
+      );
+    }
+
+    //
+    // Let rewardhandler transfer token on sidechain (instead mint)
+    //
+
+    if (
+      (
+        await tokenInstance.allowance(
+          marketingWallet,
+          configAddresses.rewardHandler
+        )
+      ).eq(0)
+    ) {
+      await catchUnknownSigner(
+        execute(
+          TOKEN_CONTRACT,
+          {
+            from: marketingWallet,
+            log: false,
+          },
+          'approve',
+          configAddresses.rewardHandler,
+          BIGNUMBER_MAX
+        )
+      );
     }
   }
 
@@ -1363,6 +1422,27 @@ const func = async function (hardhat_re) {
             log: true,
           },
           'destructContract'
+        )
+      );
+    }
+
+    //
+    // Set ChildTunnel in RewardHandler
+    //
+
+    if (
+      (await rewardHandlerInstance.childTunnel()) !==
+      generatedAddresses.polygonChildTunnelProxy
+    ) {
+      await catchUnknownSigner(
+        execute(
+          REWARD_HANDLER_CONTRACT,
+          {
+            from: marketingWallet,
+            log: true,
+          },
+          'setChildTunnel',
+          generatedAddresses.polygonChildTunnelProxy
         )
       );
     }

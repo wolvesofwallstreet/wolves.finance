@@ -111,6 +111,16 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
   event FeesDistributed(uint256 amount);
 
   //////////////////////////////////////////////////////////////////////////////
+  // Modifier
+  //////////////////////////////////////////////////////////////////////////////
+
+  modifier onlyAdmin() {
+    // Validate admin access
+    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admin');
+    _;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
   // Initialization
   //////////////////////////////////////////////////////////////////////////////
 
@@ -164,6 +174,15 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
     );
   }
 
+  /**
+   * @dev Set the childTunnel for reward bridging (child chain only)
+   */
+  function setChildTunnel(IChildTunnel childTunnel_) external onlyAdmin {
+    require(address(childTunnel_) != address(0), 'Zero address');
+
+    childTunnel = childTunnel_;
+  }
+
   //////////////////////////////////////////////////////////////////////////////
   // Public API
   //////////////////////////////////////////////////////////////////////////////
@@ -173,10 +192,7 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
    *
    * @param newAmount The new minimal amount before mint() is called
    */
-  function setMinimalMintAmount(uint256 newAmount) external {
-    // Validate access
-    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admins');
-
+  function setMinimalMintAmount(uint256 newAmount) external onlyAdmin {
     // Update state
     _minimalMintAmount = newAmount;
   }
@@ -199,10 +215,10 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
    * @param destroy True to destroy this contract, false to distribute without
    * destroying
    */
-  function terminate(address newRewardHandler, bool destroy) external {
-    // Validate access
-    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admins');
-
+  function terminate(address newRewardHandler, bool destroy)
+    external
+    onlyAdmin
+  {
     // Validate parameters
     require(newRewardHandler != address(0), "Can't transfer to address 0");
 
@@ -234,10 +250,7 @@ contract RewardHandler is Context, AccessControl, IRewardHandler {
    * @param route Path containing ERC20 token addresses to swap route[0] into
    * reward tokens. The last address must be rewardToken address.
    */
-  function swapIntoRewardToken(address[] calldata route) external {
-    // Validate access
-    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admins');
-
+  function swapIntoRewardToken(address[] calldata route) external onlyAdmin {
     // Check for ETH swap (no route given)
     if (route.length == 0) {
       // Validate state
