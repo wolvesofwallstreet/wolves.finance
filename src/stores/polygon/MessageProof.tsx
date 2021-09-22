@@ -290,7 +290,7 @@ export class MessageProof {
     this._findHeaderBlockNumber(0, 0, [result]);
   };
 
-  async _setup(cb: CB_FUNC): Promise<void> {
+  _setup = async (cb: CB_FUNC): Promise<void> => {
     if (this.pendingItems.length > 0) {
       // Get the last ChildBlock in checkPointManager
       const lastChildBlock = (
@@ -322,7 +322,7 @@ export class MessageProof {
       }
     }
     this.changeHandler = cb;
-  }
+  };
 
   processPending(tokenId: ethers.BigNumber): Promise<string> {
     const tokenIdHex = tokenId.toHexString();
