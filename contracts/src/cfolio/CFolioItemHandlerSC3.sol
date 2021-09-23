@@ -49,7 +49,7 @@ contract CFolioItemHandlerSC3 is CFolioItemHandlerFarm {
     ICurveFiDeposit3 depositContract,
     address farm
   ) CFolioItemHandlerFarm(addressRegistry, farm) {
-    // The Y pool deposit contract
+    // The pool deposit contract
     curveDeposit = depositContract;
     curveToken = IERC20(depositContract.lp_token());
   }
@@ -104,7 +104,7 @@ contract CFolioItemHandlerSC3 is CFolioItemHandlerFarm {
 
     if (totalStableAmount > 0) {
       // Call to external contract
-      curveDeposit.add_liquidity(stableAmounts, 0);
+      curveDeposit.add_liquidity(stableAmounts, 0, true);
 
       // Validate state
       uint256 afterStableBalance = curveToken.balanceOf(address(this));

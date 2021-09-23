@@ -24,6 +24,7 @@ const SFT_MINTER_CONTRACT = 'WOWSSftMinter';
 const SFT_EVALUATOR_PROXY_CONTRACT = 'SFTEvaluatorProxy';
 const TRADE_FLOOR_CONTRACT = 'TradeFloor';
 const CFOLIO_ITEM_HANDLER_LP_CONTRACT = 'CFolioItemHandlerLP';
+const CFOLIO_ITEM_HANDLER_SC3_CONTRACT = 'CFolioItemHandlerSC3';
 const CFOLIO_ITEM_HANDLER_SC4_CONTRACT = 'CFolioItemHandlerSC4';
 const POLYGON_ROOT_TUNNEL_CONTRACT = 'WOWSERC1155RootTunnel';
 const POLYGON_CHILD_TUNNEL_CONTRACT = 'WOWSERC1155ChildTunnel';
@@ -1264,7 +1265,9 @@ const func = async function (hardhat_re) {
       // destruct the old implemenation contract
       await catchUnknownSigner(
         execute(
-          CFOLIO_ITEM_HANDLER_SC4_CONTRACT,
+          hardhat_re.network.tags.curve3pool
+            ? CFOLIO_ITEM_HANDLER_SC3_CONTRACT
+            : CFOLIO_ITEM_HANDLER_SC4_CONTRACT,
           {
             from: marketingWallet,
             to: oldImplAddress,
