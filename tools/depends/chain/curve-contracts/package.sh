@@ -80,8 +80,6 @@ function build_curve() {
     "${DEPENDS_DIR_CURVE}/0001-Fix-underflow.patch"
   patch -p1 --directory="${REPO_DIR_CURVE}" < \
     "${DEPENDS_DIR_CURVE}/0002-Pass-minter-and-initial-holder-via-construction-para.patch"
-  patch -p1 --directory="${REPO_DIR_CURVE}" < \
-    "${DEPENDS_DIR_CURVE}/0003-Untether-from-USDT-for-testing.patch"
 
   # Remove unused pools, tokens and test contracts to save space (~170 MB of
   # bytecode) and several minutes of compile time

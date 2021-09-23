@@ -307,6 +307,7 @@ describe('Booster rewards', function () {
 
     // Mint a new LP investment type into Wolf
     const tx = sftMinterContract.mintCFolioItemSFT(
+      marketingWallet.address, // Recipient
       cFolioItemType,
       wowsTokenIdWolf,
       [investBalance]
@@ -494,7 +495,7 @@ describe('Booster rewards', function () {
     const { boosterContract } = contracts;
 
     const tx = boosterContract.claimRewards(wowsTokenIdWolf, true);
-    await chai.expect(tx).to.be.revertedWith('SafeMath#sub: UNDERFLOW');
+    await chai.expect(tx).to.be.revertedWith('B: Not open');
   });
 
   it('should claim the rewards into marketingWallet', async function () {

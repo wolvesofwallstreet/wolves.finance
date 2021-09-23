@@ -92,7 +92,8 @@ const BOOSTER_ABI = `${__dirname}/../src/abi/contracts/src/booster/Booster.sol/B
 const SFT_HOLDER_ABI = `${__dirname}/../src/abi/contracts/src/token/WOWSERC1155.sol/WOWSERC1155.json`;
 const SFT_MINTER_ABI = `${__dirname}/../src/abi/contracts/src/crowdsale/WOWSSftMinter.sol/WOWSSftMinter.json`;
 const TRADE_FLOOR_ABI = `${__dirname}/../src/abi/contracts/src/token/TradeFloor.sol/TradeFloor.json`;
-const CFOLIO_ITEM_HANDLER_SC_ABI = `${__dirname}/../src/abi/contracts/src/cfolio/CFolioItemHandlerSC.sol/CFolioItemHandlerSC.json`;
+const CFOLIO_ITEM_HANDLER_SC3_ABI = `${__dirname}/../src/abi/contracts/src/cfolio/CFolioItemHandlerSC3.sol/CFolioItemHandlerSC3.json`;
+const CFOLIO_ITEM_HANDLER_SC4_ABI = `${__dirname}/../src/abi/contracts/src/cfolio/CFolioItemHandlerSC4.sol/CFolioItemHandlerSC4.json`;
 const POLYGON_ROOT_TUNNEL_ABI = `${__dirname}/../src/abi/contracts/src/polygon/WOWSERC1155RootTunnel.sol/WOWSERC1155RootTunnel.json`;
 const POLYGON_CHILD_TUNNEL_ABI = `${__dirname}/../src/abi/contracts/src/polygon/WOWSERC1155ChildTunnel.sol/WOWSERC1155ChildTunnel.json`;
 
@@ -320,44 +321,6 @@ const func = async function (hardhat_re) {
   );
 
   //////////////////////////////////////////////////////////////////////////////
-  //
-  // Deploy RewardHandler
-  //
-  //////////////////////////////////////////////////////////////////////////////
-
-  if (configAddresses.rewardHandler) {
-    log_step(`Using deployed RewardHandler: ${configAddresses.rewardHandler}`);
-    generatedAddresses.rewardHandler = configAddresses.rewardHandler;
-  } else {
-    log_step('Deploying RewardHandler');
-
-    const rewardHandlerReceipt = await deploy(REWARD_HANDLER_CONTRACT, {
-      from: deployer,
-      log: true,
-      args: [ADDRESS_REGISTRY_ADDRESS],
-      deterministicDeployment: true,
-    });
-
-    generatedAddresses.rewardHandler = rewardHandlerReceipt.address;
-  }
-
-  //////////////////////////////////////////////////////////////////////////////
-  //
-  // Register address for RewardHandler
-  //
-  //////////////////////////////////////////////////////////////////////////////
-
-  log_step('Setting RewardHander in address registry');
-
-  await setRegistryKey(
-    deployer,
-    execute,
-    ADDRESS_REGISTRY_INSTANCE,
-    ADDRESS_BOOK_REWARD_HANDLER_KEY,
-    generatedAddresses.rewardHandler
-  );
-
-  //////////////////////////////////////////////////////////////////////////////
   // Booster
   //////////////////////////////////////////////////////////////////////////////
 
@@ -402,7 +365,6 @@ const func = async function (hardhat_re) {
     const boosterInterface = new ethers.utils.Interface(boosterAbi);
     const proxyCallData = boosterInterface.encodeFunctionData('initialize', [
       marketingWallet,
-      generatedAddresses.rewardHandler,
     ]);
 
     const boosterProxyReceipt = await deploy(BOOSTER_PROXY_CONTRACT, {
@@ -434,6 +396,44 @@ const func = async function (hardhat_re) {
     ADDRESS_REGISTRY_INSTANCE,
     ADDRESS_BOOK_WOWS_BOOSTER_PROXY_KEY,
     generatedAddresses.boosterProxy
+  );
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // Deploy RewardHandler
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  if (configAddresses.rewardHandler) {
+    log_step(`Using deployed RewardHandler: ${configAddresses.rewardHandler}`);
+    generatedAddresses.rewardHandler = configAddresses.rewardHandler;
+  } else {
+    log_step('Deploying RewardHandler');
+
+    const rewardHandlerReceipt = await deploy(REWARD_HANDLER_CONTRACT, {
+      from: deployer,
+      log: true,
+      args: [ADDRESS_REGISTRY_ADDRESS],
+      deterministicDeployment: true,
+    });
+
+    generatedAddresses.rewardHandler = rewardHandlerReceipt.address;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // Register address for RewardHandler
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  log_step('Setting RewardHander in address registry');
+
+  await setRegistryKey(
+    deployer,
+    execute,
+    ADDRESS_REGISTRY_INSTANCE,
+    ADDRESS_BOOK_REWARD_HANDLER_KEY,
+    generatedAddresses.rewardHandler
   );
 
   //////////////////////////////////////////////////////////////////////////////
@@ -850,7 +850,11 @@ const func = async function (hardhat_re) {
   if (hardhat_re.network.tags.sidechain) {
     // Load ABIs
     const cfolioItemHandlerSCAbi = JSON.parse(
-      fs.readFileSync(CFOLIO_ITEM_HANDLER_SC_ABI)
+      fs.readFileSync(
+        hardhat_re.network.tags.curve3pool
+          ? CFOLIO_ITEM_HANDLER_SC3_ABI
+          : CFOLIO_ITEM_HANDLER_SC4_ABI
+      )
     );
 
     //////////////////////////////////////////////////////////////////////////////

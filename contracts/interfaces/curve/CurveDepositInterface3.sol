@@ -36,13 +36,9 @@ abstract contract ICurveFiDeposit3 {
     bool donateDust
   ) external virtual;
 
-  function coins(int128 i) external view virtual returns (address);
+  function coins(uint256 i) external view virtual returns (address);
 
-  function underlying_coins(int128 i) external view virtual returns (address);
+  function underlying_coins(uint256 i) external view virtual returns (address);
 
-  function underlying_coins() external view virtual returns (address[3] memory);
-
-  function curve() external view virtual returns (address);
-
-  function token() external view virtual returns (address);
+  function lp_token() external view virtual returns (address);
 }

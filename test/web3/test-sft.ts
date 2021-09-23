@@ -30,6 +30,8 @@ const METADATA_URI = 'https://meta.wows.finance/wolves_assets/metadata/';
 // Path to generated address registry file
 const GENERATED_ADDRESSES = `${__dirname}/../../src/config/generated-addresses.json`;
 
+const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
+
 // Addresses are lazy-loaded
 let addresses = null;
 
@@ -255,21 +257,36 @@ describe('SFT contracts', function () {
     let levels = [];
     let newCaps = [];
     let newPrices = [];
-    let tx = sftMinterContract.setBaseSpec(levels, newCaps, newPrices);
+    let tx = sftMinterContract.setBaseSpec(
+      levels,
+      newCaps,
+      newPrices,
+      ADDRESS_ZERO
+    );
     await chai.expect(tx).to.not.be.reverted;
 
     // Test mismatching lengths
     levels = [0];
     newCaps = [200, 200];
     newPrices = ['2500000000000000000'];
-    tx = sftMinterContract.setBaseSpec(levels, newCaps, newPrices);
+    tx = sftMinterContract.setBaseSpec(
+      levels,
+      newCaps,
+      newPrices,
+      ADDRESS_ZERO
+    );
     await chai.expect(tx).to.be.revertedWith('WM: Length mismatch');
 
     // Set level caps
     levels = [0, 1];
     newCaps = [200, 200];
     newPrices = ['2500000000000000000', '4500000000000000000'];
-    tx = sftMinterContract.setBaseSpec(levels, newCaps, newPrices);
+    tx = sftMinterContract.setBaseSpec(
+      levels,
+      newCaps,
+      newPrices,
+      ADDRESS_ZERO
+    );
     await chai.expect(tx).to.not.be.reverted;
   });
 
@@ -348,7 +365,12 @@ describe('SFT contracts', function () {
     const referencePrices = ['100', '300', '100', '300'];
 
     // Set prices
-    const tx = sftMinterContract.setBaseSpec(levels, caps, referencePrices);
+    const tx = sftMinterContract.setBaseSpec(
+      levels,
+      caps,
+      referencePrices,
+      ADDRESS_ZERO
+    );
     await chai.expect(tx).to.not.be.reverted;
 
     // Check new prices

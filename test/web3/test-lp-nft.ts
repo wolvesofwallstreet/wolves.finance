@@ -443,6 +443,7 @@ describe('LP NFTs', function () {
 
     // Deposit LP tokens to boi should fail
     const tx = sftMinterContract.mintCFolioItemSFT(
+      marketingWallet.address, // Recipient
       cFolioItemType,
       wowsTokenIdBoi,
       []
@@ -467,6 +468,7 @@ describe('LP NFTs', function () {
 
     // Mint a new LP investment type into Wolf
     const tx = await sftMinterContract.mintCFolioItemSFT(
+      marketingWallet.address, // Recipient
       cFolioItemType,
       wowsTokenIdWolf,
       [lpBalance]

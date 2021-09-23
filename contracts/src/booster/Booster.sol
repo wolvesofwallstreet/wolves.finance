@@ -141,7 +141,7 @@ contract Booster is IBooster, AccessControl {
   /**
    * @dev One time initializer for proxy
    */
-  function initialize(address admin, address rewardHandler_) external {
+  function initialize(address admin) external {
     // Validate parameters
     require(
       getRoleMemberCount(DEFAULT_ADMIN_ROLE) == 0,
@@ -150,7 +150,6 @@ contract Booster is IBooster, AccessControl {
 
     // For administrative calls
     _setupRole(DEFAULT_ADMIN_ROLE, admin);
-    _setRewardHandler(rewardHandler_);
 
     // Reward definition: 180 days / 175% APR
     rewardDefinitions.push(RewardDefinition(15552000, 1750000000000000000));
@@ -380,7 +379,11 @@ contract Booster is IBooster, AccessControl {
     override
     onlyAdmin
   {
-    _setRewardHandler(rewardHandler_);
+    // Validate input
+    require(rewardHandler_ != address(0), 'B: Invalid rewardHandler');
+
+    // Update state
+    rewardHandler = rewardHandler_;
   }
 
   /**
@@ -423,17 +426,6 @@ contract Booster is IBooster, AccessControl {
   function _getTimestamp() private view returns (uint256) {
     // solhint-disable-next-line not-rely-on-time
     return block.timestamp;
-  }
-
-  /**
-   * @dev Internal setRewardhandler which checks for valid address
-   */
-  function _setRewardHandler(address rewardHandler_) internal {
-    // Validate input
-    require(rewardHandler_ != address(0), 'B: Invalid rewardHandler');
-
-    // Update state
-    rewardHandler = rewardHandler_;
   }
 
   /**

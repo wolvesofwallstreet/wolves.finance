@@ -521,6 +521,7 @@ describe('SFT minter', function () {
 
     // Mint a new LP investment type into marketing wallet
     const tx = sftMinterContract.mintCFolioItemSFT(
+      marketingWallet.address,
       cFolioItemType,
       // uint256(-1) == No parent cryptofolio, mint to recipient (marketing wallet)
       ethers.BigNumber.from(
@@ -594,6 +595,7 @@ describe('SFT minter', function () {
 
     // Mint a new LP investment type into marketing wallet
     const tx = sftMinterContract.mintCFolioItemSFT(
+      marketingWallet.address,
       cFolioItemType,
       // uint256(-1) == No parent cryptofolio, mint to recipient (marketing wallet)
       ethers.BigNumber.from(

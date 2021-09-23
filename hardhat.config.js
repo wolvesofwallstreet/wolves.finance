@@ -203,6 +203,7 @@ const config = {
       tags: ['sidechain', 'curve3pool'],
       url: 'https://polygon-rpc.com',
       accounts: TESTNET_ACCOUNTS,
+      gasPrice: 10000000000,
     },
   },
   etherscan: {

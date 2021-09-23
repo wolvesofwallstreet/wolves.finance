@@ -226,11 +226,12 @@ const func = async function (hardhat_re) {
 
     if (
       configAddresses.rewardHandlerUpdate &&
-      configAddresses.rewardHandlerUpdate !== configAddresses.rewardHandler &&
+      configAddresses.rewardHandlerUpdate !==
+        generatedAddresses.rewardHandler &&
       (
         await tokenInstance.allowance(
           marketingWallet,
-          configAddresses.rewardHandler
+          configAddresses.rewardHandlerUpdate
         )
       ).gt(0)
     ) {
@@ -256,7 +257,7 @@ const func = async function (hardhat_re) {
       (
         await tokenInstance.allowance(
           marketingWallet,
-          configAddresses.rewardHandler
+          generatedAddresses.rewardHandler
         )
       ).eq(0)
     ) {
@@ -268,7 +269,7 @@ const func = async function (hardhat_re) {
             log: false,
           },
           'approve',
-          configAddresses.rewardHandler,
+          generatedAddresses.rewardHandler,
           BIGNUMBER_MAX
         )
       );

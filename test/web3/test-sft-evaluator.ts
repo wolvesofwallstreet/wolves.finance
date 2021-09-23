@@ -263,6 +263,7 @@ describe('SFT evaluator', function () {
     for (let i = 0; i < cfolioItemTokenIds.length; ++i) {
       // Mint a new SC investment type into wallet
       const tx = sftMinterContract.mintCFolioItemSFT(
+        marketingWallet.address,
         // Alternate types, to fit in SFT minter's limit of 100 per type
         [cFolioItemType, cFolioItemType + 1][i % 2],
         MAX_UINT256,

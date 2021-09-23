@@ -20,9 +20,8 @@ import fs from 'fs';
 import { abi as CurveYTokenAbi } from '../../contracts/bytecode/curve-contracts/CurveTokenV1.json';
 import { abi as CurveYDepositAbi } from '../../contracts/bytecode/curve-contracts/DepositY.json';
 import { abi as CurveYSwapAbi } from '../../contracts/bytecode/curve-contracts/StableSwapY.json';
-//import CurveYDepositAbi from '../../src/abi/contracts/interfaces/curve/CurveDepositInterface.sol/ICurveFiDepositY.json';
 import YearnVaultAbi from '../../src/abi/contracts/interfaces/curve/YTokenInterface.sol/IYERC20.json';
-import CFolioItemHandlerScAbi from '../../src/abi/contracts/src/cfolio/CFolioItemHandlerSC.sol/CFolioItemHandlerSC.json';
+import CFolioItemHandlerScAbi from '../../src/abi/contracts/src/cfolio/CFolioItemHandlerSC4.sol/CFolioItemHandlerSC4.json';
 import WOWSSftMinterAbi from '../../src/abi/contracts/src/crowdsale/WOWSSftMinter.sol/WOWSSftMinter.json';
 import CFolioFarmAbi from '../../src/abi/contracts/src/investment/CFolioFarm.sol/CFolioFarm.json';
 import TradeFloorAbi from '../../src/abi/contracts/src/token/TradeFloor.sol/TradeFloor.json';
@@ -547,6 +546,7 @@ describe('SC NFTs', function () {
 
     // Deposit SC tokens to wolf should fail
     const tx = sftMinterContract.mintCFolioItemSFT(
+      marketingWallet.address, // Recipient
       cFolioItemType,
       wowsTokenIdWolf,
       []
@@ -576,6 +576,7 @@ describe('SC NFTs', function () {
 
     // Mint a new SC investment type into Boi
     const tx = sftMinterContract.mintCFolioItemSFT(
+      marketingWallet.address, // Recipient
       cFolioItemType,
       wowsTokenIdBoi,
       [daiBalance, usdcBalance, usdtBalance, tusdBalance, 0],

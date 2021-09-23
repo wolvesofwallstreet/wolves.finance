@@ -19,7 +19,7 @@ import './CFolioItemHandlerFarm.sol';
  *
  * See {CFolioItemHandlerFarm}.
  */
-contract CFolioItemHandlerSC4 is CFolioItemHandlerFarm {
+contract CFolioItemHandlerSC3 is CFolioItemHandlerFarm {
   using SafeMath for uint256;
   using SafeERC20 for IERC20;
 
@@ -51,7 +51,7 @@ contract CFolioItemHandlerSC4 is CFolioItemHandlerFarm {
   ) CFolioItemHandlerFarm(addressRegistry, farm) {
     // The Y pool deposit contract
     curveDeposit = depositContract;
-    curveToken = IERC20(depositContract.token());
+    curveToken = IERC20(depositContract.lp_token());
   }
 
   /**
@@ -60,7 +60,7 @@ contract CFolioItemHandlerSC4 is CFolioItemHandlerFarm {
   function initialize() public {
     // Approve stablecoin spending
     for (uint256 i = 0; i < 3; ++i) {
-      address underlyingCoin = curveDeposit.underlying_coins(int128(i));
+      address underlyingCoin = curveDeposit.underlying_coins(i);
       IERC20(underlyingCoin).safeApprove(address(curveDeposit), uint256(-1));
     }
 
@@ -92,7 +92,7 @@ contract CFolioItemHandlerSC4 is CFolioItemHandlerFarm {
 
     // Update state
     for (uint256 i = 0; i < 3; ++i) {
-      address underlyingCoin = curveDeposit.underlying_coins(int128(i));
+      address underlyingCoin = curveDeposit.underlying_coins(i);
 
       IERC20(underlyingCoin).safeTransferFrom(payer, address(this), amounts[i]);
 
@@ -163,7 +163,7 @@ contract CFolioItemHandlerSC4 is CFolioItemHandlerFarm {
     require(poolAmount > 0, 'CFIHSC: pool amount is 0');
 
     // Get single coin and amount
-    (int128 stableCoinIndex, uint256 stableCoinAmount) = _getStableCoinInfo(
+    (uint256 stableCoinIndex, uint256 stableCoinAmount) = _getStableCoinInfo(
       amounts
     );
 
@@ -171,18 +171,16 @@ contract CFolioItemHandlerSC4 is CFolioItemHandlerFarm {
     uint256 balanceBefore = curveToken.balanceOf(address(this));
 
     // Update state
-    if (stableCoinIndex != -1) {
+    if (stableCoinIndex != uint256(-1)) {
       // Call to external contract
       curveDeposit.remove_liquidity_one_coin(
         poolAmount,
-        stableCoinIndex,
+        int128(stableCoinIndex),
         stableCoinAmount,
         true
       );
 
-      address underlyingCoin = curveDeposit.underlying_coins(
-        int128(stableCoinIndex)
-      );
+      address underlyingCoin = curveDeposit.underlying_coins(stableCoinIndex);
       uint256 underlyingCoinAmount = IERC20(underlyingCoin).balanceOf(
         address(this)
       );
@@ -275,14 +273,14 @@ contract CFolioItemHandlerSC4 is CFolioItemHandlerFarm {
   function _getStableCoinInfo(uint256[] calldata amounts)
     private
     pure
-    returns (int128 stableCoinIndex, uint256 stableCoinAmount)
+    returns (uint256 stableCoinIndex, uint256 stableCoinAmount)
   {
-    stableCoinIndex = -1;
+    stableCoinIndex = uint256(-1);
 
-    for (uint128 i = 0; i < 3; ++i) {
+    for (uint256 i = 0; i < 3; ++i) {
       if (amounts[i] > 0) {
-        require(stableCoinIndex == -1, 'Multiple amounts > 0');
-        stableCoinIndex = int8(i);
+        require(stableCoinIndex == uint256(-1), 'Multiple amounts > 0');
+        stableCoinIndex = i;
         stableCoinAmount = amounts[i];
       }
     }
