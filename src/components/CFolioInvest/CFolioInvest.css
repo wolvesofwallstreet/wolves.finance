@@ -48,7 +48,9 @@
 
 .cfolioInvest-container > .right {
   flex-basis: 48%;
-  align-self: flex-start;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 @media only screen and (max-width: 980px) {

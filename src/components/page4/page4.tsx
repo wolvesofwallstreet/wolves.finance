@@ -547,7 +547,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
 
     const assetIndex =
       currentLevel?.type === 'bois' || currentLevel?.type === 'stableInvestment'
-        ? 4
+        ? StoreClasses.store.getStableCurrencies().length - 1
         : 0;
 
     let price,

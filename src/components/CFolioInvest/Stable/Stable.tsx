@@ -64,7 +64,7 @@ function Stable({
         : CFOLIO_ITEM_BUY,
       content: {
         wowsAmount: nftPrice,
-        investAmount: inputVals,
+        investAmount: inputVals.slice(0, currencies.length),
         sftTokenId: sft?.tokenId,
         cfolioTokenId: cfolioItem?.tokenId,
         cfolioType: nftType,

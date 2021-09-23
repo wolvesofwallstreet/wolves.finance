@@ -73,7 +73,9 @@ class App extends React.Component<unknown, APP_STATE> {
               <Route path="/detail" component={Page4} />
               <Route path="/status" component={PageStatus} />
               <Route path="/cfolio-sfts" component={CFolioItemSfts} />
-              <Route path="/cfolio-invest" component={CFolioInvest} />
+              {this.state.isSideChain && (
+                <Route path="/cfolio-invest" component={CFolioInvest} />
+              )}
               {this.state.isSideChain && (
                 <Route path="/c_folio_manager" component={CFolioManager} />
               )}

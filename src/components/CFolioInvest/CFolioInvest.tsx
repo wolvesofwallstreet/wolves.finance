@@ -418,7 +418,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
                 'cfolioInvest-container wolves-header center-container my-3'
               }
             >
-              <div className="left d-flex flex-column align-items-center justify-content-even mb-3">
+              <div className="left d-flex flex-column align-items-center justify-content-even">
                 {cfolioItemCard && (
                   <img
                     className="card-visual"
@@ -430,54 +430,55 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
               </div>
 
               <div className={'right t-left'}>
-                <h1
-                  className={
-                    'tk-vincente no-margin' +
-                    (renderCFolioItem ? ' wolves-text-shaddow' : '')
-                  }
-                >
-                  {' '}
-                  {cfolioItemCard ? cfolioItemCard.name : 'NFT'}{' '}
-                  {renderCFolioItem ? ' - MY NFT' : ' - NEW NFT'}
-                </h1>
-                {cfolioItemCard && (
-                  <h3 className="tk-vincente-lightbold">
-                    <span>
-                      {t('page.motto')}: {cfolioItemCard.motto}
-                    </span>
-                  </h3>
-                )}
-                <div
-                  className={'tk-grotesk-lightbold font-16 line-break-enable'}
-                >
-                  <h3 className="tk-vincente">
-                    {renderCFolioItem ? (
-                      <>
-                        TOKEN ID:{' '}
-                        {renderCFolioItem.tokenId.mask(128).toHexString()}
-                        <br />
-                        INVESTMENT:{' '}
-                        {renderCFolioItem.assets[
-                          renderCFolioItem.assets.length - 1
-                        ].toFixed(4)}
-                        {' ' + controlAttr.investCurrency}
-                      </>
-                    ) : (
-                      cfolioItemCard && (
+                <div>
+                  <h1
+                    className={
+                      'tk-vincente no-margin' +
+                      (renderCFolioItem ? ' wolves-text-shaddow' : '')
+                    }
+                  >
+                    {' '}
+                    {cfolioItemCard ? cfolioItemCard.name : 'NFT'}{' '}
+                    {renderCFolioItem ? ' - MY NFT' : ' - NEW NFT'}
+                  </h1>
+                  {cfolioItemCard && (
+                    <h3 className="tk-vincente-lightbold">
+                      <span>
+                        {t('page.motto')}: {cfolioItemCard.motto}
+                      </span>
+                    </h3>
+                  )}
+                  <div
+                    className={'tk-grotesk-lightbold font-16 line-break-enable'}
+                  >
+                    <h3 className="tk-vincente">
+                      {renderCFolioItem ? (
                         <>
-                          PRICE: {cfolioItemCard.price.toFixed(2)} WOWS
+                          TOKEN ID:{' '}
+                          {renderCFolioItem.tokenId.mask(128).toHexString()}
                           <br />
-                          AVAILABLE:{' '}
-                          {cfolioItemCard.maxMintable - cfolioItemCard.minted}/
-                          {cfolioItemCard.maxMintable}
+                          INVESTMENT:{' '}
+                          {renderCFolioItem.assets[
+                            renderCFolioItem.assets.length - 1
+                          ].toFixed(4)}
+                          {' ' + controlAttr.investCurrency}
                         </>
-                      )
-                    )}
-                  </h3>
-                  <p>{cfolioItemCard && cfolioItemCard.description}</p>
-                  <p>{this.cfolioItems?.description}</p>
+                      ) : (
+                        cfolioItemCard && (
+                          <>
+                            PRICE: {cfolioItemCard.price.toFixed(2)} WOWS
+                            <br />
+                            AVAILABLE:{' '}
+                            {cfolioItemCard.maxMintable - cfolioItemCard.minted}
+                            /{cfolioItemCard.maxMintable}
+                          </>
+                        )
+                      )}
+                    </h3>
+                    <p>{cfolioItemCard && cfolioItemCard.description}</p>
+                    <p>{this.cfolioItems?.description}</p>
+                  </div>
                 </div>
-
                 <div
                   id="cfolioInvest-control"
                   className="bg-blue-transparent-light tk-grotesk-lightbold"
