@@ -34,6 +34,7 @@ const config = {
       default: 1,
       rinkeby: env.RINKEBY_GNOSIS_MARKETING_WALLET_ADDRESS,
       mainnet: env.MAINNET_GNOSIS_MARKETING_WALLET_ADDRESS,
+      polygon: env.POLYGON_GNOSIS_ADMIN_WALLET_ADDRESS,
       goerli_sft: env.DEPLOYER_ADDRESS,
       mumbai: env.DEPLOYER_ADDRESS,
     },
@@ -41,6 +42,7 @@ const config = {
       default: 2,
       rinkeby: env.RINKEBY_GNOSIS_TEAM_WALLET_ADDRESS,
       mainnet: env.MAINNET_GNOSIS_TEAM_WALLET_ADDRESS,
+      polygon: env.POLYGON_GNOSIS_ADMIN_WALLET_ADDRESS,
       goerli_sft: env.DEPLOYER_ADDRESS,
       mumbai: env.DEPLOYER_ADDRESS,
     },
@@ -196,6 +198,11 @@ const config = {
       url: 'https://matic-mumbai.chainstacklabs.com',
       accounts: TESTNET_ACCOUNTS,
       gasPrice: 1500000000,
+    },
+    polygon: {
+      tags: ['sidechain', 'curve3pool'],
+      url: 'https://polygon-rpc.com',
+      accounts: TESTNET_ACCOUNTS,
     },
   },
   etherscan: {

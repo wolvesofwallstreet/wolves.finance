@@ -24,7 +24,7 @@ const SFT_MINTER_CONTRACT = 'WOWSSftMinter';
 const SFT_EVALUATOR_PROXY_CONTRACT = 'SFTEvaluatorProxy';
 const TRADE_FLOOR_CONTRACT = 'TradeFloor';
 const CFOLIO_ITEM_HANDLER_LP_CONTRACT = 'CFolioItemHandlerLP';
-const CFOLIO_ITEM_HANDLER_SC_CONTRACT = 'CFolioItemHandlerSC';
+const CFOLIO_ITEM_HANDLER_SC4_CONTRACT = 'CFolioItemHandlerSC4';
 const POLYGON_ROOT_TUNNEL_CONTRACT = 'WOWSERC1155RootTunnel';
 const POLYGON_CHILD_TUNNEL_CONTRACT = 'WOWSERC1155ChildTunnel';
 const MIGRATE_V2_CONTRACT = 'MigrateToV2';
@@ -44,7 +44,7 @@ const MIGRATE_V2_PROXY_CONTRACT = 'MigrateToV2Proxy';
 
 // Useful constants
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
-const BIGNUMBER_MAX = etheres.BigNumber.from(
+const BIGNUMBER_MAX = ethers.BigNumber.from(
   '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
 );
 
@@ -124,8 +124,9 @@ const func = async function (hardhat_re) {
 
   const REWARD_HANDLER_REWARD_ROLE = await rewardHandlerInstance.REWARD_ROLE();
 
+  const tokenInstance = await hardhat_re.ethers.getContract(TOKEN_CONTRACT);
+
   if (!hardhat_re.network.tags.sidechain || hardhat_re.network.tags.test) {
-    const tokenInstance = await hardhat_re.ethers.getContract(TOKEN_CONTRACT);
     const TOKEN_MINTER_ROLE = await tokenInstance.MINTER_ROLE();
 
     //
@@ -1262,7 +1263,7 @@ const func = async function (hardhat_re) {
       // destruct the old implemenation contract
       await catchUnknownSigner(
         execute(
-          CFOLIO_ITEM_HANDLER_SC_CONTRACT,
+          CFOLIO_ITEM_HANDLER_SC4_CONTRACT,
           {
             from: marketingWallet,
             to: oldImplAddress,

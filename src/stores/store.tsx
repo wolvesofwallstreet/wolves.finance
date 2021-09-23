@@ -8,7 +8,7 @@
 
 import WalletConnectProvider from '@walletconnect/web3-provider';
 import ERC20Abi from 'abi/contracts/0xerc1155/interfaces/IERC20.sol/IERC20.json';
-import CurveYDepositAbi from 'abi/contracts/interfaces/curve/CurveDepositInterface.sol/ICurveFiDepositY.json';
+import CurveDepositAbi from 'abi/contracts/interfaces/curve/CurveDepositInterface3.sol/ICurveFiDeposit3.json';
 import UniV2PairAbi from 'abi/contracts/interfaces/uniswap/IUniswapV2Pair.sol/IUniswapV2Pair.json';
 import BoosterAbi from 'abi/contracts/src/booster/Booster.sol/Booster.json';
 import CFolioItemHandlerAbi from 'abi/contracts/src/cfolio/interfaces/ICFolioItemHandler.sol/ICFolioItemHandler.json';
@@ -111,6 +111,7 @@ type ChainAddresses = {
   usdtToken?: string;
   curveYToken?: string;
   curveYDeposit?: string;
+  curveAToken?: string;
 };
 interface IIndexable {
   [key: number]: ChainAddresses;
@@ -204,7 +205,10 @@ export const BIGNUMBER_MAX = ethers.BigNumber.from(
   '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
 );
 
-export const STABLE_CURRENCIES = ['DAI', 'USDC', 'USDT', 'TUSD', 'yCrv'];
+export const STABLE_CURRENCIES = [
+  ['DAI', 'USDC', 'USDT', 'am3Crv'],
+  ['DAI', 'USDC', 'USDT', 'TUSD', 'yCrv'],
+];
 
 const SECONDS_PER_YEAR = 31536000;
 
@@ -341,6 +345,12 @@ class Store {
         allowance: 0,
       },
       yCrv: {
+        decimals: 18,
+        dust: Store.DUST_18,
+        value: 0,
+        allowance: 0,
+      },
+      am3Crv: {
         decimals: 18,
         dust: Store.DUST_18,
         value: 0,
@@ -502,6 +512,33 @@ class Store {
   }
 
   mount() {
+    if (window.ethereum) {
+      this.chainId = parseInt(window.ethereum.chainId);
+      switch (this.chainId) {
+        case 4:
+          this.networkName = 'rinkeby';
+          break;
+        case 5:
+          this.networkName = 'goerli';
+          break;
+        case 137:
+          this.networkName = 'matic';
+          break;
+        case 80001:
+          this.networkName = 'maticmum';
+          break;
+        default: {
+          this.networkName = ' mainnet';
+          this.chainId = 1;
+        }
+      }
+      console.log(
+        'Mount with chainId: ',
+        this.chainId,
+        ' and Network: ',
+        this.networkName
+      );
+    }
     this.autoconnect();
   }
 
@@ -857,6 +894,16 @@ class Store {
     }
   };
 
+  getStableCurrencies() {
+    switch (this.chainId) {
+      case 137:
+        return STABLE_CURRENCIES[0];
+      case 80001:
+        return STABLE_CURRENCIES[1];
+      default:
+        return [];
+    }
+  }
   /******************** Contracts *********************/
 
   _getChainAddresses(): ChainAddresses | undefined {
@@ -912,7 +959,7 @@ class Store {
       if (chainAddresses.curveYDeposit) {
         this.curveYDepositContractRO = new ethers.Contract(
           chainAddresses.curveYDeposit,
-          CurveYDepositAbi,
+          CurveDepositAbi,
           provider
         );
       } else this.curveYDepositContractRO = undefined;
@@ -925,6 +972,7 @@ class Store {
       this.assets.balances['DAI'].address = chainAddresses.daiToken;
       this.assets.balances['TUSD'].address = chainAddresses.tusdToken;
       this.assets.balances['yCrv'].address = chainAddresses.curveYToken;
+      this.assets.balances['am3Crv'].address = chainAddresses.curveAToken;
 
       this.assets.balances['WOWS'].handlerAddress =
         chainAddresses.sftMinterProxy;
@@ -1210,7 +1258,7 @@ class Store {
             const bidx =
               this.assets.cfolioItems[child.levelId].type === 'lpInvestment'
                 ? ['WETH/WOWS LP']
-                : STABLE_CURRENCIES;
+                : this.getStableCurrencies();
             for (let index = 0; index < numAssets; ++index) {
               child.assets.push(
                 this.fromWei(
@@ -1295,6 +1343,7 @@ class Store {
     cfolio: ethers.BigNumber
   ) {
     const iface = new ethers.utils.Interface(CFolioFarmAbi);
+    const stableCurrencies = this.getStableCurrencies();
     receipt.logs.find((log) => {
       if (
         log.address === this.cfolioFarmLpAddress ||
@@ -1320,7 +1369,7 @@ class Store {
                           (amount, index) =>
                             (item.assets[index] = this.fromWei(
                               amount,
-                              this.assets.balances[STABLE_CURRENCIES[index]]
+                              this.assets.balances[stableCurrencies[index]]
                                 .decimals
                             ))
                         );
@@ -1969,7 +2018,7 @@ class Store {
       balances = ['WETH/WOWS LP'];
     } else {
       cfihContract = this.cfihScContract;
-      balances = STABLE_CURRENCIES;
+      balances = this.getStableCurrencies();
     }
 
     if (!cfihContract || !this.ethersSigner) {
@@ -2005,7 +2054,10 @@ class Store {
         investWeiAmounts.push(investWeiAmount);
         approvalContracts.push(approvalContract);
 
-        if (cfihContract === this.cfihScContract && index !== '4')
+        if (
+          cfihContract === this.cfihScContract &&
+          index !== (balances.length - 1).toString()
+        )
           oneStableSet = true;
         oneSet = true;
       } else {
@@ -2082,7 +2134,7 @@ class Store {
         balances = ['WETH/WOWS LP'];
       } else {
         cfihContract = this.cfihScContract;
-        balances = STABLE_CURRENCIES;
+        balances = this.getStableCurrencies();
       }
 
       if (!cfihContract || !this.ethersSigner) {
@@ -2124,7 +2176,7 @@ class Store {
         if (
           cfihContract === this.cfihScContract &&
           withdrawWeiAmount.gt(0) &&
-          index !== '4'
+          index !== (balances.length - 1).toString()
         )
           oneStableSet = true;
 
@@ -2445,7 +2497,9 @@ const StoreClasses = {
 
 export class StoreContainer extends React.Component<unknown> {
   componentDidMount(): void {
-    StoreClasses.store.mount();
+    window.addEventListener('load', async () => {
+      StoreClasses.store.mount();
+    });
   }
 
   componentWillUnmount(): void {

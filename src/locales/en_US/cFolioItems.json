@@ -59,10 +59,10 @@
   },
   {
     "type": "stableInvestment",
-    "token": "aCrv",
-    "title": " WELCOME TO THE AAVE CRV POOL I-NFTs",
-    "shortDescription": "AAVE I-NFTs FOR YOUR LENDING FOR DAI / USDT / USDC",
-    "description": "This \"AAVE I-NFT\" allows you to invest DAI, USDT and USDC stable coins for lending with your fellow business Bois. You can sell this investment NFT with or without its added value at any point currently on any third party platform, and on ours when this is launched.",
+    "token": "am3Crv",
+    "title": " WELCOME TO THE STABLE CRV POOL I-NFTs",
+    "shortDescription": "I-NFTs FOR YOUR LENDING FOR DAI / USDT / USDC",
+    "description": "This \"STABLE I-NFT\" allows you to invest DAI, USDT and USDC stable coins for lending with your fellow business Bois. You can sell this investment NFT with or without its added value at any point currently on any third party platform, and on ours when this is launched.",
     "constraints": "bois",
     "cards": [
       {

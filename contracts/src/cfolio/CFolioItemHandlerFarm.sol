@@ -119,7 +119,7 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
    * If one of the relevant addresses changes, the contract has to be updated.
    * There is little state here, user state is completely handled in CFolioFarm.
    */
-  constructor(IAddressRegistry addressRegistry, bytes32 rewardFarmKey) {
+  constructor(IAddressRegistry addressRegistry, address farm) {
     // Admin
     address admin = addressRegistry.getRegistryEntry(AddressBook.ADMIN_ACCOUNT);
     _admin = admin;
@@ -143,10 +143,9 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
     _sftEvaluator = ISFTEvaluator(sftEvaluator);
 
     // WOWS rewards
-    address cfolioFarm = addressRegistry.getRegistryEntry(rewardFarmKey);
-    _cfolioFarm = ICFolioFarmOwnable(cfolioFarm);
+    _cfolioFarm = ICFolioFarmOwnable(farm);
 
-    emit Constructed(admin, sftHolder, sftMinter, sftEvaluator, cfolioFarm);
+    emit Constructed(admin, sftHolder, sftMinter, sftEvaluator, farm);
   }
 
   //////////////////////////////////////////////////////////////////////////////

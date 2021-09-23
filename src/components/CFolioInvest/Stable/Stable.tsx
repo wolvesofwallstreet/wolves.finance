@@ -6,7 +6,7 @@
  * See the file LICENSES/README.md for more information.
  */
 
-import './YearnQuad.css';
+import './Stable.css';
 
 import { useEffect, useState } from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
@@ -22,7 +22,7 @@ import {
   StatusResult,
   StoreClasses,
 } from '../../../stores/store';
-import Approval from '../../Approval';
+import Approval from '../../Approval/Approval';
 import AssetInput from '../../controls/asset_input';
 
 type PROPS = {
@@ -35,7 +35,7 @@ type PROPS = {
   beforeBuy: (successCb: () => void) => boolean;
 };
 
-function YearnQuad({
+function Stable({
   cfolioItem,
   investCurrency,
   nftPrice,
@@ -52,7 +52,7 @@ function YearnQuad({
   const [balances] = useState(StoreClasses.store.getAssets().balances);
   const [modal, showModal] = useState(false);
 
-  const currencies = ['DAI', 'USDC', 'USDT', 'TUSD', 'yCrv']; // maps from internal to asset index
+  const currencies = StoreClasses.store.getStableCurrencies();
 
   const handleBuy = () => {
     if (!beforeBuy(handleBuy)) return;
@@ -75,7 +75,9 @@ function YearnQuad({
   };
 
   const curMaxAmount =
-    tabOption === 0
+    currencies.length === 0
+      ? 0
+      : tabOption === 0
       ? balances[currencies[currencyIndex]].value
       : (cfolioItem && cfolioItem.assets[currencyIndex]) ?? 0;
 
@@ -101,35 +103,43 @@ function YearnQuad({
 
   useEffect(() => {
     if (tabOption) {
-      setCurrencyIndex(4);
+      setCurrencyIndex(currencies.length - 1);
       setCheckedIndex(0);
     } else setCheckedIndex(-1);
     setInputVals([0, 0, 0, 0, 0]);
-  }, [tabOption]);
+  }, [currencies, tabOption]);
 
   useEffect(() => {
     if (tabOption === 1) {
-      const newValues = [0, 0, 0, 0, inputVals[4]];
+      const newValues = Array.from({ length: currencies.length }, (v) => 0);
+      newValues[currencies.length - 1] = inputVals[currencies.length - 1];
       if (checkedIndex >= 0 && curMaxAmount > 0) {
-        newValues[checkedIndex] = isNaN(inputVals[4])
+        newValues[checkedIndex] = isNaN(inputVals[currencies.length - 1])
           ? NaN
           : (((cfolioItem && cfolioItem.assets[checkedIndex]) ?? 0) *
-              inputVals[4]) /
+              inputVals[currencies.length - 1]) /
             curMaxAmount;
       }
       if (newValues.find((v, index) => v !== inputVals[index]) !== undefined) {
         setInputVals(newValues);
       }
     }
-  }, [checkedIndex, tabOption, inputVals, cfolioItem, curMaxAmount]);
+  }, [
+    checkedIndex,
+    currencies,
+    tabOption,
+    inputVals,
+    cfolioItem,
+    curMaxAmount,
+  ]);
 
   const validCurrencies = () => {
     if (tabOption === 1)
-      return isNaN(inputVals[4])
+      return isNaN(inputVals[currencies.length - 1])
         ? undefined
-        : inputVals[4] <= 0
+        : inputVals[currencies.length - 1] <= 0
         ? []
-        : [currencies[4]];
+        : [currencies[currencies.length - 1]];
     else if (inputVals.find((v) => isNaN(v)) !== undefined) return undefined;
     else return currencies.filter((_, index) => inputVals[index] > 0);
   };
@@ -184,8 +194,8 @@ function YearnQuad({
   const spanText = cfolioItem
     ? 'DEPOSIT MORE'
     : sft?.isWallet
-    ? `BUY "${investCurrency} I-NFT" INTO MY WALLET`
-    : `BUY "${investCurrency} I-NFT" INTO MY C-FOLIO`;
+    ? 'BUY "STABLE I-NFT" INTO MY WALLET'
+    : 'BUY "STABLE I-NFT" INTO MY C-FOLIO';
 
   const hideModal = () => showModal(false);
 
@@ -225,6 +235,7 @@ function YearnQuad({
       <div id="currency-container" className="tk-grotesk-lightbold mt-3">
         {currencies.map((currency, index) => (
           <div
+            style={{ flexBasis: 100 / currencies.length - 1 + '%' }}
             key={'cidx_' + index}
             className={
               index === currencyIndex
@@ -259,4 +270,4 @@ function YearnQuad({
   );
 }
 
-export default withTranslation()(YearnQuad);
+export default withTranslation()(Stable);

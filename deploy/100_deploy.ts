@@ -30,7 +30,8 @@ const SFT_EVALUATOR_PROXY_CONTRACT = 'SFTEvaluatorProxy';
 const TRADE_FLOOR_CONTRACT = 'TradeFloor';
 const CFOLIO_FARM_CONTRACT = 'CFolioFarm';
 const CFOLIO_ITEM_HANDLER_LP_CONTRACT = 'CFolioItemHandlerLP';
-const CFOLIO_ITEM_HANDLER_SC_CONTRACT = 'CFolioItemHandlerSC';
+const CFOLIO_ITEM_HANDLER_SC3_CONTRACT = 'CFolioItemHandlerSC3';
+const CFOLIO_ITEM_HANDLER_SC4_CONTRACT = 'CFolioItemHandlerSC4';
 const POLYGON_ROOT_TUNNEL_CONTRACT = 'WOWSERC1155RootTunnel';
 const POLYGON_CHILD_TUNNEL_CONTRACT = 'WOWSERC1155ChildTunnel';
 const MIGRATE_V2_CONTRACT = 'MigrateToV2';
@@ -65,11 +66,6 @@ const ADDRESS_BOOK_DEPLOYER_KEY = ethers.utils.formatBytes32String('DEPLOYER');
 const ADDRESS_BOOK_UNISWAP_V2_ROUTER02_KEY = ethers.utils.formatBytes32String(
   'UNISWAP_V2_ROUTER02'
 );
-const ADDRESS_BOOK_CURVE_Y_TOKEN_KEY =
-  ethers.utils.formatBytes32String('CURVE_Y_TOKEN');
-const ADDRESS_BOOK_CURVE_Y_DEPOSIT_KEY =
-  ethers.utils.formatBytes32String('CURVE_Y_DEPOSIT');
-
 const ADDRESS_BOOK_WOWS_TOKEN_KEY =
   ethers.utils.formatBytes32String('WOWS_TOKEN');
 const ADDRESS_BOOK_REWARD_HANDLER_KEY =
@@ -90,8 +86,6 @@ const ADDRESS_BOOK_SFT_MINTER_PROXY_KEY =
   ethers.utils.formatBytes32String('SFT_MINTER_PROXY');
 const ADDRESS_BOOK_TRADE_FLOOR_PROXY_KEY =
   ethers.utils.formatBytes32String('TRADE_FLOOR_PROXY');
-const BOIS_REWARDS_KEY = ethers.utils.formatBytes32String('BOIS_REWARDS');
-const WOLVES_REWARDS_KEY = ethers.utils.formatBytes32String('WOLVES_REWARDS');
 
 // Contract ABIs
 const BOOSTER_ABI = `${__dirname}/../src/abi/contracts/src/booster/Booster.sol/Booster.json`;
@@ -224,7 +218,7 @@ const func = async function (hardhat_re) {
     generatedAddresses.uniV2Router = configAddresses.uniV2Router;
   }
   if (!hardhat_re.network.tags.needYearn) {
-    generatedAddresses.curveYToken = configAddresses.curveYToken;
+    generatedAddresses.curveADeposit = configAddresses.curveADeposit;
     generatedAddresses.curveYDeposit = configAddresses.curveYDeposit;
   }
 
@@ -263,22 +257,6 @@ const func = async function (hardhat_re) {
       ADDRESS_REGISTRY_INSTANCE,
       ADDRESS_BOOK_UNISWAP_V2_ROUTER02_KEY,
       generatedAddresses.uniV2Router
-    );
-  }
-  if (generatedAddresses.curveYToken) {
-    await setRegistryKey(
-      deployer,
-      execute,
-      ADDRESS_REGISTRY_INSTANCE,
-      ADDRESS_BOOK_CURVE_Y_TOKEN_KEY,
-      generatedAddresses.curveYToken
-    );
-    await setRegistryKey(
-      deployer,
-      execute,
-      ADDRESS_REGISTRY_INSTANCE,
-      ADDRESS_BOOK_CURVE_Y_DEPOSIT_KEY,
-      generatedAddresses.curveYDeposit
     );
   }
 
@@ -906,22 +884,6 @@ const func = async function (hardhat_re) {
 
     //////////////////////////////////////////////////////////////////////////////
     //
-    // Register addresses for CFolioFarmLP
-    //
-    //////////////////////////////////////////////////////////////////////////////
-
-    log_step('Setting CFolioFarmLP address in address registry');
-
-    await setRegistryKey(
-      deployer,
-      execute,
-      ADDRESS_REGISTRY_INSTANCE,
-      WOLVES_REWARDS_KEY,
-      generatedAddresses.cfolioFarmLP
-    );
-
-    //////////////////////////////////////////////////////////////////////////////
-    //
     // Deploy CFolioItemHandlerLP
     //
     //////////////////////////////////////////////////////////////////////////////
@@ -939,7 +901,7 @@ const func = async function (hardhat_re) {
         CFOLIO_ITEM_HANDLER_LP_CONTRACT,
         {
           from: deployer,
-          args: [ADDRESS_REGISTRY_ADDRESS],
+          args: [ADDRESS_REGISTRY_ADDRESS, generatedAddresses.cfolioFarmLP],
           log: true,
           deterministicDeployment: true,
         }
@@ -1014,22 +976,6 @@ const func = async function (hardhat_re) {
 
     //////////////////////////////////////////////////////////////////////////////
     //
-    // Register addresses for CFolioFarmSC
-    //
-    //////////////////////////////////////////////////////////////////////////////
-
-    log_step('Setting CFolioFarmSC address in address registry');
-
-    await setRegistryKey(
-      deployer,
-      execute,
-      ADDRESS_REGISTRY_INSTANCE,
-      BOIS_REWARDS_KEY,
-      generatedAddresses.cfolioFarmSC
-    );
-
-    //////////////////////////////////////////////////////////////////////////////
-    //
     // Deploy CFolioItemHandlerSC
     //
     //////////////////////////////////////////////////////////////////////////////
@@ -1044,10 +990,18 @@ const func = async function (hardhat_re) {
       log_step('Deploying CFolioItemHandlerSC contract');
 
       const cfolioItemHandlerSCContractReceipt = await deploy(
-        CFOLIO_ITEM_HANDLER_SC_CONTRACT,
+        hardhat_re.network.tags.curve3pool
+          ? CFOLIO_ITEM_HANDLER_SC3_CONTRACT
+          : CFOLIO_ITEM_HANDLER_SC4_CONTRACT,
         {
           from: deployer,
-          args: [ADDRESS_REGISTRY_ADDRESS],
+          args: [
+            ADDRESS_REGISTRY_ADDRESS,
+            hardhat_re.network.tags.curve3pool
+              ? generatedAddresses.curveADeposit
+              : generatedAddresses.curveYDeposit,
+            generatedAddresses.cfolioFarmSC,
+          ],
           log: true,
           deterministicDeployment: true,
         }

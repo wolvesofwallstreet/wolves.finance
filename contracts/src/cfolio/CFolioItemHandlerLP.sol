@@ -39,8 +39,8 @@ contract CFolioItemHandlerLP is CFolioItemHandlerFarm {
    * If one of the relevant addresses changes, the contract has to be updated.
    * There is little state here, user state is completely handled in CFolioFarm.
    */
-  constructor(IAddressRegistry addressRegistry)
-    CFolioItemHandlerFarm(addressRegistry, AddressBook.WOLVES_REWARDS)
+  constructor(IAddressRegistry addressRegistry, address farm)
+    CFolioItemHandlerFarm(addressRegistry, farm)
   {
     // The ERC-20 token we stake
     stakingToken = IERC20(

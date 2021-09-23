@@ -21,10 +21,6 @@ library AddressBook {
   bytes32 public constant REWARD_HANDLER = 'REWARD_HANDLER';
   bytes32 public constant SFT_MINTER_PROXY = 'SFT_MINTER_PROXY';
   bytes32 public constant SFT_HOLDER_PROXY = 'SFT_HOLDER_PROXY';
-  bytes32 public constant BOIS_REWARDS = 'BOIS_REWARDS';
-  bytes32 public constant WOLVES_REWARDS = 'WOLVES_REWARDS';
   bytes32 public constant SFT_EVALUATOR_PROXY = 'SFT_EVALUATOR_PROXY';
   bytes32 public constant TRADE_FLOOR_PROXY = 'TRADE_FLOOR_PROXY';
-  bytes32 public constant CURVE_Y_TOKEN = 'CURVE_Y_TOKEN';
-  bytes32 public constant CURVE_Y_DEPOSIT = 'CURVE_Y_DEPOSIT';
 }

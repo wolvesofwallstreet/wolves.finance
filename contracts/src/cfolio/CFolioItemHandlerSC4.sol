@@ -10,7 +10,7 @@ pragma solidity >=0.7.0 <0.8.0;
 
 import '../../0xerc1155/interfaces/IERC20.sol';
 import '../../0xerc1155/utils/SafeERC20.sol';
-import '../../interfaces/curve/CurveDepositInterface.sol';
+import '../../interfaces/curve/CurveDepositInterface4.sol';
 
 import './CFolioItemHandlerFarm.sol';
 
@@ -19,7 +19,7 @@ import './CFolioItemHandlerFarm.sol';
  *
  * See {CFolioItemHandlerFarm}.
  */
-contract CFolioItemHandlerSC is CFolioItemHandlerFarm {
+contract CFolioItemHandlerSC4 is CFolioItemHandlerFarm {
   using SafeMath for uint256;
   using SafeERC20 for IERC20;
 
@@ -27,11 +27,11 @@ contract CFolioItemHandlerSC is CFolioItemHandlerFarm {
   // Routing
   //////////////////////////////////////////////////////////////////////////////
 
-  // Curve Y pool token contract
-  IERC20 public immutable curveYToken;
+  // Curve pool token contract
+  IERC20 public immutable curveToken;
 
-  // Curve Y pool deposit contract
-  ICurveFiDepositY public immutable curveYDeposit;
+  // Curve 4 stable coin pool deposit contract
+  ICurveFiDeposit4 public immutable curveDeposit;
 
   //////////////////////////////////////////////////////////////////////////////
   // Initialization
@@ -44,18 +44,14 @@ contract CFolioItemHandlerSC is CFolioItemHandlerFarm {
    * If one of the relevant addresses changes, the contract has to be updated.
    * There is little state here, user state is completely handled in CFolioFarm.
    */
-  constructor(IAddressRegistry addressRegistry)
-    CFolioItemHandlerFarm(addressRegistry, AddressBook.BOIS_REWARDS)
-  {
+  constructor(
+    IAddressRegistry addressRegistry,
+    ICurveFiDeposit4 depositContract,
+    address farm
+  ) CFolioItemHandlerFarm(addressRegistry, farm) {
     // The Y pool deposit contract
-    curveYDeposit = ICurveFiDepositY(
-      addressRegistry.getRegistryEntry(AddressBook.CURVE_Y_DEPOSIT)
-    );
-
-    // The Y pool token contract
-    curveYToken = IERC20(
-      addressRegistry.getRegistryEntry(AddressBook.CURVE_Y_TOKEN)
-    );
+    curveDeposit = depositContract;
+    curveToken = IERC20(depositContract.token());
   }
 
   /**
@@ -64,12 +60,12 @@ contract CFolioItemHandlerSC is CFolioItemHandlerFarm {
   function initialize() public {
     // Approve stablecoin spending
     for (uint256 i = 0; i < 4; ++i) {
-      address underlyingCoin = curveYDeposit.underlying_coins(int128(i));
-      IERC20(underlyingCoin).safeApprove(address(curveYDeposit), uint256(-1));
+      address underlyingCoin = curveDeposit.underlying_coins(int128(i));
+      IERC20(underlyingCoin).safeApprove(address(curveDeposit), uint256(-1));
     }
 
     // Approve yCRV spending
-    curveYToken.approve(address(curveYDeposit), uint256(-1));
+    curveToken.approve(address(curveDeposit), uint256(-1));
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -88,7 +84,7 @@ contract CFolioItemHandlerSC is CFolioItemHandlerFarm {
     require(amounts.length == 5, 'CFIHSC: Amount length invalid');
 
     // Keep track of how many Y pool tokens were received
-    uint256 beforeBalance = curveYToken.balanceOf(address(this));
+    uint256 beforeBalance = curveToken.balanceOf(address(this));
 
     // Keep track of amounts
     uint256[4] memory stableAmounts;
@@ -96,7 +92,7 @@ contract CFolioItemHandlerSC is CFolioItemHandlerFarm {
 
     // Update state
     for (uint256 i = 0; i < 4; ++i) {
-      address underlyingCoin = curveYDeposit.underlying_coins(int128(i));
+      address underlyingCoin = curveDeposit.underlying_coins(int128(i));
 
       IERC20(underlyingCoin).safeTransferFrom(payer, address(this), amounts[i]);
 
@@ -108,10 +104,10 @@ contract CFolioItemHandlerSC is CFolioItemHandlerFarm {
 
     if (totalStableAmount > 0) {
       // Call to external contract
-      curveYDeposit.add_liquidity(stableAmounts, 0);
+      curveDeposit.add_liquidity(stableAmounts, 0);
 
       // Validate state
-      uint256 afterStableBalance = curveYToken.balanceOf(address(this));
+      uint256 afterStableBalance = curveToken.balanceOf(address(this));
       require(
         afterStableBalance > beforeBalance,
         'CFIHSC: No stable liquidity'
@@ -123,11 +119,11 @@ contract CFolioItemHandlerSC is CFolioItemHandlerFarm {
 
     // Update state
     if (yPoolAmount > 0) {
-      curveYToken.safeTransferFrom(payer, address(this), yPoolAmount);
+      curveToken.safeTransferFrom(payer, address(this), yPoolAmount);
     }
 
     // Validate state
-    uint256 afterBalance = curveYToken.balanceOf(address(this));
+    uint256 afterBalance = curveToken.balanceOf(address(this));
     require(afterBalance > beforeBalance, 'CFIFSC: No investment');
 
     // Record assets in Farm contract. They don't earn rewards.
@@ -172,19 +168,19 @@ contract CFolioItemHandlerSC is CFolioItemHandlerFarm {
     );
 
     // Keep track of how many Y pool tokens were sent
-    uint256 balanceBefore = curveYToken.balanceOf(address(this));
+    uint256 balanceBefore = curveToken.balanceOf(address(this));
 
     // Update state
     if (stableCoinIndex != -1) {
       // Call to external contract
-      curveYDeposit.remove_liquidity_one_coin(
+      curveDeposit.remove_liquidity_one_coin(
         yPoolAmount,
         stableCoinIndex,
         stableCoinAmount,
         true
       );
 
-      address underlyingCoin = curveYDeposit.underlying_coins(
+      address underlyingCoin = curveDeposit.underlying_coins(
         int128(stableCoinIndex)
       );
       uint256 underlyingCoinAmount = IERC20(underlyingCoin).balanceOf(
@@ -196,11 +192,11 @@ contract CFolioItemHandlerSC is CFolioItemHandlerFarm {
     } else {
       // No stablecoins were passed, sender is withdrawing Y pool tokens directly
       // Transfer Y pool tokens back to the sender
-      curveYToken.safeTransfer(_msgSender(), yPoolAmount);
+      curveToken.safeTransfer(_msgSender(), yPoolAmount);
     }
 
     // Valiate state
-    uint256 balanceAfter = curveYToken.balanceOf(address(this));
+    uint256 balanceAfter = curveToken.balanceOf(address(this));
     require(balanceAfter < balanceBefore, 'Nothing withdrawn');
 
     // Record assets in Farm contract. They don't earn rewards.
@@ -246,10 +242,7 @@ contract CFolioItemHandlerSC is CFolioItemHandlerFarm {
     uint256 wrappedAmount = _cfolioFarm.balanceOf(cfolioItem, 0);
 
     for (uint256 i = 0; i < 4; ++i) {
-      result[i] = curveYDeposit.calc_withdraw_one_coin(
-        wrappedAmount,
-        int128(i)
-      );
+      result[i] = curveDeposit.calc_withdraw_one_coin(wrappedAmount, int128(i));
     }
 
     result[4] = wrappedAmount;

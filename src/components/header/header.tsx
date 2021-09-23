@@ -30,6 +30,7 @@ interface HEADER_STATE {
   networkName: string;
   wowsPrice?: number;
   wowsAmount?: number;
+  isSidechain?: boolean;
 }
 
 type DropDownItem = {
@@ -51,7 +52,12 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
 
   constructor(props: HEADER_PROPS) {
     super(props);
-    this.state = { address: '', networkName: '', wowsAmount: 0 };
+    this.state = {
+      address: '',
+      networkName: '',
+      wowsAmount: 0,
+      isSidechain: false,
+    };
 
     this.handleSubmit = this.handleSubmit.bind(this);
     this.onConnectionChanged = this.onConnectionChanged.bind(this);
@@ -71,6 +77,8 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
 
   onConnectionChanged(params: ConnectResult): void {
     if (params.type === 'prod') this.setState(params);
+    const isSidechain = this.store.isSidechain();
+    if (isSidechain !== this.state.isSidechain) this.setState({ isSidechain });
   }
 
   onAssetsState(status: AssetStateresult): void {
@@ -226,7 +234,7 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
   render(): ReactNode {
     const shortAddress = this._shortAddress();
     const navItems = this._getNavItems();
-    const isSidechain = StoreClasses.store.isSidechain();
+    const isSidechain = this.state.isSidechain;
     return (
       <Navbar bg="wolf" variant="dark" expand="md">
         <Navbar.Toggle aria-controls="basic-navbar-nav" />

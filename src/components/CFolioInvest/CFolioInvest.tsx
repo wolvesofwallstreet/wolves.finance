@@ -31,8 +31,8 @@ import {
   ImageSlider,
 } from '../controls/image_slider';
 import { CARDS, CFOLIO_ITEMS } from '../types/cards';
+import Stable from './Stable/Stable';
 import StakeLP from './StakeLP/StakeLP';
-import YearnQuad from './YearnQuad/YearnQuad';
 
 type PROPS = {
   t: TFunction;
@@ -485,7 +485,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
                   {this.displayType === 'lpInvestment' ? (
                     <StakeLP {...controlAttr} />
                   ) : (
-                    <YearnQuad {...controlAttr} />
+                    <Stable {...controlAttr} />
                   )}
                 </div>
                 {/*<div className="d-flex p_relative mt-1">

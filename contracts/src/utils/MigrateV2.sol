@@ -14,7 +14,7 @@ import '../utils/AddressBook.sol';
 import '../utils/interfaces/IAddressRegistry.sol';
 import '../utils/TokenIds.sol';
 
-import '../../interfaces/curve/CurveDepositInterface.sol';
+import '../../interfaces/curve/CurveDepositInterface4.sol';
 
 interface ISFTEvaluatorOld {
   /**
@@ -98,6 +98,8 @@ contract MigrateToV2 is ERC1155Holder {
   bytes32 public constant SFT_HOLDER = 'SFT_HOLDER';
   bytes32 public constant CFOLIOITEM_BRIDGE_PROXY = 'CFOLIOITEM_BRIDGE_PROXY';
   uint256 public constant BULK_START = 0;
+  bytes32 public constant CURVE_Y_TOKEN = 'CURVE_Y_TOKEN';
+  bytes32 public constant CURVE_Y_DEPOSIT = 'CURVE_Y_DEPOSIT';
 
   //////////////////////////////////////////////////////////////////////////////
   // Routing
@@ -110,7 +112,7 @@ contract MigrateToV2 is ERC1155Holder {
   IMinterOld private immutable _sftMinterOld;
 
   IERC20 private immutable _yCrvToken;
-  ICurveFiDepositY private immutable _curveYDeposit;
+  ICurveFiDeposit4 private immutable _curveYDeposit;
 
   IWOWSERC1155 private immutable _sftContract;
   address private immutable _admin;
@@ -171,10 +173,8 @@ contract MigrateToV2 is ERC1155Holder {
     );
     _sftMinterOld = IMinterOld(regOld.getRegistryEntry(SFT_MINTER));
 
-    _yCrvToken = IERC20(regOld.getRegistryEntry(AddressBook.CURVE_Y_TOKEN));
-    _curveYDeposit = ICurveFiDepositY(
-      regOld.getRegistryEntry(AddressBook.CURVE_Y_DEPOSIT)
-    );
+    _yCrvToken = IERC20(regOld.getRegistryEntry(CURVE_Y_TOKEN));
+    _curveYDeposit = ICurveFiDeposit4(regOld.getRegistryEntry(CURVE_Y_DEPOSIT));
   }
 
   //////////////////////////////////////////////////////////////////////////////
