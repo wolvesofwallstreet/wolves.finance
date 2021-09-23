@@ -208,6 +208,7 @@ export const BIGNUMBER_MAX = ethers.BigNumber.from(
 export const STABLE_CURRENCIES = [
   ['DAI', 'USDC', 'USDT', 'am3Crv'],
   ['DAI', 'USDC', 'USDT', 'TUSD', 'yCrv'],
+  [],
 ];
 
 const SECONDS_PER_YEAR = 31536000;
@@ -901,7 +902,7 @@ class Store {
       case 80001:
         return STABLE_CURRENCIES[1];
       default:
-        return [];
+        return STABLE_CURRENCIES[2];
     }
   }
   /******************** Contracts *********************/

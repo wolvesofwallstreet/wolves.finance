@@ -177,7 +177,7 @@ class MerkleTree {
 }
 
 export class MessageProof {
-  provider: ethers.providers.WebSocketProvider;
+  provider: ethers.providers.JsonRpcProvider;
   checkPointManager: ethers.Contract;
   localStorageKey: string;
   pendingItems: PendingItem[] = [];
@@ -193,8 +193,8 @@ export class MessageProof {
     cb: CB_FUNC
   ) {
     if (chainId === 5) {
-      this.provider = new ethers.providers.WebSocketProvider(
-        'wss://ws-matic-mumbai.chainstacklabs.com'
+      this.provider = new ethers.providers.JsonRpcProvider(
+        'https://matic-mumbai.chainstacklabs.com/'
       );
       this.checkPointManager = new ethers.Contract(
         '0x2890bA17EfE978480615e330ecB65333b880928e',
@@ -203,8 +203,8 @@ export class MessageProof {
       );
       this.localStorageKey = MessageProof.LSKMUMBAI;
     } else if (chainId === 1) {
-      this.provider = new ethers.providers.WebSocketProvider(
-        'wss://polygon-rpc.com/'
+      this.provider = new ethers.providers.JsonRpcProvider(
+        'https://polygon-rpc.com/'
       );
       this.checkPointManager = new ethers.Contract(
         '0x86e4dc95c7fbdbf52e33d563bbdb00823894c287',
