@@ -20,7 +20,6 @@ import {
   SFT_CLAIM,
   SFT_CLAIM_BOOSTER,
   SFT_LOCK,
-  SFT_MIGRATE,
   SFT_REWARD,
   SFT_UNLOCK,
   SFT_UPGRADE,
@@ -34,13 +33,8 @@ import {
   StoreClasses,
 } from '../../stores/store';
 import { remainingFromSecs } from '../../utils/utils';
-import {
-  CARD,
-  CARD_LEVEL,
-  CARDS,
-  CFOLIO_ITEM,
-  CFOLIO_ITEMS,
-} from '../types/cards';
+import { CARD_LEVEL, CARDS, CFOLIO_ITEM, CFOLIO_ITEMS } from '../types/cards';
+import Migrate from './Migrate/Migrate';
 
 type PAGE4_PROPS = {
   t: TFunction;
@@ -60,6 +54,7 @@ type PAGE4_STATE = {
   currentIndex: number;
   selectedCFolio: number;
   modalOpen: boolean;
+  migrateOpen: boolean;
   boosterExistingValue: number;
   boosterNewValue: number;
   boosterRelock: number;
@@ -72,6 +67,7 @@ const INITIAL_PAGE4_STATE: PAGE4_STATE = {
   currentIndex: -1,
   selectedCFolio: -1,
   modalOpen: false,
+  migrateOpen: false,
   boosterExistingValue: 1,
   boosterNewValue: 15552000,
   boosterRelock: 1,
@@ -109,7 +105,6 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     StoreClasses.emitter.on(SFT_CLAIM, this.onSFTTransaction);
     StoreClasses.emitter.on(SFT_CLAIM_BOOSTER, this.onSFTTransaction);
     StoreClasses.emitter.on(SFT_LOCK, this.onSFTTransaction);
-    StoreClasses.emitter.on(SFT_MIGRATE, this.onSFTTransaction);
     StoreClasses.emitter.on(SFT_UNLOCK, this.onSFTTransaction);
     StoreClasses.emitter.on(SFT_UPGRADE, this.onSFTTransaction);
   }
@@ -125,7 +120,6 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
   componentWillUnmount(): void {
     StoreClasses.emitter.off(SFT_UPGRADE, this.onSFTTransaction);
     StoreClasses.emitter.off(SFT_UNLOCK, this.onSFTTransaction);
-    StoreClasses.emitter.off(SFT_MIGRATE, this.onSFTTransaction);
     StoreClasses.emitter.off(SFT_LOCK, this.onSFTTransaction);
     StoreClasses.emitter.off(SFT_CLAIM_BOOSTER, this.onSFTTransaction);
     StoreClasses.emitter.off(SFT_CLAIM, this.onSFTTransaction);
@@ -344,22 +338,6 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     }
   }
 
-  _onMigrate(): void {
-    if (this.state.currentIndex >= 0 && this.state.cards) {
-      const current = this.renderList[this.state.currentIndex];
-      if (current.tokenId) {
-        const payload = {
-          type: SFT_MIGRATE,
-          content: {
-            id: current.tokenId,
-          },
-        };
-        this.setState({ txPending: true });
-        StoreClasses.dispatcher.dispatch(payload);
-      }
-    }
-  }
-
   _onClaim(): void {
     const payload: Payload = {
       type: SFT_CLAIM,
@@ -414,6 +392,10 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     });
   }
 
+  hideCB = () => {
+    this.setState({ modalOpen: false, migrateOpen: false });
+  };
+
   render(): JSX.Element {
     const { history, t } = this.props;
     const {
@@ -425,6 +407,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       txPending,
       type,
       modalOpen,
+      migrateOpen,
       boosterExistingValue,
       boosterNewValue,
       boosterRelock,
@@ -445,29 +428,9 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         ? currentLevel.cards[currentRender.index]
         : undefined;
 
-    const noQuantity =
-      !currentCard ||
-      !currentRender ||
-      !currentLevel ||
-      (type !== 'myPack' &&
-        (currentCard as CARD).minted >= (currentLevel as CARD_LEVEL).quantity);
-
     const levelId = currentRender?.cfi
       ? 4
       : (currentLevel as CARD_LEVEL)?.levelId ?? 0;
-
-    const getButtonText = (s: string): { l: string; d: boolean } =>
-      !isWalletConnected
-        ? { l: t('header.connectWallet').toString(), d: true }
-        : noQuantity
-        ? { l: t('page4.noQuantity').toString(), d: true }
-        : txPending
-        ? { l: t('page4.txPending'), d: true }
-        : currentRender?.tokenId === undefined
-        ? { l: t('page4.buy', { name: s }).toString(), d: false }
-        : currentRender?.sft?.locked ?? currentRender?.cfi?.locked
-        ? { l: t('page4.unlock', { name: s }).toString(), d: false }
-        : { l: t('page4.lock', { name: s }).toString(), d: true };
 
     // Create Navigation Links
     let prevUrl: string | undefined, nextUrl: string | undefined;
@@ -640,10 +603,6 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     const imgClass =
       selectedCFolio < 0 ? 'card-visual' : 'card-visual monochrome';
 
-    const hideCB = () => {
-      this.setState({ modalOpen: false });
-    };
-
     const boosterState = (value: number, n: number): string => {
       return value === n ? 'active' : 'select';
     };
@@ -724,10 +683,9 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       }
     }
 
-    const buttonText = getButtonText(currentCard?.name ?? '');
     const migrateText = txPending
       ? { l: t('page4.txPending'), d: true }
-      : { l: `Migrate ${currentCard?.name} to V2`, d: false };
+      : { l: `Migrate ${currentCard?.name} to V2 ...`, d: false };
 
     return (
       <div
@@ -942,14 +900,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                       type="button"
                       value={migrateText.l}
                       disabled={migrateText.d}
-                      onClick={() => this._onMigrate()}
-                    />
-                    <input
-                      className="wolves-btn mt-1"
-                      type="button"
-                      value={buttonText.l}
-                      disabled={buttonText.d}
-                      onClick={() => this._onBuy()}
+                      onClick={() => this.setState({ migrateOpen: true })}
                     />
                   </div>
                 </>
@@ -957,11 +908,21 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
             </div>
           </div>
         )}
+        {migrateOpen &&
+          currentRender?.tokenId !== undefined &&
+          currentCard !== undefined && (
+            <Migrate
+              tokenId={currentRender?.tokenId}
+              name={currentCard.name}
+              hideCB={this.hideCB}
+              show={true}
+            />
+          )}
         {modalOpen && (
           <Modal
             show={true}
             backdrop="static"
-            onHide={hideCB}
+            onHide={this.hideCB}
             animation={false}
           >
             <Modal.Header closeButton>

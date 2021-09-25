@@ -88,6 +88,10 @@
   font-size: 32px;
 }
 
+.font-36 {
+  font-size: 36px;
+}
+
 @media only screen and (max-width: 1024px) {
   .font-20 {
     font-size: 18px;

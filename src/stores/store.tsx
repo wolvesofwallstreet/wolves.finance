@@ -62,29 +62,33 @@ import {
 const emitter = new Emitter.EventEmitter();
 const dispatcher = new Dispatcher.Dispatcher();
 
-type PayloadContent = {
+interface PayloadContent {
   amount?: number;
   investment?: number;
   time?: number;
   id?: ethers.BigNumber;
   type?: number;
   filter?: Array<string>;
-};
+}
 
-type PayloadContentCFolioItem = {
+interface PayloadContentCFolioItem extends PayloadContent {
   wowsAmount: number;
   investAmount: number[];
   sftTokenId: ethers.BigNumber;
   cfolioTokenId?: ethers.BigNumber;
   cfolioType: number;
-};
+}
 
-export type PayloadContentCFolioItemLT = {
+export interface PayloadContentCFolioItemLT extends PayloadContent {
   src: ethers.BigNumber;
   dst: ethers.BigNumber;
   lockedCFIs: ethers.BigNumber[];
   transferCFIs: ethers.BigNumber[];
-};
+}
+
+export interface PayloadContentMigration extends PayloadContent {
+  ycrvTeamConvert: boolean;
+}
 
 export type Payload = {
   type: string;
@@ -1689,6 +1693,9 @@ class Store {
       return;
     }
 
+    const ycrvTeamConvert = (payloadContent as PayloadContentMigration)
+      .ycrvTeamConvert;
+
     if (
       !this.sftHolderContractRO ||
       !this.ethersProvider ||
@@ -1711,7 +1718,9 @@ class Store {
           this.migrateTarget,
           id,
           1,
-          []
+          ycrvTeamConvert
+            ? '0x0000000000000000000000000000000000000000000000000000000000000001'
+            : '0x'
         );
       emitter.emit(SFT_MIGRATE, {
         status: 'tx',
