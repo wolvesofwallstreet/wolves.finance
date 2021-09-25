@@ -90,6 +90,32 @@ function Transfer({ hideCB, name, show, tokenId, t }: PROPS): JSX.Element {
             ADDRESS
           </div>
         </div>
+        {tOption === 0 && bridgeTarget.address !== '' && (
+          <span className="tk-aktiv-grotesk mt-2 d-inline-block">
+            {bridgeTarget.name === 'POLYGON' ? (
+              <>
+                Bridging to the Polygon network takes about 3-5 minutes.
+                <br />
+                Your CFOLIO will automatically appear after this time if you are
+                connected to the Polygon network.
+              </>
+            ) : (
+              <>
+                Bridging to Ethereum network is a 2 step process and can take up
+                to 2 hours. Your CFOLIO appears immediately in the Ethereum
+                network and shows you the current state:
+                <br />
+                <ol style={{ marginTop: '0.5em', paddingLeft: '1.5em' }}>
+                  <li>CFOLIO is waiting for the bridge process to finish.</li>
+                  <li>
+                    You have to release the CFOLIO from the bridge with an
+                    ethereum transaction.
+                  </li>
+                </ol>
+              </>
+            )}
+          </span>
+        )}
         <button
           className={'wolves-btn mt-2 tk-aktiv-grotesk-condensed'}
           onClick={() => handleTransfer()}
