@@ -97,7 +97,6 @@ contract MigrateToV2 is ERC1155Holder {
   bytes32 public constant SFT_MINTER = 'SFT_MINTER';
   bytes32 public constant SFT_HOLDER = 'SFT_HOLDER';
   bytes32 public constant CFOLIOITEM_BRIDGE_PROXY = 'CFOLIOITEM_BRIDGE_PROXY';
-  uint256 public constant BULK_START = 0;
   bytes32 public constant CURVE_Y_TOKEN = 'CURVE_Y_TOKEN';
   bytes32 public constant CURVE_Y_DEPOSIT = 'CURVE_Y_DEPOSIT';
 
@@ -134,6 +133,8 @@ contract MigrateToV2 is ERC1155Holder {
 
   address[] public bulkParticipants;
   mapping(address => BulkSlot) public bulkLookup;
+
+  uint256 releaseBlock = 13377140;
 
   //////////////////////////////////////////////////////////////////////////////
   // Modifier
@@ -241,7 +242,8 @@ contract MigrateToV2 is ERC1155Holder {
   //////////////////////////////////////////////////////////////////////////////
 
   function distributeStable() external {
-    require(block.number >= BULK_START, 'M: Not open');
+    require(block.number >= releaseBlock, 'M: Not open');
+    releaseBlock = uint256(-1);
 
     uint256 amountY = _yCrvToken.balanceOf(address(this));
     require(amountY > 0, 'M: Empty');
@@ -290,6 +292,13 @@ contract MigrateToV2 is ERC1155Holder {
   function destructContract() external onlyAdmin {
     // slither-disable-next-line suicidal
     selfdestruct(payable(_admin));
+  }
+
+  /**
+   * @dev Start a new bulk stable withdraw period
+   */
+  function setReleaseBlock(uint256 newReleaseBlock) external onlyAdmin {
+    releaseBlock = newReleaseBlock;
   }
 
   //////////////////////////////////////////////////////////////////////////////
