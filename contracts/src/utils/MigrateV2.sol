@@ -246,13 +246,10 @@ contract MigrateToV2 is ERC1155Holder {
     uint256 amountY = _yCrvToken.balanceOf(address(this));
     require(amountY > 0, 'M: Empty');
 
+    _yCrvToken.safeApprove(address(_curveYDeposit), amountY);
+
     IERC20 tetherToken = IERC20(_curveYDeposit.underlying_coins(2));
     _curveYDeposit.remove_liquidity_one_coin(amountY, 2, 0, true);
-
-    if (_yCrvToken.allowance(address(this), address(_curveYDeposit)) == 0) {
-      tetherToken.safeApprove(address(_curveYDeposit), uint256(-1));
-      _yCrvToken.safeApprove(address(_curveYDeposit), uint256(-1));
-    }
 
     // Now we have USDT in our contract: distribute to users
     uint256 availableUSDT = tetherToken.balanceOf(address(this));
