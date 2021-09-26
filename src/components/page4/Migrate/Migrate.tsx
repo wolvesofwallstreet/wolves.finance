@@ -109,7 +109,7 @@ function Migrate({ hideCB, name, show, t, tokenId }: PROPS): JSX.Element {
               supported on Polygon and have to be converted into a stable coin
               on curve.fi. Because this conversion is expensive,{' '}
               <b>we offer to do the convertion into USDT</b> after ETH block
-              13377140. After our convertion you receive USDT into your wallet.
+              13377140. After our conversion you receive USDT into your wallet.
             </li>
           </ul>
           <input id="crvOffer" type="checkbox" ref={checkRef} />
