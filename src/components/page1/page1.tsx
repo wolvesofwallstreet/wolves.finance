@@ -28,15 +28,26 @@ function Page1(props: PAGE1_PROPS) {
           <h2 className="tk-vincente-bold no-margin">{t('page1.head1')}</h2>
           <h3 className="tk-aktiv-grotesk-condensed">{t('page1.head2')}</h3>
           {!StoreClasses.store.isSidechain() && (
-            <a
-              id="wows-link"
-              className="wolves-btn tk-grotesk-bold mt-1"
-              target="_blank"
-              rel="noreferrer"
-              href={`https://app.uniswap.org/#/swap?inputCurrency=ETH&outputCurrency=${StoreClasses.store._getTokenContractAddress()}&use=v2`}
-            >
-              BUY WOWS ON UNISWAP V.2
-            </a>
+            <>
+              <a
+                id="wows-link"
+                className="wolves-btn tk-grotesk-bold mt-1"
+                target="_blank"
+                rel="noreferrer"
+                href={`https://app.uniswap.org/#/swap?inputCurrency=ETH&outputCurrency=${StoreClasses.store._getTokenContractAddress()}&use=v2`}
+              >
+                BUY WOWS ON UNISWAP V.2
+              </a>
+              <br />
+              <a
+                id="wows-link-migrate"
+                className="wolves-btn tk-grotesk-bold mt-1"
+                rel="noreferrer"
+                href={'https://appv1.wows.finance'}
+              >
+                <b>VISIT V1 AND MIGRATE MY CFOLIO's</b>
+              </a>
+            </>
           )}
         </div>
       </div>
