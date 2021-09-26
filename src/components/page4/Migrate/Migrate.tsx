@@ -78,7 +78,7 @@ function Migrate({ hideCB, name, show, t, tokenId }: PROPS): JSX.Element {
             respect of gas usage, they are also proxy backed. This let us add
             features faster in the future (multisig).
           </p>
-          <pre>Contract: 0x0000000000000000000000000000000000000000</pre>
+          <pre>Contract: 0x44FAd995ADf37075dF5db34fDE150F9B680DbED9</pre>
           <h3>MIGRATION RULES:</h3>
           <ul
             className="font-13"
