@@ -227,6 +227,11 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
             to: '/my?type=myPack&levelId=' + levelId,
             disabled: location.pathname === '/my',
           },
+          {
+            id: 'WOWS V1',
+            to: 'https://appv1.wows.finance',
+            disabled: false,
+          },
         ];
     return result;
   }
@@ -257,8 +262,11 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
             }
 
             // nav item
-            return (
+            return navItem.to.startsWith('http') ? (
+              <a href={navItem.to}>{navItem.id}</a>
+            ) : (
               <Link key={index} to={navItem.to}>
+                {' '}
                 {navItem.id}
               </Link>
             );
