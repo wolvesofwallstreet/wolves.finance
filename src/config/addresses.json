@@ -152,7 +152,7 @@
     "openSeaProxyRegistry": "",
     "uniDaiWeth": "",
     "p_fxChild": "0x8397259c983751DAf40400790063935a11afa28a",
-    "bridgeTarget": "",
+    "bridgeTarget": "0x914aCCe8AFA5726F8E37Bb1e16Cf6B46b6686def",
     "uniV2Router": "0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff",
     "daiToken": "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063",
     "usdcToken": "0x2791bca1f2de4661ed88a30c99a7a9449aa84174",
