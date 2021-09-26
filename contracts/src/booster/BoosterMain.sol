@@ -62,7 +62,7 @@ contract BoosterMain is IBooster, AccessControl {
   /**
    * @dev One time initializer for proxy
    */
-  function initialize(address admin, address rewardHandler_) external {
+  function initialize(address admin) external {
     // Validate parameters
     require(
       getRoleMemberCount(DEFAULT_ADMIN_ROLE) == 0,
@@ -71,7 +71,6 @@ contract BoosterMain is IBooster, AccessControl {
 
     // For administrative calls
     _setupRole(DEFAULT_ADMIN_ROLE, admin);
-    _setRewardHandler(rewardHandler_);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -173,18 +172,6 @@ contract BoosterMain is IBooster, AccessControl {
     override
     onlyAdmin
   {
-    _setRewardHandler(rewardHandler_);
-  }
-
-  //////////////////////////////////////////////////////////////////////////////
-  // Implementation details
-  //////////////////////////////////////////////////////////////////////////////
-
-  /**
-   * @dev Internal setRewardhandler which checks for valid address
-   */
-  function _setRewardHandler(address rewardHandler_) internal {
-    // Validate input
     require(rewardHandler_ != address(0), 'B: Invalid rewardHandler');
 
     // Update state
