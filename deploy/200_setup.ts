@@ -978,9 +978,11 @@ const func = async function (hardhat_re) {
         TRADE_FLOOR_CONTRACT,
         {
           from: marketingWallet,
+          to: configAddresses.tradeFloorUpdate,
           log: true,
         },
-        'destructContract'
+        'destructContract',
+        generatedAddresses.tradeFloorProxy
       )
     );
   }
