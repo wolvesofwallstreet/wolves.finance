@@ -73,7 +73,7 @@ function Migrate({ hideCB, name, show, t, tokenId }: PROPS): JSX.Element {
         </Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <span className="tk-aktiv-grotesk d-inline-block">
+        <span className="tk-aktiv-grotesk">
           <p className="font-16">
             Our multichain entry requires a migration to our new smart
             contracts. Beside the fact that the new contracts are optimized in
@@ -88,17 +88,19 @@ function Migrate({ hideCB, name, show, t, tokenId }: PROPS): JSX.Element {
           >
             <li>
               CFOLIO <b>without</b> I-NFT and <b>without</b> active booster lock
-              migrate to Ethereum.
+              migrates to Ethereum.
             </li>
             <li>
               CFOLIO <b>with</b> I-NFT or <b>with</b> active booster lock
-              migrate to Polygon.<br/>The booster lock is bridged to Polygon, too.
+              migrates to Polygon.
+              <br />
+              The booster lock is bridged to Polygon, too.
             </li>
             <li>
               Pending FARM REWARDS will be claimed into the existing booster
               lock, if no such one exists, into your wallet. If you want pending
-              rewards always in your wallet, you have to claim them manually before
-              migration.
+              rewards always in your wallet, you have to claim them manually
+              before migration.
             </li>
             <li>
               Invested LP TOKENS are withdrawn into your wallet, you can bridge

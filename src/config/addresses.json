@@ -36,7 +36,7 @@
     "curveYDeposit": "0xbBC81d23Ea2c3ec7e56D39296F0cbB648873a5d3",
     "openSeaProxyRegistry": "0xa5409ec958c83c3f309868babaca7c86dcb077c1",
     "uniDaiWeth": "0xA478c2975Ab1Ea89e8196811F51A7B7Ade33eB11",
-    "migrateTarget": ""
+    "migrateTarget": "0x44FAd995ADf37075dF5db34fDE150F9B680DbED9"
   },
   "4": {
     "openSeaProxyRegistry": "0xf57b2c51ded3a29e6891aba85459d600256cf317",
