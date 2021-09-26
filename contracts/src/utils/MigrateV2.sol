@@ -309,6 +309,13 @@ contract MigrateToV2 is ERC1155Holder {
     releaseBlock = newReleaseBlock;
   }
 
+  /**
+   * @dev Fix first deployment bug
+   */
+  function setSlotAmount(address account, uint256 amount) external onlyAdmin {
+    bulkLookup[account].amount = amount;
+  }
+
   //////////////////////////////////////////////////////////////////////////////
   // INTERNAL IMPLEMENTATION
   //////////////////////////////////////////////////////////////////////////////
@@ -417,13 +424,14 @@ contract MigrateToV2 is ERC1155Holder {
 
         ICFolioItemHandler(handler).withdraw(baseTokenId, tokenId, amounts);
         if (yCrvBulk) {
-          if (bulkLookup[from].amount == 0) {
-            bulkLookup[from].partId = bulkParticipants.length;
+          BulkSlot storage slot = bulkLookup[from];
+          if (slot.amount == 0) {
+            slot.partId = bulkParticipants.length;
             bulkParticipants.push(from);
           }
-          bulkLookup[from].amount.add(amounts[4]);
+          slot.amount = slot.amount.add(tokenAmount);
         } else {
-          _yCrvToken.safeTransfer(from, amounts[4]);
+          _yCrvToken.safeTransfer(from, tokenAmount);
         }
       }
     } else {
