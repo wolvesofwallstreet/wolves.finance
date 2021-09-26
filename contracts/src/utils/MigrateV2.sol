@@ -74,6 +74,14 @@ interface IMinterOld {
   function claimSFTRewards(uint256 sftTokenId, uint256 lockPeriod) external;
 }
 
+interface ICFolioItemHandlerOld {
+  function cfolioFarm() external returns (address);
+}
+
+interface ICFolioFarmOld {
+  function balanceOf(address account) external returns (uint256);
+}
+
 /**
  * @notice Migration from v1 -> v2 which processes:
  * - remove investment from cfis on old contract (either into the account
@@ -397,16 +405,16 @@ contract MigrateToV2 is ERC1155Holder {
     address cfolioItem = _sftContractOld.tokenIdToAddress(tokenId);
     require(cfolioItem != address(0), 'M: Invalid cfi');
     address handler = IWOWSCryptofolioOld(cfolioItem)._tradefloors(0);
+    address farm = ICFolioItemHandlerOld(handler).cfolioFarm();
 
-    uint256[] memory amounts = ICFolioItemHandler(handler).getAmounts(
-      cfolioItem
-    );
+    uint256 tokenAmount = ICFolioFarmOld(farm).balanceOf(cfolioItem);
 
     if (cfiType >= 16) {
       // yearn
-      require(amounts.length == 5, 'M: SC wrong');
-      if (amounts[4] > 0) {
-        amounts[0] = amounts[1] = amounts[2] = amounts[3] = 0;
+      if (tokenAmount > 0) {
+        uint256[] memory amounts = new uint256[](5);
+        amounts[4] = tokenAmount;
+
         ICFolioItemHandler(handler).withdraw(baseTokenId, tokenId, amounts);
         if (yCrvBulk) {
           if (bulkLookup[from].amount == 0) {
@@ -420,8 +428,10 @@ contract MigrateToV2 is ERC1155Holder {
       }
     } else {
       // LP token
-      require(amounts.length == 1, 'M: LP wrong');
-      if (amounts[0] > 0) {
+      if (tokenAmount > 0) {
+        uint256[] memory amounts = new uint256[](1);
+        amounts[0] = tokenAmount;
+
         ICFolioItemHandler(handler).withdraw(baseTokenId, tokenId, amounts);
         _uniV2LPToken.safeTransfer(from, amounts[0]);
       }
