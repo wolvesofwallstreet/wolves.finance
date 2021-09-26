@@ -284,7 +284,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     tokenIds[0] = tokenId;
     amounts[0] = amount;
 
-    _onTransfer(from, to, tokenIds);
+    _onTransfer(from, to, tokenIds, amounts);
   }
 
   /**
@@ -303,7 +303,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     // Call parent
     super.safeBatchTransferFrom(from, to, tokenIds, amounts, data);
 
-    _onTransfer(from, to, tokenIds);
+    _onTransfer(from, to, tokenIds, amounts);
   }
 
   /**
@@ -382,8 +382,10 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
 
     // Perform internal handling
     uint256[] memory tokenIds = new uint256[](1);
+    uint256[] memory amounts = new uint256[](1);
     tokenIds[0] = tokenId;
-    _onTransfer(account, address(0), tokenIds);
+    amounts[0] = amount;
+    _onTransfer(account, address(0), tokenIds, amounts);
   }
 
   /**
@@ -401,7 +403,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     super.burnBatch(account, tokenIds, amounts);
 
     // Perform internal handling
-    _onTransfer(account, address(0), tokenIds);
+    _onTransfer(account, address(0), tokenIds, amounts);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -583,23 +585,33 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   function _onTransfer(
     address from,
     address to,
-    uint256[] memory tokenIds
+    uint256[] memory tokenIds,
+    uint256[] memory amounts
   ) private {
     // Count SFT tokenIds
     uint256 length = tokenIds.length;
+    uint256 validLength = 0;
     // Relink owner
     for (uint256 i = 0; i < length; ++i) {
-      _relinkOwner(from, to, tokenIds[i], uint256(-1));
+      if (amounts[i] == 1) {
+        _relinkOwner(from, to, tokenIds[i], uint256(-1));
+        ++validLength;
+      }
+      // CryptoFolios send 0 amount!!
+      else require(amounts[i] == 0, 'TF: Invalid amount');
     }
 
     // On Burn we need to transfer SFT ownership back
-    if (to == address(0)) {
-      uint256[] memory sftTokenIds = new uint256[](length);
-      uint256[] memory amounts = new uint256[](length);
+    if (validLength > 0 && to == address(0)) {
+      uint256[] memory sftTokenIds = new uint256[](validLength);
+      uint256[] memory sftAmounts = new uint256[](validLength);
+      validLength = 0;
       for (uint256 i = 0; i < length; ++i) {
-        uint256 tokenId = tokenIds[i];
-        sftTokenIds[i] = tokenId.toSftTokenId();
-        amounts[i] = 1;
+        if (amounts[i] == 1) {
+          uint256 tokenId = tokenIds[i];
+          sftTokenIds[validLength] = tokenId.toSftTokenId();
+          sftAmounts[validLength++] = 1;
+        }
       }
 
       IWOWSERC1155 sftHolder = _sftHolder;
@@ -613,7 +625,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
         address(this),
         _msgSender(),
         sftTokenIds,
-        amounts,
+        sftAmounts,
         ''
       );
     }
@@ -652,7 +664,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
       // OpenSea only listens to TransferSingle event on mint
       _mintAndEmit(sftRecipient, mintedTokenId);
     }
-    _onTransfer(address(0), sftRecipient, mintedTokenIds);
+    _onTransfer(address(0), sftRecipient, mintedTokenIds, amounts);
   }
 
   /**
