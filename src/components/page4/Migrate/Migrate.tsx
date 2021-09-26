@@ -67,45 +67,49 @@ function Migrate({ hideCB, name, show, t, tokenId }: PROPS): JSX.Element {
     <Modal show={show} onHide={hideCB} animation={false} backdrop={true}>
       <Modal.Header closeButton>
         <Modal.Title>
-          <span className="tk-vincente-bold font-36">MIGRATE {name} TO V2</span>
+          <span className="tk-vincente-bold font-36 single-line">
+            MIGRATE {name} TO V2
+          </span>
         </Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <span className="tk-aktiv-grotesk mt-2 d-inline-block">
-          <p>
+        <span className="tk-aktiv-grotesk d-inline-block">
+          <p className="font-16">
             Our multichain entry requires a migration to our new smart
             contracts. Beside the fact that the new contracts are optimized in
-            respect of gas usage, they are also proxy backed. This let us add
-            features faster in the future (multisig).
+            respect of gas usage, they are now also proxy backed. This let us
+            add features faster in the future.
           </p>
           <pre>Contract: 0x44FAd995ADf37075dF5db34fDE150F9B680DbED9</pre>
           <h3>MIGRATION RULES:</h3>
           <ul
             className="font-13"
-            style={{ marginTop: '0.5em', paddingLeft: '1.5em' }}
+            style={{ marginTop: '0.5em', paddingLeft: '1em' }}
           >
             <li>
               CFOLIO <b>without</b> I-NFT and <b>without</b> active booster lock
-              migrate to Ethereum
+              migrate to Ethereum.
             </li>
             <li>
-              CFOLIO <b>with</b> either I-NFT or <b>with</b> active booster lock
-              migrate to Polygon
+              CFOLIO <b>with</b> I-NFT or <b>with</b> active booster lock
+              migrate to Polygon.<br/>The booster lock is bridged to Polygon, too.
             </li>
             <li>
               Pending FARM REWARDS will be claimed into the existing booster
-              lock, if no such one exists, into your wallet
+              lock, if no such one exists, into your wallet. If you want pending
+              rewards always in your wallet, you have to claim them manually before
+              migration.
             </li>
             <li>
               Invested LP TOKENS are withdrawn into your wallet, you can bridge
-              them on your own to Polygon and invest + earn
+              them on your own to Polygon and invest + earn.
             </li>
             <li>
               Invested YCRV TOKENS are withdrawn into your wallet. They are not
               supported on Polygon and have to be converted into a stable coin
               on curve.fi. Because this conversion is expensive,{' '}
               <b>we offer to do the convertion into USDT</b> after ETH block
-              13377140.
+              13377140. After our convertion you receive USDT into your wallet.
             </li>
           </ul>
           <input id="crvOffer" type="checkbox" ref={checkRef} />
