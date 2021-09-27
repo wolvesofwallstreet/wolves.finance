@@ -1084,6 +1084,7 @@ const func = async function (hardhat_re) {
             generatedAddresses.sftMinterProxy,
             generatedAddresses.boosterProxy,
             marketingWallet,
+            generatedAddresses.sftEvaluatorProxy,
           ],
           log: true,
           deterministicDeployment: true,

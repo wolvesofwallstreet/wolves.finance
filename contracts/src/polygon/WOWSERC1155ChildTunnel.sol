@@ -7,6 +7,7 @@ import { Address } from '../../0xerc1155/utils/Address.sol';
 import { IWOWSERC1155 } from '../token/interfaces/IWOWSERC1155.sol';
 import { FxBaseChildTunnel } from '../../polygonFx/tunnel/FxBaseChildTunnel.sol';
 import { IBooster } from '../booster/interfaces/IBooster.sol';
+import { ISFTEvaluator } from '../cfolio/interfaces/ISFTEvaluator.sol';
 
 import { IChildTunnel } from './interfaces/IChildTunnel.sol';
 
@@ -42,6 +43,7 @@ contract WOWSERC1155ChildTunnel is
   IWOWSSftMinter private immutable sftMinter_;
   IBooster private immutable booster_;
   address private immutable admin_;
+  ISFTEvaluator private immutable sftEvaluator_;
 
   //////////////////////////////////////////////////////////////////////////////
   // State
@@ -74,12 +76,14 @@ contract WOWSERC1155ChildTunnel is
   //////////////////////////////////////////////////////////////////////////////
 
   event TokenMapped(address indexed rootToken, address indexed childToken);
+
   event TokenReceived(
     address indexed to,
     address indexed depositor,
     uint256 tokenId,
     bytes data
   );
+
   event TokensReceived(
     address indexed to,
     address indexed depositor,
@@ -96,13 +100,23 @@ contract WOWSERC1155ChildTunnel is
     address _token,
     address _sftMinter,
     address _booster,
-    address _admin
+    address _admin,
+    address _sftEvaluator
   ) FxBaseChildTunnel(_fxChild) {
     require(_token.isContract(), 'CT: Not a contract');
+    require(
+      _sftMinter != address(0) &&
+        _booster != address(0) &&
+        _admin != address(0) &&
+        _sftEvaluator != address(0),
+      'CT: Zero address'
+    );
+
     childToken_ = IWOWSERC1155(_token);
     sftMinter_ = IWOWSSftMinter(_sftMinter);
     booster_ = IBooster(_booster);
     admin_ = _admin;
+    sftEvaluator_ = ISFTEvaluator(_sftEvaluator);
   }
 
   /**
@@ -191,6 +205,17 @@ contract WOWSERC1155ChildTunnel is
     require(newRewardHandler != address(0), 'CT: Zero address');
 
     rewardHandler = newRewardHandler;
+  }
+
+  function simulateMessage(uint256 stateId, bytes calldata _data)
+    external
+    onlyAdmin
+  {
+    (address rootMessageSender, address receiver, bytes memory data) = abi
+      .decode(_data, (address, address, bytes));
+    require(receiver == address(this), 'CT: Wrong receiver');
+
+    _processMessageFromRoot(stateId, rootMessageSender, data);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -347,6 +372,7 @@ contract WOWSERC1155ChildTunnel is
       if (hasBooster > 0) {
         dataIndex = booster_.migrateCreatePool(tokenId, data, dataIndex);
       }
+      sftEvaluator_.setRewardRate(tokenId, false);
     } else {
       uint256 cfiType = _getUint256(data, dataIndex++);
       tokenId = sftMinter_.mintCFolioItemSFT(

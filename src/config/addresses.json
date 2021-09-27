@@ -33,7 +33,7 @@
     "sftEvaluatorProxy": "0x2F6A08d0F52A147300D12e543f1e1e4310D0046E",
     "migratorV2": "0xD1A21424005d694dD837A0241B82a377689aBf2f",
     "migratorV2Proxy": "0x44FAd995ADf37075dF5db34fDE150F9B680DbED9",
-    "polygonRootTunnel": "0x09725F7A3056267AA207143f75402141AE20D284",
+    "polygonRootTunnel": "0x93d1e1D71E54DC10177d72494b9448470B8bC5D3",
     "polygonRootTunnelProxy": "0xDD423A34D9489454e108d6006336A687A38Ac1A0"
   },
   "4": {
@@ -184,7 +184,7 @@
     "cfolioFarmSC": "0xFF80Df978429e2444cE7b6FBF316Afa087cE5F6b",
     "cfolioItemHandlerSC": "0x8EEA9c3a4353413Ec471cDdD5Cd437289f16E2ae",
     "cfolioItemHandlerSCProxy": "0xf605B3B3Cd435bE067D3F795B322F44cA86f29c0",
-    "polygonChildTunnel": "0x5100a26947834d587c517fBD2223CF851C4412b9",
+    "polygonChildTunnel": "0x33fF6dDC69adeeEC0f52A983DbFBdf8997e635d4",
     "polygonChildTunnelProxy": "0x914aCCe8AFA5726F8E37Bb1e16Cf6B46b6686def"
   }
 }

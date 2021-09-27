@@ -204,7 +204,7 @@ contract WOWSERC1155RootTunnel is FxBaseRootTunnel, ERC1155Holder, IRootTunnel {
    */
   function mapToken() external onlyAdmin {
     // MAP_TOKEN, rootToken
-    bytes memory message = abi.encode(MAP_TOKEN, rootToken_);
+    bytes memory message = abi.encode(MAP_TOKEN, abi.encode(rootToken_));
     _sendMessageToChild(message);
   }
 
