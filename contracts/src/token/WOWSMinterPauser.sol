@@ -22,12 +22,7 @@ import '../../0xerc1155/tokens/ERC1155/ERC1155MintBurn.sol';
  * This contract is a replacement for the file ERC1155PresetMinterPauser.sol
  * in the OpenZeppelin project.
  */
-contract WOWSMinterPauser is
-  Context,
-  AccessControl,
-  ERC1155MintBurn,
-  ERC1155Metadata
-{
+contract WOWSMinterPauser is AccessControl, ERC1155MintBurn, ERC1155Metadata {
   //////////////////////////////////////////////////////////////////////////////
   // Roles
   //////////////////////////////////////////////////////////////////////////////
