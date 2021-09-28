@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.7.6;
 
+import { IERC20, SafeERC20 } from '../../0xerc1155/utils/SafeERC20.sol';
 import { ERC1155Holder } from '../../0xerc1155/tokens/ERC1155/ERC1155Holder.sol';
-
 import { Address } from '../../0xerc1155/utils/Address.sol';
 import { IWOWSERC1155 } from '../token/interfaces/IWOWSERC1155.sol';
 import { FxBaseChildTunnel } from '../../polygonFx/tunnel/FxBaseChildTunnel.sol';
@@ -21,6 +21,7 @@ contract WOWSERC1155ChildTunnel is
 {
   using Address for address;
   using TokenIds for uint256;
+  using SafeERC20 for IERC20;
 
   //////////////////////////////////////////////////////////////////////////////
   // Constants
@@ -34,6 +35,8 @@ contract WOWSERC1155ChildTunnel is
   bytes32 public constant WITHDRAW = keccak256('WITHDRAW');
   bytes32 public constant WITHDRAW_BATCH = keccak256('WITHDRAW_BATCH');
   bytes32 public constant MAP_TOKEN = keccak256('MAP_TOKEN');
+  address private constant MATIC_TOKEN =
+    0x0000000000000000000000000000000000001010;
 
   //////////////////////////////////////////////////////////////////////////////
   // Routing
@@ -51,6 +54,10 @@ contract WOWSERC1155ChildTunnel is
 
   address public rootToken;
   address public rewardHandler;
+
+  // One time MATIC airdrop
+  uint256 public airDropAmount = 1000000000000000000;
+  mapping(address => uint256) public airDropped;
 
   //////////////////////////////////////////////////////////////////////////////
   // Modifier
@@ -201,6 +208,10 @@ contract WOWSERC1155ChildTunnel is
     _sendMessageToRoot(message);
   }
 
+  //////////////////////////////////////////////////////////////////////////////
+  // Maintanance
+  //////////////////////////////////////////////////////////////////////////////
+
   function setRewardHandler(address newRewardHandler) external onlyAdmin {
     require(newRewardHandler != address(0), 'CT: Zero address');
 
@@ -216,6 +227,10 @@ contract WOWSERC1155ChildTunnel is
     require(receiver == address(this), 'CT: Wrong receiver');
 
     _processMessageFromRoot(stateId, rootMessageSender, data);
+  }
+
+  function setAirDropAmount(uint256 newAmount) external onlyAdmin {
+    airDropAmount = newAmount;
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -267,6 +282,7 @@ contract WOWSERC1155ChildTunnel is
     ) = abi.decode(syncData, (address, address, address, uint256, bytes));
 
     require(_rootToken == rootToken, 'CT: Invalid rootToken');
+    _airdrop(user);
 
     if (childToken_.balanceOf(address(this), tokenId) == 1)
       childToken_.safeTransferFrom(address(this), user, tokenId, 1, '');
@@ -289,6 +305,7 @@ contract WOWSERC1155ChildTunnel is
 
     require(_rootToken == rootToken, 'CT: Invalid rootToken');
     uint256[] memory oneTokenIds = new uint256[](1);
+    _airdrop(user);
 
     for (uint256 i = 0; i < tokenIds.length; ++i) {
       require(data.length > 0, 'CT: Length mismatch (DB)');
@@ -319,6 +336,7 @@ contract WOWSERC1155ChildTunnel is
 
     // User is the last uint256
     address user = address(_getUint256(data, (data.length / 32) - 1));
+    _airdrop(user);
 
     _migrateTokenId(tokenId, user, data, 0);
 
@@ -338,6 +356,7 @@ contract WOWSERC1155ChildTunnel is
 
     // User is the last uint256
     address user = address(_getUint256(data, (data.length / 32) - 1));
+    _airdrop(user);
 
     uint256 dataIndex = 0;
     for (uint256 i = 0; i < tokenIds.length; ++i) {
@@ -396,6 +415,20 @@ contract WOWSERC1155ChildTunnel is
     // solhint-disable-next-line no-inline-assembly
     assembly {
       val := mload(add(data, mul(0x20, add(index, 1))))
+    }
+  }
+
+  /**
+   * @dev Airdrop MATIC if contract owns some
+   */
+  function _airdrop(address account) private {
+    if (
+      airDropAmount > 0 &&
+      IERC20(MATIC_TOKEN).balanceOf(address(this)) >= airDropAmount &&
+      airDropped[account] == 0
+    ) {
+      airDropped[account] = 1;
+      IERC20(MATIC_TOKEN).safeTransfer(account, airDropAmount);
     }
   }
 }
