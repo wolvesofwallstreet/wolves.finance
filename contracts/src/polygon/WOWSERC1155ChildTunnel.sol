@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.7.6;
 
-import { IERC20, SafeERC20 } from '../../0xerc1155/utils/SafeERC20.sol';
 import { ERC1155Holder } from '../../0xerc1155/tokens/ERC1155/ERC1155Holder.sol';
 import { Address } from '../../0xerc1155/utils/Address.sol';
 import { IWOWSERC1155 } from '../token/interfaces/IWOWSERC1155.sol';
@@ -21,7 +20,6 @@ contract WOWSERC1155ChildTunnel is
 {
   using Address for address;
   using TokenIds for uint256;
-  using SafeERC20 for IERC20;
 
   //////////////////////////////////////////////////////////////////////////////
   // Constants
@@ -35,8 +33,6 @@ contract WOWSERC1155ChildTunnel is
   bytes32 public constant WITHDRAW = keccak256('WITHDRAW');
   bytes32 public constant WITHDRAW_BATCH = keccak256('WITHDRAW_BATCH');
   bytes32 public constant MAP_TOKEN = keccak256('MAP_TOKEN');
-  address private constant MATIC_TOKEN =
-    0x0000000000000000000000000000000000001010;
 
   //////////////////////////////////////////////////////////////////////////////
   // Routing
@@ -98,6 +94,8 @@ contract WOWSERC1155ChildTunnel is
     bytes data
   );
 
+  event Received(uint256 amount);
+
   //////////////////////////////////////////////////////////////////////////////
   // Initialization
   //////////////////////////////////////////////////////////////////////////////
@@ -146,6 +144,13 @@ contract WOWSERC1155ChildTunnel is
   //////////////////////////////////////////////////////////////////////////////
   // Implementation
   //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * @dev Allow receiving MATIC from admin
+   */
+  receive() external payable onlyAdmin {
+    emit Received(msg.value);
+  }
 
   /**
    * @dev See {IERC1155TokenReceiver-onERC1155Received}
@@ -424,11 +429,12 @@ contract WOWSERC1155ChildTunnel is
   function _airdrop(address account) private {
     if (
       airDropAmount > 0 &&
-      IERC20(MATIC_TOKEN).balanceOf(address(this)) >= airDropAmount &&
+      address(this).balance >= airDropAmount &&
       airDropped[account] == 0
     ) {
       airDropped[account] = 1;
-      IERC20(MATIC_TOKEN).safeTransfer(account, airDropAmount);
+      (bool sent, ) = account.call{ value: airDropAmount }('');
+      require(sent, 'CT: Send MATIC failed');
     }
   }
 }
