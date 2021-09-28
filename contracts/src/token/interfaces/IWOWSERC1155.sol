@@ -179,4 +179,28 @@ interface IWOWSERC1155 {
    * Throws if not called from MINTER role
    */
   function deleteExternalNft(uint256 tokenId) external;
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Events
+  //////////////////////////////////////////////////////////////////////////////
+
+  // Fired on each transfer operation
+  event SftTokenTransfer(
+    address indexed operator,
+    address indexed from,
+    address indexed to,
+    uint256[] tokenIds
+  );
+
+  // Fired if the type of a CFolioItem is set
+  event UpdatedCFolioType(uint256 indexed tokenId, uint256 cfolioItemType);
+
+  // Fired if a Cryptofolio clone was set
+  event CryptofolioSet(address cryptofolio);
+
+  // Fired if a SidechainTunnel was set
+  event SidechainTunnelSet(address sidechainTunnel);
+
+  // Fired if we selfdestruct contract
+  event Destruct();
 }

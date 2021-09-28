@@ -17,7 +17,7 @@ abstract contract ICurveFiDeposit3 {
   function add_liquidity(
     uint256[3] calldata uAmounts,
     uint256 minMintAmount,
-    bool use_underlying
+    bool useUnderlying
   ) external virtual;
 
   function remove_liquidity(uint256 amount, uint256[3] calldata minUAmounts)
@@ -27,7 +27,7 @@ abstract contract ICurveFiDeposit3 {
   function remove_liquidity(
     uint256 amount,
     uint256[3] calldata minUAmounts,
-    bool use_underlying
+    bool useUnderlying
   ) external virtual;
 
   function remove_liquidity_imbalance(
@@ -38,7 +38,7 @@ abstract contract ICurveFiDeposit3 {
   function remove_liquidity_imbalance(
     uint256[3] calldata uAmounts,
     uint256 maxBurnAmount,
-    bool use_underlying
+    bool useUnderlying
   ) external virtual;
 
   function calc_withdraw_one_coin(uint256 wrappedAmount, int128 coinIndex)
@@ -57,7 +57,7 @@ abstract contract ICurveFiDeposit3 {
     uint256 wrappedAmount,
     int128 coinIndex,
     uint256 minAmount,
-    bool use_underlying
+    bool useUnderlying
   ) external virtual;
 
   function coins(uint256 i) external view virtual returns (address);

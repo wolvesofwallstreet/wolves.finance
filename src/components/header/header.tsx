@@ -263,7 +263,9 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
 
             // nav item
             return navItem.to.startsWith('http') ? (
-              <a href={navItem.to}>{navItem.id}</a>
+              <a key={index} href={navItem.to}>
+                {navItem.id}
+              </a>
             ) : (
               <Link key={index} to={navItem.to}>
                 {' '}

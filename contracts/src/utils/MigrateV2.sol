@@ -142,7 +142,7 @@ contract MigrateToV2 is ERC1155Holder {
   address[] public bulkParticipants;
   mapping(address => BulkSlot) public bulkLookup;
 
-  uint256 releaseBlock = 13377140;
+  uint256 public releaseBlock = 13377140;
 
   //////////////////////////////////////////////////////////////////////////////
   // Modifier
