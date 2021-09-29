@@ -1712,6 +1712,17 @@ class Store {
       this.ethersProvider.getSigner(this.accountId)
     );
     try {
+      const gasEstimation: ethers.BigNumber =
+        await sftHolderContract.estimateGas.safeTransferFrom(
+          this.address,
+          this.migrateTarget,
+          id,
+          1,
+          ycrvTeamConvert
+            ? '0x0000000000000000000000000000000000000000000000000000000000000001'
+            : '0x'
+        );
+
       const tx: ethers.ContractTransaction =
         await sftHolderContract.safeTransferFrom(
           this.address,
@@ -1720,7 +1731,8 @@ class Store {
           1,
           ycrvTeamConvert
             ? '0x0000000000000000000000000000000000000000000000000000000000000001'
-            : '0x'
+            : '0x',
+          { gasLimit: gasEstimation.toNumber() + 100000 }
         );
       emitter.emit(SFT_MIGRATE, {
         status: 'tx',
