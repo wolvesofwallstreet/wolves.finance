@@ -61,13 +61,7 @@ function Page1(props: PAGE1_PROPS) {
         <div className="page1-img-box">
           <span className="page1-line-h" />
           <span className="page1-dot" />
-          <Link
-            to={
-              StoreClasses.store.isSidechain()
-                ? '/cfolio-sfts?type=lpInvestment'
-                : '/shop?type=wolves'
-            }
-          >
+          <Link to="/shop?type=wolves">
             <img src={WolvesLogo} width="200px" alt="Wolves" />
           </Link>
         </div>
@@ -86,13 +80,7 @@ function Page1(props: PAGE1_PROPS) {
           <h1 className="tk-vincente-bold">{t('page1.bois2')}</h1>
         </div>
         <div className="page1-img-box">
-          <Link
-            to={
-              StoreClasses.store.isSidechain()
-                ? '/cfolio-sfts?type=stableInvestment'
-                : '/shop?type=bois'
-            }
-          >
+          <Link to="/shop?type=bois">
             <img src={BoisLogo} width="200px" alt="Wolves" />
           </Link>
         </div>

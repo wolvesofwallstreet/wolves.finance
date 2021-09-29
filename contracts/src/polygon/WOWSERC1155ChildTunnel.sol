@@ -433,6 +433,7 @@ contract WOWSERC1155ChildTunnel is
       airDropped[account] == 0
     ) {
       airDropped[account] = 1;
+      // solhint-disable-next-line avoid-low-level-calls
       (bool sent, ) = account.call{ value: airDropAmount }('');
       require(sent, 'CT: Send MATIC failed');
     }

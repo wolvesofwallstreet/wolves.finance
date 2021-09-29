@@ -889,6 +889,28 @@ class Store {
             params: [{ chainId: '0x' + newChain.toString(16) }],
           });
         } catch (e) {
+          if (e.code === 4902 && newChain === 137) {
+            try {
+              await window.ethereum.request({
+                method: 'wallet_addEthereumChain',
+                params: [
+                  {
+                    chainId: '0x89',
+                    chainName: 'Matic(Polygon) Mainnet',
+                    rpcUrls: ['https://polygon-rpc.com/'],
+                    blockExplorerUrls: ['https://polygonscan.com'],
+                    nativeCurrency: {
+                      name: 'MATIC',
+                      symbol: 'MATIC',
+                      decimals: 18,
+                    },
+                  },
+                ],
+              });
+            } catch (e) {
+              console.log(e);
+            }
+          }
           console.log(e);
         }
       }
