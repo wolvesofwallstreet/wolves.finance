@@ -60,12 +60,10 @@ class App extends React.Component<unknown, APP_STATE> {
             <WolfToast />
             <Route component={Header} />
             <Switch>
-              {!this.state.isSideChain && (
-                <Route
-                  path="/shop"
-                  render={(props) => <Page3 {...props} display={'shop'} />}
-                />
-              )}
+              <Route
+                path="/shop"
+                render={(props) => <Page3 {...props} display={'shop'} />}
+              />
               <Route
                 path="/my"
                 render={(props) => <Page3 {...props} display={'my'} />}

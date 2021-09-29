@@ -162,6 +162,11 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
             disabled: location.pathname === '/wolf_trade_floor',
             dropdownItems: [
               {
+                id: t('header.viewWolvesCf'),
+                to: '/shop?type=wolves&levelId=' + levelId,
+                disabled: type === 'wolves',
+              },
+              {
                 id: t('header.buyStake'),
                 to: '/cfolio-sfts?type=lpInvestment',
               },
@@ -176,6 +181,11 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
             to: '/wolf_trade_floor-1',
             disabled: location.pathname === '/wolf_trade_floor',
             dropdownItems: [
+              {
+                id: t('header.viewBoisCf'),
+                to: '/shop?type=bois&levelId=' + levelId,
+                disabled: type === 'bois',
+              },
               {
                 id: t('header.buyYearn'),
                 to: '/cfolio-sfts?type=stableInvestment',

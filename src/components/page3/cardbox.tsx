@@ -175,14 +175,20 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
           ></span>
         </span>
         {tokenId === undefined ? (
-          <>
+          StoreClasses.store.isSidechain() ? (
             <span className="tk-grotesk-lightbold font-14 ellipsis">
-              {t('page.available')}: {quantity - minted}/{quantity}
+              {t('page.availableOnETH')}
             </span>
-            <span className="tk-grotesk-lightbold font-14 ellipsis line-h">
-              {t('page.price')}: {price} WOWS{' '}
-            </span>
-          </>
+          ) : (
+            <>
+              <span className="tk-grotesk-lightbold font-14 ellipsis">
+                {t('page.available')}: {quantity - minted}/{quantity}
+              </span>
+              <span className="tk-grotesk-lightbold font-14 ellipsis line-h">
+                {t('page.price')}: {price} WOWS{' '}
+              </span>
+            </>
+          )
         ) : sft && StoreClasses.store.isSidechain() ? (
           <>
             <span className="tk-grotesk-lightbold font-14 ellipsis">

@@ -487,7 +487,9 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     const buttonText = !isWalletConnected
       ? { l: t('header.connectWallet').toString(), d: true }
       : noQuantity
-      ? { l: t('page4.noQuantity').toString(), d: true }
+      ? StoreClasses.store.isSidechain()
+        ? { l: t('page.availableOnETH'), d: true }
+        : { l: t('page4.noQuantity').toString(), d: true }
       : txPending
       ? { l: t('page4.txPending'), d: true }
       : currentRender?.tokenId === undefined

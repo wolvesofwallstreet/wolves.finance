@@ -1077,27 +1077,29 @@ class Store {
     );
 
     try {
-      const sftResult:
-        | {
-            prices: ethers.BigNumber[];
-            numMinted: number[];
-            maxMintable: number[];
-          }
-        | undefined = await this.sftMintContractRO?.getBaseSpec(
-        levels,
-        cardIds
-      );
+      if (!this.isSidechain()) {
+        const sftResult:
+          | {
+              prices: ethers.BigNumber[];
+              numMinted: number[];
+              maxMintable: number[];
+            }
+          | undefined = await this.sftMintContractRO?.getBaseSpec(
+          levels,
+          cardIds
+        );
 
-      if (sftResult !== undefined) {
-        let index = 0;
-        for (const level of this.assets.cards.cards) {
-          level.price = this.fromWei(sftResult.prices[index]);
-          level.quantity = sftResult.maxMintable[index];
-          for (const card of level.cards) {
-            card.minted = sftResult.numMinted[index];
-            index++;
+        if (sftResult !== undefined) {
+          let index = 0;
+          for (const level of this.assets.cards.cards) {
+            level.price = this.fromWei(sftResult.prices[index]);
+            level.quantity = sftResult.maxMintable[index];
+            for (const card of level.cards) {
+              card.minted = sftResult.numMinted[index];
+              index++;
+            }
+            if (index >= sftResult.prices.length) break;
           }
-          if (index >= sftResult.prices.length) break;
         }
       }
 
