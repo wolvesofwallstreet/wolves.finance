@@ -50,7 +50,8 @@
     "earned": "REWARD",
     "autoUpgrade": "AUTO UPGRADE",
     "tokenId": "TOKEN ID",
-    "investment": "INVESTMENT"
+    "investment": "INVESTMENT",
+    "invalidAddress": "INVALID ADDRESS"
   },
   "page1": {
     "head1": "CHOOSE YOUR C\u2011FOLIO - TRADER\u00a0WOLVES\u00a0OR\u00a0BUSINESS\u00a0BOIS",

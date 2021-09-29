@@ -31,13 +31,22 @@ function Transfer({ hideCB, name, show, tokenId, t }: PROPS): JSX.Element {
     name: '...',
     address: '',
   });
+  const [customAddress, setCustomAddress] = useState('');
+
+  const addressvalid = (): string => {
+    try {
+      return ethers.utils.getAddress(customAddress);
+    } catch {
+      return '';
+    }
+  };
 
   const handleTransfer = () => {
     const payload = {
       type: SFT_TRANSFER,
       content: {
         id: tokenId,
-        address: bridgeTarget.address,
+        address: tOption === 0 ? bridgeTarget.address : customAddress,
       },
     };
     StoreClasses.dispatcher.dispatch(payload);
@@ -69,12 +78,20 @@ function Transfer({ hideCB, name, show, tokenId, t }: PROPS): JSX.Element {
     return tOption === n ? undefined : () => setTOption(n);
   };
 
+  let address = '';
   const buttonText =
-    tOption === 1 || bridgeTarget.name === 'ETHEREUM'
+    bridgeTarget.name === 'ETHEREUM'
       ? { l: 'COMING SOON', d: true }
       : txRunning
       ? { l: t('page4.txPending'), d: true }
-      : { l: t('page4.transferTo', { name: bridgeTarget.name }), d: false };
+      : tOption === 0
+      ? { l: t('page4.transferTo', { name: bridgeTarget.name }), d: false }
+      : (address = addressvalid()) !== ''
+      ? {
+          l: t('page4.transferTo', { name: address }),
+          d: false,
+        }
+      : { l: t('page.invalidAddress'), d: true };
 
   return (
     <Modal show={show} onHide={hideCB} animation={false} backdrop={true}>
@@ -115,6 +132,13 @@ function Transfer({ hideCB, name, show, tokenId, t }: PROPS): JSX.Element {
               </>
             )}
           </span>
+        )}
+        {tOption === 1 && (
+          <input
+            className="wolves-input mt-2"
+            type="edit"
+            onChange={(elem) => setCustomAddress(elem.target.value)}
+          />
         )}
         <button
           className={'wolves-btn mt-2 tk-aktiv-grotesk-condensed'}

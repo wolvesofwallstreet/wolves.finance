@@ -100,7 +100,7 @@
     "polygonRootTunnelProxy": "0xc39883499A1AeEC24d01F3AB2d44C63F670d20E6"
   },
   "80001": {
-    "wssEndpoint": "wss://ws-matic-mumbai.chainstacklabs.com",
+    "wssEndpoint": "https://rpc-endpoints.superfluid.dev/mumbai",
     "openSeaProxyRegistry": "",
     "uniDaiWeth": "",
     "p_fxChild": "0xCf73231F28B7331BBe3124B907840A94851f9f11",
@@ -150,7 +150,7 @@
   "137": {
     "wssEndpoint": "https://polygon-rpc.com",
     "openSeaProxyRegistry": "",
-    "uniDaiWeth": "",
+    "uniDaiWeth": "0x4A35582a710E1F4b2030A3F826DA20BfB6703C09",
     "p_fxChild": "0x8397259c983751DAf40400790063935a11afa28a",
     "bridgeTarget": "0x914aCCe8AFA5726F8E37Bb1e16Cf6B46b6686def",
     "uniV2Router": "0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff",

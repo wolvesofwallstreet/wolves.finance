@@ -119,6 +119,16 @@ a.wolves-btn:hover {
   text-shadow: 2px 2px 2px #e7b198;
 }
 
+.wolves-input {
+  color: inherit;
+  height: 32px;
+  width: 100%;
+  vertical-align: bottom;
+  background-color: var(--wolves-orange-transparent);
+  border: 1px solid hsla(0, 0%, 0%, 0.699);
+  outline: none;
+}
+
 .info-progress {
   display: block;
   height: 2px;

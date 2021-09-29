@@ -50,7 +50,6 @@ import {
   SFT_TRANSFER,
   SFT_UNLOCK,
   SFT_UPGRADE,
-  STAKE_LP_AVAILABLE,
 } from './constants';
 import { MessageProof } from './polygon';
 
@@ -87,7 +86,7 @@ export type Payload = {
   content: PayloadContent;
 };
 
-type ChainAddresses = {
+interface ChainAddresses {
   rpcEndpoint?: string;
   wssEndpoint?: string;
   token: string;
@@ -109,10 +108,12 @@ type ChainAddresses = {
   tusdToken?: string;
   usdcToken?: string;
   usdtToken?: string;
-  curveYToken?: string;
-  curveYDeposit?: string;
+  curveADeposit?: string;
   curveAToken?: string;
-};
+  curveYDeposit?: string;
+  curveYToken?: string;
+}
+
 interface IIndexable {
   [key: number]: ChainAddresses;
 }
@@ -281,7 +282,7 @@ class Store {
   tradeFloorContractRO?: ethers.Contract;
   lpContractRO?: ethers.Contract;
   uniDaiWethPairContractRO?: ethers.Contract;
-  curveYDepositContractRO?: ethers.Contract;
+  curveDepositContractRO?: ethers.Contract;
 
   cfolioFarmLpAddress = '';
   cfolioFarmScAddress = '';
@@ -445,10 +446,6 @@ class Store {
         /** Staking */
         case REVOKE_APPROVAL:
           this._doRevokeApproval(_payload.content);
-          break;
-        /** Staking */
-        case STAKE_LP_AVAILABLE:
-          this._getPoolTokenAmount(_payload.content);
           break;
         /** SFT */
         case SFT_BUY:
@@ -780,7 +777,10 @@ class Store {
     );
     this.lpContractRO?.on('Transfer', (from, to) => {
       if (from === this.address || to === this.address) {
-        dispatcher.dispatch({ type: STAKE_LP_AVAILABLE } as Payload);
+        dispatcher.dispatch({
+          type: ASSETS_STATE,
+          content: { filter: ['balances'] },
+        });
       }
     });
     return true;
@@ -945,6 +945,7 @@ class Store {
         UniV2PairAbi,
         provider
       );
+
       if (chainAddresses.sftHolderProxy) {
         this.sftHolderContractRO = new ethers.Contract(
           chainAddresses.sftHolderProxy,
@@ -979,13 +980,19 @@ class Store {
         );
       } else this.uniDaiWethPairContractRO = undefined;
 
-      if (chainAddresses.curveYDeposit) {
-        this.curveYDepositContractRO = new ethers.Contract(
+      if (chainAddresses.curveADeposit) {
+        this.curveDepositContractRO = new ethers.Contract(
+          chainAddresses.curveADeposit,
+          CurveDepositAbi,
+          provider
+        );
+      } else if (chainAddresses.curveYDeposit) {
+        this.curveDepositContractRO = new ethers.Contract(
           chainAddresses.curveYDeposit,
           CurveDepositAbi,
           provider
         );
-      } else this.curveYDepositContractRO = undefined;
+      } else this.curveDepositContractRO = undefined;
 
       // Setup our balances
       this.assets.balances['WOWS'].address = chainAddresses.token;
@@ -1065,22 +1072,6 @@ class Store {
     }
     return false;
   }
-
-  // Should be from getStakeState() in a next iteration
-  _getPoolTokenAmount = async (payloadContent: PayloadContent | undefined) => {
-    try {
-      const result = !this.lpContractRO
-        ? 0
-        : await this.lpContractRO?.balanceOf(this.address);
-      emitter.emit(STAKE_LP_AVAILABLE, {
-        tokenAmount: this.fromWei(result),
-      } as TokenContractResult);
-    } catch (e) {
-      emitter.emit(STAKE_LP_AVAILABLE, {
-        error: e.message,
-      } as TokenContractResult);
-    }
-  };
 
   _getSftState = async (payloadContent: PayloadContent | undefined) => {
     if (!this.sftMintContractRO) {
@@ -1493,20 +1484,33 @@ class Store {
   };
 
   async _updatePoolAPR() {
+    let lpContractRO = this.lpContractRO;
+    if (this.chainId === 137) {
+      const provider = new ethers.providers.InfuraProvider(
+        'mainnet',
+        process.env.REACT_APP_INFURA_ID
+      );
+      lpContractRO = new ethers.Contract(
+        (addresses as IIndexable)[1].uniV2Pair,
+        UniV2PairAbi,
+        provider
+      );
+    } else if (this.isSidechain()) return;
+
     if (
       this.uniDaiWethPairContractRO &&
-      this.lpContractRO &&
-      this.curveYDepositContractRO
+      lpContractRO &&
+      this.curveDepositContractRO
     ) {
       const e18 = ethers.BigNumber.from('10').pow(18);
 
       const daiWethReserves = await this.uniDaiWethPairContractRO.getReserves();
       // Price of 1 WETH in DAI
-      const wethPrice = daiWethReserves.reserve0
-        .mul(e18)
-        .div(daiWethReserves.reserve1);
+      const wethPrice = daiWethReserves.reserve0.gt(daiWethReserves.reserve1)
+        ? daiWethReserves.reserve0.mul(e18).div(daiWethReserves.reserve1)
+        : daiWethReserves.reserve1.mul(e18).div(daiWethReserves.reserve0);
 
-      const wowsWethReserves = await this.lpContractRO.getReserves();
+      const wowsWethReserves = await lpContractRO.getReserves();
       // Price of 1 WOWS
       const wowsPrice = wowsWethReserves.reserve1
         .mul(wethPrice)
@@ -1520,7 +1524,7 @@ class Store {
         let stakedPrice;
         if (i === 0) {
           // TotalSupply of the WOWS/WETH pool
-          const wowsWethTotalSupply = await this.lpContractRO.totalSupply();
+          const wowsWethTotalSupply = await lpContractRO.totalSupply();
 
           // Total price of pool
           const poolPrice = wowsWethReserves.reserve0
@@ -1539,7 +1543,7 @@ class Store {
         } else {
           // Get the DAI price of one yCrv token
           const priceToken =
-            await this.curveYDepositContractRO.calc_withdraw_one_coin(
+            await this.curveDepositContractRO.calc_withdraw_one_coin(
               this.toWei(1),
               0
             );
