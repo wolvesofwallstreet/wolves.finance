@@ -100,7 +100,7 @@
     "polygonRootTunnelProxy": "0xc39883499A1AeEC24d01F3AB2d44C63F670d20E6"
   },
   "80001": {
-    "wssEndpoint": "https://rpc-endpoints.superfluid.dev/mumbai",
+    "wssEndpoint": "https://rpc-mumbai.maticvigil.com/",
     "openSeaProxyRegistry": "",
     "uniDaiWeth": "",
     "p_fxChild": "0xCf73231F28B7331BBe3124B907840A94851f9f11",
