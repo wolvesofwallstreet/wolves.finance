@@ -612,14 +612,13 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         currentRender?.sft.boosterRewards.pending
       : 0;
     const claimText =
-      currentRender?.sft &&
-      (currentRender.sft.cfolioItems.length > 0 || claimableAmount > 0)
+      currentRender?.sft && claimableAmount > 0
         ? !isWalletConnected
           ? { l: t('header.connectWallet').toString(), d: true }
           : txPending && !modalOpen && !transferOpen
           ? { l: t('page4.txPending'), d: true }
           : {
-              l: t('page4.claim', {
+              l: t('page4.manageRewards', {
                 amount: claimableAmount.toFixed(6),
               }).toString(),
               d: sftStatus > 0 || claimableAmount === 0,
@@ -742,8 +741,8 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         default:
           boosterPeriod = 'Unknown';
       }
-    } else {
-      boosterPeriod = modalOpen && 'No period started';
+    } else if (currentRender?.sft) {
+      boosterPeriod = 'No period started';
     }
 
     if (modalOpen && currentRender?.sft) {

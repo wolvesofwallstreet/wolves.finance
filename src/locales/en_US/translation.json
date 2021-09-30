@@ -85,6 +85,7 @@
     "proof": "GET \"{{name}}\" FROM BRIDGE",
     "unlock": "UNLOCK \"{{name}}\"",
     "claim": "CLAIM {{amount}} WOWS REWARDS ...",
+    "manageRewards": "MANAGE {{amount}} WOWS REWARDS ...",
     "transfer": "TRANSFER \"{{name}}\" ...",
     "transferTo": "TRANSFER TO {{name}}",
     "lockWows": "LOCK {{amount}} WOWS REWARDS",
