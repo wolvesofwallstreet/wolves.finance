@@ -10,13 +10,15 @@ pragma solidity >=0.7.0 <0.8.0;
 
 import '@openzeppelin/contracts/proxy/Clones.sol';
 
+import '../../0xerc1155/proxy/Initializable.sol';
+
 import './interfaces/IWOWSCryptofolio.sol';
 import './interfaces/IWOWSERC1155.sol';
 import './WOWSMinterPauser.sol';
 import '../cfolio/interfaces/ICFolioItemHandler.sol';
 import '../utils/TokenIds.sol';
 
-contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
+contract WOWSERC1155 is Initializable, IWOWSERC1155, WOWSMinterPauser {
   using TokenIds for uint256;
 
   //////////////////////////////////////////////////////////////////////////////
@@ -108,13 +110,7 @@ contract WOWSERC1155 is IWOWSERC1155, WOWSMinterPauser {
     string calldata customMetadataURI,
     string calldata cfolioMetadataURI,
     string calldata contractMetadataURI
-  ) public {
-    // Check for one time initialization
-    require(
-      getRoleMemberCount(DEFAULT_ADMIN_ROLE) == 0,
-      'SFT: Already initialized'
-    );
-
+  ) public initializer {
     // Initialize {AccessControl}
     _setupRole(DEFAULT_ADMIN_ROLE, owner);
 
