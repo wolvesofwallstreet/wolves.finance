@@ -80,7 +80,7 @@ function Transfer({ hideCB, name, show, tokenId, t }: PROPS): JSX.Element {
 
   let address = '';
   const buttonText =
-    bridgeTarget.name === 'ETHEREUM'
+    tOption === 0 && bridgeTarget.name === 'ETHEREUM'
       ? { l: 'COMING SOON', d: true }
       : txRunning
       ? { l: t('page4.txPending'), d: true }

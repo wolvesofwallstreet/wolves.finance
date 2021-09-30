@@ -599,8 +599,9 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         const rewardInfo =
           StoreClasses.store.getAssets().rewardInfo[rewardIndex];
         if (rewardInfo.apr) {
-          apr = (rewardInfo.apr * profitReward) / 100;
-          apy = StoreClasses.store.aprToApy(apr);
+          const aprNum = (rewardInfo.apr * profitReward) / 100;
+          apr = aprNum.toFixed(2);
+          apy = StoreClasses.store.aprToApy(aprNum);
           share = currentRender.sft?.rewardShare.toFixed(2);
         }
       }
