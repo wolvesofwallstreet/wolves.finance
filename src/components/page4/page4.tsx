@@ -26,6 +26,7 @@ import {
 } from '../../stores/constants';
 import {
   AssetStateresult,
+  BIGNUMBER_MAX,
   Payload,
   SFT,
   SFTCHILD,
@@ -54,7 +55,7 @@ type PAGE4_STATE = {
   currentIndex: number;
   selectedCFolio: number;
   modalOpen: boolean;
-  migrateOpen: boolean;
+  migrateOpen: number;
   boosterExistingValue: number;
   boosterNewValue: number;
   boosterRelock: number;
@@ -67,7 +68,7 @@ const INITIAL_PAGE4_STATE: PAGE4_STATE = {
   currentIndex: -1,
   selectedCFolio: -1,
   modalOpen: false,
-  migrateOpen: false,
+  migrateOpen: 0,
   boosterExistingValue: 1,
   boosterNewValue: 15552000,
   boosterRelock: 1,
@@ -311,7 +312,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     }
   }
 
-  _onBuy(): void {
+  _onBuy(all: boolean): void {
     if (this.state.currentIndex >= 0 && this.state.cards) {
       const current = this.renderList[this.state.currentIndex];
       const payload = {
@@ -326,12 +327,14 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       const cardLevel = this.state.cards.cards[current.level];
       payload.content = {
         amount: cardLevel.price,
-        id: BigNumber.from(
-          current.tokenId === undefined
-            ? (cardLevel.chainRef << 8) |
-                cardLevel.cards[current.index].chainRef
-            : current.tokenId
-        ),
+        id: all
+          ? BIGNUMBER_MAX
+          : BigNumber.from(
+              current.tokenId === undefined
+                ? (cardLevel.chainRef << 8) |
+                    cardLevel.cards[current.index].chainRef
+                : current.tokenId
+            ),
       };
       this.setState({ txPending: true });
       StoreClasses.dispatcher.dispatch(payload);
@@ -393,7 +396,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
   }
 
   hideCB = () => {
-    this.setState({ modalOpen: false, migrateOpen: false });
+    this.setState({ modalOpen: false, migrateOpen: 0 });
   };
 
   render(): JSX.Element {
@@ -501,8 +504,9 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         const rewardInfo =
           StoreClasses.store.getAssets().rewardInfo[rewardIndex];
         if (rewardInfo.apr) {
-          apr = (rewardInfo.apr * profitReward) / 100;
-          apy = StoreClasses.store.aprToApy(apr);
+          const aprNum = (rewardInfo.apr * profitReward) / 100;
+          apr = aprNum.toFixed(2);
+          apy = StoreClasses.store.aprToApy(aprNum);
           share = currentRender.sft?.rewardShare.toFixed(2);
         }
       }
@@ -685,7 +689,15 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
 
     const migrateText = txPending
       ? { l: t('page4.txPending'), d: true }
+      : locked
+      ? { l: t('page4.unlock', { name: currentCard?.name }), d: false }
       : { l: `Migrate ${currentCard?.name} to V2 ...`, d: false };
+
+    const migrateAllText = txPending
+      ? { l: t('page4.txPending'), d: true }
+      : locked
+      ? { l: 'UNLOCK ALL CFOLIOS AND I-NFTs', d: false }
+      : { l: `Migrate ALL CFOLIOS AND I-NFTs to V2 ...`, d: false };
 
     return (
       <div
@@ -900,7 +912,22 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                       type="button"
                       value={migrateText.l}
                       disabled={migrateText.d}
-                      onClick={() => this.setState({ migrateOpen: true })}
+                      onClick={
+                        locked
+                          ? () => this._onBuy(false)
+                          : () => this.setState({ migrateOpen: 1 })
+                      }
+                    />
+                    <input
+                      className="wolves-btn mt-1"
+                      type="button"
+                      value={migrateAllText.l}
+                      disabled={migrateAllText.d}
+                      onClick={
+                        locked
+                          ? () => this._onBuy(true)
+                          : () => this.setState({ migrateOpen: 2 })
+                      }
                     />
                   </div>
                 </>
@@ -908,12 +935,14 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
             </div>
           </div>
         )}
-        {migrateOpen &&
+        {migrateOpen > 0 &&
           currentRender?.tokenId !== undefined &&
           currentCard !== undefined && (
             <Migrate
-              tokenId={currentRender?.tokenId}
-              name={currentCard.name}
+              tokenId={
+                migrateOpen === 2 ? BIGNUMBER_MAX : currentRender?.tokenId
+              }
+              name={migrateOpen === 2 ? 'EVERYTHING' : currentCard.name}
               hideCB={this.hideCB}
               show={true}
             />

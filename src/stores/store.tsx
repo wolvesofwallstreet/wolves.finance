@@ -1712,23 +1712,32 @@ class Store {
       this.ethersProvider.getSigner(this.accountId)
     );
     try {
+      let tokenIds, amounts;
+      if (id.eq(BIGNUMBER_MAX)) {
+        tokenIds = await sftHolderContract.getTokenIds(this.address);
+        amounts = new Array(tokenIds.length).fill(1);
+      } else {
+        tokenIds = [id];
+        amounts = [1];
+      }
+
       const gasEstimation: ethers.BigNumber =
-        await sftHolderContract.estimateGas.safeTransferFrom(
+        await sftHolderContract.estimateGas.safeBatchTransferFrom(
           this.address,
           this.migrateTarget,
-          id,
-          1,
+          tokenIds,
+          amounts,
           ycrvTeamConvert
             ? '0x0000000000000000000000000000000000000000000000000000000000000001'
             : '0x'
         );
 
       const tx: ethers.ContractTransaction =
-        await sftHolderContract.safeTransferFrom(
+        await sftHolderContract.safeBatchTransferFrom(
           this.address,
           this.migrateTarget,
-          id,
-          1,
+          tokenIds,
+          amounts,
           ycrvTeamConvert
             ? '0x0000000000000000000000000000000000000000000000000000000000000001'
             : '0x',
@@ -1775,10 +1784,18 @@ class Store {
         this.ethersSigner
       );
 
-      const tx: ethers.ContractTransaction = await tradeFloorContract.burn(
+      let tokenIds, amounts;
+      if (id.eq(BIGNUMBER_MAX)) {
+        tokenIds = await tradeFloorContract.getTokenIds(this.address);
+        amounts = new Array(tokenIds.length).fill(1);
+      } else {
+        tokenIds = [id];
+        amounts = [1];
+      }
+      const tx = await tradeFloorContract.burnBatch(
         this.address,
-        id,
-        1
+        tokenIds,
+        amounts
       );
       emitter.emit(SFT_UNLOCK, {
         status: 'tx',
