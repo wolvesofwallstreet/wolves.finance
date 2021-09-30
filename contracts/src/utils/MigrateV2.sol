@@ -235,7 +235,7 @@ contract MigrateToV2 is ERC1155Holder {
     for (uint256 i = 0; i < tokenIds.length; ++i) {
       require(amounts[i] == 1, 'M: Invalid amount');
 
-      oneTokenIds[0] = tokenIds[0];
+      oneTokenIds[0] = tokenIds[i];
 
       _processTokenId(from, oneTokenIds, yCrvBulkWithdraw);
     }
@@ -342,6 +342,7 @@ contract MigrateToV2 is ERC1155Holder {
         _sftEvaluator.setRewardRate(oneTokenIds[0], false);
       }
     } else {
+      migrateData = abi.encodePacked(migrateData, uint256(from));
       rootTunnel.mintCFolioItems(migrateData);
     }
   }

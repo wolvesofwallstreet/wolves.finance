@@ -433,6 +433,7 @@ contract WOWSERC1155ChildTunnel is
       airDropped[account] == 0
     ) {
       airDropped[account] = 1;
+      // slither-disable-next-line arbitrary-send
       payable(account).transfer(airDropAmount);
     }
   }
