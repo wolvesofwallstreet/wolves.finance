@@ -12,6 +12,7 @@ import { Form, Image, Navbar } from 'react-bootstrap';
 import { TFunction, withTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
+import newLogo from '../../assets/new-icon-transparent-20.jpg';
 import logo from '../../assets/wolves_sft_logo.svg';
 import { ASSETS_STATE, CONNECTION_CHANGED } from '../../stores/constants';
 import {
@@ -169,6 +170,11 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
         ],
       },
       {
+        id: 'V2',
+        to: 'https://app.wows.finance',
+        disabled: false,
+      },
+      {
         id: t('header.myPack'),
         to: '/my?type=myPack&levelId=' + levelId,
         disabled: location.pathname === '/my',
@@ -212,8 +218,15 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
             }
 
             // nav item
-            return (
+            // nav item
+            return navItem.to.startsWith('http') ? (
+              <a key={index} href={navItem.to}>
+                <img className="mr-1" height="28px" src={newLogo} alt="New" />
+                {navItem.id}
+              </a>
+            ) : (
               <Link key={index} to={navItem.to}>
+                {' '}
                 {navItem.id}
               </Link>
             );
