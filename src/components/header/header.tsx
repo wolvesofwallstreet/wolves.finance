@@ -12,7 +12,7 @@ import { Form, Image, Navbar } from 'react-bootstrap';
 import { TFunction, withTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
-import newLogo from '../../assets/new-icon-transparent-20.jpg';
+import newLogo from '../../assets/new-icon-transparent-20-128.png';
 import logo from '../../assets/wolves_sft_logo.svg';
 import { ASSETS_STATE, CONNECTION_CHANGED } from '../../stores/constants';
 import {
