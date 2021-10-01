@@ -99,6 +99,10 @@ const CPM_ABI = [
 const SEND_MESSAGE_SIG =
   '0x8c5261668696ce22758910d05bab8f186d6eb247ceac2af2e82c7dc17669b036';
 
+const GRAPH_BASE = 'https://api.thegraph.com/subgraphs/name/';
+const GRAPH_INDEX = 'https://api.thegraph.com/index-node/graphql';
+const GRAPH_ACCOUNT = 'havan/';
+
 type HeaderBlock = {
   root: string;
   start: ethers.BigNumber;
@@ -119,14 +123,20 @@ type RawBlock = {
 type PendingItem = {
   rootBlock: number; // The blocknumber on the root chain at create tie
   headerBlockId: number; // The header blockId (checkpointed)
-  tokenId: string;
+  tokenIds: string[];
   txHash: string; // Child chain TX hash
   txBlockNumber: number; // Child chain block number
-  account: string;
   pending: boolean;
 };
 
-type CB_FUNC = (accounts: Set<string>) => void;
+type Storage = {
+  ethLastHeaderScanned: number;
+  ethLastScanned: number;
+  polygonLastScanned: number;
+  pendingItems: PendingItem[];
+};
+
+type CB_FUNC = () => void;
 
 class MerkleTree {
   leaves: Buffer[];
@@ -176,13 +186,24 @@ class MerkleTree {
   }
 }
 
+//////////////////////////////////////////////////////////////////////////////
+// MainClass
+//////////////////////////////////////////////////////////////////////////////
+
 export class MessageProof {
   provider: ethers.providers.JsonRpcProvider;
   checkPointManager: ethers.Contract;
   localStorageKey: string;
-  pendingItems: PendingItem[] = [];
+  localStorageItems: Storage;
   newBlockFilter: ethers.EventFilter;
-  changeHandler?: CB_FUNC;
+  account: string;
+  rootTunnel: string;
+  childTunnel: string;
+  rootGraph: string;
+  childGraph: string;
+  changed = false;
+  launchBlock = 0;
+  changeHandler: CB_FUNC;
 
   static LSKMUMBAI = 'mumbai_goerli_bridge';
   static LSKMATIC = 'matic_mainnet_bridge';
@@ -190,83 +211,69 @@ export class MessageProof {
   constructor(
     ethereumProvider: ethers.providers.Provider,
     chainId: number,
+    checkPointManagerAddress: string,
+    account: string,
+    rootTunnel: string,
+    childTunnel: string,
     cb: CB_FUNC
   ) {
     if (chainId === 5) {
       this.provider = new ethers.providers.JsonRpcProvider(
-        'https://matic-mumbai.chainstacklabs.com/'
+        'https://rpc-mumbai.maticvigil.com/'
       );
-      this.checkPointManager = new ethers.Contract(
-        '0x2890bA17EfE978480615e330ecB65333b880928e',
-        CPM_ABI,
-        ethereumProvider
-      );
-      this.localStorageKey = MessageProof.LSKMUMBAI;
+      this.rootGraph = 'sft-token-transfers-goerli';
+      this.childGraph = 'sft-token-transfers-maticmum';
+      this.localStorageKey = MessageProof.LSKMUMBAI + '_' + account;
     } else if (chainId === 1) {
       this.provider = new ethers.providers.JsonRpcProvider(
         'https://polygon-rpc.com/'
       );
-      this.checkPointManager = new ethers.Contract(
-        '0x86e4dc95c7fbdbf52e33d563bbdb00823894c287',
-        CPM_ABI,
-        ethereumProvider
-      );
-      this.localStorageKey = MessageProof.LSKMATIC;
+      this.rootGraph = 'sft-token-transfers-mainnet';
+      this.childGraph = 'sft-token-transfers-matic';
+      this.localStorageKey = MessageProof.LSKMATIC + '_' + account;
     } else {
       this.localStorageKey = '';
       throw new Error('Unsupported chainId');
     }
 
+    this.checkPointManager = new ethers.Contract(
+      checkPointManagerAddress,
+      CPM_ABI,
+      ethereumProvider
+    );
+
     const items = window.localStorage.getItem(this.localStorageKey);
-    this.pendingItems = [];
-    if (items) this.pendingItems = JSON.parse(items);
+    // Migrate from old format
+    if (items && items.indexOf('ethLastHeaderScanned') > 0) {
+      this.localStorageItems = JSON.parse(items);
+    } else {
+      this.localStorageItems = {
+        ethLastHeaderScanned: 1,
+        ethLastScanned: 1,
+        polygonLastScanned: chainId === 5 ? 18923386 : 19420655,
+        pendingItems: [],
+      };
+    }
 
     this.newBlockFilter = this.checkPointManager.filters.NewHeaderBlock();
+    this.account = account;
+    this.rootTunnel = rootTunnel;
+    this.childTunnel = childTunnel;
+    this.changeHandler = cb;
 
-    this._setup(cb);
-  }
-
-  static async insertItem(
-    account: string,
-    chainId: number,
-    tokenId: ethers.BigNumber,
-    receipt: ethers.providers.TransactionReceipt
-  ): Promise<void> {
-    const localStorageId =
-      chainId === 80001
-        ? MessageProof.LSKMUMBAI
-        : chainId === 137
-        ? MessageProof.LSKMATIC
-        : '';
-    if (localStorageId) {
-      const infuranetwork = chainId === 80001 ? 'goerli' : 'mainnet';
-      const provider = new ethers.providers.JsonRpcProvider(
-        `https://${infuranetwork}.infura.io/v3/${process.env.REACT_APP_INFURA_ID}`
-      );
-      const items = window.localStorage.getItem(localStorageId);
-      const pIs: PendingItem[] = items ? JSON.parse(items) : [];
-      pIs.push({
-        rootBlock: await provider.getBlockNumber(),
-        headerBlockId: 0,
-        tokenId: tokenId.toHexString(),
-        txHash: receipt.transactionHash,
-        txBlockNumber: receipt.blockNumber,
-        account,
-        pending: false,
-      });
-      window.localStorage.setItem(localStorageId, JSON.stringify(pIs));
-    }
+    this._setup();
   }
 
   removeItem(tokenId: ethers.BigNumber): void {
     if (this.localStorageKey) {
       const tokenIdHex = tokenId.toHexString();
-      this.pendingItems = this.pendingItems.filter(
-        (elem) => elem.tokenId !== tokenIdHex
-      );
+      this.localStorageItems.pendingItems =
+        this.localStorageItems.pendingItems.filter((elem) =>
+          elem.tokenIds.includes(tokenIdHex)
+        );
       window.localStorage.setItem(
         this.localStorageKey,
-        JSON.stringify(this.pendingItems)
+        JSON.stringify(this.localStorageItems)
       );
     }
   }
@@ -274,59 +281,24 @@ export class MessageProof {
   getTokenIds(
     account: string
   ): { tokenId: ethers.BigNumber; available: boolean }[] {
-    return this.pendingItems
-      .filter(
-        (item) => !item.pending && (!item.account || item.account === account)
+    return this.localStorageItems.pendingItems
+      .filter((item) => !item.pending)
+      .map((item) =>
+        item.tokenIds.map((tid) => {
+          return {
+            tokenId: ethers.BigNumber.from(tid),
+            available: item.headerBlockId > 0,
+          };
+        })
       )
-      .map((item) => {
-        return {
-          tokenId: ethers.BigNumber.from(item.tokenId),
-          available: item.headerBlockId > 0,
-        };
-      });
+      .flat();
   }
-
-  _onNewHeaderBlock = (result: ethers.providers.Log): void => {
-    this._findHeaderBlockNumber(0, 0, [result]);
-  };
-
-  _setup = async (cb: CB_FUNC): Promise<void> => {
-    if (this.pendingItems.length > 0) {
-      // Get the last ChildBlock in checkPointManager
-      const lastChildBlock = (
-        (await this.checkPointManager.getLastChildBlock()) as ethers.BigNumber
-      ).toNumber();
-
-      // Run throu pendingItems and look which are ready
-      let scanHeaderFrom,
-        scanHeaderTo = 0;
-      for (const pI of this.pendingItems) {
-        if (!pI.headerBlockId) {
-          if (pI.txBlockNumber <= lastChildBlock) {
-            if (!scanHeaderFrom) scanHeaderFrom = pI.rootBlock;
-            scanHeaderTo = pI.rootBlock;
-          }
-        }
-      }
-      if (scanHeaderFrom) {
-        await this._findHeaderBlockNumber(scanHeaderFrom, scanHeaderTo);
-      }
-      if (
-        this.pendingItems[this.pendingItems.length - 1].txBlockNumber >
-        lastChildBlock
-      ) {
-        this.checkPointManager.provider.on(
-          this.newBlockFilter,
-          this._onNewHeaderBlock
-        );
-      }
-    }
-    this.changeHandler = cb;
-  };
 
   processPending(tokenId: ethers.BigNumber): Promise<string> {
     const tokenIdHex = tokenId.toHexString();
-    const item = this.pendingItems.find((item) => item.tokenId === tokenIdHex);
+    const item = this.localStorageItems.pendingItems.find((item) =>
+      item.tokenIds.includes(tokenIdHex)
+    );
     if (!item || !item.headerBlockId) throw new Error('TokenId invalid');
     item.pending = true;
 
@@ -335,7 +307,9 @@ export class MessageProof {
 
   resetPending(tokenId: ethers.BigNumber): void {
     const tokenIdHex = tokenId.toHexString();
-    const item = this.pendingItems.find((item) => item.tokenId === tokenIdHex);
+    const item = this.localStorageItems.pendingItems.find((item) =>
+      item.tokenIds.includes(tokenIdHex)
+    );
     if (item) item.pending = false;
   }
 
@@ -388,6 +362,170 @@ export class MessageProof {
     );
   }
 
+  _onNewHeaderBlock = (result: ethers.providers.Log): void => {
+    this._findHeaderBlockNumber(0, 0, [result]);
+  };
+
+  _setup = async (): Promise<void> => {
+    await this._scanPendingTokenIds();
+    if (this.localStorageItems.pendingItems.length > 0) {
+      // Get the last ChildBlock in checkPointManager
+      const lastChildBlock = (
+        (await this.checkPointManager.getLastChildBlock()) as ethers.BigNumber
+      ).toNumber();
+
+      // Run throu pendingItems and look which are ready
+      let scanHeaderFrom,
+        scanHeaderTo = 0;
+      for (const pI of this.localStorageItems.pendingItems) {
+        if (!pI.headerBlockId) {
+          if (pI.txBlockNumber <= lastChildBlock) {
+            if (!scanHeaderFrom) scanHeaderFrom = pI.rootBlock;
+            scanHeaderTo = pI.rootBlock;
+          }
+        }
+      }
+      if (scanHeaderFrom) {
+        if (scanHeaderFrom < this.localStorageItems.ethLastHeaderScanned)
+          scanHeaderFrom = this.localStorageItems.ethLastHeaderScanned;
+        await this._findHeaderBlockNumber(scanHeaderFrom, scanHeaderTo);
+      }
+      if (
+        this.localStorageItems.pendingItems[
+          this.localStorageItems.pendingItems.length - 1
+        ].txBlockNumber > lastChildBlock
+      ) {
+        this.checkPointManager.provider.on(
+          this.newBlockFilter,
+          this._onNewHeaderBlock
+        );
+      }
+    }
+  };
+
+  _scanPendingTokenIds = async (): Promise<void> => {
+    //Step 1: fetch all sft token transfers to childTunnel
+    try {
+      const ethBlockNumber =
+        await this.checkPointManager.provider.getBlockNumber();
+      // Poll until we reached startup block
+      let query = `{ "query": "{indexingStatusForCurrentVersion(subgraphName: \\"${GRAPH_ACCOUNT}${this.childGraph}\\") { chains { latestBlock { number }}}}"}`;
+      let results = await (
+        await fetch(GRAPH_INDEX, {
+          method: 'POST', // or 'PUT'
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: query,
+        })
+      ).json();
+      const syncedBlockNumber =
+        results.data.indexingStatusForCurrentVersion.chains[0].latestBlock
+          .number;
+
+      query = `{"query":"{ sftTransferEntities(where: {to: \\"${this.childTunnel}\\", from: \\"${this.account}\\", block_gt: ${this.localStorageItems.polygonLastScanned}}, orderBy: block) { txHash block blockTimestamp tokenIds }}","variables":null}`;
+      this.localStorageItems.polygonLastScanned =
+        await this.provider.getBlockNumber();
+      const mumbaiTime = (
+        await this.provider.getBlock(this.localStorageItems.polygonLastScanned)
+      ).timestamp;
+      if (!this.launchBlock)
+        this.launchBlock = this.localStorageItems.polygonLastScanned;
+
+      results = await (
+        await fetch(GRAPH_BASE + GRAPH_ACCOUNT + this.childGraph, {
+          method: 'POST', // or 'PUT'
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: query,
+        })
+      ).json();
+
+      // Step 2: Create a Set with tokenIds as key
+      const bridgeItems = new Map<
+        string,
+        {
+          count: number;
+          hash: string;
+          polygonBlockNumber: number;
+          ethBlockNumber: number;
+        }
+      >();
+      for (const ent of results.data.sftTransferEntities) {
+        const tokenIds = ent.tokenIds
+          .map((tid: string) => ethers.BigNumber.from(tid).toHexString())
+          .join('_');
+        const item = bridgeItems.get(tokenIds) ?? {
+          count: 0,
+          hash: '',
+          polygonBlockNumber: 0,
+          ethBlockNumber: 0,
+        };
+        ++item.count;
+        item.hash = ent.txHash;
+        item.polygonBlockNumber = parseInt(ent.block);
+        const logTimestamp = parseInt(ent.blockTimestamp);
+        item.ethBlockNumber = Math.trunc(
+          ethBlockNumber - (mumbaiTime - logTimestamp) / 10
+        );
+        bridgeItems.set(tokenIds, item);
+      }
+
+      query = `{"query":"{ sftTransferEntities(where: {to: \\"${this.account}\\", from: \\"${this.rootTunnel}\\", txMethodID: \\"0xf953cec7\\", block_gt: ${this.localStorageItems.ethLastScanned}}, orderBy: block) { txHash block blockTimestamp tokenIds }}","variables":null}`;
+      this.localStorageItems.ethLastScanned = ethBlockNumber;
+
+      results = await (
+        await fetch(GRAPH_BASE + GRAPH_ACCOUNT + this.rootGraph, {
+          method: 'POST', // or 'PUT'
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: query,
+        })
+      ).json();
+
+      // Step 4: Create a Set with tokenIds as key
+      for (const ent of results.data.sftTransferEntities) {
+        const tokenIds = ent.tokenIds
+          .map((tid: string) => ethers.BigNumber.from(tid).toHexString())
+          .join('_');
+        const item = bridgeItems.get(tokenIds);
+        if (!item || item.count <= 0) throw new Error('Sync mismatch');
+        --item.count;
+      }
+
+      // Collect the results
+      for (const key of bridgeItems.keys()) {
+        const value = bridgeItems.get(key);
+        if (value && value.count > 0) {
+          this.localStorageItems.pendingItems.push({
+            rootBlock: value.ethBlockNumber,
+            headerBlockId: 0,
+            tokenIds: key.split('_'),
+            txHash: value.hash,
+            txBlockNumber: value.polygonBlockNumber,
+            pending: false,
+          });
+          this.changed = true;
+        }
+      }
+
+      this.localStorageItems.pendingItems.sort(
+        (a, b) => a.txBlockNumber - b.txBlockNumber
+      );
+      window.localStorage.setItem(
+        this.localStorageKey,
+        JSON.stringify(this.localStorageItems)
+      );
+
+      if (this.launchBlock > syncedBlockNumber)
+        window.setTimeout(this._setup, 10000);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
   _encodePayload(
     headerNumber: number,
     buildBlockProof: string,
@@ -422,7 +560,6 @@ export class MessageProof {
     eventLogs?: ethers.providers.Log[]
   ): Promise<void> {
     let piIndex = 0;
-    const changedAccounts: Set<string> = new Set();
     let logs = eventLogs;
     if (!logs) {
       if (!scanStart) {
@@ -437,36 +574,43 @@ export class MessageProof {
       logs = await this.checkPointManager.provider.getLogs(filter);
     }
 
+    const pendingItems = this.localStorageItems.pendingItems;
+
     for (const log of logs) {
       const parsed = this.checkPointManager.interface.parseLog(log);
       while (
-        piIndex < this.pendingItems.length &&
-        this.pendingItems[piIndex].txBlockNumber <= parsed.args.end
+        piIndex < pendingItems.length &&
+        pendingItems[piIndex].txBlockNumber <= parsed.args.end
       ) {
         if (
-          !this.pendingItems[piIndex].headerBlockId &&
-          this.pendingItems[piIndex].txBlockNumber >= parsed.args.start
+          !pendingItems[piIndex].headerBlockId &&
+          pendingItems[piIndex].txBlockNumber >= parsed.args.start
         ) {
-          this.pendingItems[piIndex].headerBlockId =
+          pendingItems[piIndex].headerBlockId =
             parsed.args.headerBlockId.toNumber();
-          changedAccounts.add(this.pendingItems[piIndex].account);
+          this.changed = true;
         }
         ++piIndex;
       }
-      if (piIndex >= this.pendingItems.length) break;
+      if (piIndex >= pendingItems.length) break;
     }
-    if (piIndex >= this.pendingItems.length) {
+    if (piIndex >= pendingItems.length) {
       this.checkPointManager.provider.off(
         this.newBlockFilter,
         this._onNewHeaderBlock
       );
     }
-    if (changedAccounts.size > 0) {
+
+    if (this.changed) {
+      this.localStorageItems.ethLastHeaderScanned =
+        logs[logs.length - 1].blockNumber;
+
       window.localStorage.setItem(
         this.localStorageKey,
-        JSON.stringify(this.pendingItems)
+        JSON.stringify(this.localStorageItems)
       );
-      if (this.changeHandler) this.changeHandler(changedAccounts);
+      this.changeHandler();
+      this.changed = false;
     }
   }
 

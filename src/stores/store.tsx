@@ -114,6 +114,13 @@ interface ChainAddresses {
   curveYToken?: string;
 }
 
+interface PolygonAddresses {
+  p_checkpointManager?: string;
+  p_sftHolderProxy?: string;
+  p_childTunnel?: string;
+  polygonRootTunnelProxy?: string;
+}
+
 interface IIndexable {
   [key: number]: ChainAddresses;
 }
@@ -548,14 +555,12 @@ class Store {
     return this.assets;
   };
 
-  handleBridgeChange = (accounts: Set<string>) => {
-    console.log('Brige:', accounts);
-    if (accounts.has(this.address)) {
-      dispatcher.dispatch({
-        type: ASSETS_STATE,
-        content: { filter: ['tokens'] },
-      } as Payload);
-    }
+  handleBridgeChange = () => {
+    console.log('BrigeChange');
+    dispatcher.dispatch({
+      type: ASSETS_STATE,
+      content: { filter: ['tokens'] },
+    } as Payload);
   };
 
   /*********************** NETWORK ******************/
@@ -602,12 +607,19 @@ class Store {
       this.ethersSigner = ethersProvider.getSigner(this.accountId);
 
       // Enable MessageProof for bidging back from Polygon
-      if (this.chainId === 1 || this.chainId === 5)
+      if (this.chainId === 1 || this.chainId === 5) {
+        const chainAddresses = (this._getChainAddresses() ??
+          {}) as PolygonAddresses;
         this.polygonBridge = new MessageProof(
           this.eventProvider ?? ethersProvider,
           this.chainId,
+          chainAddresses.p_checkpointManager ?? '',
+          this.address,
+          chainAddresses.polygonRootTunnelProxy ?? '',
+          chainAddresses.p_childTunnel ?? '',
           this.handleBridgeChange
         );
+      }
     } catch (e) {
       console.log(e);
       await this.disconnect(true, true);
@@ -777,10 +789,10 @@ class Store {
     );
     this.lpContractRO?.on('Transfer', (from, to) => {
       if (from === this.address || to === this.address) {
-        dispatcher.dispatch({
+        this._addDQ(0, {
           type: ASSETS_STATE,
           content: { filter: ['balances'] },
-        });
+        } as Payload);
       }
     });
     return true;
@@ -1750,11 +1762,7 @@ class Store {
         tx: tx?.hash,
       } as StatusResult);
 
-      const receipt = await tx.wait();
-
-      if (address === this.bridgeTargetAddress) {
-        await MessageProof.insertItem(this.address, this.chainId, id, receipt);
-      }
+      await tx.wait();
 
       emitter.emit(SFT_TRANSFER, {
         status: 'success',

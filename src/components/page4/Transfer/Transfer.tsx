@@ -79,19 +79,16 @@ function Transfer({ hideCB, name, show, tokenId, t }: PROPS): JSX.Element {
   };
 
   let address = '';
-  const buttonText =
-    tOption === 0 && bridgeTarget.name === 'ETHEREUM'
-      ? { l: 'COMING SOON', d: true }
-      : txRunning
-      ? { l: t('page4.txPending'), d: true }
-      : tOption === 0
-      ? { l: t('page4.transferTo', { name: bridgeTarget.name }), d: false }
-      : (address = addressvalid()) !== ''
-      ? {
-          l: t('page4.transferTo', { name: address }),
-          d: false,
-        }
-      : { l: t('page.invalidAddress'), d: true };
+  const buttonText = txRunning
+    ? { l: t('page4.txPending'), d: true }
+    : tOption === 0
+    ? { l: t('page4.transferTo', { name: bridgeTarget.name }), d: false }
+    : (address = addressvalid()) !== ''
+    ? {
+        l: t('page4.transferTo', { name: address }),
+        d: false,
+      }
+    : { l: t('page.invalidAddress'), d: true };
 
   return (
     <Modal show={show} onHide={hideCB} animation={false} backdrop={true}>
@@ -119,8 +116,8 @@ function Transfer({ hideCB, name, show, tokenId, t }: PROPS): JSX.Element {
             ) : (
               <>
                 Bridging to Ethereum network is a 2 step process and can take up
-                to 2 hours. Your CFOLIO appears immediately in the Ethereum
-                network and displays the transfer state:
+                to 2 hours. Your CFOLIO appears after some seconds in the
+                Ethereum network and displays the transfer state:
                 <br />
                 <ol style={{ marginTop: '0.5em', paddingLeft: '1.5em' }}>
                   <li>CFOLIO is waiting for the bridge process to finish.</li>
