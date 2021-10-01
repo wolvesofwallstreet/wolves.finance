@@ -1315,7 +1315,7 @@ class Store {
       const contracts = [this.cfihLpContract, this.cfihScContract];
 
       for (let i = 0; i < 2; ++i) {
-        if (!contracts[i]) return;
+        if (!contracts[i]) continue;
 
         const sfts = this.assets.userSFT.filter(
           (sft) =>
@@ -1509,11 +1509,7 @@ class Store {
       );
     } else if (this.isSidechain()) return;
 
-    if (
-      this.uniDaiWethPairContractRO &&
-      lpContractRO &&
-      this.curveDepositContractRO
-    ) {
+    if (this.uniDaiWethPairContractRO && lpContractRO) {
       const e18 = ethers.BigNumber.from('10').pow(18);
 
       const daiWethReserves = await this.uniDaiWethPairContractRO.getReserves();
@@ -1552,7 +1548,7 @@ class Store {
           stakedPrice = poolPrice
             .mul(ethers.BigNumber.from(rewardInfo.total))
             .div(wowsWethTotalSupply);
-        } else {
+        } else if (this.curveDepositContractRO) {
           // Get the DAI price of one yCrv token
           const priceToken =
             await this.curveDepositContractRO.calc_withdraw_one_coin(
