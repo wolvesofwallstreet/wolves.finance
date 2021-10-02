@@ -842,7 +842,7 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     uint256 filteredCount = 0;
     ListKey storage key = list.listKey;
     for (uint256 i = 0; i < list.count; ++i) {
-      if (filter.tokenIdToAddress(key.index) != address(0))
+      if (filter.balanceOf(address(this), key.index.toSftTokenId()) == 1)
         result[filteredCount++] = key.index;
       key = _tokenInfos[key.index].listKey;
     }
