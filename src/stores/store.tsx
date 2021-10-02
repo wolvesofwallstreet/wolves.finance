@@ -650,8 +650,9 @@ class Store {
     });
 
     provider.on('accountsChanged', async (accounts: string[]) => {
-      if (this.address !== '' && accounts[0] !== this.address) {
-        this.address = ethers.utils.getAddress(accounts[0]);
+      const account = ethers.utils.getAddress(accounts[0]);
+      if (this.address !== '' && account !== this.address) {
+        this.address = account;
         this._emitNetworkChange();
       }
     });
@@ -766,9 +767,9 @@ class Store {
       const filter = [];
       if (cards && from === Store.nullAddress) filter.push('cards');
       if (
-        operator === this.address ||
-        from === this.address ||
-        to === this.address
+        ethers.utils.getAddress(operator) === this.address ||
+        ethers.utils.getAddress(from) === this.address ||
+        ethers.utils.getAddress(to) === this.address
       ) {
         filter.push('tokens');
       }
@@ -788,7 +789,10 @@ class Store {
       handleTransfer(operator, from, to, false)
     );
     this.lpContractRO?.on('Transfer', (from, to) => {
-      if (from === this.address || to === this.address) {
+      if (
+        ethers.utils.getAddress(from) === this.address ||
+        ethers.utils.getAddress(to) === this.address
+      ) {
         this._addDQ(0, {
           type: ASSETS_STATE,
           content: { filter: ['balances'] },
