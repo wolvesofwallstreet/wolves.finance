@@ -106,6 +106,8 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
   IWOWSERC1155 private immutable _sftHolder;
   // Migration!! This is the old sft contract
   IWOWSERC1155 private immutable _sftHolderOld;
+  // Migration!! Need filter getTokenIds
+  address private immutable _sftMinter;
 
   // Restrict approvals to OPERATOR_ROLE members
   bool private _tradingRestricted = false;
@@ -187,6 +189,11 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
       _getAddressRegistryAddress(addressRegistry, AddressBook.SFT_HOLDER_PROXY)
     );
 
+    _sftMinter = _getAddressRegistryAddress(
+      addressRegistry,
+      AddressBook.SFT_MINTER_PROXY
+    );
+
     _sftHolderOld = sftHolderOld;
 
     // Immutable, visible for all contexts
@@ -252,14 +259,21 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
     view
     returns (uint256[] memory)
   {
-    Owned storage list = _owned[account];
-    uint256[] memory result = new uint256[](list.count);
-    ListKey storage key = list.listKey;
-    for (uint256 i = 0; i < list.count; ++i) {
-      result[i] = key.index;
-      key = _tokenInfos[key.index].listKey;
-    }
-    return result;
+    IWOWSERC1155 filter = _msgSender() == _sftMinter
+      ? _sftHolder
+      : _sftHolderOld;
+    return _getTokenIds(account, filter);
+  }
+
+  /**
+   * @dev Return list of V2 tokenIds owned by `account`
+   */
+  function getTokenIdsV2(address account)
+    external
+    view
+    returns (uint256[] memory)
+  {
+    return _getTokenIds(account, _sftHolder);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -813,5 +827,31 @@ contract TradeFloor is WOWSMinterPauser, ERC1155Holder {
 
     uint256 hashNum = uint256(keccak256(hashData));
     return (hashNum ^ (hashNum << 128)).maskHash() | sftTokenId;
+  }
+
+  /**
+   * @dev Return list of tokenIds owned by `account`
+   */
+  function _getTokenIds(address account, IWOWSERC1155 filter)
+    private
+    view
+    returns (uint256[] memory)
+  {
+    Owned storage list = _owned[account];
+    uint256[] memory result = new uint256[](list.count);
+    uint256 filteredCount = 0;
+    ListKey storage key = list.listKey;
+    for (uint256 i = 0; i < list.count; ++i) {
+      if (filter.tokenIdToAddress(key.index) != address(0))
+        result[filteredCount++] = key.index;
+      key = _tokenInfos[key.index].listKey;
+    }
+    if (filteredCount != list.count) {
+      // solhint-disable-next-line no-inline-assembly
+      assembly {
+        mstore(result, filteredCount)
+      }
+    }
+    return result;
   }
 }
