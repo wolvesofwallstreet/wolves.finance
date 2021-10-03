@@ -482,7 +482,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       ? currentRender.sft.status
       : currentRender?.cfi
       ? currentRender.cfi.status
-      : 0;
+      : -1;
 
     const buttonText = !isWalletConnected
       ? { l: t('header.connectWallet').toString(), d: true }
@@ -1023,7 +1023,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                           )}
                       </span>
                     )}
-                    {currentRender?.sft && !currentRender?.sft?.status && (
+                    {currentRender?.sft && currentRender.sft.status <= 1 && (
                       <input
                         className="wolves-btn mt-1"
                         type="button"
@@ -1181,12 +1181,13 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
           </Modal>
         )}
         {transferOpen &&
-          !currentRender?.sft?.status &&
+          (sftStatus === 0 || sftStatus === 1) &&
           currentRender?.tokenId && (
             <Transfer
               tokenId={currentRender.tokenId}
               name={currentCard?.name ?? 'UNKNOWN'}
               show={true}
+              canBridge={sftStatus === 0}
               hideCB={this.hideCB}
             />
           )}

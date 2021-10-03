@@ -21,12 +21,20 @@ type PROPS = {
   tokenId: ethers.BigNumber;
   name: string;
   show: boolean;
+  canBridge: boolean;
   hideCB: () => void;
 };
 
-function Transfer({ hideCB, name, show, tokenId, t }: PROPS): JSX.Element {
+function Transfer({
+  hideCB,
+  name,
+  show,
+  canBridge,
+  tokenId,
+  t,
+}: PROPS): JSX.Element {
   const [txRunning, setTXRunning] = useState(false);
-  const [tOption, setTOption] = useState(0);
+  const [tOption, setTOption] = useState(canBridge ? 0 : 1);
   const [bridgeTarget, setBridgeTarget] = useState({
     name: '...',
     address: '',
@@ -71,23 +79,23 @@ function Transfer({ hideCB, name, show, tokenId, t }: PROPS): JSX.Element {
   }, [hideCB]);
 
   const transferState = (n: number): string => {
-    return tOption === n ? 'active' : 'select';
+    return tOption === n
+      ? canBridge
+        ? 'active'
+        : 'active full-width'
+      : 'select';
   };
 
   const transferFunc = (n: number) => {
     return tOption === n ? undefined : () => setTOption(n);
   };
 
-  let address = '';
   const buttonText = txRunning
     ? { l: t('page4.txPending'), d: true }
     : tOption === 0
     ? { l: t('page4.transferTo', { name: bridgeTarget.name }), d: false }
-    : (address = addressvalid()) !== ''
-    ? {
-        l: t('page4.transferTo', { name: address }),
-        d: false,
-      }
+    : addressvalid() !== ''
+    ? { l: t('page4.transferTo', { name: 'ADDRESS' }), d: false }
     : { l: t('page.invalidAddress'), d: true };
 
   return (
@@ -97,9 +105,11 @@ function Transfer({ hideCB, name, show, tokenId, t }: PROPS): JSX.Element {
       </Modal.Header>
       <Modal.Body>
         <div className="lock-container">
-          <div className={transferState(0)} onClick={transferFunc(0)}>
-            {bridgeTarget.name}
-          </div>
+          {canBridge && (
+            <div className={transferState(0)} onClick={transferFunc(0)}>
+              {bridgeTarget.name}
+            </div>
+          )}
           <div className={transferState(1)} onClick={transferFunc(1)}>
             ADDRESS
           </div>

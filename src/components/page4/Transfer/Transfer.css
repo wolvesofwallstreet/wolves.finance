@@ -1,0 +1,5 @@
+@media all and (max-width: 500px) {
+  .modal-body input {
+    font-size: 13px;
+  }
+}

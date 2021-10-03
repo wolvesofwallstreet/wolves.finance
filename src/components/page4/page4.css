@@ -180,3 +180,7 @@
 .lock-container div.select {
   cursor: pointer;
 }
+
+.lock-container div.full-width {
+  flex-basis: 100%;
+}
