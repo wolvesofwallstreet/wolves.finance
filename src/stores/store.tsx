@@ -385,6 +385,7 @@ class Store {
         package: WalletConnectProvider,
         options: {
           infuraId: process.env.REACT_APP_INFURA_ID,
+          rpc: { 137: 'https://polygon-rpc.com/' },
         },
       },
       'custom-walletlink': {
@@ -627,7 +628,6 @@ class Store {
   };
 
   autoconnect = async () => {
-    if (this.address) alert('Conneted');
     const query = new URLSearchParams(window.location.search);
     const defaultChain = query.get('chainId');
     const defaultAccountId = query.get('accountId');
@@ -681,6 +681,7 @@ class Store {
     this.address = '';
     if (clearCache) {
       this.web3Modal.clearCachedProvider();
+      window.localStorage.removeItem('WALLETCONNECT_DEEPLINK_CHOICE');
     }
     if (fireEvent) {
       this._emitNetworkChange();
@@ -905,7 +906,7 @@ class Store {
             params: [{ chainId: '0x' + newChain.toString(16) }],
           });
         } catch (e) {
-          if (e.code === 4902 && newChain === 137) {
+          if ((e.code === 4902 || e.code === -32603) && newChain === 137) {
             try {
               await window.ethereum.request({
                 method: 'wallet_addEthereumChain',
