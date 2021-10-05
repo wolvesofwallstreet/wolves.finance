@@ -101,7 +101,7 @@ const SEND_MESSAGE_SIG =
 
 const GRAPH_BASE = 'https://api.thegraph.com/subgraphs/name/';
 const GRAPH_INDEX = 'https://api.thegraph.com/index-node/graphql';
-const GRAPH_ACCOUNT = 'havan/';
+const GRAPH_ACCOUNT = 'wolvesofwallstreet/';
 
 type HeaderBlock = {
   root: string;
@@ -221,15 +221,15 @@ export class MessageProof {
       this.provider = new ethers.providers.JsonRpcProvider(
         'https://rpc-mumbai.maticvigil.com/'
       );
-      this.rootGraph = 'sft-token-transfers-goerli';
-      this.childGraph = 'sft-token-transfers-maticmum';
+      this.rootGraph = 'wows-goerli-v2';
+      this.childGraph = 'wows-maticmum-v2';
       this.localStorageKey = MessageProof.LSKMUMBAI + '_' + account;
     } else if (chainId === 1) {
       this.provider = new ethers.providers.JsonRpcProvider(
         'https://polygon-rpc.com/'
       );
-      this.rootGraph = 'sft-token-transfers-mainnet';
-      this.childGraph = 'sft-token-transfers-matic';
+      this.rootGraph = 'wows-mainnet-v2';
+      this.childGraph = 'wows-matic-v2';
       this.localStorageKey = MessageProof.LSKMATIC + '_' + account;
     } else {
       this.localStorageKey = '';
@@ -250,7 +250,7 @@ export class MessageProof {
       this.localStorageItems = {
         ethLastHeaderScanned: 1,
         ethLastScanned: 1,
-        polygonLastScanned: chainId === 5 ? 18923386 : 19420655,
+        polygonLastScanned: 1,
         pendingItems: [],
       };
     }
@@ -262,6 +262,17 @@ export class MessageProof {
     this.changeHandler = cb;
 
     this._setup();
+  }
+
+  accountChanged(account: string): void {
+    if (account !== this.account) {
+      this.account = account;
+      const items = window.localStorage.getItem(this.localStorageKey);
+      if (items) {
+        this.localStorageItems = JSON.parse(items);
+        this._setup();
+      }
+    }
   }
 
   removeItem(tokenId: ethers.BigNumber): void {
@@ -450,17 +461,20 @@ export class MessageProof {
           hash: string;
           polygonBlockNumber: number;
           ethBlockNumber: number;
+          headerBlockId: number;
+          pending: boolean;
         }
       >();
       for (const ent of results.data.sftTransferEntities) {
-        const tokenIds = ent.tokenIds
-          .map((tid: string) => ethers.BigNumber.from(tid).toHexString())
-          .join('_');
+        const tokenIds = ent.tokenIds.join('_');
+
         const item = bridgeItems.get(tokenIds) ?? {
           count: 0,
           hash: '',
           polygonBlockNumber: 0,
           ethBlockNumber: 0,
+          headerBlockId: 0,
+          pending: false,
         };
         ++item.count;
         item.hash = ent.txHash;
@@ -471,6 +485,20 @@ export class MessageProof {
         );
         bridgeItems.set(tokenIds, item);
       }
+
+      // Insert existing pending items
+      this.localStorageItems.pendingItems.forEach((item) => {
+        const tokenIds = item.tokenIds.join('_');
+        if (bridgeItems.get(tokenIds)) throw new Error('Sync Mismatch');
+        bridgeItems.set(tokenIds, {
+          count: 1,
+          hash: item.txHash,
+          polygonBlockNumber: item.txBlockNumber,
+          ethBlockNumber: item.rootBlock,
+          headerBlockId: item.headerBlockId,
+          pending: item.pending,
+        });
+      });
 
       query = `{"query":"{ sftTransferEntities(where: {to: \\"${this.account}\\", from: \\"${this.rootTunnel}\\", txMethodID: \\"0xf953cec7\\", block_gt: ${this.localStorageItems.ethLastScanned}}, orderBy: block) { txHash block blockTimestamp tokenIds }}","variables":null}`;
       this.localStorageItems.ethLastScanned = ethBlockNumber;
@@ -487,25 +515,24 @@ export class MessageProof {
 
       // Step 4: Create a Set with tokenIds as key
       for (const ent of results.data.sftTransferEntities) {
-        const tokenIds = ent.tokenIds
-          .map((tid: string) => ethers.BigNumber.from(tid).toHexString())
-          .join('_');
+        const tokenIds = ent.tokenIds.join('_');
         const item = bridgeItems.get(tokenIds);
         if (!item || item.count <= 0) throw new Error('Sync mismatch');
         --item.count;
       }
 
       // Collect the results
+      this.localStorageItems.pendingItems = [];
       for (const key of bridgeItems.keys()) {
         const value = bridgeItems.get(key);
         if (value && value.count > 0) {
           this.localStorageItems.pendingItems.push({
             rootBlock: value.ethBlockNumber,
-            headerBlockId: 0,
+            headerBlockId: value.headerBlockId,
             tokenIds: key.split('_'),
             txHash: value.hash,
             txBlockNumber: value.polygonBlockNumber,
-            pending: false,
+            pending: value.pending,
           });
           this.changed = true;
         }

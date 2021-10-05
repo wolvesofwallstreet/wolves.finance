@@ -806,6 +806,7 @@ class Store {
   _emitNetworkChange() {
     // Request new SFT List
     if (this.address) {
+      if (this.polygonBridge) this.polygonBridge.accountChanged(this.address);
       dispatcher.dispatch({
         type: ASSETS_STATE,
         content: { filter: ['tokens', 'balances', 'rewards'] },
@@ -1566,7 +1567,7 @@ class Store {
           stakedPrice = priceToken
             .mul(ethers.BigNumber.from(rewardInfo.total))
             .div(e18);
-        }
+        } else stakedPrice = ethers.BigNumber.from(0);
 
         if (rewardInfo.rewardDuration) {
           // yearly emission
