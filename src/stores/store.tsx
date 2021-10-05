@@ -61,7 +61,7 @@ type PayloadContent = {
   investment?: number;
   time?: number;
   id?: ethers.BigNumber;
-  type?: number;
+  status?: 'locked';
   filter?: Array<string>;
   address?: string;
 };
@@ -1729,7 +1729,7 @@ class Store {
   };
 
   _doSftTransfer = async (payloadContent: PayloadContent) => {
-    const { id, address } = payloadContent;
+    const { id, status, address } = payloadContent;
     if (id === undefined || !address) {
       emitter.emit(SFT_TRANSFER, {
         status: 'error',
@@ -1738,7 +1738,12 @@ class Store {
       return;
     }
 
-    if (!this.sftHolderContractRO || !this.ethersProvider) {
+    const contract =
+      status === 'locked'
+        ? this.tradeFloorContractRO
+        : this.sftHolderContractRO;
+
+    if (!contract || !this.ethersProvider) {
       emitter.emit(SFT_TRANSFER, {
         status: 'error',
         errorMessage: 'Invalid contract state',
@@ -1747,18 +1752,12 @@ class Store {
     }
 
     try {
-      const sftHolderContract = this.sftHolderContractRO.connect(
+      const signedContract = contract.connect(
         this.ethersProvider.getSigner(this.accountId)
       );
       this.eventsSuspended = true;
       const tx: ethers.ContractTransaction =
-        await sftHolderContract.safeTransferFrom(
-          this.address,
-          address,
-          id,
-          1,
-          []
-        );
+        await signedContract.safeTransferFrom(this.address, address, id, 1, []);
       emitter.emit(SFT_TRANSFER, {
         status: 'tx',
         tx: tx?.hash,

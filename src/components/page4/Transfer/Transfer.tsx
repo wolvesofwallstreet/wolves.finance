@@ -54,6 +54,7 @@ function Transfer({
       type: SFT_TRANSFER,
       content: {
         id: tokenId,
+        status: canBridge ? undefined : 'locked',
         address: tOption === 0 ? bridgeTarget.address : customAddress,
       },
     };

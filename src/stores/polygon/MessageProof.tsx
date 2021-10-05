@@ -223,14 +223,14 @@ export class MessageProof {
       );
       this.rootGraph = 'wows-goerli-v2';
       this.childGraph = 'wows-maticmum-v2';
-      this.localStorageKey = MessageProof.LSKMUMBAI + '_' + account;
+      this.localStorageKey = MessageProof.LSKMUMBAI + '#' + account;
     } else if (chainId === 1) {
       this.provider = new ethers.providers.JsonRpcProvider(
         'https://polygon-rpc.com/'
       );
       this.rootGraph = 'wows-mainnet-v2';
       this.childGraph = 'wows-matic-v2';
-      this.localStorageKey = MessageProof.LSKMATIC + '_' + account;
+      this.localStorageKey = MessageProof.LSKMATIC + '#' + account;
     } else {
       this.localStorageKey = '';
       throw new Error('Unsupported chainId');
@@ -266,11 +266,26 @@ export class MessageProof {
 
   accountChanged(account: string): void {
     if (account !== this.account) {
+      const hasItems = this.localStorageItems.pendingItems.length > 0;
       this.account = account;
+      this.localStorageKey = this.localStorageKey.split('#')[0] + '#' + account;
       const items = window.localStorage.getItem(this.localStorageKey);
       if (items) {
         this.localStorageItems = JSON.parse(items);
+        if (hasItems || this.localStorageItems.pendingItems.length > 0)
+          this.changed = true;
         this._setup();
+      } else {
+        this.localStorageItems = {
+          ethLastHeaderScanned: 1,
+          ethLastScanned: 1,
+          polygonLastScanned: 1,
+          pendingItems: [],
+        };
+        if (hasItems) {
+          this.changed = false;
+          this.changeHandler();
+        }
       }
     }
   }
@@ -406,6 +421,10 @@ export class MessageProof {
           this.localStorageItems.pendingItems.length - 1
         ].txBlockNumber > lastChildBlock
       ) {
+        this.checkPointManager.provider.off(
+          this.newBlockFilter,
+          this._onNewHeaderBlock
+        );
         this.checkPointManager.provider.on(
           this.newBlockFilter,
           this._onNewHeaderBlock
