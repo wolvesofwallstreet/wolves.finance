@@ -30,11 +30,13 @@ const SFT_EVALUATOR_PROXY_CONTRACT = 'SFTEvaluatorProxy';
 const TRADE_FLOOR_CONTRACT = 'TradeFloor';
 const CFOLIO_FARM_CONTRACT = 'CFolioFarm';
 const CFOLIO_ITEM_HANDLER_LP_CONTRACT = 'CFolioItemHandlerLP';
+const CFOLIO_ITEM_HANDLER_SC2_CONTRACT = 'CFolioItemHandlerSC3';
 const CFOLIO_ITEM_HANDLER_SC3_CONTRACT = 'CFolioItemHandlerSC3';
 const CFOLIO_ITEM_HANDLER_SC4_CONTRACT = 'CFolioItemHandlerSC4';
 const POLYGON_ROOT_TUNNEL_CONTRACT = 'WOWSERC1155RootTunnel';
 const POLYGON_CHILD_TUNNEL_CONTRACT = 'WOWSERC1155ChildTunnel';
 const MIGRATE_V2_CONTRACT = 'MigrateToV2';
+const FANTOM_ANY_HANDLER_CONTRACT = 'FantomAnyHandler';
 
 // Deployed contract aliases
 const BOOSTER_PROXY_CONTRACT = 'BoosterProxy';
@@ -48,6 +50,7 @@ const CFOLIO_ITEM_HANDLER_SC_PROXY_CONTRACT = 'CFolioItemHandlerSCProxy';
 const POLYGON_ROOT_TUNNEL_PROXY_CONTRACT = 'PolygonRootTunnelProxy';
 const POLYGON_CHILD_TUNNEL_PROXY_CONTRACT = 'PolygonChildTunnelProxy';
 const MIGRATE_V2_PROXY_CONTRACT = 'MigrateToV2Proxy';
+const FANTOM_ANY_HANDLER_PROXY_CONTRACT = 'FantomAnyHandlerProxy';
 
 // Path to address files
 const CONFIG_ADDRESSES = `${__dirname}/../src/config/addresses.json`;
@@ -92,6 +95,7 @@ const BOOSTER_ABI = `${__dirname}/../src/abi/contracts/src/booster/Booster.sol/B
 const SFT_HOLDER_ABI = `${__dirname}/../src/abi/contracts/src/token/WOWSERC1155.sol/WOWSERC1155.json`;
 const SFT_MINTER_ABI = `${__dirname}/../src/abi/contracts/src/crowdsale/WOWSSftMinter.sol/WOWSSftMinter.json`;
 const TRADE_FLOOR_ABI = `${__dirname}/../src/abi/contracts/src/token/TradeFloor.sol/TradeFloor.json`;
+const CFOLIO_ITEM_HANDLER_SC2_ABI = `${__dirname}/../src/abi/contracts/src/cfolio/CFolioItemHandlerSC2.sol/CFolioItemHandlerSC2.json`;
 const CFOLIO_ITEM_HANDLER_SC3_ABI = `${__dirname}/../src/abi/contracts/src/cfolio/CFolioItemHandlerSC3.sol/CFolioItemHandlerSC3.json`;
 const CFOLIO_ITEM_HANDLER_SC4_ABI = `${__dirname}/../src/abi/contracts/src/cfolio/CFolioItemHandlerSC4.sol/CFolioItemHandlerSC4.json`;
 const POLYGON_ROOT_TUNNEL_ABI = `${__dirname}/../src/abi/contracts/src/polygon/WOWSERC1155RootTunnel.sol/WOWSERC1155RootTunnel.json`;
@@ -99,6 +103,10 @@ const POLYGON_CHILD_TUNNEL_ABI = `${__dirname}/../src/abi/contracts/src/polygon/
 
 // Useful constants
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
+// Root chain for FTM bridging
+const FANTOM_ANY_ROOT_CHAIN = 1;
+// Child chain for FTM bridging
+const FANTOM_ANY_CHILD_CHAIN = 250;
 
 //////////////////////////////////////////////////////////////////////////////
 // Functions
@@ -221,6 +229,7 @@ const func = async function (hardhat_re) {
   if (!hardhat_re.network.tags.needYearn) {
     generatedAddresses.curveADeposit = configAddresses.curveADeposit;
     generatedAddresses.curveYDeposit = configAddresses.curveYDeposit;
+    generatedAddresses.curve2Deposit = configAddresses.curve2Deposit;
   }
 
   await setRegistryKey(
@@ -851,7 +860,9 @@ const func = async function (hardhat_re) {
     // Load ABIs
     const cfolioItemHandlerSCAbi = JSON.parse(
       fs.readFileSync(
-        hardhat_re.network.tags.curve3pool
+        hardhat_re.network.tags.curve2pool
+          ? CFOLIO_ITEM_HANDLER_SC2_ABI
+          : hardhat_re.network.tags.curve3pool
           ? CFOLIO_ITEM_HANDLER_SC3_ABI
           : CFOLIO_ITEM_HANDLER_SC4_ABI
       )
@@ -994,14 +1005,18 @@ const func = async function (hardhat_re) {
       log_step('Deploying CFolioItemHandlerSC contract');
 
       const cfolioItemHandlerSCContractReceipt = await deploy(
-        hardhat_re.network.tags.curve3pool
+        hardhat_re.network.tags.curve2pool
+          ? CFOLIO_ITEM_HANDLER_SC2_CONTRACT
+          : hardhat_re.network.tags.curve3pool
           ? CFOLIO_ITEM_HANDLER_SC3_CONTRACT
           : CFOLIO_ITEM_HANDLER_SC4_CONTRACT,
         {
           from: deployer,
           args: [
             ADDRESS_REGISTRY_ADDRESS,
-            hardhat_re.network.tags.curve3pool
+            hardhat_re.network.tags.curve2pool
+              ? generatedAddresses.curve2Deposit
+              : hardhat_re.network.tags.curve3pool
               ? generatedAddresses.curveADeposit
               : generatedAddresses.curveYDeposit,
             generatedAddresses.cfolioFarmSC,
@@ -1059,85 +1074,154 @@ const func = async function (hardhat_re) {
   }
 
   if (hardhat_re.network.tags.sidechain && !hardhat_re.network.tags.test) {
-    //////////////////////////////////////////////////////////////////////////////
-    //
-    // Deploy PolygonChildTunnel
-    //
-    //////////////////////////////////////////////////////////////////////////////
+    if (hardhat_re.network.tags.fantom) {
+      //////////////////////////////////////////////////////////////////////////////
+      //
+      // Deploy FantomAnyHandler
+      //
+      //////////////////////////////////////////////////////////////////////////////
 
-    if (configAddresses.polygonChildTunnel) {
-      log_step(
-        `Using PolygonChildTunnel contract: ${configAddresses.polygonChildTunnel}`
-      );
-      generatedAddresses.polygonChildTunnel =
-        configAddresses.polygonChildTunnel;
+      if (configAddresses.fantomAnyHandler) {
+        log_step(
+          `Using FantomAnyHandler contract: ${configAddresses.fantomAnyHandler}`
+        );
+        generatedAddresses.fantomAnyHandler = configAddresses.fantomAnyHandler;
+      } else {
+        log_step('Deploying FantomAnyHandler contract');
+
+        const fantomAnyHandlerContractReceipt = await deploy(
+          FANTOM_ANY_HANDLER_CONTRACT,
+          {
+            from: deployer,
+            args: [
+              marketingWallet,
+              generatedAddresses.sftHolderProxy,
+              configAddresses.f_anyNftRouter,
+              FANTOM_ANY_ROOT_CHAIN,
+            ],
+            log: true,
+            deterministicDeployment: true,
+          }
+        );
+
+        generatedAddresses.fantomAnyHandler =
+          fantomAnyHandlerContractReceipt.address;
+      }
+
+      //////////////////////////////////////////////////////////////////////////////
+      //
+      // Deploy FantomAnyHandlerProxy
+      //
+      //////////////////////////////////////////////////////////////////////////////
+
+      if (configAddresses.fantomAnyHandlerProxy) {
+        log_step(
+          `Using FantomAnyHandler proxy: ${configAddresses.fantomAnyHandlerProxy}`
+        );
+        generatedAddresses.fantomAnyHandlerProxy =
+          configAddresses.fantomAnyHandlerProxy;
+      } else {
+        log_step('Deploying FantomAnyHandler proxy');
+
+        const fantomAnyHandlerProxyReceipt = await deploy(
+          FANTOM_ANY_HANDLER_PROXY_CONTRACT,
+          {
+            contract: UPGRADE_PROXY_CONTRACT,
+            from: deployer,
+            args: [
+              ADDRESS_REGISTRY_ADDRESS,
+              generatedAddresses.fantomAnyHandler,
+              [],
+            ],
+            log: true,
+            deterministicDeployment: true,
+          }
+        );
+
+        generatedAddresses.fantomAnyHandlerProxy =
+          fantomAnyHandlerProxyReceipt.address;
+      }
     } else {
-      log_step('Deploying PolygonChildTunnel contract');
+      //////////////////////////////////////////////////////////////////////////////
+      //
+      // Deploy PolygonChildTunnel
+      //
+      //////////////////////////////////////////////////////////////////////////////
 
-      const polygonChildTunnelContractReceipt = await deploy(
-        POLYGON_CHILD_TUNNEL_CONTRACT,
-        {
-          from: deployer,
-          args: [
-            configAddresses.p_fxChild,
-            generatedAddresses.sftHolderProxy,
-            generatedAddresses.sftMinterProxy,
-            generatedAddresses.boosterProxy,
-            marketingWallet,
-            generatedAddresses.sftEvaluatorProxy,
-          ],
-          log: true,
-          deterministicDeployment: true,
-        }
-      );
+      if (configAddresses.polygonChildTunnel) {
+        log_step(
+          `Using PolygonChildTunnel contract: ${configAddresses.polygonChildTunnel}`
+        );
+        generatedAddresses.polygonChildTunnel =
+          configAddresses.polygonChildTunnel;
+      } else {
+        log_step('Deploying PolygonChildTunnel contract');
 
-      generatedAddresses.polygonChildTunnel =
-        polygonChildTunnelContractReceipt.address;
-    }
+        const polygonChildTunnelContractReceipt = await deploy(
+          POLYGON_CHILD_TUNNEL_CONTRACT,
+          {
+            from: deployer,
+            args: [
+              configAddresses.p_fxChild,
+              generatedAddresses.sftHolderProxy,
+              generatedAddresses.sftMinterProxy,
+              generatedAddresses.boosterProxy,
+              marketingWallet,
+              generatedAddresses.sftEvaluatorProxy,
+            ],
+            log: true,
+            deterministicDeployment: true,
+          }
+        );
 
-    //////////////////////////////////////////////////////////////////////////////
-    //
-    // Deploy PolygonChildTunnelProxy
-    //
-    //////////////////////////////////////////////////////////////////////////////
+        generatedAddresses.polygonChildTunnel =
+          polygonChildTunnelContractReceipt.address;
+      }
 
-    if (configAddresses.polygonChildTunnelProxy) {
-      log_step(
-        `Using PolygonChildTunnel proxy: ${configAddresses.polygonChildTunnelProxy}`
-      );
-      generatedAddresses.polygonChildTunnelProxy =
-        configAddresses.polygonChildTunnelProxy;
-    } else {
-      log_step('Deploying PolygonChildTunnel proxy');
+      //////////////////////////////////////////////////////////////////////////////
+      //
+      // Deploy PolygonChildTunnelProxy
+      //
+      //////////////////////////////////////////////////////////////////////////////
 
-      const polygonChildTunnelAbi = JSON.parse(
-        fs.readFileSync(POLYGON_CHILD_TUNNEL_ABI)
-      );
-      const polygonChildTunnelInterface = new ethers.utils.Interface(
-        polygonChildTunnelAbi
-      );
-      const proxyCallData = polygonChildTunnelInterface.encodeFunctionData(
-        'initialize',
-        [generatedAddresses.rewardHandler]
-      );
+      if (configAddresses.polygonChildTunnelProxy) {
+        log_step(
+          `Using PolygonChildTunnel proxy: ${configAddresses.polygonChildTunnelProxy}`
+        );
+        generatedAddresses.polygonChildTunnelProxy =
+          configAddresses.polygonChildTunnelProxy;
+      } else {
+        log_step('Deploying PolygonChildTunnel proxy');
 
-      const polygonChildTunnelProxyReceipt = await deploy(
-        POLYGON_CHILD_TUNNEL_PROXY_CONTRACT,
-        {
-          contract: UPGRADE_PROXY_CONTRACT,
-          from: deployer,
-          args: [
-            ADDRESS_REGISTRY_ADDRESS,
-            generatedAddresses.polygonChildTunnel,
-            proxyCallData,
-          ],
-          log: true,
-          deterministicDeployment: true,
-        }
-      );
+        const polygonChildTunnelAbi = JSON.parse(
+          fs.readFileSync(POLYGON_CHILD_TUNNEL_ABI)
+        );
+        const polygonChildTunnelInterface = new ethers.utils.Interface(
+          polygonChildTunnelAbi
+        );
+        const proxyCallData = polygonChildTunnelInterface.encodeFunctionData(
+          'initialize',
+          [generatedAddresses.rewardHandler]
+        );
 
-      generatedAddresses.polygonChildTunnelProxy =
-        polygonChildTunnelProxyReceipt.address;
+        const polygonChildTunnelProxyReceipt = await deploy(
+          POLYGON_CHILD_TUNNEL_PROXY_CONTRACT,
+          {
+            contract: UPGRADE_PROXY_CONTRACT,
+            from: deployer,
+            args: [
+              ADDRESS_REGISTRY_ADDRESS,
+              generatedAddresses.polygonChildTunnel,
+              proxyCallData,
+            ],
+            log: true,
+            deterministicDeployment: true,
+          }
+        );
+
+        generatedAddresses.polygonChildTunnelProxy =
+          polygonChildTunnelProxyReceipt.address;
+      }
     }
   } else if (hardhat_re.network.tags.rootchain) {
     //////////////////////////////////////////////////////////////////////////////
@@ -1164,7 +1248,7 @@ const func = async function (hardhat_re) {
 
     //////////////////////////////////////////////////////////////////////////////
     //
-    // Deploy PolygonRootTunnelProxy
+    // Deploy MigratorV2Proxy
     //
     //////////////////////////////////////////////////////////////////////////////
 
@@ -1264,6 +1348,73 @@ const func = async function (hardhat_re) {
 
       generatedAddresses.polygonRootTunnelProxy =
         polygonRootTunnelProxyReceipt.address;
+    }
+
+    //////////////////////////////////////////////////////////////////////////////
+    //
+    // Deploy FantomAnyHandler
+    //
+    //////////////////////////////////////////////////////////////////////////////
+
+    if (configAddresses.fantomAnyHandler) {
+      log_step(
+        `Using FantomAnyHandler contract: ${configAddresses.fantomAnyHandler}`
+      );
+      generatedAddresses.fantomAnyHandler = configAddresses.fantomAnyHandler;
+    } else {
+      log_step('Deploying FantomAnyHandler contract');
+
+      const fantomAnyHandlerContractReceipt = await deploy(
+        FANTOM_ANY_HANDLER_CONTRACT,
+        {
+          from: deployer,
+          args: [
+            marketingWallet,
+            generatedAddresses.sftHolderProxy,
+            configAddresses.f_anyNftRouter,
+            FANTOM_ANY_CHILD_CHAIN,
+          ],
+          log: true,
+          deterministicDeployment: true,
+        }
+      );
+
+      generatedAddresses.fantomAnyHandler =
+        fantomAnyHandlerContractReceipt.address;
+    }
+
+    //////////////////////////////////////////////////////////////////////////////
+    //
+    // Deploy FantomAnyHandlerProxy
+    //
+    //////////////////////////////////////////////////////////////////////////////
+
+    if (configAddresses.fantomAnyHandlerProxy) {
+      log_step(
+        `Using FantomAnyHandler proxy: ${configAddresses.fantomAnyHandlerProxy}`
+      );
+      generatedAddresses.fantomAnyHandlerProxy =
+        configAddresses.fantomAnyHandlerProxy;
+    } else {
+      log_step('Deploying FantomAnyHandler proxy');
+
+      const fantomAnyHandlerProxyReceipt = await deploy(
+        FANTOM_ANY_HANDLER_PROXY_CONTRACT,
+        {
+          contract: UPGRADE_PROXY_CONTRACT,
+          from: deployer,
+          args: [
+            ADDRESS_REGISTRY_ADDRESS,
+            generatedAddresses.fantomAnyHandler,
+            [],
+          ],
+          log: true,
+          deterministicDeployment: true,
+        }
+      );
+
+      generatedAddresses.fantomAnyHandlerProxy =
+        fantomAnyHandlerProxyReceipt.address;
     }
   }
 

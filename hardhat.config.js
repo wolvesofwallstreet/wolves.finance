@@ -35,6 +35,7 @@ const config = {
       rinkeby: env.RINKEBY_GNOSIS_MARKETING_WALLET_ADDRESS,
       mainnet: env.MAINNET_GNOSIS_MARKETING_WALLET_ADDRESS,
       polygon: env.POLYGON_GNOSIS_ADMIN_WALLET_ADDRESS,
+      fantom: env.FANTOM_GNOSIS_ADMIN_WALLET_ADDRESS,
       goerli_sft: env.DEPLOYER_ADDRESS,
       mumbai: env.DEPLOYER_ADDRESS,
     },
@@ -43,6 +44,7 @@ const config = {
       rinkeby: env.RINKEBY_GNOSIS_TEAM_WALLET_ADDRESS,
       mainnet: env.MAINNET_GNOSIS_TEAM_WALLET_ADDRESS,
       polygon: env.POLYGON_GNOSIS_ADMIN_WALLET_ADDRESS,
+      fantom: env.FANTOM_GNOSIS_ADMIN_WALLET_ADDRESS,
       goerli_sft: env.DEPLOYER_ADDRESS,
       mumbai: env.DEPLOYER_ADDRESS,
     },
@@ -204,6 +206,12 @@ const config = {
       url: 'https://polygon-rpc.com',
       accounts: TESTNET_ACCOUNTS,
       gasPrice: 10000000000,
+    },
+    fantom: {
+      tags: ['sidechain', 'fantom', 'curve2pool'],
+      url: 'https://rpc.ftm.tools/',
+      accounts: TESTNET_ACCOUNTS,
+      gasPrice: 100000000000,
     },
   },
   etherscan: {

@@ -7,6 +7,7 @@
     "p_fxChild": "0x8397259c983751DAf40400790063935a11afa28a",
     "p_sftHolderProxy": "0x0F0c855DC8a7e579e04d75319A7AD6238F379b09",
     "p_childTunnel": "0x914aCCe8AFA5726F8E37Bb1e16Cf6B46b6686def",
+    "f_anyNftRouter": "0xb0ae108669ceb86e9e98e8fe9e40d98b867855fd",
     "bridgeTarget": "0xDD423A34D9489454e108d6006336A687A38Ac1A0",
     "weth": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
     "uniV2Factory": "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f",
@@ -186,5 +187,11 @@
     "cfolioItemHandlerSCProxy": "0xf605B3B3Cd435bE067D3F795B322F44cA86f29c0",
     "polygonChildTunnel": "0xF636D6fBF329155F05Ba2afb877590B59f237E22",
     "polygonChildTunnelProxy": "0x914aCCe8AFA5726F8E37Bb1e16Cf6B46b6686def"
+  },
+  "250": {
+    "openSeaProxyRegistry": "",
+    "uniDaiWeth": "",
+    "f_anyNftRouter": "0xfe19f0b51438fd612f6fd59c1dbb3ea319f433ba",
+    "curve2Deposit": "0x27E611FD27b276ACbd5Ffd632E5eAEBEC9761E40"
   }
 }

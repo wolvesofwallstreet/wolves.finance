@@ -21,6 +21,7 @@ contract FantomAnyHandler is IERC1155Transfer, ERC1155Holder {
   // Routing
   //////////////////////////////////////////////////////////////////////////////
 
+  address private immutable _admin;
   address private immutable _sftHolder;
   address private immutable _nftRouter;
   uint256 private immutable _destChain;
@@ -34,6 +35,11 @@ contract FantomAnyHandler is IERC1155Transfer, ERC1155Holder {
   //////////////////////////////////////////////////////////////////////////////
   // Modifier
   //////////////////////////////////////////////////////////////////////////////
+
+  modifier onlyAdmin() {
+    require(msg.sender == _admin, 'FAH: Only admin');
+    _;
+  }
 
   modifier onlyNftRouter() {
     require(msg.sender == _nftRouter, 'FAH: Only router');
@@ -50,10 +56,12 @@ contract FantomAnyHandler is IERC1155Transfer, ERC1155Holder {
   //////////////////////////////////////////////////////////////////////////////
 
   constructor(
+    address admin,
     address sftHolder,
     address nftRouter,
     uint256 destChain
   ) {
+    _admin = admin;
     _sftHolder = sftHolder;
     _nftRouter = nftRouter;
     _destChain = destChain;
@@ -120,6 +128,14 @@ contract FantomAnyHandler is IERC1155Transfer, ERC1155Holder {
     // Call ancestor
     return
       super.onERC1155BatchReceived(operator, from, tokenIds, amounts, data);
+  }
+
+  /**
+   * @dev Destruct implementation
+   */
+  function destructContract() external onlyAdmin {
+    // slither-disable-next-line suicidal
+    selfdestruct(payable(_admin));
   }
 
   //////////////////////////////////////////////////////////////////////////////
