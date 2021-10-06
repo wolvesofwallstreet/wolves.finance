@@ -187,11 +187,9 @@ contract WOWSERC1155 is IWOWSERC1155, AccessControl {
     bytes calldata data
   ) external override {
     require(from != address(0) && to != address(0), 'SFT: Null address');
-    require(
-      amounts.length == 0 || tokenIds.length == amounts.length,
-      'SFT: Length mismatch'
-    );
     if (amounts.length > 0) {
+      require(tokenIds.length == amounts.length, 'SFT: Length mismatch');
+
       for (uint256 i = 0; i < amounts.length; ++i)
         require(amounts[i] == 1, 'SFT: Wrong amount');
     }
