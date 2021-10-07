@@ -115,8 +115,12 @@ contract FantomAnyHandler is IERC1155Transfer, ERC1155Holder {
       }
     }
 
+    uint256 fee = IAnyNftRouter(_nftRouter).feePerTransaction() +
+      tokenIds.length *
+      IAnyNftRouter(_nftRouter).feePerUnitInBatch();
+
     // ToDo: pass fees
-    IAnyNftRouter(_nftRouter).nft1155BatchSwapOut(
+    IAnyNftRouter(_nftRouter).nft1155BatchSwapOut{ value: fee }(
       address(this),
       from,
       tokenIds,
@@ -137,6 +141,11 @@ contract FantomAnyHandler is IERC1155Transfer, ERC1155Holder {
     // slither-disable-next-line suicidal
     selfdestruct(payable(_admin));
   }
+
+  /**
+   * @dev Allow receiving ETH
+   */
+  receive() external payable {}
 
   //////////////////////////////////////////////////////////////////////////////
   // Internal

@@ -9,6 +9,10 @@
 pragma solidity >=0.7.0 <0.8.0;
 
 interface IAnyNftRouter {
+  function feePerTransaction() external view returns (uint256);
+
+  function feePerUnitInBatch() external view returns (uint256);
+
   function nft1155SwapOut(
     address token,
     address to,
