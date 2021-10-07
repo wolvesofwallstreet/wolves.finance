@@ -173,7 +173,7 @@ const config = {
       gasPrice: 1500000000,
     },
     goerli_sft: {
-      tags: ['rootchain'],
+      tags: ['rootchain', 'polygon', 'migrate'],
       url: `https://goerli.infura.io/v3/${env.INFURA_API_KEY}`,
       accounts: TESTNET_ACCOUNTS,
       gasPrice: 1500000000,
@@ -183,6 +183,7 @@ const config = {
       accounts: TESTNET_ACCOUNTS,
     },
     rinkeby: {
+      tags: ['rootchain', 'fantom'],
       url: `https://rinkeby.infura.io/v3/${env.INFURA_API_KEY}`,
       accounts: TESTNET_ACCOUNTS,
     },
@@ -191,7 +192,7 @@ const config = {
       accounts: TESTNET_ACCOUNTS,
     },
     mainnet: {
-      tags: ['rootchain'],
+      tags: ['rootchain', 'polygon', 'fantom', 'migrate'],
       url: `https://mainnet.infura.io/v3/${env.INFURA_API_KEY}`,
       accounts: TESTNET_ACCOUNTS,
     },
@@ -211,7 +212,7 @@ const config = {
       tags: ['sidechain', 'fantom', 'curve2pool'],
       url: 'https://rpc.ftm.tools/',
       accounts: TESTNET_ACCOUNTS,
-      gasPrice: 100000000000,
+      //gasPrice: 250000000000,
     },
   },
   etherscan: {

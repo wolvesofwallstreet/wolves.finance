@@ -1366,7 +1366,7 @@ const func = async function (hardhat_re) {
           )
         );
       }
-    } else {
+    } else if (hardhat_re.network.tags.polygon) {
       //////////////////////////////////////////////////////////////////////////////
       // POLYGON
       //////////////////////////////////////////////////////////////////////////////
@@ -1538,271 +1538,280 @@ const func = async function (hardhat_re) {
       }
     }
   } else if (hardhat_re.network.tags.rootchain) {
-    //
-    // Check if we have to upgrade the polygonRootTunnel implementation
-    //
+    if (hardhat_re.network.tags.polygon) {
+      //
+      // Check if we have to upgrade the polygonRootTunnel implementation
+      //
 
-    if (
-      (await getProxyImplementation(
-        hardhat_re,
-        generatedAddresses.polygonRootTunnelProxy
-      )) !== generatedAddresses.polygonRootTunnel
-    ) {
-      await catchUnknownSigner(
-        execute(
-          POLYGON_ROOT_TUNNEL_PROXY_CONTRACT,
-          {
-            from: marketingWallet,
-            log: true,
-          },
-          'upgradeTo',
-          generatedAddresses.polygonRootTunnel
-        )
-      );
-    }
-
-    //
-    // Check if we have to upgrade the migratorV2 implementation
-    //
-
-    if (
-      (await getProxyImplementation(
-        hardhat_re,
-        generatedAddresses.migratorV2Proxy
-      )) !== generatedAddresses.migratorV2
-    ) {
-      await catchUnknownSigner(
-        execute(
-          MIGRATE_V2_PROXY_CONTRACT,
-          {
-            from: marketingWallet,
-            log: true,
-          },
-          'upgradeTo',
-          generatedAddresses.migratorV2
-        )
-      );
-    }
-
-    //
-    // Allow MigratorV2 to mint SFT
-    //
-
-    if (
-      !(await sftHolderInstance.hasRole(
-        SFT_HOLDER_MINTER_ROLE,
-        generatedAddresses.migratorV2Proxy
-      ))
-    ) {
-      await catchUnknownSigner(
-        execute(
-          SFT_HOLDER_CONTRACT,
-          {
-            from: marketingWallet,
-            to: generatedAddresses.sftHolderProxy,
-            log: true,
-          },
-          'grantRole',
-          SFT_HOLDER_MINTER_ROLE,
-          generatedAddresses.migratorV2Proxy
-        )
-      );
-    }
-
-    // MigratorV2 needs MIGRATOR role in old Booster
-    const oldBoosterInstance = await hardhat_re.ethers.getContractAt(
-      BOOSTER_CONTRACT,
-      configAddresses.boosterProxyOld
-    );
-    if (
-      !(await oldBoosterInstance.hasRole(
-        BOOSTER_MIGRATOR_ROLE,
-        generatedAddresses.migratorV2Proxy
-      ))
-    ) {
-      await catchUnknownSigner(
-        execute(
-          BOOSTER_CONTRACT,
-          {
-            from: marketingWallet,
-            to: configAddresses.boosterProxyOld,
-            log: true,
-          },
-          'grantRole',
-          BOOSTER_MIGRATOR_ROLE,
-          generatedAddresses.migratorV2Proxy
-        )
-      );
-    }
-
-    //
-    // Set MigratorV2 rootTunnel
-    //
-
-    const migratorV2Instance = await hardhat_re.ethers.getContractAt(
-      MIGRATE_V2_CONTRACT,
-      generatedAddresses.migratorV2Proxy
-    );
-    if (
-      (await migratorV2Instance.rootTunnel()) !==
-      generatedAddresses.polygonRootTunnelProxy
-    ) {
-      await catchUnknownSigner(
-        execute(
-          MIGRATE_V2_CONTRACT,
-          {
-            from: marketingWallet,
-            to: generatedAddresses.migratorV2Proxy,
-            log: true,
-          },
-          'setRootTunnel',
+      if (
+        (await getProxyImplementation(
+          hardhat_re,
           generatedAddresses.polygonRootTunnelProxy
-        )
-      );
-    }
+        )) !== generatedAddresses.polygonRootTunnel
+      ) {
+        await catchUnknownSigner(
+          execute(
+            POLYGON_ROOT_TUNNEL_PROXY_CONTRACT,
+            {
+              from: marketingWallet,
+              log: true,
+            },
+            'upgradeTo',
+            generatedAddresses.polygonRootTunnel
+          )
+        );
+      }
 
-    //
-    // Set rewardHandler in RootTunnel
-    //
+      //
+      // Set rewardHandler in RootTunnel
+      //
 
-    const polygonRootTunnelInstance = await hardhat_re.ethers.getContractAt(
-      POLYGON_ROOT_TUNNEL_CONTRACT,
-      generatedAddresses.polygonRootTunnelProxy
-    );
-    if (
-      (await polygonRootTunnelInstance.rewardHandler()) !==
-      generatedAddresses.rewardHandler
-    ) {
-      await catchUnknownSigner(
-        execute(
-          POLYGON_ROOT_TUNNEL_CONTRACT,
-          {
-            from: marketingWallet,
-            to: generatedAddresses.polygonRootTunnelProxy,
-            log: true,
-          },
-          'setRewardHandler',
-          generatedAddresses.rewardHandler
-        )
-      );
-    }
-
-    //
-    // Grant reward Role in RewardHandler
-    //
-
-    if (
-      !(await rewardHandlerInstance.hasRole(
-        REWARD_HANDLER_REWARD_ROLE,
+      const polygonRootTunnelInstance = await hardhat_re.ethers.getContractAt(
+        POLYGON_ROOT_TUNNEL_CONTRACT,
         generatedAddresses.polygonRootTunnelProxy
-      ))
-    ) {
-      await catchUnknownSigner(
-        execute(
-          REWARD_HANDLER_CONTRACT,
-          {
-            from: marketingWallet,
-            log: true,
-          },
-          'grantRole',
+      );
+      if (
+        (await polygonRootTunnelInstance.rewardHandler()) !==
+        generatedAddresses.rewardHandler
+      ) {
+        await catchUnknownSigner(
+          execute(
+            POLYGON_ROOT_TUNNEL_CONTRACT,
+            {
+              from: marketingWallet,
+              to: generatedAddresses.polygonRootTunnelProxy,
+              log: true,
+            },
+            'setRewardHandler',
+            generatedAddresses.rewardHandler
+          )
+        );
+      }
+
+      //
+      // Grant reward Role in RewardHandler
+      //
+
+      if (
+        !(await rewardHandlerInstance.hasRole(
           REWARD_HANDLER_REWARD_ROLE,
           generatedAddresses.polygonRootTunnelProxy
-        )
-      );
+        ))
+      ) {
+        await catchUnknownSigner(
+          execute(
+            REWARD_HANDLER_CONTRACT,
+            {
+              from: marketingWallet,
+              log: true,
+            },
+            'grantRole',
+            REWARD_HANDLER_REWARD_ROLE,
+            generatedAddresses.polygonRootTunnelProxy
+          )
+        );
+      }
+
+      //
+      // Destruct rootTunnel implementation
+      //
+
+      if (
+        configAddresses.polygonRootTunnelUpdate &&
+        configAddresses.polygonRootTunnelUpdate !==
+          generatedAddresses.polygonRootTunnel
+      ) {
+        console.log('Destruct old PolygonRootTunnel implementation');
+
+        await catchUnknownSigner(
+          execute(
+            POLYGON_ROOT_TUNNEL_CONTRACT,
+            {
+              from: marketingWallet,
+              to: configAddresses.polygonRootTunnelUpdate,
+              log: true,
+            },
+            'destructContract'
+          )
+        );
+      }
     }
 
-    //
-    // Destruct rootTunnel implementation
-    //
+    if (hardhat_re.network.tags.migrate) {
+      //
+      // Check if we have to upgrade the migratorV2 implementation
+      //
 
-    if (
-      configAddresses.polygonRootTunnelUpdate &&
-      configAddresses.polygonRootTunnelUpdate !==
-        generatedAddresses.polygonRootTunnel
-    ) {
-      console.log('Destruct old PolygonRootTunnel implementation');
+      if (
+        (await getProxyImplementation(
+          hardhat_re,
+          generatedAddresses.migratorV2Proxy
+        )) !== generatedAddresses.migratorV2
+      ) {
+        await catchUnknownSigner(
+          execute(
+            MIGRATE_V2_PROXY_CONTRACT,
+            {
+              from: marketingWallet,
+              log: true,
+            },
+            'upgradeTo',
+            generatedAddresses.migratorV2
+          )
+        );
+      }
 
-      await catchUnknownSigner(
-        execute(
-          POLYGON_ROOT_TUNNEL_CONTRACT,
-          {
-            from: marketingWallet,
-            to: configAddresses.polygonRootTunnelUpdate,
-            log: true,
-          },
-          'destructContract'
-        )
+      //
+      // Allow MigratorV2 to mint SFT
+      //
+
+      if (
+        !(await sftHolderInstance.hasRole(
+          SFT_HOLDER_MINTER_ROLE,
+          generatedAddresses.migratorV2Proxy
+        ))
+      ) {
+        await catchUnknownSigner(
+          execute(
+            SFT_HOLDER_CONTRACT,
+            {
+              from: marketingWallet,
+              to: generatedAddresses.sftHolderProxy,
+              log: true,
+            },
+            'grantRole',
+            SFT_HOLDER_MINTER_ROLE,
+            generatedAddresses.migratorV2Proxy
+          )
+        );
+      }
+
+      //
+      // MigratorV2 needs MIGRATOR role in old Booster
+      //
+
+      const oldBoosterInstance = await hardhat_re.ethers.getContractAt(
+        BOOSTER_CONTRACT,
+        configAddresses.boosterProxyOld
       );
+      if (
+        !(await oldBoosterInstance.hasRole(
+          BOOSTER_MIGRATOR_ROLE,
+          generatedAddresses.migratorV2Proxy
+        ))
+      ) {
+        await catchUnknownSigner(
+          execute(
+            BOOSTER_CONTRACT,
+            {
+              from: marketingWallet,
+              to: configAddresses.boosterProxyOld,
+              log: true,
+            },
+            'grantRole',
+            BOOSTER_MIGRATOR_ROLE,
+            generatedAddresses.migratorV2Proxy
+          )
+        );
+      }
+
+      //
+      // Set MigratorV2 rootTunnel
+      //
+
+      const migratorV2Instance = await hardhat_re.ethers.getContractAt(
+        MIGRATE_V2_CONTRACT,
+        generatedAddresses.migratorV2Proxy
+      );
+      if (
+        (await migratorV2Instance.rootTunnel()) !==
+        generatedAddresses.polygonRootTunnelProxy
+      ) {
+        await catchUnknownSigner(
+          execute(
+            MIGRATE_V2_CONTRACT,
+            {
+              from: marketingWallet,
+              to: generatedAddresses.migratorV2Proxy,
+              log: true,
+            },
+            'setRootTunnel',
+            generatedAddresses.polygonRootTunnelProxy
+          )
+        );
+      }
+
+      //
+      // Destruct migratorV2 implementation
+      //
+
+      if (
+        configAddresses.migratorV2Update &&
+        configAddresses.migratorV2Update !== generatedAddresses.migratorV2
+      ) {
+        console.log('Destruct old MigratorV2 implementation');
+
+        await catchUnknownSigner(
+          execute(
+            MIGRATE_V2_CONTRACT,
+            {
+              from: marketingWallet,
+              to: configAddresses.migratorV2Update,
+              log: true,
+            },
+            'destructContract'
+          )
+        );
+      }
     }
 
-    //
-    // Destruct migratorV2 implementation
-    //
+    if (hardhat_re.network.tags.fantom) {
+      //
+      // Check if we have to upgrade the fantomAnyHandler implementation
+      //
 
-    if (
-      configAddresses.migratorV2Update &&
-      configAddresses.migratorV2Update !== generatedAddresses.migratorV2
-    ) {
-      console.log('Destruct old MigratorV2 implementation');
+      if (
+        (await getProxyImplementation(
+          hardhat_re,
+          generatedAddresses.fantomAnyHandlerProxy
+        )) !== generatedAddresses.fantomAnyHandler
+      ) {
+        await catchUnknownSigner(
+          execute(
+            FANTOM_ANY_HANDLER_PROXY_CONTRACT,
+            {
+              from: marketingWallet,
+              log: true,
+            },
+            'upgradeTo',
+            generatedAddresses.fantomAnyHandler
+          )
+        );
+      }
 
-      await catchUnknownSigner(
-        execute(
-          MIGRATE_V2_CONTRACT,
-          {
-            from: marketingWallet,
-            to: configAddresses.migratorV2Update,
-            log: true,
-          },
-          'destructContract'
-        )
-      );
-    }
+      //
+      // Destruct implementation
+      //
 
-    //
-    // Check if we have to upgrade the fantomAnyHandler implementation
-    //
-
-    if (
-      (await getProxyImplementation(
-        hardhat_re,
-        generatedAddresses.fantomAnyHandlerProxy
-      )) !== generatedAddresses.fantomAnyHandler
-    ) {
-      await catchUnknownSigner(
-        execute(
-          FANTOM_ANY_HANDLER_PROXY_CONTRACT,
-          {
-            from: marketingWallet,
-            log: true,
-          },
-          'upgradeTo',
+      if (
+        configAddresses.fantomAnyHandlerUpdate &&
+        configAddresses.fantomAnyHandlerUpdate !==
           generatedAddresses.fantomAnyHandler
-        )
-      );
-    }
+      ) {
+        console.log('Destruct old FantomAnyHandler implementation');
 
-    //
-    // Destruct implementation
-    //
-
-    if (
-      configAddresses.fantomAnyHandlerUpdate &&
-      configAddresses.fantomAnyHandlerUpdate !==
-        generatedAddresses.fantomAnyHandler
-    ) {
-      console.log('Destruct old FantomAnyHandler implementation');
-
-      await catchUnknownSigner(
-        execute(
-          FANTOM_ANY_HANDLER_CONTRACT,
-          {
-            from: marketingWallet,
-            to: configAddresses.fantomAnyHandlerUpdate,
-            log: true,
-          },
-          'destructContract'
-        )
-      );
+        await catchUnknownSigner(
+          execute(
+            FANTOM_ANY_HANDLER_CONTRACT,
+            {
+              from: marketingWallet,
+              to: configAddresses.fantomAnyHandlerUpdate,
+              log: true,
+            },
+            'destructContract'
+          )
+        );
+      }
     }
   }
 }; // func
