@@ -312,7 +312,7 @@ describe('Trade Floor', function () {
       );
 
     // Get the new minted TradeFloor tokenId
-    const tokenIds = await tradeFloorContract.getTokenIds(
+    const tokenIds = await tradeFloorContract.getTokenIdsV2(
       marketingWallet.address
     );
     chai.expect(tokenIds.length).to.equal(1);
