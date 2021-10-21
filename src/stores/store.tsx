@@ -1321,7 +1321,11 @@ class Store {
       const contracts = [this.cfihLpContract, this.cfihScContract];
 
       for (let i = 0; i < 2; ++i) {
-        if (!contracts[i]) continue;
+        if (!contracts[i]) {
+          this.assets.rewardInfo[i].apr = 0;
+          this.assets.rewardInfo[i].rewardDuration = 0;
+          continue;
+        }
 
         const sfts = this.assets.userSFT.filter(
           (sft) =>

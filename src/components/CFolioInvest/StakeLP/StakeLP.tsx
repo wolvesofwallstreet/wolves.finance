@@ -106,8 +106,8 @@ function StakeLP({
   const spanText = cfolioItem
     ? 'STAKE MORE'
     : sft?.isWallet
-    ? 'ADD "STAKE I-NFT" INTO MY WALLET'
-    : 'ADD "STAKE I-NFT" INTO MY C-FOLIO';
+    ? 'BUY "STAKE I-NFT" INTO MY WALLET'
+    : 'BUY "STAKE I-NFT" INTO MY C-FOLIO';
 
   const handleBuy = () => {
     if (!beforeBuy(handleBuy)) return;

@@ -741,7 +741,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         default:
           boosterPeriod = 'Unknown';
       }
-    } else if (currentRender?.sft) {
+    } else if (StoreClasses.store.isSidechain() && currentRender?.sft) {
       boosterPeriod = 'No period started';
     }
 
