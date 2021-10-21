@@ -98,7 +98,7 @@ a.wolves-btn:hover {
 
 .bg-bois,
 .bg-myPack,
-.bg-yearnInvestment {
+.bg-stableInvestment {
   background-image: url(./assets/background_bois.jpg);
 }
 
@@ -117,4 +117,61 @@ a.wolves-btn:hover {
 
 .wolves-text-shaddow {
   text-shadow: 2px 2px 2px #e7b198;
+}
+
+.wolves-input {
+  color: inherit;
+  height: 32px;
+  width: 100%;
+  vertical-align: bottom;
+  background-color: var(--wolves-orange-transparent);
+  border: 1px solid hsla(0, 0%, 0%, 0.699);
+  outline: none;
+}
+
+.info-progress {
+  display: block;
+  height: 2px;
+  background-color: whitesmoke;
+  animation: progressBar 30s steps(30, end);
+  animation-fill-mode: both;
+  animation-iteration-count: infinite;
+  -webkit-animation: progressBar 30s steps(30, end);
+  -webkit-animation-fill-mode: both;
+  -webkit-animation-iteration-count: infinite;
+  -moz-animation: progressBar 30s steps(30, end);
+  -moz-animation-fill-mode: both;
+  -moz-animation-iteration-count: infinite;
+}
+
+.info-progress.absolute {
+  position: absolute;
+  bottom: 2px;
+}
+
+@keyframes progressBar {
+  0% {
+    width: calc(100% - 4px);
+  }
+  100% {
+    width: 0;
+  }
+}
+
+@-webkit-keyframes progressBar {
+  0% {
+    width: calc(100% - 4px);
+  }
+  100% {
+    width: 0;
+  }
+}
+
+@-moz-keyframes progressBar {
+  0% {
+    width: calc(100% - 4px);
+  }
+  100% {
+    width: 0;
+  }
 }

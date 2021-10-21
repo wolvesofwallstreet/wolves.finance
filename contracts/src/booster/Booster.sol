@@ -8,7 +8,6 @@
 
 pragma solidity 0.7.6;
 
-import '../../0xerc1155/interfaces/IERC1155.sol';
 import '../../0xerc1155/utils/SafeERC20.sol';
 import '../../0xerc1155/utils/SafeMath.sol';
 import '../../0xerc1155/access/AccessControl.sol';
@@ -29,6 +28,7 @@ contract Booster is IBooster, AccessControl {
   //////////////////////////////////////////////////////////////////////////////
 
   bytes32 public constant CONTROLLER_ROLE = bytes32('CONTROLLER');
+  bytes32 public constant MIGRATOR_ROLE = bytes32('MIGRATOR');
 
   // 30 days in seconds multiplied by 10 (10% per month)
   uint256 private constant MONTHLY_REWARD = 25920000;
@@ -44,10 +44,10 @@ contract Booster is IBooster, AccessControl {
   //////////////////////////////////////////////////////////////////////////////
 
   // The rewardHandler to distribute rewards
-  IRewardHandler public rewardHandler;
+  address public override rewardHandler;
 
   // The SFT contract to validate recipients
-  IWOWSERC1155 public sftHolder;
+  address public override sftHolder;
 
   // Our timelock
   struct TimeLock {
@@ -69,7 +69,7 @@ contract Booster is IBooster, AccessControl {
   RewardDefinition[] public rewardDefinitions;
 
   // Overall provided rewards
-  uint256 public rewardsProvided;
+  uint256 public rewardsProvided = 0;
 
   //////////////////////////////////////////////////////////////////////////////
   // Modifiers
@@ -141,7 +141,7 @@ contract Booster is IBooster, AccessControl {
   /**
    * @dev One time initializer for proxy
    */
-  function initialize(address admin, address rewardHandler_) external {
+  function initialize(address admin) external {
     // Validate parameters
     require(
       getRoleMemberCount(DEFAULT_ADMIN_ROLE) == 0,
@@ -150,7 +150,6 @@ contract Booster is IBooster, AccessControl {
 
     // For administrative calls
     _setupRole(DEFAULT_ADMIN_ROLE, admin);
-    _setRewardHandler(rewardHandler_);
 
     // Reward definition: 180 days / 175% APR
     rewardDefinitions.push(RewardDefinition(15552000, 1750000000000000000));
@@ -188,7 +187,9 @@ contract Booster is IBooster, AccessControl {
     uint256 ts = _getTimestamp();
 
     for (uint256 i = 0; i < tokenIds.length; ++i) {
-      address cfolio = sftHolder.tokenIdToAddress(tokenIds[i].toSftTokenId());
+      address cfolio = IWOWSERC1155(sftHolder).tokenIdToAddress(
+        tokenIds[i].toSftTokenId()
+      );
       require(cfolio != address(0), 'B: Invalid tokenId');
 
       TimeLock storage currentLock = timeLocks[cfolio];
@@ -213,7 +214,7 @@ contract Booster is IBooster, AccessControl {
     // Validate input
     require(recipient != address(0), 'B: Invalid recipient');
 
-    if (sftHolder.addressToTokenId(recipient) != uint256(-1)) {
+    if (IWOWSERC1155(sftHolder).addressToTokenId(recipient) != uint256(-1)) {
       // Prepare locking amount into SFT
       TimeLock storage currentLock = timeLocks[recipient];
 
@@ -240,7 +241,7 @@ contract Booster is IBooster, AccessControl {
         currentLock.totalAmount = currentLock.totalAmount.add(amount);
       }
     } else {
-      rewardHandler.distribute2(recipient, amount, fee);
+      IRewardHandler(rewardHandler).distribute2(recipient, amount, fee);
     }
   }
 
@@ -302,10 +303,10 @@ contract Booster is IBooster, AccessControl {
    */
   function claimRewards(uint256 sftTokenId, bool reLock) external override {
     // Validate access
-    address cfolio = sftHolder.tokenIdToAddress(sftTokenId);
+    address cfolio = IWOWSERC1155(sftHolder).tokenIdToAddress(sftTokenId);
     require(cfolio != address(0), 'B: Invalid cfolio');
     require(
-      IERC1155(address(sftHolder)).balanceOf(_msgSender(), sftTokenId) == 1,
+      IWOWSERC1155(sftHolder).balanceOf(_msgSender(), sftTokenId) == 1,
       'B: Access denied'
     );
 
@@ -323,10 +324,39 @@ contract Booster is IBooster, AccessControl {
 
     // Update state
     if (reLock) {
+      require(currentLock.end > 0, 'B: Not open');
       _addMore(cfolio, currentLock, ts, claimable);
     } else {
-      rewardHandler.distribute2(_msgSender(), claimable, currentLock.fee);
+      IRewardHandler(rewardHandler).distribute2(
+        _msgSender(),
+        claimable,
+        currentLock.fee
+      );
     }
+  }
+
+  function migrateCreatePool(
+    uint256 tokenId,
+    bytes memory data,
+    uint256 dataIndex
+  ) external override returns (uint256) {
+    require(hasRole(MIGRATOR_ROLE, _msgSender()), 'B: Forbidden');
+
+    address cfolio = IWOWSERC1155(sftHolder).tokenIdToAddress(tokenId);
+    require(cfolio != address(0), 'B: Invalid cfolio');
+
+    TimeLock storage currentLock = timeLocks[cfolio];
+    require(currentLock.end == 0, 'B: Lock existent');
+
+    currentLock.totalAmount = _getUint256(data, dataIndex++);
+    currentLock.pendingAmount = _getUint256(data, dataIndex++);
+    currentLock.providedAmount = _getUint256(data, dataIndex++);
+    currentLock.apr = _getUint256(data, dataIndex++);
+    currentLock.end = _getUint256(data, dataIndex++);
+    currentLock.fee = uint32(_getUint256(data, dataIndex++));
+    currentLock.last = _getTimestamp();
+
+    return dataIndex;
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -344,19 +374,27 @@ contract Booster is IBooster, AccessControl {
   /**
    * @dev Set reward handler in case it will be upgraded
    */
-  function setRewardHandler(address rewardHandler_) external onlyAdmin {
-    _setRewardHandler(rewardHandler_);
+  function setRewardHandler(address rewardHandler_)
+    external
+    override
+    onlyAdmin
+  {
+    // Validate input
+    require(rewardHandler_ != address(0), 'B: Invalid rewardHandler');
+
+    // Update state
+    rewardHandler = rewardHandler_;
   }
 
   /**
    * @dev Set sftHolder contract which is deployed after Booster
    */
-  function setSftHolder(address sftHolder_) external onlyAdmin {
+  function setSftHolder(address sftHolder_) external override onlyAdmin {
     // Validate input
     require(sftHolder_ != address(0), 'B: Invalid sftHolder');
 
     // Update state
-    sftHolder = IWOWSERC1155(sftHolder_);
+    sftHolder = sftHolder_;
   }
 
   /**
@@ -388,17 +426,6 @@ contract Booster is IBooster, AccessControl {
   function _getTimestamp() private view returns (uint256) {
     // solhint-disable-next-line not-rely-on-time
     return block.timestamp;
-  }
-
-  /**
-   * @dev Internal setRewardhandler which checks for valid address
-   */
-  function _setRewardHandler(address rewardHandler_) internal {
-    // Validate input
-    require(rewardHandler_ != address(0), 'B: Invalid rewardHandler');
-
-    // Update state
-    rewardHandler = IRewardHandler(rewardHandler_);
   }
 
   /**
@@ -472,11 +499,25 @@ contract Booster is IBooster, AccessControl {
    * @dev Verify that we never exceed the token supply from tokenomics and fees
    */
   function _verifyRewardsProvided() private view {
-    uint256 externalSupply = rewardHandler.getBoosterRewards();
+    uint256 externalSupply = IRewardHandler(rewardHandler).getBoosterRewards();
 
     require(
       rewardsProvided <= externalSupply.add(MAX_TOKENOMICS_REWARDS),
       'B: Cap reached'
     );
+  }
+
+  /**
+   * @dev Get the uint256 from the user data parameter
+   */
+  function _getUint256(bytes memory data, uint256 index)
+    private
+    pure
+    returns (uint256 val)
+  {
+    // solhint-disable-next-line no-inline-assembly
+    assembly {
+      val := mload(add(data, mul(0x20, add(index, 1))))
+    }
   }
 }

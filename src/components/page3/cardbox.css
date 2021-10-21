@@ -18,6 +18,7 @@
 }
 
 .wrapper {
+  width: 100%;
   max-width: 100%;
   align-items: center;
   display: grid;
@@ -36,6 +37,17 @@
   width: 64px;
   height: 64px;
   background-image: url(../../assets/padlock_filter.png);
+  background-size: cover;
+  z-index: 10;
+  position: absolute;
+  top: 4px;
+  left: 4px;
+}
+
+.card-container .bridged {
+  width: 64px;
+  height: 64px;
+  background-image: url(../../assets/bridge.png);
   background-size: cover;
   z-index: 10;
   position: absolute;

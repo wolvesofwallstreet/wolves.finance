@@ -8,12 +8,11 @@
 
 pragma solidity 0.7.6;
 
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
-import '@openzeppelin/contracts/math/SafeMath.sol';
-import '@openzeppelin/contracts/access/Ownable.sol';
-import '@openzeppelin/contracts/utils/Context.sol';
-import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
+import '../../0xerc1155/access/Ownable.sol';
+import '../../0xerc1155/utils/Context.sol';
+import '../../0xerc1155/utils/ReentrancyGuard.sol';
+import '../../0xerc1155/utils/SafeERC20.sol';
+import '../../0xerc1155/utils/SafeMath.sol';
 
 import '../utils/ERC20Recovery.sol';
 
@@ -278,9 +277,9 @@ contract UniV2StakeFarm is
     emit RewardAdded(reward);
   }
 
-  // We don't have any rebalancing here
+  // We don't have any slot handling
   // solhint-disable-next-line no-empty-blocks
-  function rebalance() external override onlyController {}
+  function weightSlotId(uint256 slotId, uint256 weight) external override {}
 
   // Added to support recovering LP Rewards from other systems to be distributed to holders
   function recoverERC20(address tokenAddress, uint256 tokenAmount)

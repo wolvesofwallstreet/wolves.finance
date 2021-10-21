@@ -8,8 +8,7 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
+import '../../0xerc1155/utils/SafeERC20.sol';
 
 contract ERC20Recovery {
   using SafeERC20 for IERC20;

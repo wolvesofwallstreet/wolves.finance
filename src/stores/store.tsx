@@ -8,18 +8,17 @@
 
 import WalletConnectProvider from '@walletconnect/web3-provider';
 import ERC20Abi from 'abi/contracts/0xerc1155/interfaces/IERC20.sol/IERC20.json';
-import CurveYDepositAbi from 'abi/contracts/interfaces/curve/CurveDepositInterface.sol/ICurveFiDepositY.json';
+import CurveDepositAbi from 'abi/contracts/interfaces/curve/CurveDepositInterface3.sol/ICurveFiDeposit3.json';
 import UniV2PairAbi from 'abi/contracts/interfaces/uniswap/IUniswapV2Pair.sol/IUniswapV2Pair.json';
 import BoosterAbi from 'abi/contracts/src/booster/Booster.sol/Booster.json';
-import CFolioItemBridgeAbi from 'abi/contracts/src/cfolio/CFolioItemBridge.sol/CFolioItemBridge.json';
 import CFolioItemHandlerAbi from 'abi/contracts/src/cfolio/interfaces/ICFolioItemHandler.sol/ICFolioItemHandler.json';
 import SftEvaluatorAbi from 'abi/contracts/src/cfolio/SFTEvaluator.sol/SFTEvaluator.json';
 import SFTMinterAbi from 'abi/contracts/src/crowdsale/WOWSSftMinter.sol/WOWSSftMinter.json';
 import CFolioFarmAbi from 'abi/contracts/src/investment/CFolioFarm.sol/CFolioFarm.json';
-import StakeAbi from 'abi/contracts/src/investment/UniV2StakeFarm.sol/UniV2StakeFarm.json';
+import RootTunnelAbi from 'abi/contracts/src/polygon/WOWSERC1155RootTunnel.sol/WOWSERC1155RootTunnel.json';
 import TradeFloorAbi from 'abi/contracts/src/token/TradeFloor.sol/TradeFloor.json';
 import TokenAbi from 'abi/contracts/src/token/WOWSErc20.sol/WowsToken.json';
-import SFTHolderAbi from 'abi/contracts/src/token/WOWSErc1155.sol/WOWSERC1155.json';
+import SFTHolderAbi from 'abi/contracts/src/token/WOWSERC1155.sol/WOWSERC1155.json';
 import { ethers } from 'ethers';
 import Emitter from 'events';
 import Dispatcher from 'flux';
@@ -34,7 +33,6 @@ import Web3Modal, {
 import WalletLinkLogo from '../assets/coinbase-wallet.svg';
 import { CARD_LEVEL, CARDS, CFOLIO_ITEMS } from '../components/types/cards';
 import { addresses } from '../config/addresses';
-import { privateNetworkRPC, privateNetworkWS } from '../config/networks';
 import {
   ASSETS_STATE,
   CFOLIO_ITEM_BUY,
@@ -42,21 +40,18 @@ import {
   CFOLIO_ITEM_UNLOCK_TRANSFER,
   CFOLIO_ITEM_WITHDRAW,
   CONNECTION_CHANGED,
-  NEW_BLOCK,
   REVOKE_APPROVAL,
   SFT_BUY,
   SFT_CLAIM,
   SFT_CLAIM_BOOSTER,
   SFT_LOCK,
+  SFT_PROOF,
   SFT_REWARD,
+  SFT_TRANSFER,
   SFT_UNLOCK,
   SFT_UPGRADE,
-  STAKE_ADD,
-  STAKE_CLAIM,
-  STAKE_EXIT,
-  STAKE_LP_AVAILABLE,
-  STAKE_STATE,
 } from './constants';
+import { MessageProof } from './polygon';
 
 const emitter = new Emitter.EventEmitter();
 const dispatcher = new Dispatcher.Dispatcher();
@@ -66,8 +61,9 @@ type PayloadContent = {
   investment?: number;
   time?: number;
   id?: ethers.BigNumber;
-  type?: number;
+  status?: 'locked';
   filter?: Array<string>;
+  address?: string;
 };
 
 type PayloadContentCFolioItem = {
@@ -90,27 +86,41 @@ export type Payload = {
   content: PayloadContent;
 };
 
-type ChainAddresses = {
+interface ChainAddresses {
+  rpcEndpoint?: string;
+  wssEndpoint?: string;
   token: string;
-  stakeFarm: string;
-  sftMinter: string;
-  sftHolder: string;
+  uniV2Pair: string;
+  stakeFarm?: string;
+  sftMinterProxy: string;
+  sftHolderProxy: string;
   boosterProxy: string;
   tradeFloorProxy: string;
   sftEvaluatorProxy: string;
-  cfolioFarmLP: string;
-  cfolioItemHandlerLPProxy: string;
-  cfolioFarmSC: string;
-  cfiBridgeProxy: string;
-  cfolioItemHandlerSCProxy: string;
+  cfolioFarmLP?: string;
+  cfolioItemHandlerLPProxy?: string;
+  cfolioFarmSC?: string;
+  cfiBridgeProxy?: string;
+  cfolioItemHandlerSCProxy?: string;
+  bridgeTarget: string;
   uniDaiWeth: string;
-  daiToken: string;
-  tusdToken: string;
-  usdcToken: string;
-  usdtToken: string;
-  curveYToken: string;
-  curveYDeposit: string;
-};
+  daiToken?: string;
+  tusdToken?: string;
+  usdcToken?: string;
+  usdtToken?: string;
+  curveADeposit?: string;
+  curveAToken?: string;
+  curveYDeposit?: string;
+  curveYToken?: string;
+}
+
+interface PolygonAddresses {
+  p_checkpointManager?: string;
+  p_sftHolderProxy?: string;
+  p_childTunnel?: string;
+  polygonRootTunnelProxy?: string;
+}
+
 interface IIndexable {
   [key: number]: ChainAddresses;
 }
@@ -160,11 +170,18 @@ export type StakeResult = {
   };
 };
 
+export enum SFTS {
+  UNLOCKED,
+  LOCKED,
+  BRIDGE_PENDING,
+  BRIDGE_READY,
+}
+
 export type SFTCHILD = {
   tokenId: ethers.BigNumber;
   levelId: number;
   cardId: number;
-  locked: boolean;
+  status: SFTS;
   type: number;
   assets: number[];
 };
@@ -183,7 +200,7 @@ export type SFT = {
   isBaseCard: boolean;
   isStockCard: boolean;
   isWallet: boolean;
-  locked: boolean;
+  status: SFTS;
   rewardRate: number;
   rewardShare: number;
   rewardEarned: number;
@@ -196,7 +213,11 @@ export const BIGNUMBER_MAX = ethers.BigNumber.from(
   '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
 );
 
-export const STABLE_CURRENCIES = ['DAI', 'USDC', 'USDT', 'TUSD', 'yCrv'];
+export const STABLE_CURRENCIES = [
+  ['DAI', 'USDC', 'USDT', 'am3Crv'],
+  ['DAI', 'USDC', 'USDT', 'TUSD', 'yCrv'],
+  [],
+];
 
 const SECONDS_PER_YEAR = 31536000;
 
@@ -234,12 +255,28 @@ type ASSETS = {
 const readUint256 = (s: string, i: number) =>
   ethers.BigNumber.from('0x' + s.substr(i * 64 + 2, 64));
 
+class AsyncLock {
+  disable: () => void;
+  promise: Promise<void>;
+  constructor() {
+    this.disable = () => {
+      if (!this) alert('');
+    };
+    this.promise = Promise.resolve();
+  }
+  enable() {
+    this.promise = new Promise((resolve) => (this.disable = resolve));
+  }
+}
+
 class Store {
   web3Modal: Web3Modal;
   /* Provider */
   ethersProvider?: ethers.providers.JsonRpcProvider;
-  eventProvider?: ethers.providers.WebSocketProvider;
+  eventProvider?: ethers.providers.BaseProvider;
   ethersSigner?: ethers.Signer;
+  isWSEventProvider = false;
+
   /* Contracts */
   tokenContract?: ethers.Contract;
   cfihLpContract?: ethers.Contract;
@@ -249,15 +286,14 @@ class Store {
 
   sftHolderContractRO?: ethers.Contract;
   sftMintContractRO?: ethers.Contract;
-  stakeContractRO?: ethers.Contract;
   tradeFloorContractRO?: ethers.Contract;
   lpContractRO?: ethers.Contract;
-  cfiBridgeContractRO?: ethers.Contract;
   uniDaiWethPairContractRO?: ethers.Contract;
-  curveYDepositContractRO?: ethers.Contract;
+  curveDepositContractRO?: ethers.Contract;
 
   cfolioFarmLpAddress = '';
   cfolioFarmScAddress = '';
+  bridgeTargetAddress = '';
 
   static nullAddress = '0x0000000000000000000000000000000000000000';
   static BASE_CARD_MAX = ethers.BigNumber.from('0xFFFFFFFFFFFFFFFF');
@@ -271,11 +307,13 @@ class Store {
   chainId = 0;
   address = '';
   tokenContractAddress = Store.nullAddress;
-  eventBlockNumber = 0;
   lastAprTime = 0;
   eventsSuspended = false;
+  lock = new AsyncLock();
 
   dispatchQueue: Payload[] = [];
+
+  polygonBridge?: MessageProof;
 
   assets = {
     balances: {
@@ -321,6 +359,12 @@ class Store {
         value: 0,
         allowance: 0,
       },
+      am3Crv: {
+        decimals: 18,
+        dust: Store.DUST_18,
+        value: 0,
+        allowance: 0,
+      },
     },
     userSFT: [],
     cards: { levelNames: [], cards: [], myPackLevelDescriptions: [] },
@@ -341,6 +385,7 @@ class Store {
         package: WalletConnectProvider,
         options: {
           infuraId: process.env.REACT_APP_INFURA_ID,
+          rpc: { 137: 'https://polygon-rpc.com/' },
         },
       },
       'custom-walletlink': {
@@ -410,22 +455,6 @@ class Store {
         case REVOKE_APPROVAL:
           this._doRevokeApproval(_payload.content);
           break;
-        /** Staking */
-        case STAKE_ADD:
-          this._doStakeAdd(_payload.content);
-          break;
-        case STAKE_CLAIM:
-          this._doStakeClaim(_payload.content);
-          break;
-        case STAKE_EXIT:
-          this._doStakeExit(_payload.content);
-          break;
-        case STAKE_STATE:
-          this._getStakeState(_payload.content);
-          break;
-        case STAKE_LP_AVAILABLE:
-          this._getPoolTokenAmount(_payload.content);
-          break;
         /** SFT */
         case SFT_BUY:
           this._doSftBuy(_payload.content);
@@ -441,6 +470,12 @@ class Store {
           break;
         case SFT_REWARD:
           this._getSftRewards(_payload.content);
+          break;
+        case SFT_PROOF:
+          this._doSftMessageProof(_payload.content);
+          break;
+        case SFT_TRANSFER:
+          this._doSftTransfer(_payload.content);
           break;
         case ASSETS_STATE:
           if (_payload.content.filter?.includes('cards'))
@@ -483,6 +518,33 @@ class Store {
   }
 
   mount() {
+    if (window.ethereum) {
+      this.chainId = parseInt(window.ethereum.chainId);
+      switch (this.chainId) {
+        case 4:
+          this.networkName = 'rinkeby';
+          break;
+        case 5:
+          this.networkName = 'goerli';
+          break;
+        case 137:
+          this.networkName = 'matic';
+          break;
+        case 80001:
+          this.networkName = 'maticmum';
+          break;
+        default: {
+          this.networkName = ' mainnet';
+          this.chainId = 1;
+        }
+      }
+      console.log(
+        'Mount with chainId: ',
+        this.chainId,
+        ' and Network: ',
+        this.networkName
+      );
+    }
     this.autoconnect();
   }
 
@@ -494,19 +556,41 @@ class Store {
     return this.assets;
   };
 
+  handleBridgeChange = () => {
+    console.log('BrigeChange');
+    dispatcher.dispatch({
+      type: ASSETS_STATE,
+      content: { filter: ['tokens'] },
+    } as Payload);
+  };
+
   /*********************** NETWORK ******************/
+
+  getEndpoint(wss: boolean): string | undefined {
+    const chainAddresses = this._getChainAddresses();
+    return wss ? chainAddresses?.wssEndpoint : chainAddresses?.rpcEndpoint;
+  }
+
+  isSidechain(): boolean {
+    return this.networkName.startsWith('matic');
+  }
+
+  getBridgeTarget(): { name: string; address: string } {
+    return this.networkName.startsWith('matic')
+      ? { name: 'ETHEREUM', address: this.bridgeTargetAddress }
+      : { name: 'POLYGON', address: this.bridgeTargetAddress };
+  }
 
   connect = async () => {
     try {
       if (this.ethersProvider) {
-        await this.disconnect(false);
+        await this.disconnect(false, false);
       }
 
       let ethersProvider: ethers.providers.JsonRpcProvider;
-      if (this.networkName === 'private') {
-        ethersProvider = new ethers.providers.JsonRpcProvider(
-          privateNetworkRPC
-        );
+      const endpoint = this.getEndpoint(false);
+      if (endpoint) {
+        ethersProvider = new ethers.providers.JsonRpcProvider(endpoint);
       } else {
         const web3Provider = await this.web3Modal.connect();
         await this.subscribeProvider(web3Provider);
@@ -517,23 +601,38 @@ class Store {
       this.address = ethers.utils.getAddress(accounts[this.accountId]);
       const network = await ethersProvider.getNetwork();
       this.chainId = network.chainId;
-      if (this.networkName !== 'private') this.networkName = network.name;
+      this.networkName = network.name;
       await this._launchEventProvider();
       if (await this._setupContracts(ethersProvider)) this._emitNetworkChange();
       this.ethersProvider = ethersProvider;
       this.ethersSigner = ethersProvider.getSigner(this.accountId);
+
+      // Enable MessageProof for bidging back from Polygon
+      if (this.chainId === 1 || this.chainId === 5) {
+        const chainAddresses = (this._getChainAddresses() ??
+          {}) as PolygonAddresses;
+        this.polygonBridge = new MessageProof(
+          this.eventProvider ?? ethersProvider,
+          this.chainId,
+          chainAddresses.p_checkpointManager ?? '',
+          this.address,
+          chainAddresses.polygonRootTunnelProxy ?? '',
+          chainAddresses.p_childTunnel ?? '',
+          this.handleBridgeChange
+        );
+      }
     } catch (e) {
       console.log(e);
-      await this.disconnect(true);
+      await this.disconnect(true, true);
     }
   };
 
   autoconnect = async () => {
     const query = new URLSearchParams(window.location.search);
-    const defaultNetwork = query.get('network');
+    const defaultChain = query.get('chainId');
     const defaultAccountId = query.get('accountId');
 
-    if (defaultNetwork) this.networkName = defaultNetwork;
+    if (defaultChain) this.chainId = parseInt(defaultChain);
     if (defaultAccountId) this.accountId = parseInt(defaultAccountId);
 
     if (this.web3Modal.cachedProvider) {
@@ -546,36 +645,27 @@ class Store {
       return;
     }
 
-    provider.on('close', () => {
-      this.disconnect(true);
-    });
-
     provider.on('disconnect', () => {
-      this.disconnect(true);
+      this.disconnect(false, true);
     });
 
     provider.on('accountsChanged', async (accounts: string[]) => {
-      if (this.address !== Store.nullAddress && accounts[0] !== this.address) {
-        this.address = ethers.utils.getAddress(accounts[0]);
+      const account = ethers.utils.getAddress(accounts[0]);
+      if (this.address !== '' && account !== this.address) {
+        this.address = account;
         this._emitNetworkChange();
       }
     });
 
     provider.on('chainChanged', async (chainId: number) => {
       if (chainId !== this.chainId) {
+        this.chainId = chainId;
         await this.connect();
-      }
-    });
-
-    provider.on('networkChanged', async () => {
-      if (this.ethersProvider) {
-        const network = await this.ethersProvider.getNetwork();
-        if (network.chainId !== this.chainId) await this.connect();
       }
     });
   };
 
-  disconnect = async (clearCache: boolean) => {
+  disconnect = async (clearCache: boolean, fireEvent: boolean) => {
     if (this.ethersProvider) {
       localStorage.removeItem('walletconnect');
       this.ethersProvider.removeAllListeners();
@@ -586,29 +676,46 @@ class Store {
       this.sftEvaluatorContract = undefined;
       this.boosterContract = undefined;
       this.ethersSigner = undefined;
+      this.polygonBridge = undefined;
     }
     this.address = '';
     if (clearCache) {
       this.web3Modal.clearCachedProvider();
+      window.localStorage.removeItem('WALLETCONNECT_DEEPLINK_CHOICE');
     }
-    this._emitNetworkChange();
+    if (fireEvent) {
+      this._emitNetworkChange();
+    }
   };
 
   close = async () => {
-    this.stakeContractRO = undefined;
-    this.sftHolderContractRO?.removeAllListeners();
-    this.sftHolderContractRO = undefined;
-    this.sftMintContractRO = undefined;
-    this.tradeFloorContractRO?.removeAllListeners();
-    this.tradeFloorContractRO = undefined;
-    this.cfiBridgeContractRO?.removeAllListeners();
-    this.cfiBridgeContractRO = undefined;
-    this.lpContractRO = undefined;
-    await this.disconnect(false);
+    try {
+      this.sftHolderContractRO?.removeAllListeners();
+      this.sftHolderContractRO = undefined;
+      this.sftMintContractRO = undefined;
+      this.tradeFloorContractRO?.removeAllListeners();
+      this.tradeFloorContractRO = undefined;
+      this.lpContractRO?.removeAllListeners();
+      this.lpContractRO = undefined;
+      this.uniDaiWethPairContractRO = undefined;
+    } catch (e) {
+      console.log(e);
+    }
+    console.log('Disconnect due to WS close');
+    await this.disconnect(false, true);
     if (this.eventProvider) {
-      this.eventProvider?.removeAllListeners();
-      this.eventProvider._websocket.onclose = null;
-      await this.eventProvider?.destroy();
+      try {
+        this.eventProvider?.removeAllListeners();
+      } catch (e) {
+        console.log(e);
+      }
+      if (this.isWSEventProvider) {
+        const wsEventProvider = this
+          .eventProvider as ethers.providers.WebSocketProvider;
+        wsEventProvider._websocket.onclose = null;
+        wsEventProvider._websocket.onerror = null;
+        await wsEventProvider.destroy();
+      }
       this.eventProvider = undefined;
     }
   };
@@ -622,7 +729,7 @@ class Store {
   };
 
   _addDQ = async (block: number, payload: Payload) => {
-    if (this.eventsSuspended || block > this.eventBlockNumber) {
+    if (this.eventsSuspended) {
       if (
         !this.dispatchQueue.find(
           (elem) => JSON.stringify(elem) === JSON.stringify(payload)
@@ -635,20 +742,22 @@ class Store {
   };
 
   _resolveDQ = () => {
-    this.dispatchQueue.forEach((payload) => dispatcher.dispatch(payload));
-    this.dispatchQueue = [];
-    if (this.lastAprTime + 300000 < Date.now()) {
-      this.lastAprTime = Date.now();
-      this._updatePoolAPR();
+    if (this.eventsSuspended) {
+      this.dispatchQueue.forEach((payload) => dispatcher.dispatch(payload));
+      this.dispatchQueue = [];
+      /*if (this.lastAprTime + 300000 < Date.now()) {
+        this.lastAprTime = Date.now();
+        this._updatePoolAPR();
+      }*/
+      this.eventsSuspended = false;
     }
-    this.eventsSuspended = false;
   };
 
   _setupEvents(): boolean {
     this.eventProvider?.removeAllListeners();
     this.sftHolderContractRO?.removeAllListeners();
     this.tradeFloorContractRO?.removeAllListeners();
-    this.cfiBridgeContractRO?.removeAllListeners();
+    this.lpContractRO?.removeAllListeners();
 
     const handleTransfer = (
       operator: string,
@@ -659,9 +768,9 @@ class Store {
       const filter = [];
       if (cards && from === Store.nullAddress) filter.push('cards');
       if (
-        operator === this.address ||
-        from === this.address ||
-        to === this.address
+        ethers.utils.getAddress(operator) === this.address ||
+        ethers.utils.getAddress(from) === this.address ||
+        ethers.utils.getAddress(to) === this.address
       ) {
         filter.push('tokens');
       }
@@ -671,16 +780,7 @@ class Store {
       }
     };
 
-    // Our Block ticker
-    this.eventProvider?.on('block', (blockNumber) => {
-      emitter.emit(NEW_BLOCK, { blockNumber });
-      this.eventBlockNumber = blockNumber;
-      if (!this.eventsSuspended) this._resolveDQ();
-    });
-    this.sftHolderContractRO?.on('TransferSingle', (operator, from, to) =>
-      handleTransfer(operator, from, to, true)
-    );
-    this.sftHolderContractRO?.on('TransferBatch', (operator, from, to) =>
+    this.sftHolderContractRO?.on('SftTokenTransfer', (operator, from, to) =>
       handleTransfer(operator, from, to, true)
     );
     this.tradeFloorContractRO?.on('TransferSingle', (operator, from, to) =>
@@ -689,49 +789,62 @@ class Store {
     this.tradeFloorContractRO?.on('TransferBatch', (operator, from, to) =>
       handleTransfer(operator, from, to, false)
     );
-    this.cfiBridgeContractRO?.on('BridgeTransfer', (operator, from, to) =>
-      handleTransfer(operator, from, to, false)
-    );
     this.lpContractRO?.on('Transfer', (from, to) => {
-      if (from === this.address || to === this.address) {
-        dispatcher.dispatch({ type: STAKE_LP_AVAILABLE } as Payload);
+      if (
+        ethers.utils.getAddress(from) === this.address ||
+        ethers.utils.getAddress(to) === this.address
+      ) {
+        this._addDQ(0, {
+          type: ASSETS_STATE,
+          content: { filter: ['balances'] },
+        } as Payload);
       }
     });
     return true;
   }
 
   _emitNetworkChange() {
-    emitter.emit(CONNECTION_CHANGED, {
-      type: 'prod',
-      address: this.address,
-      networkName: this.networkName,
-    } as ConnectResult);
     // Request new SFT List
-    if (this.address !== '')
+    if (this.address) {
+      if (this.polygonBridge) this.polygonBridge.accountChanged(this.address);
       dispatcher.dispatch({
         type: ASSETS_STATE,
         content: { filter: ['tokens', 'balances', 'rewards'] },
       } as Payload);
-    else {
+    } else {
       for (const [, value] of Object.entries(this.assets.balances)) {
         value.value = 0;
       }
       this.assets.userSFT = [];
       emitter.emit(ASSETS_STATE, { status: 'tokens' } as AssetStateresult);
     }
+    emitter.emit(CONNECTION_CHANGED, {
+      type: 'prod',
+      address: this.address,
+      networkName: this.networkName,
+    } as ConnectResult);
   }
 
   _launchEventProvider = async () => {
+    await this.lock.promise;
+    this.lock.enable();
     try {
       if (
         !this.eventProvider ||
         (await this.eventProvider?.getNetwork()).chainId !== this.chainId
       ) {
-        let eventProvider: ethers.providers.WebSocketProvider;
-        if (this.networkName === 'private') {
-          eventProvider = new ethers.providers.WebSocketProvider(
-            privateNetworkWS
-          );
+        let eventProvider:
+          | ethers.providers.WebSocketProvider
+          | ethers.providers.JsonRpcProvider;
+        this.isWSEventProvider = true;
+        const endpoint = this.getEndpoint(true);
+        if (endpoint) {
+          if (endpoint.startsWith('http')) {
+            this.isWSEventProvider = false;
+            eventProvider = new ethers.providers.JsonRpcProvider(endpoint);
+          } else {
+            eventProvider = new ethers.providers.WebSocketProvider(endpoint);
+          }
         } else {
           eventProvider = ethers.providers.InfuraProvider.getWebSocketProvider(
             this.networkName,
@@ -742,12 +855,16 @@ class Store {
           this.chainId = (await eventProvider.getNetwork()).chainId;
 
         await this._setupEventContracts(eventProvider);
-        eventProvider._websocket.onclose = () => {
-          this.close();
-        };
-        eventProvider._websocket.onerror = () => {
-          this.close();
-        };
+        if (this.isWSEventProvider) {
+          const wsEventProvider =
+            eventProvider as ethers.providers.WebSocketProvider;
+          wsEventProvider._websocket.onclose = () => {
+            this.close();
+          };
+          wsEventProvider._websocket.onerror = () => {
+            this.close();
+          };
+        }
 
         this.eventProvider?.removeAllListeners();
         this.eventProvider = eventProvider;
@@ -758,22 +875,76 @@ class Store {
           address: '',
           networkName: this.networkName,
         } as ConnectResult);
+        if (this.assets.cfolioItems.length > 0) {
+          dispatcher.dispatch({
+            type: ASSETS_STATE,
+            content: { filter: ['cards'] },
+          } as Payload);
+        }
+        this._setupEvents();
       }
-      if (this.assets.cfolioItems.length > 0) {
-        dispatcher.dispatch({
-          type: ASSETS_STATE,
-          content: { filter: ['cards'] },
-        } as Payload);
-      }
-      this._setupEvents();
     } catch (e) {
       console.log(e);
       if (this.eventProvider) {
         this.eventProvider = undefined;
       }
     }
+    this.lock.disable();
   };
 
+  switchChain = async (chain: string) => {
+    if (window.ethereum) {
+      let newChain = 0;
+      if (chain === 'polygon') {
+        newChain = this.chainId === 1 ? 137 : 80001;
+      } else {
+        newChain = this.chainId === 137 ? 1 : 5;
+      }
+      if (newChain) {
+        try {
+          await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: '0x' + newChain.toString(16) }],
+          });
+        } catch (e) {
+          if ((e.code === 4902 || e.code === -32603) && newChain === 137) {
+            try {
+              await window.ethereum.request({
+                method: 'wallet_addEthereumChain',
+                params: [
+                  {
+                    chainId: '0x89',
+                    chainName: 'Matic(Polygon) Mainnet',
+                    rpcUrls: ['https://polygon-rpc.com/'],
+                    blockExplorerUrls: ['https://polygonscan.com'],
+                    nativeCurrency: {
+                      name: 'MATIC',
+                      symbol: 'MATIC',
+                      decimals: 18,
+                    },
+                  },
+                ],
+              });
+            } catch (e) {
+              console.log(e);
+            }
+          }
+          console.log(e);
+        }
+      }
+    }
+  };
+
+  getStableCurrencies() {
+    switch (this.chainId) {
+      case 137:
+        return STABLE_CURRENCIES[0];
+      case 80001:
+        return STABLE_CURRENCIES[1];
+      default:
+        return STABLE_CURRENCIES[2];
+    }
+  }
   /******************** Contracts *********************/
 
   _getChainAddresses(): ChainAddresses | undefined {
@@ -781,45 +952,43 @@ class Store {
   }
 
   async _setupEventContracts(
-    provider: ethers.providers.WebSocketProvider
+    provider: ethers.providers.BaseProvider
   ): Promise<void> {
     const chainAddresses = this._getChainAddresses();
 
     if (chainAddresses) {
       this.tokenContractAddress = chainAddresses.token;
-      this.stakeContractRO = new ethers.Contract(
-        chainAddresses.stakeFarm,
-        StakeAbi,
-        provider
-      );
       this.lpContractRO = new ethers.Contract(
-        await this.stakeContractRO.stakingToken(),
+        chainAddresses.uniV2Pair,
         UniV2PairAbi,
         provider
       );
-      this.sftHolderContractRO = new ethers.Contract(
-        chainAddresses.sftHolder,
-        SFTHolderAbi,
-        provider
-      );
-      this.sftMintContractRO = new ethers.Contract(
-        chainAddresses.sftMinter,
-        SFTMinterAbi,
-        provider
-      );
-      this.tradeFloorContractRO = new ethers.Contract(
-        chainAddresses.tradeFloorProxy,
-        TradeFloorAbi,
-        provider
-      );
-      this.cfiBridgeContractRO = new ethers.Contract(
-        chainAddresses.cfiBridgeProxy,
-        CFolioItemBridgeAbi,
-        provider
-      );
 
-      this.cfolioFarmLpAddress = chainAddresses.cfolioFarmLP;
-      this.cfolioFarmScAddress = chainAddresses.cfolioFarmSC;
+      if (chainAddresses.sftHolderProxy) {
+        this.sftHolderContractRO = new ethers.Contract(
+          chainAddresses.sftHolderProxy,
+          SFTHolderAbi,
+          provider
+        );
+      }
+
+      if (chainAddresses.sftMinterProxy) {
+        this.sftMintContractRO = new ethers.Contract(
+          chainAddresses.sftMinterProxy,
+          SFTMinterAbi,
+          provider
+        );
+      }
+      if (chainAddresses.tradeFloorProxy) {
+        this.tradeFloorContractRO = new ethers.Contract(
+          chainAddresses.tradeFloorProxy,
+          TradeFloorAbi,
+          provider
+        );
+      }
+
+      this.cfolioFarmLpAddress = chainAddresses.cfolioFarmLP || '';
+      this.cfolioFarmScAddress = chainAddresses.cfolioFarmSC || '';
 
       if (chainAddresses.uniDaiWeth !== '') {
         this.uniDaiWethPairContractRO = new ethers.Contract(
@@ -827,15 +996,21 @@ class Store {
           UniV2PairAbi,
           provider
         );
-      }
+      } else this.uniDaiWethPairContractRO = undefined;
 
-      if (chainAddresses.curveYDeposit !== '') {
-        this.curveYDepositContractRO = new ethers.Contract(
-          chainAddresses.curveYDeposit,
-          CurveYDepositAbi,
+      if (chainAddresses.curveADeposit) {
+        this.curveDepositContractRO = new ethers.Contract(
+          chainAddresses.curveADeposit,
+          CurveDepositAbi,
           provider
         );
-      }
+      } else if (chainAddresses.curveYDeposit) {
+        this.curveDepositContractRO = new ethers.Contract(
+          chainAddresses.curveYDeposit,
+          CurveDepositAbi,
+          provider
+        );
+      } else this.curveDepositContractRO = undefined;
 
       // Setup our balances
       this.assets.balances['WOWS'].address = chainAddresses.token;
@@ -845,8 +1020,10 @@ class Store {
       this.assets.balances['DAI'].address = chainAddresses.daiToken;
       this.assets.balances['TUSD'].address = chainAddresses.tusdToken;
       this.assets.balances['yCrv'].address = chainAddresses.curveYToken;
+      this.assets.balances['am3Crv'].address = chainAddresses.curveAToken;
 
-      this.assets.balances['WOWS'].handlerAddress = chainAddresses.sftMinter;
+      this.assets.balances['WOWS'].handlerAddress =
+        chainAddresses.sftMinterProxy;
       this.assets.balances['WETH/WOWS LP'].handlerAddress =
         chainAddresses.cfolioItemHandlerLPProxy;
       this.assets.balances['USDC'].handlerAddress =
@@ -879,83 +1056,46 @@ class Store {
         TokenAbi,
         signer
       );
-      this.cfihLpContract = new ethers.Contract(
-        chainAddresses.cfolioItemHandlerLPProxy,
-        CFolioItemHandlerAbi,
-        signer
-      );
-      this.cfihScContract = new ethers.Contract(
-        chainAddresses.cfolioItemHandlerSCProxy,
-        CFolioItemHandlerAbi,
-        signer
-      );
-      this.sftEvaluatorContract = new ethers.Contract(
-        chainAddresses.sftEvaluatorProxy,
-        SftEvaluatorAbi,
-        signer
-      );
-      this.boosterContract = new ethers.Contract(
-        chainAddresses.boosterProxy,
-        BoosterAbi,
-        signer
-      );
+      if (chainAddresses.cfolioItemHandlerLPProxy) {
+        this.cfihLpContract = new ethers.Contract(
+          chainAddresses.cfolioItemHandlerLPProxy,
+          CFolioItemHandlerAbi,
+          signer
+        );
+      }
+      if (chainAddresses.cfolioItemHandlerSCProxy) {
+        this.cfihScContract = new ethers.Contract(
+          chainAddresses.cfolioItemHandlerSCProxy,
+          CFolioItemHandlerAbi,
+          signer
+        );
+      }
+      if (chainAddresses.sftEvaluatorProxy) {
+        this.sftEvaluatorContract = new ethers.Contract(
+          chainAddresses.sftEvaluatorProxy,
+          SftEvaluatorAbi,
+          signer
+        );
+      }
+      if (chainAddresses.boosterProxy) {
+        this.boosterContract = new ethers.Contract(
+          chainAddresses.boosterProxy,
+          BoosterAbi,
+          signer
+        );
+      }
+      this.bridgeTargetAddress = chainAddresses.bridgeTarget;
+
       return true;
     }
     return false;
   }
 
-  // Should be from getStakeState() in a next iteration
-  _getPoolTokenAmount = async (payloadContent: PayloadContent | undefined) => {
-    try {
-      const result = !this.lpContractRO
-        ? 0
-        : await this.lpContractRO?.balanceOf(this.address);
-      emitter.emit(STAKE_LP_AVAILABLE, {
-        tokenAmount: this.fromWei(result),
-      } as TokenContractResult);
-    } catch (e) {
-      emitter.emit(STAKE_LP_AVAILABLE, {
-        error: e.message,
-      } as TokenContractResult);
-    }
-  };
-
-  _getStakeState = async (payloadContent: PayloadContent | undefined) => {
-    try {
-      const result: ethers.BigNumber[] | undefined =
-        await this.stakeContractRO?.getUIData(
-          this.address === '' ? Store.nullAddress : this.address
-        );
-
-      if (result) {
-        const stakeInfo: StakeResult = {
-          error: undefined,
-          state: {
-            poolSupply: this.fromWei(result[0]),
-            reserve0: this.fromWei(result[1]),
-            reserve1: this.fromWei(result[2]),
-            priceReserve0: this.fromWei(result[3]),
-            stakeSupply: this.fromWei(result[4]),
-            stakeSupplyUser: this.fromWei(result[5]),
-            rewardsDuration: result[6].toNumber(),
-            rewardPerDuration: this.fromWei(result[7]),
-            earned: this.fromWei(result[8]),
-          },
-        };
-        if (this.uniDaiWethPairContractRO) {
-          const reserves = await this.uniDaiWethPairContractRO.getReserves();
-          stakeInfo.state.priceReserve0 = reserves.reserve0.div(
-            reserves.reserve1
-          );
-        }
-        emitter.emit(STAKE_STATE, stakeInfo);
-      }
-    } catch (e) {
-      emitter.emit(STAKE_STATE, { error: e.message });
-    }
-  };
-
   _getSftState = async (payloadContent: PayloadContent | undefined) => {
+    if (!this.sftMintContractRO) {
+      return;
+    }
+
     // Loop through the assets and build up level / cardIds to query
     const levels: ethers.BigNumber[] = [];
     const cardIds: ethers.BigNumber[] = [];
@@ -968,17 +1108,30 @@ class Store {
     );
 
     try {
-      const sftResult: number[] | undefined =
-        await this.sftHolderContractRO?.getCardDataBatch(levels, cardIds);
-
-      if (sftResult !== undefined && sftResult.length > 0) {
-        let index = 0;
-        this.assets.cards.cards.forEach((level) =>
-          level.cards.forEach((card) => {
-            level.quantity = sftResult[index++];
-            card.minted = sftResult[index++];
-          })
+      if (!this.isSidechain()) {
+        const sftResult:
+          | {
+              prices: ethers.BigNumber[];
+              numMinted: number[];
+              maxMintable: number[];
+            }
+          | undefined = await this.sftMintContractRO?.getBaseSpec(
+          levels,
+          cardIds
         );
+
+        if (sftResult !== undefined) {
+          let index = 0;
+          for (const level of this.assets.cards.cards) {
+            level.price = this.fromWei(sftResult.prices[index]);
+            level.quantity = sftResult.maxMintable[index];
+            for (const card of level.cards) {
+              card.minted = sftResult.numMinted[index];
+              index++;
+            }
+            if (index >= sftResult.prices.length) break;
+          }
+        }
       }
 
       const cfolioTypes: number[] = [];
@@ -1014,8 +1167,13 @@ class Store {
       const result: [ethers.BigNumber[], ethers.BigNumber[]] =
         await this.sftMintContractRO.getTokenIds(this.address);
 
+      const bridgeToken = this.polygonBridge
+        ? this.polygonBridge.getTokenIds(this.address)
+        : [];
+
       const mergeList = result[0].map((t) => t);
       mergeList.push(...result[1]);
+      mergeList.push(...bridgeToken.map((item) => item.tokenId));
 
       const newUserSFT: SFT[] = mergeList
         .filter((n) => n.mask(128).lte(Store.BASE_CARD_MAX))
@@ -1029,6 +1187,7 @@ class Store {
                 (c) => c.chainRef === (cr & 0xff)
               )) >= 0
           );
+          const bridgeItem = bridgeToken.find((item) => item.tokenId.eq(bn));
           return {
             tokenId: bn,
             levelId: levelIndex,
@@ -1036,7 +1195,13 @@ class Store {
             isBaseCard: bn.mask(128).lte(Store.BASE_CARD_MAX),
             isStockCard: bn.mask(128).lte(Store.STOCK_CARD_MAX),
             isWallet: false,
-            locked: result[1].find((b) => b.eq(bn)) !== undefined,
+            status: bridgeItem
+              ? bridgeItem.available
+                ? SFTS.BRIDGE_READY
+                : SFTS.BRIDGE_PENDING
+              : result[1].find((b) => b.eq(bn)) !== undefined
+              ? SFTS.LOCKED
+              : SFTS.UNLOCKED,
             rewardRate: 0,
             rewardShare: 0,
             rewardEarned: 0,
@@ -1064,7 +1229,7 @@ class Store {
         isBaseCard: false,
         isStockCard: false,
         isWallet: true,
-        locked: false,
+        status: SFTS.UNLOCKED,
         rewardRate: 0,
         rewardShare: 0,
         rewardEarned: 0,
@@ -1109,9 +1274,11 @@ class Store {
               tokenId: childId,
               levelId: -1,
               cardId: -1,
-              locked:
+              status:
                 destinationId === 0 &&
-                result[1].find((b) => b.eq(childId)) !== undefined,
+                result[1].find((b) => b.eq(childId)) !== undefined
+                  ? SFTS.LOCKED
+                  : SFTS.UNLOCKED,
               type: readUint256(result2, readIndex++).toNumber(),
               assets: [],
             };
@@ -1125,7 +1292,7 @@ class Store {
             const bidx =
               this.assets.cfolioItems[child.levelId].type === 'lpInvestment'
                 ? ['WETH/WOWS LP']
-                : STABLE_CURRENCIES;
+                : this.getStableCurrencies();
             for (let index = 0; index < numAssets; ++index) {
               child.assets.push(
                 this.fromWei(
@@ -1154,7 +1321,11 @@ class Store {
       const contracts = [this.cfihLpContract, this.cfihScContract];
 
       for (let i = 0; i < 2; ++i) {
-        if (!contracts[i]) continue;
+        if (!contracts[i]) {
+          this.assets.rewardInfo[i].apr = 0;
+          this.assets.rewardInfo[i].rewardDuration = 0;
+          continue;
+        }
 
         const sfts = this.assets.userSFT.filter(
           (sft) =>
@@ -1210,6 +1381,7 @@ class Store {
     cfolio: ethers.BigNumber
   ) {
     const iface = new ethers.utils.Interface(CFolioFarmAbi);
+    const stableCurrencies = this.getStableCurrencies();
     receipt.logs.find((log) => {
       if (
         log.address === this.cfolioFarmLpAddress ||
@@ -1235,7 +1407,7 @@ class Store {
                           (amount, index) =>
                             (item.assets[index] = this.fromWei(
                               amount,
-                              this.assets.balances[STABLE_CURRENCIES[index]]
+                              this.assets.balances[stableCurrencies[index]]
                                 .decimals
                             ))
                         );
@@ -1334,20 +1506,29 @@ class Store {
   };
 
   async _updatePoolAPR() {
-    if (
-      this.uniDaiWethPairContractRO &&
-      this.lpContractRO &&
-      this.curveYDepositContractRO
-    ) {
+    let lpContractRO = this.lpContractRO;
+    if (this.chainId === 137) {
+      const provider = new ethers.providers.InfuraProvider(
+        'mainnet',
+        process.env.REACT_APP_INFURA_ID
+      );
+      lpContractRO = new ethers.Contract(
+        (addresses as IIndexable)[1].uniV2Pair,
+        UniV2PairAbi,
+        provider
+      );
+    } else if (this.isSidechain()) return;
+
+    if (this.uniDaiWethPairContractRO && lpContractRO) {
       const e18 = ethers.BigNumber.from('10').pow(18);
 
       const daiWethReserves = await this.uniDaiWethPairContractRO.getReserves();
       // Price of 1 WETH in DAI
-      const wethPrice = daiWethReserves.reserve0
-        .mul(e18)
-        .div(daiWethReserves.reserve1);
+      const wethPrice = daiWethReserves.reserve0.gt(daiWethReserves.reserve1)
+        ? daiWethReserves.reserve0.mul(e18).div(daiWethReserves.reserve1)
+        : daiWethReserves.reserve1.mul(e18).div(daiWethReserves.reserve0);
 
-      const wowsWethReserves = await this.lpContractRO.getReserves();
+      const wowsWethReserves = await lpContractRO.getReserves();
       // Price of 1 WOWS
       const wowsPrice = wowsWethReserves.reserve1
         .mul(wethPrice)
@@ -1361,7 +1542,7 @@ class Store {
         let stakedPrice;
         if (i === 0) {
           // TotalSupply of the WOWS/WETH pool
-          const wowsWethTotalSupply = await this.lpContractRO.totalSupply();
+          const wowsWethTotalSupply = await lpContractRO.totalSupply();
 
           // Total price of pool
           const poolPrice = wowsWethReserves.reserve0
@@ -1377,10 +1558,10 @@ class Store {
           stakedPrice = poolPrice
             .mul(ethers.BigNumber.from(rewardInfo.total))
             .div(wowsWethTotalSupply);
-        } else {
+        } else if (this.curveDepositContractRO) {
           // Get the DAI price of one yCrv token
           const priceToken =
-            await this.curveYDepositContractRO.calc_withdraw_one_coin(
+            await this.curveDepositContractRO.calc_withdraw_one_coin(
               this.toWei(1),
               0
             );
@@ -1390,7 +1571,7 @@ class Store {
           stakedPrice = priceToken
             .mul(ethers.BigNumber.from(rewardInfo.total))
             .div(e18);
-        }
+        } else stakedPrice = ethers.BigNumber.from(0);
 
         if (rewardInfo.rewardDuration) {
           // yearly emission
@@ -1416,130 +1597,6 @@ class Store {
 
   /************** TX ****************/
 
-  _doStakeAdd = async (payloadContent: PayloadContent) => {
-    const { amount } = payloadContent;
-
-    try {
-      if (!amount) {
-        throw new Error('Invalid amount');
-      }
-
-      if (!this.lpContractRO || !this.stakeContractRO || !this.ethersSigner) {
-        throw new Error('Invalid contract');
-      }
-
-      let stakeAmount = this.toWei(amount);
-      // Fix math inaccuraties
-      const available: ethers.BigNumber = await this.lpContractRO.balanceOf(
-        this.address
-      );
-      if (
-        (available.gt(stakeAmount) && available.sub(stakeAmount).lt(1000)) ||
-        (available.lt(stakeAmount) && stakeAmount.sub(available).lt(1000))
-      )
-        stakeAmount = available;
-
-      if (stakeAmount > available) {
-        throw new Error('Insufficient LP token');
-      }
-
-      const allowance = await this.lpContractRO.allowance(
-        this.address,
-        this.stakeContractRO.address
-      );
-
-      if (allowance.lt(stakeAmount)) {
-        const lpContract = this.lpContractRO.connect(this.ethersSigner);
-        const tx = await lpContract.approve(
-          this.stakeContractRO.address,
-          this._checkUnlimited('WETH/WOWS LP', stakeAmount)
-        );
-        emitter.emit(STAKE_ADD, {
-          status: 'approve',
-          tx: tx?.hash,
-        } as StatusResult);
-
-        await tx.wait();
-      }
-
-      const stakeContract = this.stakeContractRO.connect(this.ethersSigner);
-      const tx: ethers.ContractTransaction | undefined =
-        await stakeContract?.stake(stakeAmount);
-      emitter.emit(STAKE_ADD, {
-        status: 'tx',
-        tx: tx?.hash,
-      } as StatusResult);
-
-      await tx?.wait();
-      emitter.emit(STAKE_ADD, {
-        status: 'success',
-        tx: tx?.hash,
-      } as StatusResult);
-    } catch (e) {
-      emitter.emit(STAKE_ADD, {
-        status: 'error',
-        errorMessage: e.error ? e.error.message : e.message,
-      } as StatusResult);
-    }
-  };
-
-  _doStakeClaim = async (payloadContent: PayloadContent) => {
-    try {
-      if (!this.stakeContractRO || !this.ethersSigner) {
-        throw new Error('Invalid contract');
-      }
-
-      const stakeContract = this.stakeContractRO.connect(this.ethersSigner);
-      const tx: ethers.ContractTransaction | undefined =
-        await stakeContract.getReward();
-      emitter.emit(STAKE_CLAIM, {
-        status: 'tx',
-        type: STAKE_CLAIM,
-        tx: tx?.hash,
-      } as StatusResult);
-
-      await tx?.wait();
-      emitter.emit(STAKE_CLAIM, {
-        status: 'success',
-        type: STAKE_CLAIM,
-        tx: tx?.hash,
-      } as StatusResult);
-    } catch (e) {
-      emitter.emit(STAKE_CLAIM, {
-        status: 'error',
-        type: STAKE_CLAIM,
-        errorMessage: e.error ? e.error.message : e.message,
-      } as StatusResult);
-    }
-  };
-
-  _doStakeExit = async (payloadContent: PayloadContent) => {
-    try {
-      if (!this.stakeContractRO || !this.ethersSigner) {
-        throw new Error('Invalid contract');
-      }
-
-      const stakeContract = this.stakeContractRO.connect(this.ethersSigner);
-      const tx: ethers.ContractTransaction | undefined =
-        await stakeContract.exit();
-      emitter.emit(STAKE_EXIT, {
-        status: 'tx',
-        tx: tx?.hash,
-      } as StatusResult);
-
-      await tx?.wait();
-      emitter.emit(STAKE_EXIT, {
-        status: 'success',
-        tx: tx?.hash,
-      } as StatusResult);
-    } catch (e) {
-      emitter.emit(STAKE_EXIT, {
-        status: 'error',
-        errorMessage: e.error ? e.error.message : e.message,
-      } as StatusResult);
-    }
-  };
-
   _doSftBuy = async (payloadContent: PayloadContent) => {
     const { amount, id } = payloadContent;
 
@@ -1564,11 +1621,11 @@ class Store {
         throw new Error('Insufficient balances');
       }
 
-      const cardData = await this.sftHolderContractRO?.getCardDataBatch(
+      const cardData = await this.sftMintContractRO?.getBaseSpec(
         [id.toNumber() >> 8],
         [id.toNumber() & 0xff]
       );
-      if (cardData[0] <= cardData[1]) {
+      if (cardData.maxMintable[0] <= cardData.numMinted[0]) {
         throw new Error('No cards available');
       }
 
@@ -1581,7 +1638,7 @@ class Store {
       if (allowance.lt(sftAmount)) {
         const tx = await this.tokenContract.approve(
           sftMintContract.address,
-          sftAmount
+          this._checkUnlimited('WOWS', sftAmount)
         );
         emitter.emit(SFT_BUY, {
           status: 'approve',
@@ -1591,12 +1648,12 @@ class Store {
         await tx.wait();
       }
 
+      this.eventsSuspended = true;
       const tx: ethers.ContractTransaction | undefined =
         await sftMintContract?.mintWowsSFT(
           this.address,
           id.toNumber() >> 8,
-          id.toNumber() & 0xff,
-          { gasLimit: 420000 }
+          id.toNumber() & 0xff
         );
       emitter.emit(SFT_BUY, {
         status: 'tx',
@@ -1614,6 +1671,7 @@ class Store {
         errorMessage: e.error ? e.error.message : e.message,
       } as StatusResult);
     }
+    this._resolveDQ();
   };
 
   _doSftLock = async (payloadContent: PayloadContent) => {
@@ -1645,6 +1703,7 @@ class Store {
     );
 
     try {
+      this.eventsSuspended = true;
       const tx: ethers.ContractTransaction =
         await sftHolderContract.safeTransferFrom(
           this.address,
@@ -1670,6 +1729,108 @@ class Store {
         errorMessage: e.error ? e.error.message : e.message,
       } as StatusResult);
     }
+    this._resolveDQ();
+  };
+
+  _doSftTransfer = async (payloadContent: PayloadContent) => {
+    const { id, status, address } = payloadContent;
+    if (id === undefined || !address) {
+      emitter.emit(SFT_TRANSFER, {
+        status: 'error',
+        errorMessage: 'Invalid input',
+      } as StatusResult);
+      return;
+    }
+
+    const contract =
+      status === 'locked'
+        ? this.tradeFloorContractRO
+        : this.sftHolderContractRO;
+
+    if (!contract || !this.ethersProvider) {
+      emitter.emit(SFT_TRANSFER, {
+        status: 'error',
+        errorMessage: 'Invalid contract state',
+      } as StatusResult);
+      return;
+    }
+
+    try {
+      const signedContract = contract.connect(
+        this.ethersProvider.getSigner(this.accountId)
+      );
+      this.eventsSuspended = true;
+      const tx: ethers.ContractTransaction =
+        await signedContract.safeTransferFrom(this.address, address, id, 1, []);
+      emitter.emit(SFT_TRANSFER, {
+        status: 'tx',
+        tx: tx?.hash,
+      } as StatusResult);
+
+      await tx.wait();
+
+      emitter.emit(SFT_TRANSFER, {
+        status: 'success',
+        tx: tx?.hash,
+      } as StatusResult);
+    } catch (e) {
+      emitter.emit(SFT_TRANSFER, {
+        status: 'error',
+        errorMessage: e.error ? e.error.message : e.message,
+      } as StatusResult);
+    }
+    this._resolveDQ();
+  };
+
+  _doSftMessageProof = async (payloadContent: PayloadContent) => {
+    const { id } = payloadContent;
+    if (id === undefined) {
+      emitter.emit(SFT_PROOF, {
+        status: 'error',
+        errorMessage: 'Invalid input',
+      } as StatusResult);
+      return;
+    }
+
+    if (!this.ethersSigner || !this.polygonBridge) {
+      emitter.emit(SFT_PROOF, {
+        status: 'error',
+        errorMessage: 'Invalid contract state',
+      } as StatusResult);
+      return;
+    }
+    try {
+      const proof = await this.polygonBridge.processPending(id);
+      const contract = new ethers.Contract(
+        this.bridgeTargetAddress,
+        RootTunnelAbi,
+        this.ethersSigner
+      );
+
+      this.eventsSuspended = true;
+      const tx = await contract.receiveMessage(proof);
+
+      emitter.emit(SFT_PROOF, {
+        status: 'tx',
+        tx: tx.hash,
+      } as StatusResult);
+
+      await tx.wait();
+
+      emitter.emit(SFT_PROOF, {
+        status: 'success',
+        tx: tx.hash,
+      } as StatusResult);
+
+      this.polygonBridge?.removeItem(id);
+    } catch (e) {
+      this.polygonBridge?.resetPending(id);
+      emitter.emit(SFT_PROOF, {
+        status: 'error',
+        errorMessage: e.error ? e.error.message : e.message,
+      } as StatusResult);
+    }
+    this._resolveDQ();
   };
 
   _doSftUnlock = async (payloadContent: PayloadContent) => {
@@ -1695,6 +1856,7 @@ class Store {
         this.ethersSigner
       );
 
+      this.eventsSuspended = true;
       const tx: ethers.ContractTransaction = await tradeFloorContract.burn(
         this.address,
         id,
@@ -1716,6 +1878,7 @@ class Store {
         errorMessage: e.error ? e.error.message : e.message,
       } as StatusResult);
     }
+    this._resolveDQ();
   };
 
   _doCFolioItemBuy = async (payloadContent: PayloadContentCFolioItem) => {
@@ -1780,6 +1943,7 @@ class Store {
         options = { gasLimit: gasEstimation.toNumber() + additionalGas };
       }
 
+      this.eventsSuspended = true;
       const tx: ethers.ContractTransaction =
         await sftMintContract.mintCFolioItemSFT(
           this.address,
@@ -1793,23 +1957,21 @@ class Store {
         tx: tx.hash,
       } as StatusResult);
 
-      this.ethersProvider?.once(
-        tx.hash,
-        (receipt: ethers.providers.TransactionReceipt) => {
-          emitter.emit(CFOLIO_ITEM_BUY, {
-            status: 'success',
-            tx: tx?.hash,
-          } as StatusResult);
+      await tx.wait();
 
-          // There is no transfer with our address emitted,
-          // in case of valid SFT: Request an tokenId update
-          if (!sftTokenId.eq(BIGNUMBER_MAX))
-            this._addDQ(tx?.blockNumber ?? 0, {
-              type: ASSETS_STATE,
-              content: { filter: ['tokens', 'balances'] },
-            } as Payload);
-        }
-      );
+      emitter.emit(CFOLIO_ITEM_BUY, {
+        status: 'success',
+        tx: tx?.hash,
+      } as StatusResult);
+
+      // There is no transfer with our address emitted,
+      // in case of valid SFT: Request an tokenId update
+      if (!sftTokenId.eq(BIGNUMBER_MAX)) {
+        this._addDQ(tx?.blockNumber ?? 0, {
+          type: ASSETS_STATE,
+          content: { filter: ['tokens', 'balances'] },
+        } as Payload);
+      }
     } catch (e) {
       console.log(e);
       emitter.emit(CFOLIO_ITEM_BUY, {
@@ -1817,6 +1979,7 @@ class Store {
         errorMessage: e.error ? e.error.message : e.message,
       } as StatusResult);
     }
+    this._resolveDQ();
   };
 
   _doCFolioItemDeposit = async (payloadContent: PayloadContentCFolioItem) => {
@@ -1841,6 +2004,7 @@ class Store {
       if (additionalGas) {
         const gasEstimation: ethers.BigNumber =
           await cfihContract.estimateGas.deposit(
+            this.address,
             sftTokenId,
             cfolioTokenId,
             investWeiAmounts
@@ -1849,6 +2013,7 @@ class Store {
       }
 
       const tx = await cfihContract.deposit(
+        this.address,
         sftTokenId,
         cfolioTokenId,
         investWeiAmounts,
@@ -1859,17 +2024,13 @@ class Store {
         tx: tx?.hash,
       } as StatusResult);
 
-      //await tx?.wait();
-      this.ethersProvider?.once(
-        tx.hash,
-        (receipt: ethers.providers.TransactionReceipt) => {
-          emitter.emit(CFOLIO_ITEM_DEPOSIT, {
-            status: 'success',
-            tx: tx?.hash,
-          } as StatusResult);
-          this._setCFolioAmount(receipt, sftTokenId, cfolioTokenId);
-        }
-      );
+      const receipt = await tx.wait();
+      emitter.emit(CFOLIO_ITEM_DEPOSIT, {
+        status: 'success',
+        tx: tx?.hash,
+      } as StatusResult);
+
+      this._setCFolioAmount(receipt, sftTokenId, cfolioTokenId);
     } catch (e) {
       console.log(e);
       emitter.emit(CFOLIO_ITEM_DEPOSIT, {
@@ -1899,7 +2060,7 @@ class Store {
       balances = ['WETH/WOWS LP'];
     } else {
       cfihContract = this.cfihScContract;
-      balances = STABLE_CURRENCIES;
+      balances = this.getStableCurrencies();
     }
 
     if (!cfihContract || !this.ethersSigner) {
@@ -1935,7 +2096,10 @@ class Store {
         investWeiAmounts.push(investWeiAmount);
         approvalContracts.push(approvalContract);
 
-        if (cfihContract === this.cfihScContract && index !== '4')
+        if (
+          cfihContract === this.cfihScContract &&
+          index !== (balances.length - 1).toString()
+        )
           oneStableSet = true;
         oneSet = true;
       } else {
@@ -2012,7 +2176,7 @@ class Store {
         balances = ['WETH/WOWS LP'];
       } else {
         cfihContract = this.cfihScContract;
-        balances = STABLE_CURRENCIES;
+        balances = this.getStableCurrencies();
       }
 
       if (!cfihContract || !this.ethersSigner) {
@@ -2054,7 +2218,7 @@ class Store {
         if (
           cfihContract === this.cfihScContract &&
           withdrawWeiAmount.gt(0) &&
-          index !== '4'
+          index !== (balances.length - 1).toString()
         )
           oneStableSet = true;
 
@@ -2083,17 +2247,14 @@ class Store {
         tx: tx?.hash,
       } as StatusResult);
 
-      //await tx?.wait();
-      this.ethersProvider?.once(
-        tx.hash,
-        (receipt: ethers.providers.TransactionReceipt) => {
-          emitter.emit(CFOLIO_ITEM_WITHDRAW, {
-            status: 'success',
-            tx: receipt.transactionHash,
-          } as StatusResult);
-          this._setCFolioAmount(receipt, sftTokenId, cfolioTokenId);
-        }
-      );
+      const receipt = await tx?.wait();
+
+      emitter.emit(CFOLIO_ITEM_WITHDRAW, {
+        status: 'success',
+        tx: receipt.transactionHash,
+      } as StatusResult);
+
+      this._setCFolioAmount(receipt, sftTokenId, cfolioTokenId);
     } catch (e) {
       console.log(e);
       emitter.emit(CFOLIO_ITEM_WITHDRAW, {
@@ -2107,13 +2268,11 @@ class Store {
     payloadContent: PayloadContentCFolioItemLT
   ) => {
     const { src, dst, lockedCFIs, transferCFIs } = payloadContent;
-    this.eventsSuspended = true;
 
     try {
       if (
         !this.sftHolderContractRO ||
         !this.tradeFloorContractRO ||
-        !this.cfiBridgeContractRO ||
         !this.ethersSigner
       ) {
         throw new Error('Contract not initialized');
@@ -2130,6 +2289,8 @@ class Store {
           throw new Error('Cannot get cfolio address');
         }
       }
+
+      this.eventsSuspended = true;
 
       if (lockedCFIs.length > 0) {
         if (src !== BIGNUMBER_MAX) {
@@ -2155,7 +2316,6 @@ class Store {
       }
       if (transferCFIs.length > 0) {
         // CFI's has to be in TF contract!
-        let tx;
         let srcAddress = this.address;
         if (src !== BIGNUMBER_MAX) {
           srcAddress = this.sftHolderContractRO.tokenIdToAddress(src);
@@ -2163,54 +2323,26 @@ class Store {
             throw new Error('Cannot get cfolio address');
           }
         }
-        if (src !== BIGNUMBER_MAX) {
-          const cfiBridgeContract = this.cfiBridgeContractRO.connect(
-            this.ethersSigner
-          );
-          if (dst !== BIGNUMBER_MAX) {
-            // cfolio -> cfolio transfer
-            tx = await cfiBridgeContract.safeBatchTransferFrom(
-              srcAddress,
-              dstAddress,
-              transferCFIs,
-              new Array(transferCFIs.length).fill(1),
-              []
-            );
-          } else {
-            // cfolio -> wallet burn
-            tx = await cfiBridgeContract.burnBatch(
-              srcAddress,
-              transferCFIs,
-              new Array(transferCFIs.length).fill(1)
-            );
-          }
-        } else {
-          // wallet -> cfolio transfer
-          const sftContract = this.sftHolderContractRO.connect(
-            this.ethersSigner
-          );
-          tx = await sftContract.safeBatchTransferFrom(
-            srcAddress,
-            this.cfiBridgeContractRO.address,
-            transferCFIs,
-            new Array(transferCFIs.length).fill(1),
-            dstAddress
-          );
-        }
+        const sftHolderContract = this.sftHolderContractRO.connect(
+          this.ethersSigner
+        );
+        const tx = await sftHolderContract.safeBatchTransferFrom(
+          srcAddress,
+          dstAddress,
+          transferCFIs,
+          new Array(transferCFIs.length).fill(1),
+          []
+        );
         emitter.emit(CFOLIO_ITEM_UNLOCK_TRANSFER, {
           status: 'tx',
           tx: tx.hash,
         } as StatusResult);
 
-        this.ethersProvider?.once(
-          tx.hash,
-          (receipt: ethers.providers.TransactionReceipt) => {
-            emitter.emit(CFOLIO_ITEM_UNLOCK_TRANSFER, {
-              status: 'success',
-              tx: receipt.transactionHash,
-            } as StatusResult);
-          }
-        );
+        await tx.wait();
+        emitter.emit(CFOLIO_ITEM_UNLOCK_TRANSFER, {
+          status: 'success',
+          tx: tx.hash,
+        } as StatusResult);
       }
     } catch (e) {
       console.log(e);
@@ -2242,20 +2374,16 @@ class Store {
         tx: tx.hash,
       } as StatusResult);
 
-      this.ethersProvider?.once(
-        tx.hash,
-        (receipt: ethers.providers.TransactionReceipt) => {
-          emitter.emit(SFT_CLAIM, {
-            status: 'success',
-            type: SFT_CLAIM,
-            tx: tx.hash,
-          } as StatusResult);
-          this._addDQ(tx.blockNumber ?? 0, {
-            type: SFT_REWARD,
-            content: {},
-          } as Payload);
-        }
-      );
+      await tx.wait();
+      emitter.emit(SFT_CLAIM, {
+        status: 'success',
+        type: SFT_CLAIM,
+        tx: tx.hash,
+      } as StatusResult);
+      this._addDQ(tx.blockNumber ?? 0, {
+        type: SFT_REWARD,
+        content: {},
+      } as Payload);
     } catch (e) {
       emitter.emit(SFT_CLAIM, {
         status: 'error',
@@ -2317,16 +2445,14 @@ class Store {
         tx: tx.hash,
       } as StatusResult);
 
-      this.ethersProvider?.once(
-        tx.hash,
-        (receipt: ethers.providers.TransactionReceipt) => {
-          this._setRewardRate(receipt);
-          emitter.emit(SFT_UPGRADE, {
-            status: 'success',
-            tx: tx?.hash,
-          } as StatusResult);
-        }
-      );
+      const receipt = await tx.wait();
+
+      this._setRewardRate(receipt);
+
+      emitter.emit(SFT_UPGRADE, {
+        status: 'success',
+        tx: tx?.hash,
+      } as StatusResult);
     } catch (e) {
       emitter.emit(SFT_UPGRADE, {
         status: 'error',
@@ -2361,20 +2487,18 @@ class Store {
         tx: tx.hash,
       } as StatusResult);
 
-      this.ethersProvider?.once(
-        tx.hash,
-        (receipt: ethers.providers.TransactionReceipt) => {
-          emitter.emit(REVOKE_APPROVAL, {
-            status: 'success',
-            type: currency,
-            tx: tx.hash,
-          } as StatusResult);
-          dispatcher.dispatch({
-            type: ASSETS_STATE,
-            content: { filter: ['allowance'] },
-          } as Payload);
-        }
-      );
+      await tx.wait();
+
+      emitter.emit(REVOKE_APPROVAL, {
+        status: 'success',
+        type: currency,
+        tx: tx.hash,
+      } as StatusResult);
+
+      dispatcher.dispatch({
+        type: ASSETS_STATE,
+        content: { filter: ['allowance'] },
+      } as Payload);
     } catch (e) {
       emitter.emit(REVOKE_APPROVAL, {
         status: 'error',
@@ -2415,7 +2539,9 @@ const StoreClasses = {
 
 export class StoreContainer extends React.Component<unknown> {
   componentDidMount(): void {
-    StoreClasses.store.mount();
+    window.addEventListener('load', async () => {
+      StoreClasses.store.mount();
+    });
   }
 
   componentWillUnmount(): void {

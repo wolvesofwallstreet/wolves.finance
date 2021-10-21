@@ -22,19 +22,6 @@ interface ICFolioItemHandler is ICFolioItemCallback {
    */
   function sftUpgrade(uint256 tokenId, uint32 newRate) external;
 
-  /**
-   * @dev Called from SFTMinter after an Investment SFT is minted
-   *
-   * @param payer The approved address to get investment from
-   * @param sftTokenId The sftTokenId whose c-folio is the owner of investment
-   * @param amounts The amounts of invested assets
-   */
-  function setupCFolio(
-    address payer,
-    uint256 sftTokenId,
-    uint256[] calldata amounts
-  ) external;
-
   //////////////////////////////////////////////////////////////////////////////
   // Asset access
   //////////////////////////////////////////////////////////////////////////////
@@ -45,11 +32,13 @@ interface ICFolioItemHandler is ICFolioItemCallback {
    * Transfers amounts of assets from users wallet to the contract. In general,
    * an Approval call is required before the function is called.
    *
+   * @param from must be msg.sender for calls not from sftMinter
    * @param baseTokenId cFolio tokenId, must be unlocked, or -1
    * @param tokenId cFolioItem tokenId, must be unlocked if not in unlocked cFolio
    * @param amounts Investment amounts, implementation specific
    */
   function deposit(
+    address from,
     uint256 baseTokenId,
     uint256 tokenId,
     uint256[] calldata amounts
@@ -69,6 +58,16 @@ interface ICFolioItemHandler is ICFolioItemCallback {
     uint256 tokenId,
     uint256[] calldata amounts
   ) external;
+
+  /**
+   * @dev Update investment values from sidechain
+   *
+   * Must be called from a registered root tunnel
+   *
+   * @param tokenId cFolioItem tokenId
+   * @param amounts Investment amounts, implementation specific
+   */
+  function update(uint256 tokenId, uint256[] calldata amounts) external;
 
   /**
    * @dev Get the rewards collected by an SFT base card

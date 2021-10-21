@@ -65,7 +65,7 @@ function toEth(wei: ethers.BigNumber): number {
 }
 
 describe('Presale contract', function () {
-  let signer: SignerWithAddress;
+  let signer, marketingWallet: SignerWithAddress;
   let marketingWalletAddress: string;
 
   let tokenContract: ethers.Contract;
@@ -120,11 +120,10 @@ describe('Presale contract', function () {
     this.timeout(120 * 1000);
 
     // Get the Signers
-    [signer] = await hardhat.ethers.getSigners();
+    [signer, marketingWallet] = await hardhat.ethers.getSigners();
 
     // Get the marketing wallet
-    const { marketingWallet } = await hardhat.getNamedAccounts();
-    marketingWalletAddress = marketingWallet;
+    marketingWalletAddress = marketingWallet.address;
 
     // Create the initial fixture, this will generate the address registry
     await hardhat.deployments.fixture();
@@ -143,7 +142,7 @@ describe('Presale contract', function () {
     presaleContract = new ethers.Contract(
       addresses.presale,
       PresaleAbi,
-      signer
+      marketingWallet
     );
 
     stakeFarm = new ethers.Contract(
@@ -173,15 +172,18 @@ describe('Presale contract', function () {
     // See:
     //   https://github.com/OpenZeppelin/openzeppelin-test-helpers/blob/master/src/time.js#L70
 
-    // Expect closed
+    // Expect closed (0 / 0)
     let isOpen = await presaleContract.isOpen();
     let hasClosed = await presaleContract.hasClosed();
     chai.expect(isOpen).to.be.false;
-    chai.expect(hasClosed).to.be.false;
+    chai.expect(hasClosed).to.be.true;
 
-    // Add 5 minutes and mine the next block
-    await hardhat.network.provider.send('evm_increaseTime', [5 * 60]);
-    await hardhat.network.provider.send('evm_mine');
+    // Open the presale
+    const tx = presaleContract.setTimes(
+      Math.round(Date.now() / 1000) - 120,
+      Math.round(Date.now() / 1000) + 120
+    );
+    await chai.expect(tx).to.not.be.reverted;
 
     // Expect open
     isOpen = await presaleContract.isOpen();
@@ -221,8 +223,12 @@ describe('Presale contract', function () {
     this.timeout(60 * 1000);
 
     // Open the presale
-    await hardhat.network.provider.send('evm_increaseTime', [5 * 60]); // 5 mins
-    await hardhat.network.provider.send('evm_mine');
+    let tx = presaleContract.setTimes(
+      Math.round(Date.now() / 1000) - 120,
+      Math.round(Date.now() / 1000) + 120
+    );
+    await chai.expect(tx).to.not.be.reverted;
+
     chai.expect(await presaleContract.isOpen()).to.be.true;
 
     // Check signer balance
@@ -234,10 +240,7 @@ describe('Presale contract', function () {
     const options = { gasPrice, value: toWei(amount) };
 
     // Expect buy tokens to revert
-    const tx: Promise<ethers.ContractTransaction> = presaleContract.buyTokens(
-      signer.address,
-      options
-    );
+    tx = presaleContract.buyTokens(signer.address, options);
     await chai.expect(tx).to.be.revertedWith('invest too small');
 
     // Check that balance is the same
@@ -249,8 +252,12 @@ describe('Presale contract', function () {
     this.timeout(60 * 1000);
 
     // Open the presale
-    await hardhat.network.provider.send('evm_increaseTime', [5 * 60]); // 5 mins
-    await hardhat.network.provider.send('evm_mine');
+    let tx = presaleContract.setTimes(
+      Math.round(Date.now() / 1000) - 120,
+      Math.round(Date.now() / 1000) + 120
+    );
+    await chai.expect(tx).to.not.be.reverted;
+
     chai.expect(await presaleContract.isOpen()).to.be.true;
 
     // Too much - 3.1 ETH of token
@@ -258,10 +265,7 @@ describe('Presale contract', function () {
     const options = { gasPrice, value: toWei(amount) };
 
     // Expect buy tokens to revert
-    const tx: Promise<ethers.ContractTransaction> = presaleContract.buyTokens(
-      signer.address,
-      options
-    );
+    tx = presaleContract.buyTokens(signer.address, options);
     await chai.expect(tx).to.be.revertedWith('wallet-cap exceeded');
 
     // Check that balance is the same
@@ -273,8 +277,14 @@ describe('Presale contract', function () {
     this.timeout(60 * 1000);
 
     // Open the presale
-    await hardhat.network.provider.send('evm_increaseTime', [5 * 60]); // 5 mins
-    await hardhat.network.provider.send('evm_mine');
+    let tx = presaleContract.setTimes(
+      Math.round(Date.now() / 1000) - 120,
+      Math.round(Date.now() / 1000) + 120
+    );
+    await chai.expect(tx).to.not.be.reverted;
+
+    const presaleContractSigner = presaleContract.connect(signer);
+
     chai.expect(await presaleContract.isOpen()).to.be.true;
 
     // Get initial balances
@@ -287,7 +297,6 @@ describe('Presale contract', function () {
 
     let amount: number;
     let options: unknown;
-    let tx: Promise<ethers.ContractTransaction>;
     let tokenBalance: number;
     let marketingProfit: number;
 
@@ -302,13 +311,16 @@ describe('Presale contract', function () {
     options = { gasPrice, value: toWei(amount) };
 
     // Buy tokens
-    tx = presaleContract.buyTokens(signer.address, options);
-    await chai.expect(tx).to.emit(presaleContract, 'TokensPurchased').withArgs(
-      signer.address, // Purchaser
-      signer.address, // Beneficiary
-      ethers.BigNumber.from('1500000000000000000'), // Value - 1.5 ETH
-      ethers.BigNumber.from('120000000000000000000') // Amount - 120 WOWS
-    );
+    tx = presaleContractSigner.buyTokens(signer.address, options);
+    await chai
+      .expect(tx)
+      .to.emit(presaleContractSigner, 'TokensPurchased')
+      .withArgs(
+        signer.address, // Purchaser
+        signer.address, // Beneficiary
+        ethers.BigNumber.from('1500000000000000000'), // Value - 1.5 ETH
+        ethers.BigNumber.from('120000000000000000000') // Amount - 120 WOWS
+      );
 
     // Log gas cost
     const finalBalance = toEth(
@@ -345,13 +357,16 @@ describe('Presale contract', function () {
     options = { gasPrice, value: toWei(amount) };
 
     // Buy tokens
-    tx = presaleContract.buyTokens(signer.address, options);
-    await chai.expect(tx).to.emit(presaleContract, 'TokensPurchased').withArgs(
-      signer.address, // Purchaser
-      signer.address, // Beneficiary
-      ethers.BigNumber.from('1500000000000000000'), // Value - 1.5 ETH
-      ethers.BigNumber.from('120000000000000000000') // Amount - 120 WOWS
-    );
+    tx = presaleContractSigner.buyTokens(signer.address, options);
+    await chai
+      .expect(tx)
+      .to.emit(presaleContractSigner, 'TokensPurchased')
+      .withArgs(
+        signer.address, // Purchaser
+        signer.address, // Beneficiary
+        ethers.BigNumber.from('1500000000000000000'), // Value - 1.5 ETH
+        ethers.BigNumber.from('120000000000000000000') // Amount - 120 WOWS
+      );
 
     // Check token balance
     tokenBalance = await tokenContract.balanceOf(signer.address);
@@ -377,7 +392,7 @@ describe('Presale contract', function () {
     options = { gasPrice, value: toWei(amount) };
 
     // Expect buy tokens to revert
-    tx = presaleContract.buyTokens(signer.address, options);
+    tx = presaleContractSigner.buyTokens(signer.address, options);
     await chai.expect(tx).to.be.revertedWith('wallet-cap exceeded');
 
     // Check token balance
@@ -391,9 +406,15 @@ describe('Presale contract', function () {
     this.timeout(60 * 1000);
 
     // Open the presale
-    await hardhat.network.provider.send('evm_increaseTime', [5 * 60]); // 5 mins
-    await hardhat.network.provider.send('evm_mine');
+    let tx = presaleContract.setTimes(
+      Math.round(Date.now() / 1000) - 120,
+      Math.round(Date.now() / 1000) + 120
+    );
+    await chai.expect(tx).to.not.be.reverted;
+
     chai.expect(await presaleContract.isOpen()).to.be.true;
+
+    const presaleContractSigner = presaleContract.connect(signer);
 
     // Get initial balances
     const initialBalance = toEth(
@@ -408,9 +429,8 @@ describe('Presale contract', function () {
     const options = { gasPrice, value: toWei(amount) };
 
     // Buy tokens and add liquidity
-    const tx: Promise<ethers.ContractTransaction> =
-      presaleContract.buyTokensAddLiquidity(signer.address, options);
-    await chai.expect(tx).to.emit(presaleContract, 'Staked').withArgs(
+    tx = presaleContractSigner.buyTokensAddLiquidity(signer.address, options);
+    await chai.expect(tx).to.emit(presaleContractSigner, 'Staked').withArgs(
       signer.address, // Beneficiary
       ethers.BigNumber.from('29999999999999999000') // Liquidity - ~30 LP tokens
     );
@@ -450,20 +470,25 @@ describe('Presale contract', function () {
     this.timeout(60 * 1000);
 
     // Open the presale
-    await hardhat.network.provider.send('evm_increaseTime', [5 * 60]); // 5 mins
-    await hardhat.network.provider.send('evm_mine');
+    let tx = presaleContract.setTimes(
+      Math.round(Date.now() / 1000) - 120,
+      Math.round(Date.now() / 1000) + 120
+    );
+    await chai.expect(tx).to.not.be.reverted;
+
     chai.expect(await presaleContract.isOpen()).to.be.true;
 
+    const presaleContractSigner = presaleContract.connect(signer);
+
     let options: unknown;
-    let tx: Promise<ethers.ContractTransaction>;
 
     // Limit of 6.75 ETH
     const amount = 6.75;
     options = { gasPrice, value: toWei(amount) };
 
     // Buy tokens and add liquidity
-    tx = presaleContract.buyTokensAddLiquidity(signer.address, options);
-    await chai.expect(tx).to.emit(presaleContract, 'Staked').withArgs(
+    tx = presaleContractSigner.buyTokensAddLiquidity(signer.address, options);
+    await chai.expect(tx).to.emit(presaleContractSigner, 'Staked').withArgs(
       signer.address, // Beneficiary
       ethers.BigNumber.from('29999999999999999000') // Liquidity - ~30 LP tokens
     );

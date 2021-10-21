@@ -12,7 +12,7 @@ import { Link } from 'react-router-dom';
 
 import BoisLogo from '../../assets/bois_shadow.png';
 import WolvesLogo from '../../assets/wolves_shadow.png';
-// import WowsStatus from '../wowsstatus';
+import { StoreClasses } from '../../stores/store';
 
 type PAGE1_PROPS = {
   t: TFunction;
@@ -27,15 +27,28 @@ function Page1(props: PAGE1_PROPS) {
         <div className="page1-title-box-text">
           <h2 className="tk-vincente-bold no-margin">{t('page1.head1')}</h2>
           <h3 className="tk-aktiv-grotesk-condensed">{t('page1.head2')}</h3>
-          <a
-            id="wows-link"
-            className="wolves-btn tk-grotesk-bold mt-1"
-            target="_blank"
-            rel="noreferrer"
-            href="https://app.uniswap.org/#/swap?inputCurrency=ETH&outputCurrency=0x672EF7E4Fe230B5cA1466C5fDD40588d30FdF90a&use=v2"
-          >
-            BUY WOWS ON UNISWAP V.2
-          </a>
+          {!StoreClasses.store.isSidechain() && (
+            <>
+              <a
+                id="wows-link"
+                className="wolves-btn tk-grotesk-bold mt-1"
+                target="_blank"
+                rel="noreferrer"
+                href={`https://app.uniswap.org/#/swap?inputCurrency=ETH&outputCurrency=${StoreClasses.store._getTokenContractAddress()}&use=v2`}
+              >
+                BUY WOWS ON UNISWAP V.2
+              </a>
+              <br />
+              <a
+                id="wows-link-migrate"
+                className="wolves-btn tk-grotesk-bold mt-1"
+                rel="noreferrer"
+                href={'https://appv1.wows.finance'}
+              >
+                <b>VISIT V1 AND MIGRATE MY CFOLIO's</b>
+              </a>
+            </>
+          )}
         </div>
       </div>
       {/************** Left ************/}

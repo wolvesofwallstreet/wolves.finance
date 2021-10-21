@@ -49,7 +49,7 @@ interface IFarm {
   function setRewardsDuration(uint256 _rewardsDuration) external;
 
   /**
-   * @dev Rebalance strategies (if implemented)
+   * @dev Set the weight of investment token relative to 0
    */
-  function rebalance() external;
+  function weightSlotId(uint256 slotId, uint256 weight) external;
 }

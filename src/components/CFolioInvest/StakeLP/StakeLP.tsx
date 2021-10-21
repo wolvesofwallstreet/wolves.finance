@@ -12,17 +12,17 @@ import { useEffect, useState } from 'react';
 import { TFunction, withTranslation } from 'react-i18next';
 
 import {
+  ASSETS_STATE,
   CFOLIO_ITEM_BUY,
   CFOLIO_ITEM_DEPOSIT,
   CFOLIO_ITEM_WITHDRAW,
-  STAKE_LP_AVAILABLE,
 } from '../../../stores/constants';
 import {
+  AssetStateresult,
   SFT,
   SFTCHILD,
   StatusResult,
   StoreClasses,
-  TokenContractResult,
 } from '../../../stores/store';
 import Approval from '../../Approval';
 import AssetInput from '../../controls/asset_input';
@@ -47,7 +47,9 @@ function StakeLP({
   t,
 }: PROPS): JSX.Element {
   const [tabOption, setTabOption] = useState(0);
-  const [investAmount, setInvestAmount] = useState(0);
+  const [investAmount, setInvestAmount] = useState(
+    StoreClasses.store.getAssets().balances['WETH/WOWS LP'].value
+  );
   const [hasSft, setHasSft] = useState(false);
   const [inputVal, setInputVal] = useState(0);
   const [txRunning, setTXRunning] = useState(false);
@@ -55,28 +57,22 @@ function StakeLP({
 
   if ((sft === undefined) === hasSft) {
     if (hasSft) setInvestAmount(0);
-    else {
-      StoreClasses.dispatcher.dispatch({
-        type: STAKE_LP_AVAILABLE,
-        content: {},
-      });
-    }
     setHasSft(sft !== undefined);
   }
 
   useEffect(() => {
-    const onLpAvailable = (params: TokenContractResult) => {
-      const newInvestAmount =
-        params.error === undefined && params.tokenAmount !== undefined
-          ? params.tokenAmount
-          : 0;
-      setInvestAmount(newInvestAmount);
+    const onAssetsState = (params: AssetStateresult) => {
+      if (params.status === 'balances') {
+        setInvestAmount(
+          StoreClasses.store.getAssets().balances['WETH/WOWS LP'].value
+        );
+      }
     };
     const resetTx = (result: StatusResult) => {
       if (['success', 'error'].includes(result.status)) setTXRunning(false);
     };
 
-    StoreClasses.emitter.on(STAKE_LP_AVAILABLE, onLpAvailable);
+    StoreClasses.emitter.on(ASSETS_STATE, onAssetsState);
     StoreClasses.emitter.on(CFOLIO_ITEM_BUY, resetTx);
     StoreClasses.emitter.on(CFOLIO_ITEM_DEPOSIT, resetTx);
     StoreClasses.emitter.on(CFOLIO_ITEM_WITHDRAW, resetTx);
@@ -85,7 +81,7 @@ function StakeLP({
       StoreClasses.emitter.off(CFOLIO_ITEM_WITHDRAW, resetTx);
       StoreClasses.emitter.off(CFOLIO_ITEM_DEPOSIT, resetTx);
       StoreClasses.emitter.off(CFOLIO_ITEM_BUY, resetTx);
-      StoreClasses.emitter.off(STAKE_LP_AVAILABLE, onLpAvailable);
+      StoreClasses.emitter.off(ASSETS_STATE, onAssetsState);
     };
   }, []);
 
@@ -110,8 +106,8 @@ function StakeLP({
   const spanText = cfolioItem
     ? 'STAKE MORE'
     : sft?.isWallet
-    ? 'ADD "STAKE I-NFT" INTO MY WALLET'
-    : 'ADD "STAKE I-NFT" INTO MY C-FOLIO';
+    ? 'BUY "STAKE I-NFT" INTO MY WALLET'
+    : 'BUY "STAKE I-NFT" INTO MY C-FOLIO';
 
   const handleBuy = () => {
     if (!beforeBuy(handleBuy)) return;

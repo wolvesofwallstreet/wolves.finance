@@ -16,14 +16,12 @@ import { solidity } from 'ethereum-waffle';
 import { ethers } from 'ethers';
 import fs from 'fs';
 
-import CFolioItemBridgeAbi from '../../src/abi/contracts/src/cfolio/CFolioItemBridge.sol/CFolioItemBridge.json';
 // Contract ABIs
 import SftEvaluatorAbi from '../../src/abi/contracts/src/cfolio/SFTEvaluator.sol/SFTEvaluator.json';
 import WOWSSftMinterAbi from '../../src/abi/contracts/src/crowdsale/WOWSSftMinter.sol/WOWSSftMinter.json';
-import UpgradeProxyAbi from '../../src/abi/contracts/src/proxy/UpgradeProxy.sol/UpgradeProxy.json';
 import WOWSCryptofolioAbi from '../../src/abi/contracts/src/token/WOWSCryptofolio.sol/WOWSCryptofolio.json';
 import WOWSTokenAbi from '../../src/abi/contracts/src/token/WOWSErc20.sol/WowsToken.json';
-import WOWSERC1155Abi from '../../src/abi/contracts/src/token/WOWSErc1155.sol/WOWSERC1155.json';
+import WOWSERC1155Abi from '../../src/abi/contracts/src/token/WOWSERC1155.sol/WOWSERC1155.json';
 import { ADDRESS_ZERO, MAX_UINT256 } from '../utils/constants';
 import { hardhat } from '../utils/hardhat';
 
@@ -94,31 +92,16 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
     marketingWallet
   );
   const sftHolderContract = new ethers.Contract(
-    addresses.sftHolder,
+    addresses.sftHolderProxy,
     WOWSERC1155Abi,
     marketingWallet
   );
   const sftMinterContract = new ethers.Contract(
-    addresses.sftMinter,
+    addresses.sftMinterProxy,
     WOWSSftMinterAbi,
     marketingWallet
   );
-  const cfiBridgeContract = new ethers.Contract(
-    addresses.cfiBridge,
-    CFolioItemBridgeAbi,
-    marketingWallet
-  );
-  const cfiBridgeProxyContract = new ethers.Contract(
-    addresses.cfiBridgeProxy,
-    UpgradeProxyAbi,
-    marketingWallet
-  );
   const sftEvaluatorContract = new ethers.Contract(
-    addresses.sftEvaluator,
-    SftEvaluatorAbi,
-    marketingWallet
-  );
-  const sftEvaluatorProxyContract = new ethers.Contract(
     addresses.sftEvaluatorProxy,
     SftEvaluatorAbi,
     marketingWallet
@@ -128,10 +111,7 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
     tokenContract,
     sftHolderContract,
     sftMinterContract,
-    cfiBridgeContract,
-    cfiBridgeProxyContract,
     sftEvaluatorContract,
-    sftEvaluatorProxyContract,
   };
 });
 
@@ -139,9 +119,6 @@ describe('SFT evaluator', function () {
   let signer: SignerWithAddress;
   let marketingWallet: SignerWithAddress;
   let contracts: any;
-
-  let cfiBridgeProxyInstance: ethers.Contract;
-  let sftEvaluatorProxyInstance: ethers.Contract;
 
   let cryptofolioAddressBoi: string;
 
@@ -221,28 +198,6 @@ describe('SFT evaluator', function () {
 
     console.log(`    ETH price is $${ethUsd}`);
     console.log(`    Using '${GAS_PRICE}' gas at ${gasPrice / 1e9} Gwei`);
-  });
-
-  it('should attach the cfolioItem bridge proxy', async function () {
-    this.timeout(120 * 1000);
-
-    const { cfiBridgeContract, cfiBridgeProxyContract } = contracts;
-
-    // Attach the proxy and set marketing wallet signer
-    cfiBridgeProxyInstance = cfiBridgeContract
-      .attach(cfiBridgeProxyContract.address)
-      .connect(marketingWallet);
-  });
-
-  it('should attach the sftEvaluator proxy', async function () {
-    this.timeout(120 * 1000);
-
-    const { sftEvaluatorContract, sftEvaluatorProxyContract } = contracts;
-
-    // Attach the proxy and set marketing wallet signer
-    sftEvaluatorProxyInstance = sftEvaluatorContract
-      .attach(sftEvaluatorProxyContract.address)
-      .connect(marketingWallet);
   });
 
   //////////////////////////////////////////////////////////////////////////////
@@ -354,55 +309,42 @@ describe('SFT evaluator', function () {
   // Test reward updates
   //////////////////////////////////////////////////////////////////////////////
 
-  it('should test admin address', async function () {
-    this.timeout(120 * 1000);
-
-    const { sftEvaluatorProxyContract } = contracts;
-
-    const adminAddress = await sftEvaluatorProxyContract.admin();
-    chai
-      .expect(adminAddress.toLowerCase())
-      .to.equal(marketingWallet.address.toLowerCase());
-  });
-
   it('should test reward rate of unminted SFT', async function () {
     this.timeout(120 * 1000);
 
-    const { sftEvaluatorProxyContract } = contracts;
+    const { sftEvaluatorContract } = contracts;
 
     // Should be the lowest pre-defined base rate
-    const rewardRate = await sftEvaluatorProxyContract.rewardRate('0x00000000');
+    const rewardRate = await sftEvaluatorContract.rewardRate('0x00000000');
     chai.expect(rewardRate).to.equal(25e4);
   });
 
   it('should test reward rate of minted Boi SFT', async function () {
     this.timeout(120 * 1000);
 
-    const { sftEvaluatorProxyContract } = contracts;
+    const { sftEvaluatorContract } = contracts;
 
     // Should be the lowest tier of base rates (later we'll test after
     // upgarding levels)
-    const rewardRate = await sftEvaluatorProxyContract.rewardRate(
-      wowsTokenIdBoi
-    );
+    const rewardRate = await sftEvaluatorContract.rewardRate(wowsTokenIdBoi);
     chai.expect(rewardRate).to.equal(25e4);
   });
 
   it('should test CFolioItem type of invalid token', async function () {
     this.timeout(120 * 1000);
 
-    const { sftEvaluatorProxyContract } = contracts;
+    const { sftHolderContract } = contracts;
 
-    const tx = sftEvaluatorProxyContract.getCFolioItemType(wowsTokenIdBoi);
+    const tx = sftHolderContract.getCFolioItemType(wowsTokenIdBoi);
     await chai.expect(tx).to.be.revertedWith('Invalid tokenId');
   });
 
   it('should test CFolioItem type of valid token', async function () {
     this.timeout(120 * 1000);
 
-    const { sftEvaluatorProxyContract } = contracts;
+    const { sftHolderContract } = contracts;
 
-    const itemType = await sftEvaluatorProxyContract.getCFolioItemType(
+    const itemType = await sftHolderContract.getCFolioItemType(
       cfolioItemTokenIds[0]
     );
     chai.expect(itemType).to.equal(cFolioItemType);
@@ -411,30 +353,27 @@ describe('SFT evaluator', function () {
   it('should fail to set reward rate of CFolioItem', async function () {
     this.timeout(120 * 1000);
 
-    const { sftEvaluatorProxyContract } = contracts;
+    const { sftEvaluatorContract } = contracts;
 
-    const tx = sftEvaluatorProxyContract.setRewardRate(
-      cfolioItemTokenIds[0],
-      true
-    );
+    const tx = sftEvaluatorContract.setRewardRate(cfolioItemTokenIds[0], true);
     await chai.expect(tx).to.be.revertedWith('Invalid tokenId');
   });
 
   it('should revert if reward rate is unchanged', async function () {
     this.timeout(120 * 1000);
 
-    const { sftEvaluatorProxyContract } = contracts;
+    const { sftEvaluatorContract } = contracts;
 
-    const tx = sftEvaluatorProxyContract.setRewardRate(wowsTokenIdBoi, true);
+    const tx = sftEvaluatorContract.setRewardRate(wowsTokenIdBoi, true);
     await chai.expect(tx).to.be.revertedWith('Rate unchange');
   });
 
   it('should set the reward rate (no effect)', async function () {
     this.timeout(120 * 1000);
 
-    const { sftEvaluatorProxyContract } = contracts;
+    const { sftEvaluatorContract } = contracts;
 
-    const tx = sftEvaluatorProxyContract.setRewardRate(wowsTokenIdBoi, false);
+    const tx = sftEvaluatorContract.setRewardRate(wowsTokenIdBoi, false);
     await chai.expect(tx).to.not.be.reverted;
 
     // Log gas cost
@@ -462,9 +401,9 @@ describe('SFT evaluator', function () {
   it('should set the reward rate (after level upgrade)', async function () {
     this.timeout(120 * 1000);
 
-    const { sftEvaluatorProxyContract } = contracts;
+    const { sftEvaluatorContract } = contracts;
 
-    const tx = sftEvaluatorProxyContract.setRewardRate(wowsTokenIdBoi, false);
+    const tx = sftEvaluatorContract.setRewardRate(wowsTokenIdBoi, false);
     await chai.expect(tx).to.not.be.reverted;
 
     // Log gas cost
@@ -492,7 +431,7 @@ describe('SFT evaluator', function () {
     // Transfer cryptofolio item NFT
     const tx = sftHolderContract.safeTransferFrom(
       marketingWallet.address,
-      cfiBridgeProxyInstance.address,
+      cryptofolioAddressBoi,
       cfolioItemTokenIds[0],
       1,
       cryptofolioAddressBoi
@@ -503,9 +442,9 @@ describe('SFT evaluator', function () {
   it('should set the reward rate (one item)', async function () {
     this.timeout(120 * 1000);
 
-    const { sftEvaluatorProxyContract } = contracts;
+    const { sftEvaluatorContract } = contracts;
 
-    const tx = sftEvaluatorProxyContract.setRewardRate(wowsTokenIdBoi, false);
+    const tx = sftEvaluatorContract.setRewardRate(wowsTokenIdBoi, false);
     await chai.expect(tx).to.not.be.reverted;
 
     const receipt = await (await tx).wait();
@@ -518,7 +457,8 @@ describe('SFT evaluator', function () {
     const gasCost =
       gasUsedGwei
         .mul(await getGasPrice())
-        .div(ethers.BigNumber.from('1000000000000000')) / 1000.0;
+        .div(ethers.BigNumber.from('1000000000000000'))
+        .toNumber() / 1000.0;
     console.log(
       `    Set reward rate (one item) marginal gas: ${gasUsedGwei} (${gasCost} ETH / $${await toUsd(
         gasCost
@@ -534,7 +474,7 @@ describe('SFT evaluator', function () {
     // Transfer cryptofolio item NFT
     const tx = sftHolderContract.safeTransferFrom(
       marketingWallet.address,
-      cfiBridgeProxyInstance.address,
+      cryptofolioAddressBoi,
       cfolioItemTokenIds[1],
       1,
       cryptofolioAddressBoi
@@ -545,9 +485,9 @@ describe('SFT evaluator', function () {
   it('should set the reward rate (two items)', async function () {
     this.timeout(120 * 1000);
 
-    const { sftEvaluatorProxyContract } = contracts;
+    const { sftEvaluatorContract } = contracts;
 
-    const tx = sftEvaluatorProxyContract.setRewardRate(wowsTokenIdBoi, false);
+    const tx = sftEvaluatorContract.setRewardRate(wowsTokenIdBoi, false);
     await chai.expect(tx).to.not.be.reverted;
 
     const receipt = await (await tx).wait();
@@ -576,7 +516,7 @@ describe('SFT evaluator', function () {
     // Transfer cryptofolio item NFT
     const tx1 = sftHolderContract.safeBatchTransferFrom(
       marketingWallet.address,
-      cfiBridgeProxyInstance.address,
+      cryptofolioAddressBoi,
       cfolioItemTokenIds.slice(2, 50),
       Array(48).fill(1),
       cryptofolioAddressBoi
@@ -586,7 +526,7 @@ describe('SFT evaluator', function () {
     // Transfer cryptofolio item NFT
     const tx2 = sftHolderContract.safeBatchTransferFrom(
       marketingWallet.address,
-      cfiBridgeProxyInstance.address,
+      cryptofolioAddressBoi,
       cfolioItemTokenIds.slice(50, 100),
       Array(50).fill(1),
       cryptofolioAddressBoi
@@ -597,9 +537,9 @@ describe('SFT evaluator', function () {
   it(`should set the reward rate (100 items)`, async function () {
     this.timeout(120 * 1000);
 
-    const { sftEvaluatorProxyContract } = contracts;
+    const { sftEvaluatorContract } = contracts;
 
-    const tx = sftEvaluatorProxyContract.setRewardRate(wowsTokenIdBoi, false);
+    const tx = sftEvaluatorContract.setRewardRate(wowsTokenIdBoi, false);
     await chai.expect(tx).to.not.be.reverted;
 
     const receipt = await (await tx).wait();
@@ -628,7 +568,7 @@ describe('SFT evaluator', function () {
     // Transfer cryptofolio item NFT
     const tx = sftHolderContract.safeTransferFrom(
       marketingWallet.address,
-      cfiBridgeProxyInstance.address,
+      cryptofolioAddressBoi,
       cfolioItemTokenIds[100],
       1,
       cryptofolioAddressBoi

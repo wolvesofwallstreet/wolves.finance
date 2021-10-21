@@ -24,11 +24,34 @@ import Page1 from './components/page1';
 import Page3 from './components/page3';
 import Page4 from './components/page4';
 import { PageStatus } from './components/pageStatus';
-import Stake from './components/stake';
 import WolfToast from './components/toast/wolftoast';
-import { StoreContainer } from './stores/store';
+import { CONNECTION_CHANGED } from './stores/constants';
+import { ConnectResult, StoreClasses, StoreContainer } from './stores/store';
 
-class App extends React.Component {
+type APP_STATE = {
+  isSideChain: boolean;
+};
+
+class App extends React.Component<unknown, APP_STATE> {
+  constructor(props: unknown) {
+    super(props);
+    this.state = { isSideChain: false };
+  }
+
+  componentDidMount(): void {
+    StoreClasses.emitter.on(CONNECTION_CHANGED, this.setNetwork);
+  }
+
+  componentWillUnmount(): void {
+    StoreClasses.emitter.off(CONNECTION_CHANGED, this.setNetwork);
+  }
+
+  setNetwork = (result: ConnectResult): void => {
+    if (result.type === 'prod' && result.address !== '') {
+      this.setState({ isSideChain: StoreClasses.store.isSidechain() });
+    }
+  };
+
   render(): JSX.Element {
     return (
       <div className="App">
@@ -37,7 +60,6 @@ class App extends React.Component {
             <WolfToast />
             <Route component={Header} />
             <Switch>
-              <Route path="/stake" component={Stake} />
               <Route
                 path="/shop"
                 render={(props) => <Page3 {...props} display={'shop'} />}
@@ -48,11 +70,13 @@ class App extends React.Component {
               />
               <Route path="/detail" component={Page4} />
               <Route path="/status" component={PageStatus} />
-
               <Route path="/cfolio-sfts" component={CFolioItemSfts} />
-              <Route path="/cfolio-invest" component={CFolioInvest} />
-
-              <Route path="/c_folio_manager" component={CFolioManager} />
+              {this.state.isSideChain && (
+                <Route path="/cfolio-invest" component={CFolioInvest} />
+              )}
+              {this.state.isSideChain && (
+                <Route path="/c_folio_manager" component={CFolioManager} />
+              )}
               <Route component={Page1} />
             </Switch>
             <Footer />

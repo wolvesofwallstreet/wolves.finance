@@ -13,6 +13,16 @@ pragma solidity >=0.7.0 <0.8.0;
  */
 interface IBooster {
   /**
+   * @dev return current rewardHandler
+   */
+  function rewardHandler() external view returns (address);
+
+  /**
+   * @dev return current sftHolder
+   */
+  function sftHolder() external view returns (address);
+
+  /**
    * @dev Return information about the reward state in Booster
    *
    * @param tokenIds The SFT or TF tokenId
@@ -31,6 +41,18 @@ interface IBooster {
       uint256[] memory apr,
       uint256[] memory secsLeft
     );
+
+  /**
+   * @dev Create a booster pool from v1 specs
+   *
+   * @param tokenId The SFT tokenId
+   * @param data list of uint256's: total, pending, provided, apr, end, fee
+   */
+  function migrateCreatePool(
+    uint256 tokenId,
+    bytes memory data,
+    uint256 dataIndex
+  ) external returns (uint256);
 
   /**
    * @dev Handles farm distribution, only callable from controller
@@ -66,4 +88,14 @@ interface IBooster {
    * @param reLock True to re-lock existing rewards to earn more
    */
   function claimRewards(uint256 sftTokenId, bool reLock) external;
+
+  /**
+   * @dev Set sftHolder contract which is deployed after Booster
+   */
+  function setSftHolder(address sftHolder_) external;
+
+  /**
+   * @dev Set reward handler in case it will be upgraded
+   */
+  function setRewardHandler(address rewardHandler_) external;
 }

@@ -39,8 +39,8 @@ contract CFolioItemHandlerLP is CFolioItemHandlerFarm {
    * If one of the relevant addresses changes, the contract has to be updated.
    * There is little state here, user state is completely handled in CFolioFarm.
    */
-  constructor(IAddressRegistry addressRegistry)
-    CFolioItemHandlerFarm(addressRegistry, AddressBook.WOLVES_REWARDS)
+  constructor(IAddressRegistry addressRegistry, address farm)
+    CFolioItemHandlerFarm(addressRegistry, farm)
   {
     // The ERC-20 token we stake
     stakingToken = IERC20(
@@ -68,7 +68,7 @@ contract CFolioItemHandlerLP is CFolioItemHandlerFarm {
     // Record assets in the Farm contract. They don't earn rewards.
     //
     // NOTE: {addAssets} must only be called from investment CFolios.
-    cfolioFarm.addAssets(itemCFolio, amounts[0]);
+    _cfolioFarm.addAssets(itemCFolio, amounts[0], 0);
   }
 
   /**
@@ -84,7 +84,7 @@ contract CFolioItemHandlerLP is CFolioItemHandlerFarm {
     // Record assets in Farm contract. They don't earn rewards.
     //
     // NOTE: {removeAssets} must only be called from Investment CFolios.
-    cfolioFarm.removeAssets(itemCFolio, amounts[0]);
+    _cfolioFarm.removeAssets(itemCFolio, amounts[0], 0);
 
     // Transfer LP token from this contract.
     stakingToken.safeTransfer(_msgSender(), amounts[0]);
@@ -98,7 +98,7 @@ contract CFolioItemHandlerLP is CFolioItemHandlerFarm {
     view
     override
   {
-    (, uint8 level) = sftHolder.getTokenData(baseSftTokenId);
+    (, uint8 level) = _sftHolder.getTokenData(baseSftTokenId);
 
     require((LEVEL2WOLF & (uint256(1) << level)) > 0, 'CFIHLP: Wolves only');
   }
@@ -114,12 +114,8 @@ contract CFolioItemHandlerLP is CFolioItemHandlerFarm {
     external
     view
     override
-    returns (uint256[] memory)
+    returns (uint256[] memory result)
   {
-    uint256[] memory result = new uint256[](1);
-
-    result[0] = cfolioFarm.balanceOf(cfolioItem);
-
-    return result;
+    result = _cfolioFarm.balancesOf(cfolioItem);
   }
 }

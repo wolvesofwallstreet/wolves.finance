@@ -30,6 +30,7 @@ interface HEADER_STATE {
   networkName: string;
   wowsPrice?: number;
   wowsAmount?: number;
+  isSidechain?: boolean;
 }
 
 type DropDownItem = {
@@ -51,7 +52,12 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
 
   constructor(props: HEADER_PROPS) {
     super(props);
-    this.state = { address: '', networkName: '', wowsAmount: 0 };
+    this.state = {
+      address: '',
+      networkName: '',
+      wowsAmount: 0,
+      isSidechain: false,
+    };
 
     this.handleSubmit = this.handleSubmit.bind(this);
     this.onConnectionChanged = this.onConnectionChanged.bind(this);
@@ -71,6 +77,8 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
 
   onConnectionChanged(params: ConnectResult): void {
     if (params.type === 'prod') this.setState(params);
+    const isSidechain = this.store.isSidechain();
+    if (isSidechain !== this.state.isSidechain) this.setState({ isSidechain });
   }
 
   onAssetsState(status: AssetStateresult): void {
@@ -89,7 +97,7 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
 
   handleSubmit(event: React.FormEvent<HTMLFormElement>): void {
     if (this.store.isConnected()) {
-      this.store.disconnect(true);
+      this.store.disconnect(true, true);
     } else {
       this.store.connect();
     }
@@ -146,74 +154,102 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
     const query = new URLSearchParams(location.search);
     const type = query.get('type');
     const levelId = query.get('levelId') || 0;
-    const result = [
-      /*{
-        id: t('header.home'),
-        to: '/',
-        disabled: location.pathname === '/',
-      },*/
-      {
-        id: 'WOLF TRADE FLOOR',
-        to: '/wolf_trade_floor-1',
-        disabled: location.pathname === '/wolf_trade_floor',
-        dropdownItems: [
+    const result = StoreClasses.store.isSidechain()
+      ? [
           {
-            id: t('header.wolvesCf'),
-            to: '/shop?type=wolves&levelId=' + levelId,
-            disabled: type === 'wolves',
+            id: 'WOLF TRADE FLOOR',
+            to: '/wolf_trade_floor-1',
+            disabled: location.pathname === '/wolf_trade_floor',
+            dropdownItems: [
+              {
+                id: t('header.viewWolvesCf'),
+                to: '/shop?type=wolves&levelId=' + levelId,
+                disabled: type === 'wolves',
+              },
+              {
+                id: t('header.buyStake'),
+                to: '/cfolio-sfts?type=lpInvestment',
+              },
+              {
+                id: t('header.stakeInvest'),
+                to: '/cfolio-invest?type=lpInvestment',
+              },
+            ],
           },
           {
-            id: t('header.buyStake'),
-            to: '/cfolio-sfts?type=lpInvestment',
+            id: 'BOIS BOARDROOMS',
+            to: '/wolf_trade_floor-1',
+            disabled: location.pathname === '/wolf_trade_floor',
+            dropdownItems: [
+              {
+                id: t('header.viewBoisCf'),
+                to: '/shop?type=bois&levelId=' + levelId,
+                disabled: type === 'bois',
+              },
+              {
+                id: t('header.buyYearn'),
+                to: '/cfolio-sfts?type=stableInvestment',
+              },
+              {
+                id: t('header.yearnInvest'),
+                to: '/cfolio-invest?type=stableInvestment',
+              },
+            ],
           },
           {
-            id: t('header.stakeInvest'),
-            to: '/cfolio-invest?type=lpInvestment',
-          },
-        ],
-      },
-      {
-        id: 'BOIS BOARDROOMS',
-        to: '/wolf_trade_floor-1',
-        disabled: location.pathname === '/wolf_trade_floor',
-        dropdownItems: [
-          {
-            id: t('header.boisCf'),
-            to: '/shop?type=bois&levelId=' + levelId,
-            disabled: type === 'bois',
+            id: t('header.myPack'),
+            to: '/my?type=myPack&levelId=' + levelId,
+            disabled: location.pathname === '/my',
           },
           {
-            id: t('header.buyYearn'),
-            to: '/cfolio-sfts?type=yearnInvestment',
+            id: 'C-FOLIO MANAGER',
+            to: '/c_folio_manager',
+            disabled: location.pathname === '/c_folio_manager',
+          },
+        ]
+      : [
+          {
+            id: 'WOLF TRADE FLOOR',
+            to: '/wolf_trade_floor-1',
+            disabled: location.pathname === '/wolf_trade_floor',
+            dropdownItems: [
+              {
+                id: t('header.wolvesCf'),
+                to: '/shop?type=wolves&levelId=' + levelId,
+                disabled: type === 'wolves',
+              },
+            ],
           },
           {
-            id: t('header.yearnInvest'),
-            to: '/cfolio-invest?type=yearnInvestment',
+            id: 'BOIS BOARDROOMS',
+            to: '/wolf_trade_floor-1',
+            disabled: location.pathname === '/wolf_trade_floor',
+            dropdownItems: [
+              {
+                id: t('header.boisCf'),
+                to: '/shop?type=bois&levelId=' + levelId,
+                disabled: type === 'bois',
+              },
+            ],
           },
-        ],
-      },
-      {
-        id: t('header.myPack'),
-        to: '/my?type=myPack&levelId=' + levelId,
-        disabled: location.pathname === '/my',
-      },
-      {
-        id: 'C-FOLIO MANAGER',
-        to: '/c_folio_manager',
-        disabled: location.pathname === '/c_folio_manager',
-      },
-      {
-        id: t('header.stake'),
-        to: '/stake',
-        disabled: location.pathname === '/stake',
-      },
-    ];
+          {
+            id: t('header.myPack'),
+            to: '/my?type=myPack&levelId=' + levelId,
+            disabled: location.pathname === '/my',
+          },
+          {
+            id: 'WOWS V1',
+            to: 'https://appv1.wows.finance',
+            disabled: false,
+          },
+        ];
     return result;
   }
 
   render(): ReactNode {
     const shortAddress = this._shortAddress();
     const navItems = this._getNavItems();
+    const isSidechain = this.state.isSidechain;
     return (
       <Navbar bg="wolf" variant="dark" expand="md">
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
@@ -236,8 +272,13 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
             }
 
             // nav item
-            return (
+            return navItem.to.startsWith('http') ? (
+              <a key={index} href={navItem.to}>
+                {navItem.id}
+              </a>
+            ) : (
               <Link key={index} to={navItem.to}>
+                {' '}
                 {navItem.id}
               </Link>
             );
@@ -245,24 +286,36 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
         </Navbar.Collapse>
 
         <div className="dp-conn-container">
-          <Form onSubmit={this.handleSubmit}>
-            <input
-              className="wolves-btn dp-conn-btn"
-              type="submit"
-              value={shortAddress}
+          <div className="dp-chain-container">
+            <span
+              className={`icon ethereum${isSidechain ? '' : ' selected'}`}
+              onClick={() => StoreClasses.store.switchChain('ethereum')}
             />
-          </Form>
-          {this.state.wowsPrice !== undefined && (
-            <span className="dp-conn-price">
-              1 WOWS &asymp; ${this.state.wowsPrice.toFixed(0)}
-            </span>
-          )}
-          <br />
-          {this.state.wowsAmount !== undefined && (
-            <span className="dp-conn-price">
-              My WOWS: {this.state.wowsAmount.toFixed(2)}
-            </span>
-          )}
+            <span
+              className={`icon polygon${isSidechain ? ' selected' : ''}`}
+              onClick={() => StoreClasses.store.switchChain('polygon')}
+            />
+          </div>
+          <div>
+            <Form onSubmit={this.handleSubmit}>
+              <input
+                className="wolves-btn dp-conn-btn"
+                type="submit"
+                value={shortAddress}
+              />
+            </Form>
+            {this.state.wowsPrice !== undefined && (
+              <span className="dp-conn-price">
+                1 WOWS &asymp; ${this.state.wowsPrice.toFixed(0)}
+              </span>
+            )}
+            <br />
+            {this.state.wowsAmount !== undefined && (
+              <span className="dp-conn-price">
+                My WOWS: {this.state.wowsAmount.toFixed(2)}
+              </span>
+            )}
+          </div>
         </div>
       </Navbar>
     );

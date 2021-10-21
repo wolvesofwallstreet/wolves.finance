@@ -8,7 +8,7 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
-import '@openzeppelin/contracts/token/ERC1155/IERC1155.sol';
+import '../../../0xerc1155/interfaces/IERC1155.sol';
 
 interface IERC1155BurnMintable is IERC1155 {
   /**

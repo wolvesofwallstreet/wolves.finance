@@ -8,11 +8,10 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
-import '@openzeppelin/contracts/GSN/Context.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/math/SafeMath.sol';
-import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
-import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
+import '../../0xerc1155/utils/Context.sol';
+import '../../0xerc1155/utils/ReentrancyGuard.sol';
+import '../../0xerc1155/utils/SafeMath.sol';
+import '../../0xerc1155/utils/SafeERC20.sol';
 
 import '../../interfaces/uniswap/IUniswapV2Factory.sol';
 import '../../interfaces/uniswap/IUniswapV2Router02.sol';
@@ -147,8 +146,6 @@ contract Crowdsale is Context, ReentrancyGuard, ERC20Recovery {
    * @param _walletCap Max amount of wei to be contributed per wallet
    * @param _lpEth numerator of liquidity pair
    * @param _lpToken denominator of liquidity pair
-   * @param _openingTime Crowdsale opening time
-   * @param _closingTime Crowdsale closing time
    */
   constructor(
     IAddressRegistry _addressRegistry,
@@ -158,19 +155,13 @@ contract Crowdsale is Context, ReentrancyGuard, ERC20Recovery {
     uint256 _investMin,
     uint256 _walletCap,
     uint256 _lpEth,
-    uint256 _lpToken,
-    uint256 _openingTime,
-    uint256 _closingTime
+    uint256 _lpToken
   ) {
     require(_rate > 0, 'rate is 0');
     require(address(_token) != address(0), 'token is addr(0)');
     require(_cap > 0, 'cap is 0');
     require(_lpEth > 0, 'lpEth is 0');
     require(_lpToken > 0, 'lpToken is 0');
-
-    // solhint-disable-next-line not-rely-on-time
-    require(_openingTime >= block.timestamp, 'opening > now');
-    require(_closingTime > _openingTime, 'open > close');
 
     // Reverts if address is invalid
     IUniswapV2Router02 _uniV2Router = IUniswapV2Router02(
@@ -205,8 +196,6 @@ contract Crowdsale is Context, ReentrancyGuard, ERC20Recovery {
     walletCap = _walletCap;
     ethForLp = _lpEth;
     tokenForLp = _lpToken;
-    openingTime = _openingTime;
-    closingTime = _closingTime;
   }
 
   /**
@@ -217,8 +206,7 @@ contract Crowdsale is Context, ReentrancyGuard, ERC20Recovery {
    * buyTokens directly when purchasing tokens from a contract.
    */
   receive() external payable {
-    // A payable receive() function follows the OpenZeppelin strategy, in which
-    // it is designed to buy tokens.
+    // A payable receive() function is designed to buy tokens.
     //
     // However, because we call out to uniV2Router from the crowdsale contract,
     // re-imbursement of ETH from UniswapV2Pair must not buy tokens.
@@ -447,7 +435,7 @@ contract Crowdsale is Context, ReentrancyGuard, ERC20Recovery {
    * @dev Added to support recovering LP Rewards from other systems to be distributed to holders
    */
   function recoverERC20(address tokenAddress, uint256 tokenAmount) external {
-    require(msg.sender == _wallet, 'restricted to wallet');
+    require(_msgSender() == _wallet, 'restricted to wallet');
     require(hasClosed(), 'not closed');
     // Cannot recover the staking token or the rewards token
     require(tokenAddress != address(token), 'native tokens unrecoverable');
@@ -460,11 +448,13 @@ contract Crowdsale is Context, ReentrancyGuard, ERC20Recovery {
    * @dev Change the closing time which gives you the possibility
    * to either shorten or enlarge the presale period
    */
-  function setClosingTime(uint256 newClosingTime) external {
+  function setTimes(uint256 newOpeningTime, uint256 newClosingTime) external {
     require(msg.sender == _wallet, 'restricted to wallet');
-    require(newClosingTime > openingTime, 'close < open');
+    require(newOpeningTime >= openingTime, 'newOpening < opening');
+    require(newClosingTime > newOpeningTime, 'close < open');
 
     closingTime = newClosingTime;
+    openingTime = newOpeningTime;
   }
 
   /**

@@ -22,7 +22,7 @@ import PresaleAbi from '../../src/abi/contracts/src/crowdsale/Crowdsale.sol/Crow
 import WOWSSftMinterAbi from '../../src/abi/contracts/src/crowdsale/WOWSSftMinter.sol/WOWSSftMinter.json';
 import ControllerAbi from '../../src/abi/contracts/src/investment/Controller.sol/Controller.json';
 import WOWSTokenAbi from '../../src/abi/contracts/src/token/WOWSErc20.sol/WowsToken.json';
-import WOWSERC1155Abi from '../../src/abi/contracts/src/token/WOWSErc1155.sol/WOWSERC1155.json';
+import WOWSERC1155Abi from '../../src/abi/contracts/src/token/WOWSERC1155.sol/WOWSERC1155.json';
 import { hardhat } from '../utils/hardhat';
 
 chai.use(solidity);
@@ -119,13 +119,13 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
   );
 
   const sftHolderContract = new ethers.Contract(
-    addresses.sftHolder,
+    addresses.sftHolderProxy,
     WOWSERC1155Abi,
     marketingWallet
   );
 
   const sftMinterContract = new ethers.Contract(
-    addresses.sftMinter,
+    addresses.sftMinterProxy,
     WOWSSftMinterAbi,
     marketingWallet
   );
@@ -163,8 +163,12 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
   //
 
   // Open the presale
-  await hardhat.network.provider.send('evm_increaseTime', [5 * 60]); // 5 mins
-  await hardhat.network.provider.send('evm_mine');
+  let tx = presaleContract.setTimes(
+    Math.round(Date.now() / 1000) - 120,
+    Math.round(Date.now() / 1000) + 120
+  );
+  await chai.expect(tx).to.not.be.reverted;
+
   chai.expect(await presaleContract.isOpen()).to.be.true;
 
   // Limit of 6.75 ETH
@@ -172,10 +176,7 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
   const options = { value: toWei(amount) };
 
   // Buy tokens and add liquidity
-  let tx = presaleContract.buyTokensAddLiquidity(
-    marketingWallet.address,
-    options
-  );
+  tx = presaleContract.buyTokensAddLiquidity(marketingWallet.address, options);
   await chai.expect(tx).to.emit(presaleContract, 'Staked').withArgs(
     marketingWallet.address, // Beneficiary
     ethers.BigNumber.from('29999999999999999000') // Liquidity - ~30 LP tokens
@@ -194,6 +195,19 @@ const setupTest = hardhat.deployments.createFixture(async ({ deployments }) => {
   // Refuel reward Farms
   //
   tx = controllerContract.setWorker(marketingWallet.address);
+  await chai.expect(tx).to.not.be.reverted;
+
+  // Set test parameters
+
+  tx = controllerContract.registerFarm(
+    addresses.cfolioFarmLP, // Farm
+    '15000000000000000000000', // Cap
+    '192307692300000000000', // RewardForDuration
+    0, // RewardProvided
+    20000, // Fee
+    0, // FarmEnd
+    false // Paused
+  );
   await chai.expect(tx).to.not.be.reverted;
 
   tx = controllerContract.refuelFarms([], []);
@@ -293,7 +307,7 @@ describe('Booster rewards', function () {
 
     // Mint a new LP investment type into Wolf
     const tx = sftMinterContract.mintCFolioItemSFT(
-      marketingWallet.address,
+      marketingWallet.address, // Recipient
       cFolioItemType,
       wowsTokenIdWolf,
       [investBalance]
@@ -481,7 +495,7 @@ describe('Booster rewards', function () {
     const { boosterContract } = contracts;
 
     const tx = boosterContract.claimRewards(wowsTokenIdWolf, true);
-    await chai.expect(tx).to.be.revertedWith('SafeMath#sub: UNDERFLOW');
+    await chai.expect(tx).to.be.revertedWith('B: Not open');
   });
 
   it('should claim the rewards into marketingWallet', async function () {

@@ -6,7 +6,7 @@
  * See the file LICENSES/README.md for more information.
  */
 
-import '@openzeppelin/contracts/access/Ownable.sol';
+import '../../0xerc1155/access/Ownable.sol';
 
 import './interfaces/IAddressRegistry.sol';
 

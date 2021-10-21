@@ -10,6 +10,11 @@
   width: 220px;
   display: inline-block;
 }
+#wows-link-migrate {
+  width: 320px;
+  display: inline-block;
+  border: 2px solid white;
+}
 
 .page1-container {
   position: relative;

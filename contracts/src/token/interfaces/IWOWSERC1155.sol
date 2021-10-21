@@ -9,21 +9,12 @@
 pragma solidity >=0.7.0 <0.8.0;
 
 /**
- * @notice Cryptofolio interface
+ * @notice Sft holder contract
  */
 interface IWOWSERC1155 {
   //////////////////////////////////////////////////////////////////////////////
   // Getters
   //////////////////////////////////////////////////////////////////////////////
-
-  /**
-   * @dev Check if the specified address is a known tradefloor
-   *
-   * @param account The address to check
-   *
-   * @return True if the address is a known tradefloor, false otherwise
-   */
-  function isTradeFloor(address account) external view returns (bool);
 
   /**
    * @dev Get the token ID of a given address
@@ -51,25 +42,6 @@ interface IWOWSERC1155 {
   function tokenIdToAddress(uint256 tokenId) external view returns (address);
 
   /**
-   * @dev Get the next mintable token ID for the specified card
-   *
-   * @param level The level of the card
-   * @param cardId The ID of the card
-   *
-   * @return bool True if a free token ID was found, false otherwise
-   * @return uint256 The first free token ID if one was found, or invalid otherwise
-   */
-  function getNextMintableTokenId(uint8 level, uint8 cardId)
-    external
-    view
-    returns (bool, uint256);
-
-  /**
-   * @dev Return the next mintable custom token ID
-   */
-  function getNextMintableCustomToken() external view returns (uint256);
-
-  /**
    * @dev Return the level and the mint timestamp of tokenId
    *
    * @param tokenId The tokenId to query
@@ -90,34 +62,89 @@ interface IWOWSERC1155 {
     view
     returns (uint256[] memory);
 
+  /**
+   * @dev Returns the cFolioItemType of a given cFolioItem tokenId
+   */
+  function getCFolioItemType(uint256 tokenId) external view returns (uint256);
+
+  /**
+   * @notice Get the balance of an account's Tokens
+   * @param owner  The address of the token holder
+   * @param tokenId ID of the Token
+   * @return The _owner's balance of the token type requested
+   */
+  function balanceOf(address owner, uint256 tokenId)
+    external
+    view
+    returns (uint256);
+
+  /**
+   * @notice Get the balance of multiple account/token pairs
+   * @param owners The addresses of the token holders
+   * @param tokenIds ID of the Tokens
+   * @return       The _owner's balance of the Token types requested (i.e. balance for each (owner, id) pair)
+   */
+  function balanceOfBatch(
+    address[] calldata owners,
+    uint256[] calldata tokenIds
+  ) external view returns (uint256[] memory);
+
   //////////////////////////////////////////////////////////////////////////////
   // State modifiers
   //////////////////////////////////////////////////////////////////////////////
 
   /**
-   * @dev Set the base URI for either predefined cards or custom cards
-   * which don't have it's own URI.
+   * @notice Mints tokenIds into 'to' account
+   * @dev Emits SftTokenTransfer Event
    *
-   * The resulting uri is baseUri+[hex(tokenId)] + '.json'. where
-   * tokenId will be reduces to upper 16 bit (>> 16) before building the hex string.
-   *
+   * Throws if sender has no MINTER_ROLE
+   * 'data' holds the CFolioItemHandler if CFI's are minted
    */
-  function setBaseMetadataURI(string memory baseContractMetadata) external;
+  function mintBatch(
+    address to,
+    uint256[] calldata tokenIds,
+    bytes calldata data
+  ) external;
 
   /**
-   * @dev Set the contracts metadata URI
+   * @notice Burns tokenIds owned by 'account'
+   * @dev Emits SftTokenTransfer Event
    *
-   * @param contractMetadataURI The URI which point to the contract metadata file.
+   * Burns all owned CFolioItems
+   * Throws if CFolioItems have assets
    */
-  function setContractMetadataURI(string memory contractMetadataURI) external;
+  function burnBatch(address account, uint256[] calldata tokenIds) external;
 
   /**
-   * @dev Set the URI for a custom card
-   *
-   * @param tokenId The token ID whose URI is being set.
-   * @param customURI The URI which point to an unique metadata file.
+   * @notice Transfers amount of an id from the from address to the 'to' address specified
+   * @dev Emits SftTokenTransfer Event
+   * Throws if 'to' is the zero address
+   * Throws if 'from' is not the current owner
+   * If 'to' is a smart contract, ERC1155TokenReceiver interface will checked
+   * @param from    Source address
+   * @param to      Target address
+   * @param tokenId ID of the token type
+   * @param amount  Transfered amount
+   * @param data    Additional data with no specified format, sent in call to `_to`
    */
-  function setCustomURI(uint256 tokenId, string memory customURI) external;
+  function safeTransferFrom(
+    address from,
+    address to,
+    uint256 tokenId,
+    uint256 amount,
+    bytes calldata data
+  ) external;
+
+  /**
+   * @dev Batch version of {safeTransferFrom}
+   */
+  function safeBatchTransferFrom(
+    address from,
+    address to,
+    uint256[] calldata tokenIds,
+    uint256[] calldata amounts,
+    bytes calldata data
+  ) external;
 
   /**
    * @dev Each custom card has its own level. Level will be used when
@@ -127,4 +154,53 @@ interface IWOWSERC1155 {
    * @param cardLevel The new level of the specified token
    */
   function setCustomCardLevel(uint256 tokenId, uint8 cardLevel) external;
+
+  /**
+   * @dev Sets the cfolioItemType of a cfolioItem tokenId, not yet used
+   * sftHolder tokenId expected (without hash)
+   */
+  function setCFolioItemType(uint256 tokenId, uint256 cfolioItemType_) external;
+
+  /**
+   * @dev Sets external NFT for display tokenId
+   * By default NFT is rendered using our internal metadata
+   *
+   * Throws if not called from MINTER role
+   */
+  function setExternalNft(
+    uint256 tokenId,
+    address externalCollection,
+    uint256 externalTokenId
+  ) external;
+
+  /**
+   * @dev Deletes external NFT settings
+   *
+   * Throws if not called from MINTER role
+   */
+  function deleteExternalNft(uint256 tokenId) external;
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Events
+  //////////////////////////////////////////////////////////////////////////////
+
+  // Fired on each transfer operation
+  event SftTokenTransfer(
+    address indexed operator,
+    address indexed from,
+    address indexed to,
+    uint256[] tokenIds
+  );
+
+  // Fired if the type of a CFolioItem is set
+  event UpdatedCFolioType(uint256 indexed tokenId, uint256 cfolioItemType);
+
+  // Fired if a Cryptofolio clone was set
+  event CryptofolioSet(address cryptofolio);
+
+  // Fired if a SidechainTunnel was set
+  event SidechainTunnelSet(address sidechainTunnel);
+
+  // Fired if we selfdestruct contract
+  event Destruct();
 }

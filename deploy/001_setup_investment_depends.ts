@@ -46,9 +46,12 @@ function log_step(step_string) {
  * Steps to deploy the WOWS environment
  */
 const func = async function (hardhat_re) {
+  // Check tags
+  if (!hardhat_re.network.tags.needYearn) return;
+
   const { deployments, getNamedAccounts } = hardhat_re;
 
-  const { catchUnknownSigner, execute } = deployments;
+  const { catchUnknownSigner, execute, read } = deployments;
   const { deployer, marketingWallet } = await getNamedAccounts();
 
   // Get chain ID
@@ -288,97 +291,165 @@ const func = async function (hardhat_re) {
     // Mint
     //
 
-    await execute(
-      DAI_TOKEN_CONTRACT,
-      {
-        from: deployer,
-        log: true,
-      },
-      'mint',
-      deployer,
-      INITIAL_Y_POOL_DAI
-    );
+    if (
+      (await read(
+        DAI_TOKEN_CONTRACT,
+        { from: deployer, log: true },
+        'balanceOf',
+        deployer
+      )) < INITIAL_Y_POOL_DAI
+    )
+      await execute(
+        DAI_TOKEN_CONTRACT,
+        {
+          from: deployer,
+          log: true,
+        },
+        'mint',
+        deployer,
+        INITIAL_Y_POOL_DAI
+      );
 
-    await execute(
-      TUSD_TOKEN_CONTRACT,
-      {
-        from: deployer,
-        log: true,
-      },
-      'mint',
-      deployer,
-      INITIAL_Y_POOL_TUSD
-    );
+    if (
+      (await read(
+        TUSD_TOKEN_CONTRACT,
+        { from: deployer, log: true },
+        'balanceOf',
+        deployer
+      )) < INITIAL_Y_POOL_TUSD
+    )
+      await execute(
+        TUSD_TOKEN_CONTRACT,
+        {
+          from: deployer,
+          log: true,
+        },
+        'mint',
+        deployer,
+        INITIAL_Y_POOL_TUSD
+      );
 
-    await execute(
-      USDC_TOKEN_CONTRACT,
-      {
-        from: deployer,
-        log: true,
-      },
-      'mint',
-      deployer,
-      INITIAL_Y_POOL_USDC
-    );
+    if (
+      (await read(
+        USDC_TOKEN_CONTRACT,
+        { from: deployer, log: true },
+        'balanceOf',
+        deployer
+      )) < INITIAL_Y_POOL_USDC
+    )
+      await execute(
+        USDC_TOKEN_CONTRACT,
+        {
+          from: deployer,
+          log: true,
+        },
+        'mint',
+        deployer,
+        INITIAL_Y_POOL_USDC
+      );
 
-    await execute(
-      USDT_TOKEN_CONTRACT,
-      {
-        from: deployer,
-        log: true,
-      },
-      'mint',
-      deployer,
-      INITIAL_Y_POOL_USDT
-    );
+    if (
+      (await read(
+        USDT_TOKEN_CONTRACT,
+        { from: deployer, log: true },
+        'balanceOf',
+        deployer
+      )) < INITIAL_Y_POOL_USDT
+    )
+      await execute(
+        USDT_TOKEN_CONTRACT,
+        {
+          from: deployer,
+          log: true,
+        },
+        'mint',
+        deployer,
+        INITIAL_Y_POOL_USDT
+      );
 
     //
     // Approve
     //
 
-    await execute(
-      DAI_TOKEN_CONTRACT,
-      {
-        from: deployer,
-        log: true,
-      },
-      'approve',
-      CURVE_Y_DEPOSIT_ADDRESS,
-      INITIAL_Y_POOL_DAI
-    );
+    if (
+      (await read(
+        DAI_TOKEN_CONTRACT,
+        { from: deployer, log: true },
+        'allowance',
+        deployer,
+        CURVE_Y_DEPOSIT_ADDRESS
+      )) < INITIAL_Y_POOL_DAI
+    )
+      await execute(
+        DAI_TOKEN_CONTRACT,
+        {
+          from: deployer,
+          log: true,
+        },
+        'approve',
+        CURVE_Y_DEPOSIT_ADDRESS,
+        INITIAL_Y_POOL_DAI
+      );
 
-    await execute(
-      TUSD_TOKEN_CONTRACT,
-      {
-        from: deployer,
-        log: true,
-      },
-      'approve',
-      CURVE_Y_DEPOSIT_ADDRESS,
-      INITIAL_Y_POOL_TUSD
-    );
+    if (
+      (await read(
+        TUSD_TOKEN_CONTRACT,
+        { from: deployer, log: true },
+        'allowance',
+        deployer,
+        CURVE_Y_DEPOSIT_ADDRESS
+      )) < INITIAL_Y_POOL_TUSD
+    )
+      await execute(
+        TUSD_TOKEN_CONTRACT,
+        {
+          from: deployer,
+          log: true,
+        },
+        'approve',
+        CURVE_Y_DEPOSIT_ADDRESS,
+        INITIAL_Y_POOL_TUSD
+      );
 
-    await execute(
-      USDC_TOKEN_CONTRACT,
-      {
-        from: deployer,
-        log: true,
-      },
-      'approve',
-      CURVE_Y_DEPOSIT_ADDRESS,
-      INITIAL_Y_POOL_USDC
-    );
+    if (
+      (await read(
+        USDC_TOKEN_CONTRACT,
+        { from: deployer, log: true },
+        'allowance',
+        deployer,
+        CURVE_Y_DEPOSIT_ADDRESS
+      )) < INITIAL_Y_POOL_USDC
+    )
+      await execute(
+        USDC_TOKEN_CONTRACT,
+        {
+          from: deployer,
+          log: true,
+        },
+        'approve',
+        CURVE_Y_DEPOSIT_ADDRESS,
+        INITIAL_Y_POOL_USDC
+      );
 
-    await execute(
-      USDT_TOKEN_CONTRACT,
-      {
-        from: deployer,
-        log: true,
-      },
-      'approve',
-      CURVE_Y_DEPOSIT_ADDRESS,
-      INITIAL_Y_POOL_USDT
-    );
+    if (
+      (await read(
+        USDT_TOKEN_CONTRACT,
+        { from: deployer, log: true },
+        'allowance',
+        deployer,
+        CURVE_Y_DEPOSIT_ADDRESS
+      )) < INITIAL_Y_POOL_USDT
+    )
+      await execute(
+        USDT_TOKEN_CONTRACT,
+        {
+          from: deployer,
+          log: true,
+        },
+        'approve',
+        CURVE_Y_DEPOSIT_ADDRESS,
+        INITIAL_Y_POOL_USDT
+      );
 
     //
     // Add liquidity

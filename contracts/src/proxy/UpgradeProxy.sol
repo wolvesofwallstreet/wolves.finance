@@ -8,11 +8,12 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
-import '@openzeppelin/contracts/proxy/UpgradeableProxy.sol';
-import '@openzeppelin/contracts/utils/Context.sol';
+import '../../0xerc1155/utils/Context.sol';
 
 import '../utils/AddressBook.sol';
 import '../utils/interfaces/IAddressRegistry.sol';
+
+import './UpgradeableProxy.sol';
 
 contract UpgradeProxy is Context, UpgradeableProxy {
   /**
@@ -52,10 +53,7 @@ contract UpgradeProxy is Context, UpgradeableProxy {
       _ADMIN_SLOT == bytes32(uint256(keccak256('eip1967.proxy.admin')) - 1)
     );
     // Initialize {AccessControl}
-    address marketingWallet = addressRegistry_.getRegistryEntry(
-      AddressBook.MARKETING_WALLET
-    );
-    _setAdmin(marketingWallet);
+    _setAdmin(addressRegistry_.getRegistryEntry(AddressBook.ADMIN_ACCOUNT));
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -84,7 +82,7 @@ contract UpgradeProxy is Context, UpgradeableProxy {
     ifAdmin
   {
     _upgradeTo(newImplementation);
-    Address.functionDelegateCall(newImplementation, data);
+    Address.functionDelegateCall(newImplementation, data, 'Proxy: Call failed');
   }
 
   //////////////////////////////////////////////////////////////////////////////

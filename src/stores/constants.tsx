@@ -14,18 +14,14 @@ export const ADDRESS_COPIED = 'ADDRESS_COPIED';
 export const CONNECTION_CHANGED = 'CONNECTION_CHANGED';
 export const NEW_BLOCK = 'NEW_BLOCK'; // Block ticker
 
-export const STAKE_ADD = 'STAKE_ADD'; // stake LP tokens
-export const STAKE_CLAIM = 'STAKE_CLAIM'; // claim stake rewards
-export const STAKE_EXIT = 'STAKE_EXIT'; // unstake and claim rewards
-export const STAKE_STATE = 'STAKE_STATE'; // request Stake information
-export const STAKE_LP_AVAILABLE = 'STAKE_LP_AVAILABLE'; // Available LP token
-
 export const SFT_BUY = 'SFT_BUY'; // Buy (mint) an SFT with given level / class
-export const SFT_LOCK = 'SFT_LOCK'; // Transfer SFT to TradingFloor contract
-export const SFT_UNLOCK = 'SFT_UNLOCK'; // Burn NFT, transfer SFT back
-export const SFT_REWARD = 'SFT_REWARD'; // REQUEST REWARD INFO
 export const SFT_CLAIM = 'SFT_CLAIM'; // Claim all SFT rewards
 export const SFT_CLAIM_BOOSTER = 'SFT_CLAIM_BOOSTER'; // Claim all SFT rewards from booster
+export const SFT_LOCK = 'SFT_LOCK'; // Transfer SFT to TradingFloor contract
+export const SFT_PROOF = 'SFT_PROOF'; // Fire the Polygon Burn Proof
+export const SFT_REWARD = 'SFT_REWARD'; // REQUEST REWARD INFO
+export const SFT_TRANSFER = 'SFT_TRANSFER'; // Transfer / bridge
+export const SFT_UNLOCK = 'SFT_UNLOCK'; // Burn NFT, transfer SFT back
 export const SFT_UPGRADE = 'SFT_UPGRADE'; // Upgrade Reward Share
 
 export const CFOLIO_ITEM_BUY = 'CFOLIO_ITEM_BUY'; // Buy (mint) cfolioItem

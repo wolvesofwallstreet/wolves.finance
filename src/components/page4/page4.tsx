@@ -16,19 +16,23 @@ import { RouteComponentProps } from 'react-router-dom';
 import Logo from '../../assets/wolves-token_99.png';
 import {
   ASSETS_STATE,
+  CONNECTION_CHANGED,
   SFT_BUY,
   SFT_CLAIM,
   SFT_CLAIM_BOOSTER,
   SFT_LOCK,
+  SFT_PROOF,
   SFT_REWARD,
   SFT_UNLOCK,
   SFT_UPGRADE,
 } from '../../stores/constants';
 import {
   AssetStateresult,
+  ConnectResult,
   Payload,
   SFT,
   SFTCHILD,
+  SFTS,
   StatusResult,
   StoreClasses,
 } from '../../stores/store';
@@ -40,6 +44,7 @@ import {
   CFOLIO_ITEM,
   CFOLIO_ITEMS,
 } from '../types/cards';
+import Transfer from './Transfer/Transfer';
 
 type PAGE4_PROPS = {
   t: TFunction;
@@ -53,37 +58,42 @@ type PAGE4_STATE = {
   type: QueryType;
   cards?: CARDS;
   cfolios?: CFOLIO_ITEMS[];
+  renderList: RenderListItem[];
   tokenIds?: SFT[];
   isWalletConnected: boolean;
   txPending: boolean;
   currentIndex: number;
   selectedCFolio: number;
   modalOpen: boolean;
+  transferOpen: boolean;
   boosterExistingValue: number;
   boosterNewValue: number;
   boosterRelock: number;
 };
 
+type RenderListItem = {
+  sft?: SFT;
+  cfi?: SFTCHILD;
+  tokenId?: ethers.BigNumber;
+  level: number;
+  index: number;
+};
+
 const INITIAL_PAGE4_STATE: PAGE4_STATE = {
   type: 'wolves',
+  renderList: [],
   isWalletConnected: false,
   txPending: false,
   currentIndex: -1,
   selectedCFolio: -1,
   modalOpen: false,
+  transferOpen: false,
   boosterExistingValue: 1,
   boosterNewValue: 15552000,
   boosterRelock: 1,
 };
 
 class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
-  renderList: {
-    sft?: SFT;
-    cfi?: SFTCHILD;
-    tokenId?: ethers.BigNumber;
-    level: number;
-    index: number;
-  }[] = [];
   scrollOnUpdate = true;
   needUpdate = true;
   imageContainerRef: React.RefObject<HTMLDivElement> = React.createRef();
@@ -97,6 +107,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       tokenIds: StoreClasses.store.getAssets().userSFT,
     };
     this.onAssetsState = this.onAssetsState.bind(this);
+    this.onConnectionChanged = this.onConnectionChanged.bind(this);
     this.onSFTTransaction = this.onSFTTransaction.bind(this);
   }
 
@@ -104,10 +115,12 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     this._updateContent();
     this.setState({ isWalletConnected: StoreClasses.store.isConnected() });
     StoreClasses.emitter.on(ASSETS_STATE, this.onAssetsState);
+    StoreClasses.emitter.on(CONNECTION_CHANGED, this.onConnectionChanged);
     StoreClasses.emitter.on(SFT_BUY, this.onSFTTransaction);
     StoreClasses.emitter.on(SFT_CLAIM, this.onSFTTransaction);
     StoreClasses.emitter.on(SFT_CLAIM_BOOSTER, this.onSFTTransaction);
     StoreClasses.emitter.on(SFT_LOCK, this.onSFTTransaction);
+    StoreClasses.emitter.on(SFT_PROOF, this.onSFTTransaction);
     StoreClasses.emitter.on(SFT_UNLOCK, this.onSFTTransaction);
     StoreClasses.emitter.on(SFT_UPGRADE, this.onSFTTransaction);
   }
@@ -123,23 +136,33 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
   componentWillUnmount(): void {
     StoreClasses.emitter.off(SFT_UPGRADE, this.onSFTTransaction);
     StoreClasses.emitter.off(SFT_UNLOCK, this.onSFTTransaction);
+    StoreClasses.emitter.off(SFT_PROOF, this.onSFTTransaction);
     StoreClasses.emitter.off(SFT_LOCK, this.onSFTTransaction);
     StoreClasses.emitter.off(SFT_CLAIM_BOOSTER, this.onSFTTransaction);
     StoreClasses.emitter.off(SFT_CLAIM, this.onSFTTransaction);
     StoreClasses.emitter.off(SFT_BUY, this.onSFTTransaction);
+    StoreClasses.emitter.off(CONNECTION_CHANGED, this.onConnectionChanged);
     StoreClasses.emitter.off(ASSETS_STATE, this.onAssetsState);
+  }
+
+  onConnectionChanged(params: ConnectResult): void {
+    if (params.type === 'prod') {
+      this.setState({ isWalletConnected: params.address !== '' });
+      this.hideCB();
+    }
   }
 
   onAssetsState(status: AssetStateresult): void {
     if (status.status === 'loaded' || status.status === 'cards') {
       this.needUpdate = true;
-      this.setState({ cards: StoreClasses.store.getAssets().cards });
-      this.setState({ cfolios: StoreClasses.store.getAssets().cfolioItems });
+      this.setState({
+        cards: StoreClasses.store.getAssets().cards,
+        cfolios: StoreClasses.store.getAssets().cfolioItems,
+      });
     } else if (status.status === 'tokens') {
       this.needUpdate = true;
       this.setState({
         tokenIds: StoreClasses.store.getAssets().userSFT,
-        isWalletConnected: StoreClasses.store.getAssets().userSFT.length > 0,
         selectedCFolio: -1,
       });
     } else if (status.status === 'rewards') {
@@ -153,7 +176,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
   }
 
   _updateContent() {
-    const { tokenIds, type } = this.state;
+    const { cards, tokenIds, type } = this.state;
     const { history, location } = this.props;
     const query = new URLSearchParams(location.search);
 
@@ -167,7 +190,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         break;
     }
 
-    if (newType !== this.state.type) {
+    if (newType !== type) {
       this.needUpdate = true;
       this.setState({ type: newType });
       query.delete('type');
@@ -176,7 +199,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       return;
     }
 
-    if (!this.state.cards) return;
+    if (!cards) return;
 
     if (!this.needUpdate) {
       return this._getCurrentIndex();
@@ -184,7 +207,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
 
     let currentIndex = -1;
     let fixIndex = 0;
-    this.renderList = [];
+    const newRenderList: RenderListItem[] = [];
 
     this.needUpdate = false;
 
@@ -203,8 +226,8 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         // loop through cfolio items and create renderlist
         tokenIds[0].cfolioItems.forEach((cfi) => {
           if (curTokenId && cfi.tokenId.mask(128).eq(curTokenId.mask(128)))
-            currentIndex = this.renderList.length;
-          this.renderList.push({
+            currentIndex = newRenderList.length;
+          newRenderList.push({
             cfi,
             tokenId: cfi.tokenId,
             level: cfi.levelId,
@@ -217,12 +240,12 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
           if (sft.isStockCard) {
             if (curTokenId) {
               if (sft.tokenId.eq(curTokenId)) {
-                currentIndex = this.renderList.length;
+                currentIndex = newRenderList.length;
               } else if (sft.tokenId.mask(128).eq(curTokenId.mask(128))) {
-                fixIndex = this.renderList.length;
+                fixIndex = newRenderList.length;
               }
             }
-            this.renderList.push({
+            newRenderList.push({
               sft,
               tokenId: sft.tokenId,
               level: sft.levelId,
@@ -233,16 +256,17 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       }
     } else if (type !== 'myPack') {
       const curCardId = query.get('cardId') || '';
-      this.state.cards.cards.forEach((level, index1) => {
+      cards.cards.forEach((level, index1) => {
         if (level.type === type) {
           level.cards.forEach((card, index2) => {
-            if (card.id === curCardId) currentIndex = this.renderList.length;
-            this.renderList.push({ level: index1, index: index2 });
+            if (card.id === curCardId) currentIndex = newRenderList.length;
+            newRenderList.push({ level: index1, index: index2 });
           });
         }
       });
     }
-    if (currentIndex < 0 && this.renderList.length > 0) {
+    this.setState({ renderList: newRenderList });
+    if (currentIndex < 0 && newRenderList.length > 0) {
       this._fixUrl(fixIndex);
       return;
     }
@@ -251,39 +275,39 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     }
     if (
       currentIndex >= 0 &&
-      (this.renderList[currentIndex].sft?.cfolioItems.length ?? 0) > 0
+      (newRenderList[currentIndex].sft?.cfolioItems.length ?? 0) > 0
     )
       this.onProgressIteration();
   }
 
   _getCurrentIndex() {
-    const { cards, type } = this.state;
+    const { cards, renderList, type } = this.state;
     const { location } = this.props;
     const query = new URLSearchParams(location.search);
     let fixIndex = 0;
 
-    if (cards && this.renderList.length > 0) {
+    if (cards && renderList.length > 0) {
       let currentIndex = -1;
       if (type === 'myPack' && query.get('tokenId')) {
         const curTokenId = ethers.BigNumber.from(query.get('tokenId'));
-        currentIndex = this.renderList.findIndex((elem) =>
+        currentIndex = renderList.findIndex((elem) =>
           elem.tokenId?.mask(128).eq(curTokenId.mask(128))
         );
         if (
           currentIndex >= 0 &&
-          this.renderList[currentIndex]?.tokenId &&
-          !this.renderList[currentIndex]?.tokenId?.eq(curTokenId)
+          renderList[currentIndex]?.tokenId &&
+          !renderList[currentIndex]?.tokenId?.eq(curTokenId)
         ) {
           fixIndex = currentIndex;
           currentIndex = -1;
         }
       } else if (type !== 'myPack' && query.get('cardId')) {
         const curCardId = query.get('cardId');
-        currentIndex = this.renderList.findIndex(
+        currentIndex = renderList.findIndex(
           (elem) => cards.cards[elem.level].cards[elem.index].id === curCardId
         );
       }
-      if (currentIndex < 0 && this.renderList.length > 0) {
+      if (currentIndex < 0 && renderList.length > 0) {
         this._fixUrl(fixIndex);
         return;
       }
@@ -291,7 +315,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         this.setState({ currentIndex, selectedCFolio: -1 });
         if (
           currentIndex >= 0 &&
-          (this.renderList[currentIndex].sft?.cfolioItems.length ?? 0) > 0
+          (renderList[currentIndex].sft?.cfolioItems.length ?? 0) > 0
         )
           this.onProgressIteration();
       }
@@ -300,11 +324,12 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
 
   _fixUrl(index: number) {
     const { history, location } = this.props;
+    const { renderList } = this.state;
     const query = new URLSearchParams(location.search);
-    if (index < this.renderList.length) {
+    if (index < renderList.length) {
       if (this.state.type === 'myPack') {
         query.delete('tokenId');
-        const tokenId = this.renderList[index].tokenId;
+        const tokenId = renderList[index].tokenId;
         if (tokenId) {
           query.append('tokenId', tokenId.toHexString());
         }
@@ -315,18 +340,26 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
   }
 
   _onBuy(): void {
-    if (this.state.currentIndex >= 0 && this.state.cards) {
-      const current = this.renderList[this.state.currentIndex];
+    const { cards, currentIndex, renderList } = this.state;
+    if (currentIndex >= 0 && cards) {
+      const current = renderList[this.state.currentIndex];
+      const status = current.sft
+        ? current.sft.status
+        : current.cfi
+        ? current.cfi.status
+        : 0;
       const payload = {
         type:
           current.tokenId === undefined
             ? SFT_BUY
-            : current.sft?.locked ?? current.cfi?.locked
+            : status > SFTS.LOCKED
+            ? SFT_PROOF
+            : status > 0
             ? SFT_UNLOCK
             : SFT_LOCK,
         content: {},
       };
-      const cardLevel = this.state.cards.cards[current.level];
+      const cardLevel = cards.cards[current.level];
       payload.content = {
         amount: cardLevel.price,
         id: BigNumber.from(
@@ -342,12 +375,12 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
   }
 
   _onClaim(): void {
+    const { currentIndex, renderList } = this.state;
     const payload: Payload = {
       type: SFT_CLAIM,
       content: {
-        id: this.renderList[this.state.currentIndex].sft?.tokenId,
-        time: this.renderList[this.state.currentIndex].sft?.boosterRewards
-          .secsLeft
+        id: renderList[currentIndex].sft?.tokenId,
+        time: renderList[currentIndex].sft?.boosterRewards.secsLeft
           ? this.state.boosterExistingValue
           : this.state.boosterNewValue,
       },
@@ -357,10 +390,11 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
   }
 
   _onClaimBooster(): void {
+    const { currentIndex, renderList } = this.state;
     const payload: Payload = {
       type: SFT_CLAIM_BOOSTER,
       content: {
-        id: this.renderList[this.state.currentIndex].sft?.tokenId,
+        id: renderList[currentIndex].sft?.tokenId,
         time: this.state.boosterRelock,
       },
     };
@@ -369,10 +403,11 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
   }
 
   _onUpgrade(): void {
+    const { currentIndex, renderList } = this.state;
     const payload: Payload = {
       type: SFT_UPGRADE,
       content: {
-        id: this.renderList[this.state.currentIndex].tokenId,
+        id: renderList[currentIndex].tokenId,
       },
     };
     this.setState({ txPending: true });
@@ -395,6 +430,10 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     });
   }
 
+  hideCB = () => {
+    this.setState({ modalOpen: false, transferOpen: false });
+  };
+
   render(): JSX.Element {
     const { history, t } = this.props;
     const {
@@ -403,16 +442,18 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       currentIndex,
       selectedCFolio,
       isWalletConnected,
+      renderList,
       txPending,
       type,
       modalOpen,
+      transferOpen,
       boosterExistingValue,
       boosterNewValue,
       boosterRelock,
     } = this.state;
 
     const currentRender =
-      currentIndex >= 0 ? this.renderList[currentIndex] : undefined;
+      currentIndex >= 0 ? renderList[currentIndex] : undefined;
 
     const currentLevel =
       cards && cfolios && currentRender
@@ -437,42 +478,65 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       ? 4
       : (currentLevel as CARD_LEVEL)?.levelId ?? 0;
 
-    const getButtonText = (s: string): string =>
-      !isWalletConnected
-        ? t('header.connectWallet').toString()
-        : noQuantity
-        ? t('page4.noQuantity').toString()
-        : txPending
-        ? t('page4.txPending')
-        : currentRender?.tokenId === undefined
-        ? t('page4.buy', { name: s }).toString()
-        : currentRender?.sft?.locked ?? currentRender?.cfi?.locked
-        ? t('page4.unlock', { name: s }).toString()
-        : t('page4.lock', { name: s }).toString();
+    const sftStatus = currentRender?.sft
+      ? currentRender.sft.status
+      : currentRender?.cfi
+      ? currentRender.cfi.status
+      : -1;
+
+    const buttonText = !isWalletConnected
+      ? { l: t('header.connectWallet').toString(), d: true }
+      : noQuantity
+      ? StoreClasses.store.isSidechain()
+        ? { l: t('page.availableOnETH'), d: true }
+        : { l: t('page4.noQuantity').toString(), d: true }
+      : txPending
+      ? { l: t('page4.txPending'), d: true }
+      : currentRender?.tokenId === undefined
+      ? { l: t('page4.buy', { name: currentCard?.name }).toString(), d: false }
+      : sftStatus === SFTS.BRIDGE_PENDING
+      ? {
+          l: t('page4.waitProof', { name: currentCard?.name }).toString(),
+          d: true,
+        }
+      : sftStatus === SFTS.BRIDGE_READY
+      ? {
+          l: t('page4.proof', { name: currentCard?.name }).toString(),
+          d: false,
+        }
+      : sftStatus > 0
+      ? {
+          l: t('page4.unlock', { name: currentCard?.name }).toString(),
+          d: false,
+        }
+      : {
+          l: t('page4.lock', { name: currentCard?.name }).toString(),
+          d: false,
+        };
 
     // Create Navigation Links
     let prevUrl: string | undefined, nextUrl: string | undefined;
-    if (this.renderList && this.renderList.length > 1) {
+    if (renderList && renderList.length > 1) {
       const prevIndex =
-        currentIndex > 0 ? currentIndex - 1 : this.renderList.length - 1;
+        currentIndex > 0 ? currentIndex - 1 : renderList.length - 1;
       const nextIndex =
-        currentIndex < this.renderList.length - 1 ? currentIndex + 1 : 0;
+        currentIndex < renderList.length - 1 ? currentIndex + 1 : 0;
       if (type === 'myPack') {
-        prevUrl = `?type=myPack&tokenId=${this.renderList[
+        prevUrl = `?type=myPack&tokenId=${renderList[
           prevIndex
         ].tokenId?.toHexString()}&scroll=false`;
-        nextUrl = `?type=myPack&tokenId=${this.renderList[
+        nextUrl = `?type=myPack&tokenId=${renderList[
           nextIndex
         ].tokenId?.toHexString()}&scroll=false`;
       } else {
         prevUrl = `?type=${type}&cardId=${
-          cards?.cards[this.renderList[prevIndex].level].cards[
-            this.renderList[prevIndex].index
+          cards?.cards[renderList[prevIndex].level].cards[
+            renderList[prevIndex].index
           ].id
         }&scroll=false`;
         nextUrl = `?type=${type}&cardId=${
-          cards?.cards[this.renderList[nextIndex].level].cards[
-            this.renderList[nextIndex].index
+          cards?.cards[renderList[nextIndex].level].cards[
+            renderList[nextIndex].index
           ].id
         }&scroll=false`;
       }
@@ -484,8 +548,8 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         : `/shop?type=${type}&levelId=${levelId}`;
 
     const assetIndex =
-      currentLevel?.type === 'bois' || currentLevel?.type === 'yearnInvestment'
-        ? 4
+      currentLevel?.type === 'bois' || currentLevel?.type === 'stableInvestment'
+        ? StoreClasses.store.getStableCurrencies().length - 1
         : 0;
 
     let price,
@@ -497,10 +561,8 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       apy,
       investment,
       share;
-    let locked = false;
     if (currentRender?.cfi && currentCard) {
       quantity = (currentCard as CFOLIO_ITEM).maxMintable;
-      locked = currentRender.cfi.locked;
       investment =
         currentRender?.cfi.assets[assetIndex].toFixed(6) +
         ' ' +
@@ -514,7 +576,10 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         : (currentLevel as CARD_LEVEL).profitReward;
       if (!currentRender?.sft) price = (currentLevel as CARD_LEVEL).price;
       if (autoUpgrade && currentRender.sft) {
-        if (profitReward === (currentLevel as CARD_LEVEL).profitReward) {
+        if (
+          sftStatus === 0 &&
+          profitReward === (currentLevel as CARD_LEVEL).profitReward
+        ) {
           autoUpgrade =
             60 * 86400 + currentRender.sft?.mintTimestamp - Date.now() / 1000;
           const upgradeReward = (currentLevel as CARD_LEVEL).upgradeReward;
@@ -528,14 +593,15 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
           autoUpgrade = undefined;
         }
       }
-      locked = currentRender.sft?.locked ?? false;
+
       if (profitReward && currentLevel) {
         const rewardIndex = currentLevel.type === 'wolves' ? 0 : 1;
         const rewardInfo =
           StoreClasses.store.getAssets().rewardInfo[rewardIndex];
         if (rewardInfo.apr) {
-          apr = (rewardInfo.apr * profitReward) / 100;
-          apy = StoreClasses.store.aprToApy(apr);
+          const aprNum = (rewardInfo.apr * profitReward) / 100;
+          apr = aprNum.toFixed(2);
+          apy = StoreClasses.store.aprToApy(aprNum);
           share = currentRender.sft?.rewardShare.toFixed(2);
         }
       }
@@ -546,17 +612,16 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         currentRender?.sft.boosterRewards.pending
       : 0;
     const claimText =
-      currentRender?.sft &&
-      (currentRender.sft.cfolioItems.length > 0 || claimableAmount > 0)
+      currentRender?.sft && claimableAmount > 0
         ? !isWalletConnected
           ? { l: t('header.connectWallet').toString(), d: true }
-          : txPending && !modalOpen
+          : txPending && !modalOpen && !transferOpen
           ? { l: t('page4.txPending'), d: true }
           : {
-              l: t('page4.claim', {
+              l: t('page4.manageRewards', {
                 amount: claimableAmount.toFixed(6),
               }).toString(),
-              d: locked || claimableAmount === 0,
+              d: sftStatus > 0 || claimableAmount === 0,
             }
         : undefined;
 
@@ -636,10 +701,6 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     const imgClass =
       selectedCFolio < 0 ? 'card-visual' : 'card-visual monochrome';
 
-    const hideCB = () => {
-      this.setState({ modalOpen: false });
-    };
-
     const boosterState = (value: number, n: number): string => {
       return value === n ? 'active' : 'select';
     };
@@ -680,8 +741,8 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         default:
           boosterPeriod = 'Unknown';
       }
-    } else {
-      boosterPeriod = modalOpen && 'No period started';
+    } else if (StoreClasses.store.isSidechain() && currentRender?.sft) {
+      boosterPeriod = 'No period started';
     }
 
     if (modalOpen && currentRender?.sft) {
@@ -719,6 +780,11 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
             };
       }
     }
+
+    const transferButtonText =
+      txPending && !transferOpen && !modalOpen
+        ? { l: t('page4.txPending'), d: true }
+        : { l: t('page4.transfer', { name: currentCard?.name }), d: false };
 
     return (
       <div
@@ -804,7 +870,11 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                       alt={currentCard.name}
                     />
                   ))}
-                {locked && <div className={'locked'} />}
+                {sftStatus > 0 && (
+                  <div
+                    className={sftStatus > SFTS.LOCKED ? 'bridged' : 'locked'}
+                  />
+                )}
                 {renderCFolioItems()}
               </div>
             </div>
@@ -840,14 +910,22 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                       </h3>
                     )}
                     <p className="font-16">{currentCard.description}</p>
-                    {currentRender?.sft && (
+                    {currentRender?.sft && sftStatus < SFTS.BRIDGE_PENDING && (
                       <p className="font-14">
-                        {t(locked ? 'page4.lockedSft' : 'page4.unlockedSft')}
+                        {t(
+                          sftStatus > 0
+                            ? 'page4.lockedSft'
+                            : 'page4.unlockedSft'
+                        )}
                       </p>
                     )}
                     {currentRender?.cfi && (
                       <p className="font-14">
-                        {t(locked ? 'page4.lockedCfi' : 'page4.unlockedCfi')}
+                        {t(
+                          sftStatus > 0
+                            ? 'page4.lockedCfi'
+                            : 'page4.unlockedCfi'
+                        )}
                       </p>
                     )}
                     <ul className="tk-vincente-lightbold font-24 rarity-box">
@@ -945,11 +1023,20 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                           )}
                       </span>
                     )}
+                    {currentRender?.sft && currentRender.sft.status <= 1 && (
+                      <input
+                        className="wolves-btn mt-1"
+                        type="button"
+                        value={transferButtonText.l}
+                        disabled={transferButtonText.d}
+                        onClick={() => this.setState({ transferOpen: true })}
+                      />
+                    )}
                     <input
                       className="wolves-btn mt-1"
                       type="button"
-                      value={getButtonText(currentCard.name)}
-                      disabled={!isWalletConnected || noQuantity || txPending}
+                      value={buttonText.l}
+                      disabled={buttonText.d}
                       onClick={() => this._onBuy()}
                     />
                   </div>
@@ -962,7 +1049,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
           <Modal
             show={true}
             backdrop="static"
-            onHide={hideCB}
+            onHide={this.hideCB}
             animation={false}
           >
             <Modal.Header closeButton>
@@ -1093,6 +1180,17 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
             </Modal.Body>
           </Modal>
         )}
+        {transferOpen &&
+          (sftStatus === 0 || sftStatus === 1) &&
+          currentRender?.tokenId && (
+            <Transfer
+              tokenId={currentRender.tokenId}
+              name={currentCard?.name ?? 'UNKNOWN'}
+              show={true}
+              canBridge={sftStatus === 0}
+              hideCB={this.hideCB}
+            />
+          )}
       </div>
     );
   }

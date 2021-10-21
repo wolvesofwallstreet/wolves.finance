@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT AND Apache-2.0
+
 pragma solidity 0.7.6;
 
 /**
@@ -20,6 +21,7 @@ library Address {
 
     // Currently there is no better way to check if there is a contract in an address
     // than to check the size of the code at that address or if it has a non-zero code hash or account hash
+    // solhint-disable-next-line no-inline-assembly
     assembly {
       codehash := extcodehash(_address)
     }
@@ -45,11 +47,34 @@ library Address {
     bytes memory data,
     string memory errorMessage
   ) internal returns (bytes memory) {
-    require(isContract(target), 'Address: call to non-contract');
+    require(isContract(target), 'Address: No contract');
 
     // solhint-disable-next-line avoid-low-level-calls
     (bool success, bytes memory returndata) = target.call(data);
+    return _verifyCallResult(success, returndata, errorMessage);
+  }
 
+  /**
+   * @dev Same as {xref-Address-functionCall-address-bytes-string-}[`functionCall`],
+   * but performing a delegate call.
+   */
+  function functionDelegateCall(
+    address target,
+    bytes memory data,
+    string memory errorMessage
+  ) internal returns (bytes memory) {
+    require(isContract(target), 'Address: No contract');
+
+    // solhint-disable-next-line avoid-low-level-calls
+    (bool success, bytes memory returndata) = target.delegatecall(data);
+    return _verifyCallResult(success, returndata, errorMessage);
+  }
+
+  function _verifyCallResult(
+    bool success,
+    bytes memory returndata,
+    string memory errorMessage
+  ) private pure returns (bytes memory) {
     if (success) {
       return returndata;
     } else {

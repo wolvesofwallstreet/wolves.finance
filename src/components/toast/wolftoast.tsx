@@ -30,11 +30,10 @@ import {
   SFT_CLAIM,
   SFT_CLAIM_BOOSTER,
   SFT_LOCK,
+  SFT_PROOF,
+  SFT_TRANSFER,
   SFT_UNLOCK,
   SFT_UPGRADE,
-  STAKE_ADD,
-  STAKE_CLAIM,
-  STAKE_EXIT,
 } from '../../stores/constants';
 import { ConnectResult, StatusResult, StoreClasses } from '../../stores/store';
 
@@ -69,13 +68,12 @@ class WolfToast extends Component<TOASTPROPS, TOASTSTATE> {
   componentDidMount(): void {
     StoreClasses.emitter.on(ADDRESS_COPIED, this.onAddressCopied);
     StoreClasses.emitter.on(CONNECTION_CHANGED, this.onConnectionChanged);
-    StoreClasses.emitter.on(STAKE_ADD, this.onTransaction);
-    StoreClasses.emitter.on(STAKE_CLAIM, this.onTransaction);
-    StoreClasses.emitter.on(STAKE_EXIT, this.onTransaction);
     StoreClasses.emitter.on(SFT_BUY, this.onTransaction);
     StoreClasses.emitter.on(SFT_CLAIM, this.onTransaction);
     StoreClasses.emitter.on(SFT_CLAIM_BOOSTER, this.onTransaction);
     StoreClasses.emitter.on(SFT_LOCK, this.onTransaction);
+    StoreClasses.emitter.on(SFT_PROOF, this.onTransaction);
+    StoreClasses.emitter.on(SFT_TRANSFER, this.onTransaction);
     StoreClasses.emitter.on(SFT_UNLOCK, this.onTransaction);
     StoreClasses.emitter.on(SFT_UPGRADE, this.onTransaction);
     StoreClasses.emitter.on(CFOLIO_ITEM_BUY, this.onTransaction);
@@ -93,13 +91,12 @@ class WolfToast extends Component<TOASTPROPS, TOASTSTATE> {
     StoreClasses.emitter.off(CFOLIO_ITEM_BUY, this.onTransaction);
     StoreClasses.emitter.off(SFT_UPGRADE, this.onTransaction);
     StoreClasses.emitter.off(SFT_UNLOCK, this.onTransaction);
+    StoreClasses.emitter.off(SFT_TRANSFER, this.onTransaction);
+    StoreClasses.emitter.off(SFT_PROOF, this.onTransaction);
     StoreClasses.emitter.off(SFT_LOCK, this.onTransaction);
     StoreClasses.emitter.off(SFT_CLAIM_BOOSTER, this.onTransaction);
     StoreClasses.emitter.off(SFT_CLAIM, this.onTransaction);
     StoreClasses.emitter.off(SFT_BUY, this.onTransaction);
-    StoreClasses.emitter.off(STAKE_EXIT, this.onTransaction);
-    StoreClasses.emitter.off(STAKE_CLAIM, this.onTransaction);
-    StoreClasses.emitter.off(STAKE_ADD, this.onTransaction);
     StoreClasses.emitter.off(CONNECTION_CHANGED, this.onConnectionChanged);
     StoreClasses.emitter.off(ADDRESS_COPIED, this.onAddressCopied);
   }

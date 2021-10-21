@@ -8,9 +8,9 @@
 
 pragma solidity >=0.7.0 <0.8.0;
 
-import '@openzeppelin/contracts/access/AccessControl.sol';
-import '@openzeppelin/contracts/math/SafeMath.sol';
-import '@openzeppelin/contracts/token/ERC20/ERC20Capped.sol';
+import '../../0xerc1155/access/AccessControl.sol';
+import '../../0xerc1155/tokens/ERC20/ERC20.sol';
+import '../../0xerc1155/utils/SafeMath.sol';
 
 import '../../interfaces/uniswap/IUniswapV2Router02.sol';
 import '../../interfaces/uniswap/IUniswapV2Factory.sol';
@@ -22,8 +22,13 @@ import '../utils/interfaces/IAddressRegistry.sol';
 
 import './interfaces/IERC20WowsMintable.sol';
 
-contract WowsToken is IERC20WowsMintable, ERC20Capped, AccessControl {
+contract WowsToken is ERC20, IERC20WowsMintable, AccessControl {
   using SafeMath for uint256;
+
+  /**
+   * @dev The ERC 20 cap
+   */
+  uint256 public cap = MAX_SUPPLY;
 
   /**
    * @dev The ERC 20 token name used by wallets to identify the token
@@ -71,7 +76,6 @@ contract WowsToken is IERC20WowsMintable, ERC20Capped, AccessControl {
    * @param _addressRegistry registry to get required contracts
    */
   constructor(IAddressRegistry _addressRegistry)
-    ERC20Capped(MAX_SUPPLY)
     ERC20(TOKEN_NAME, TOKEN_SYMBOL)
   {
     // Initialize ERC20 base
@@ -84,10 +88,10 @@ contract WowsToken is IERC20WowsMintable, ERC20Capped, AccessControl {
      *   2.) 1800 token for marketing (influencer / design ...)
      */
     // reverts if address is invalid
-    address marketingWallet = _addressRegistry.getRegistryEntry(
-      AddressBook.MARKETING_WALLET
+    _mint(
+      _addressRegistry.getRegistryEntry(AddressBook.MARKETING_WALLET),
+      3600 * 1e18
     );
-    _mint(marketingWallet, 3600 * 1e18);
 
     /*
      * Mint 7500 token into teams wallet
@@ -101,7 +105,10 @@ contract WowsToken is IERC20WowsMintable, ERC20Capped, AccessControl {
     _mint(teamWallet, 7500 * 1e18);
 
     // Multi-sig marketing wallet gets admin rights
-    _setupRole(DEFAULT_ADMIN_ROLE, marketingWallet);
+    _setupRole(
+      DEFAULT_ADMIN_ROLE,
+      _addressRegistry.getRegistryEntry(AddressBook.ADMIN_ACCOUNT)
+    );
 
     // Reverts if address is invalid
     IUniswapV2Router02 _uniV2Router = IUniswapV2Router02(
@@ -138,7 +145,7 @@ contract WowsToken is IERC20WowsMintable, ERC20Capped, AccessControl {
     returns (bool)
   {
     // Mint is only allowed by addresses with minter role
-    require(hasRole(MINTER_ROLE, msg.sender), 'Only minters');
+    require(hasRole(MINTER_ROLE, _msgSender()), 'Only minters');
 
     _mint(account, amount);
 
@@ -151,7 +158,7 @@ contract WowsToken is IERC20WowsMintable, ERC20Capped, AccessControl {
    * @param enable True to enable the univ2 pair, false to disable
    */
   function enableUniV2Pair(bool enable) external override {
-    require(hasRole(MINTER_ROLE, msg.sender), 'Only minters');
+    require(hasRole(MINTER_ROLE, _msgSender()), 'Only minters');
     _uniV2Whitelist[uniV2Pair] = enable;
   }
 
@@ -162,8 +169,8 @@ contract WowsToken is IERC20WowsMintable, ERC20Capped, AccessControl {
    */
   function enableUniV2Pair(address pairAddress) external {
     require(
-      hasRole(MINTER_ROLE, msg.sender) ||
-        hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+      hasRole(MINTER_ROLE, _msgSender()) ||
+        hasRole(DEFAULT_ADMIN_ROLE, _msgSender()),
       'Only minters and admins'
     );
     _uniV2Whitelist[pairAddress] = true;
@@ -173,7 +180,7 @@ contract WowsToken is IERC20WowsMintable, ERC20Capped, AccessControl {
    * @dev Remove univ2 pair address from whitelist
    */
   function disableUniV2Pair(address pairAddress) external {
-    require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), 'Only admins');
+    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admins');
     _uniV2Whitelist[pairAddress] = false;
   }
 
@@ -231,8 +238,28 @@ contract WowsToken is IERC20WowsMintable, ERC20Capped, AccessControl {
     return codeHash != _uniV2PairCodeHash;
   }
 
+  /**
+   * @dev See {ERC20-_beforeTokenTransfer}.
+   *
+   * Requirements:
+   *
+   * - minted tokens must not cause the total supply to go over the cap.
+   */
+  function _beforeTokenTransfer(
+    address from,
+    address to,
+    uint256 amount
+  ) internal virtual override {
+    super._beforeTokenTransfer(from, to, amount);
+
+    if (from == address(0)) {
+      // When minting tokens
+      require(totalSupply().add(amount) <= cap, 'Cap exceeded');
+    }
+  }
+
   function setTXWorker(address _txWorker) external {
-    require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), 'Only admins');
+    require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), 'Only admins');
     txWorker = ITxWorker(_txWorker);
   }
 }
