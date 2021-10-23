@@ -83,6 +83,16 @@ interface ICFolioFarm is IFarm {
   ) external;
 
   /**
+   * @dev Migrate amount of shares and rewards
+   */
+  function migrateShares(
+    address account,
+    uint256 amount,
+    uint256 slotId,
+    uint256 reward
+  ) external;
+
+  /**
    * @dev Remove amount of previous added shares, rewards will not be claimed
    */
   function removeShares(
@@ -93,17 +103,13 @@ interface ICFolioFarm is IFarm {
 
   /**
    * @dev Claim rewards harvested during reward time
+   * @notice Empty slotIds get all rewards
    */
   function getRewards(
     address account,
     address rewardRecipient,
-    uint256 slotId
+    uint256[] memory slotIds
   ) external;
-
-  /**
-   * @dev Claim rewards of all slots
-   */
-  function getAllRewards(address account, address rewardRecipient) external;
 }
 
 /**

@@ -22,6 +22,10 @@ import '../utils/TokenIds.sol';
 import './interfaces/ICFolioItemHandler.sol';
 import './interfaces/ISFTEvaluator.sol';
 
+interface ICFolioFarmOld is ICFolioFarm {
+  function earned(address account) external view returns (uint256);
+}
+
 /**
  * @dev CFolioItemHandlerFarm manages CFolioItems, minted in the SFT contract.
  *
@@ -334,7 +338,8 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
       'CFHI: Forbidden'
     );
 
-    _cfolioFarm.getAllRewards(cfolio, recipient);
+    // Get rewards from all slots
+    _cfolioFarm.getRewards(cfolio, recipient, new uint256[](0));
   }
 
   /**
@@ -409,6 +414,33 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
     //
     // slither-disable-next-line suicidal
     selfdestruct(payable(_admin));
+  }
+
+  /**
+   * @dev Migrate set of addresses from an old Farm into the current one
+   */
+  function migrateFromFarm(
+    ICFolioFarmOld from,
+    uint256 slotIdFrom,
+    uint256 slotIdTo,
+    address[] memory sfts
+  ) external onlyAdmin {
+    for (uint256 i = 0; i < sfts.length; ++i) {
+      uint256 tokenId = _sftHolder.addressToTokenId(sfts[i]);
+      require(tokenId != uint256(-1), 'CFIH: No SFT');
+
+      uint256 amount = from.balanceOf(sfts[i], slotIdFrom);
+      if (tokenId.isBaseCard()) {
+        _cfolioFarm.migrateShares(
+          sfts[i],
+          amount,
+          slotIdTo,
+          from.earned(sfts[i])
+        );
+      } else if (amount > 0) {
+        _cfolioFarm.addAssets(sfts[i], amount, slotIdTo);
+      }
+    }
   }
 
   //////////////////////////////////////////////////////////////////////////////
