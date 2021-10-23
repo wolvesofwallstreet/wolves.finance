@@ -7,7 +7,7 @@
  */
 
 import { ethers } from 'ethers';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Modal } from 'react-bootstrap';
 import { TFunction, withTranslation } from 'react-i18next';
 
@@ -29,14 +29,12 @@ type PROPS = {
 function Migrate({ hideCB, name, show, t, tokenId }: PROPS): JSX.Element {
   const [txRunning, setTXRunning] = useState(false);
 
-  const checkRef: React.RefObject<HTMLInputElement> = useRef(null);
-
   const handleMigrate = () => {
     const payload = {
       type: SFT_MIGRATE,
       content: {
         id: tokenId,
-        ycrvTeamConvert: checkRef.current?.checked ?? false,
+        ycrvTeamConvert: false,
       } as PayloadContentMigration,
     };
     StoreClasses.dispatcher.dispatch(payload);
@@ -109,15 +107,9 @@ function Migrate({ hideCB, name, show, t, tokenId }: PROPS): JSX.Element {
             <li>
               Invested YCRV TOKENS are withdrawn into your wallet. They are not
               supported on Polygon and have to be converted into a stable coin
-              on curve.fi. Because this conversion is expensive,{' '}
-              <b>we offer to do the convertion into USDT</b> after ETH block
-              13377140. After our conversion you receive USDT into your wallet.
+              on curve.fi or swapped at one of the known DEX.
             </li>
           </ul>
-          <input id="crvOffer" type="checkbox" ref={checkRef} />
-          <label htmlFor="crvOffer" className="font-13 ml-2">
-            Let team WOWS convert my yCrv token into USDT
-          </label>
         </span>
         <button
           className={'wolves-btn mt-2 tk-aktiv-grotesk-condensed'}
