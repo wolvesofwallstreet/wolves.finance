@@ -439,7 +439,7 @@ contract Controller is IController, Context, Ownable {
     require(oneRefueled, 'NOP');
   }
 
-  function weightSlotWeights(
+  function weightSlots(
     address[] calldata _farms,
     uint256[] calldata slotIds,
     uint256[] calldata weights
@@ -450,7 +450,7 @@ contract Controller is IController, Context, Ownable {
     );
     for (uint256 i = 0; i < _farms.length; ++i) {
       require(farms[_farms[i]].farmStartedAtBlock != 0, 'C: Invalid farm');
-      IFarm(_farms[i]).weightSlotId(slotIds[i], weights[i]);
+      IFarm(_farms[i]).weightSlot(slotIds[i], weights[i]);
     }
   }
 

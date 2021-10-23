@@ -334,7 +334,7 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
       'CFHI: Forbidden'
     );
 
-    _cfolioFarm.getReward(cfolio, recipient);
+    _cfolioFarm.getAllRewards(cfolio, recipient);
   }
 
   /**
@@ -346,29 +346,22 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
     override
     returns (bytes memory result)
   {
-    uint256[5] memory uiData;
+    uint256 slotCount = _cfolioFarm.slotCount();
+    result = abi.encodePacked(_cfolioFarm.rewardsDuration(), slotCount);
 
-    // Get basic data once
-    uiData = _cfolioFarm.getUIData(address(0));
-
-    // total / rewardDuration / rewardPerDuration
-    result = abi.encodePacked(uiData[0], uiData[2], uiData[3]);
-
-    uint256 length = tokenIds.length;
-    if (length > 0) {
+    for (uint256 slotId = 0; slotId < slotCount; ++slotId) {
+      result = abi.encodePacked(
+        result,
+        _cfolioFarm.getRewardsForDuration(slotId)
+      );
       // Iterate through all tokenIds and collect reward info
-      for (uint256 i = 0; i < length; ++i) {
-        uint256 sftTokenId = tokenIds[i].toSftTokenId();
-        uint256 share = 0;
-        uint256 earned = 0;
-        if (sftTokenId.isBaseCard()) {
-          address cfolio = _sftHolder.tokenIdToAddress(sftTokenId);
-          if (cfolio != address(0)) {
-            uiData = _cfolioFarm.getUIData(cfolio);
-            share = uiData[1];
-            earned = uiData[4];
-          }
-        }
+      for (uint256 i = 0; i < tokenIds.length; ++i) {
+        (uint256 share, uint256 earned) = tokenIds[i].isBaseCard()
+          ? _cfolioFarm.getShareAndEarned(
+            _sftHolder.tokenIdToAddress(tokenIds[i].toSftTokenId()),
+            slotId
+          )
+          : (0, 0);
         result = abi.encodePacked(result, share, earned);
       }
     }

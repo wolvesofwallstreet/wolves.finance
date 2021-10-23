@@ -1,25 +1,30 @@
 class Farm {
   timestamp = 0;
-  rewardPerTokenStored = 0;
-  userRewardPerTokenPaid = new Map();
-  rewards = new Map();
-  _balances = new Map();
-  lastUpdateTime = 0;
-  periodFinish = 0;
+  periodFinish = 0;  
   rewardsDuration = 100;
+
+  slotData = new Array();
   
   constructor() {
-    this._totalSupplys= [0];
-    this.slotWeights = [1];
+    this.slotData.push({
+      totalSupply: 0,
+      weight: 1,
+      rewardPerTokenStored: 0,
+      lastUpdateTime: 0,
+      balances: new Map(),
+      rewards: new Map(),
+      userRewardPerTokenPaid: new Map()});
   }
 
-  _updateReward(account) {
-    this.rewardPerTokenStored = this.rewardPerToken();
-    this.lastUpdateTime = this.lastTimeRewardApplicable();
+  _updateReward(account, slotId) {
+    const slot = this.slotData[slotId];
+    
+    slot.rewardPerTokenStored = this.rewardPerToken(slotId);
+    slot.lastUpdateTime = this.lastTimeRewardApplicable();
 
     if (account) {
-      this.rewards[account] = this.earned(account);
-      this.userRewardPerTokenPaid[account] = this.rewardPerTokenStored;
+      slot.rewards[account] = this.earned(account, slotId);
+      slot.userRewardPerTokenPaid[account] = slot.rewardPerTokenStored;
     }
   }
 
@@ -27,71 +32,85 @@ class Farm {
     return this.timestamp < this.periodFinish ? this.timestamp : this.periodFinish;
   }
 
-  rewardPerToken() {
-    const ts = this._totalSupply();
+  rewardPerToken(slotId) {
+    const slot = this.slotData[slotId];
+    const ts = slot.totalSupply;
     if (ts === 0) {
-      return this.rewardPerTokenStored;
+      return slot.rewardPerTokenStored;
     }
 
-    return this.rewardPerTokenStored + (
-      ((this.lastTimeRewardApplicable()-this.lastUpdateTime)*this.rewardRate) / ts
+    return slot.rewardPerTokenStored + (
+      ((this.lastTimeRewardApplicable()-slot.lastUpdateTime) * slot.rewardRate) / ts
     );
   }
 
-  earned(account) {
-    return this._balance(account)
-      * (this.rewardPerToken() - (this.userRewardPerTokenPaid[account] ?? 0))
-      + (this.rewards[account] ?? 0);
+  earned(account, slotId) {
+    const slot = this.slotData[slotId];
+    return (slot.balances[account] ?? 0)
+      * (this.rewardPerToken(slotId) - (slot.userRewardPerTokenPaid[account] ?? 0))
+      + (slot.rewards[account] ?? 0);
   }
 
   addShares(account,amount, slotId) {
-    this._updateReward(account);
-
+    this._updateReward(account, slotId);
     // Update state
-    this._totalSupplys[slotId] = (this._totalSupplys[slotId] ?? 0) + amount;
-    if (!this._balances[account])this._balances[account]=new Map();
-    this._balances[account][slotId] = (this._balances[account][slotId] ?? 0) + amount;
-  }
-
-  _totalSupply() {
-    let ts = 0;
-    for (let i = 0; i < this.slotWeights.length; ++i)
-      ts += (this._totalSupplys[i] ?? 0) * this.slotWeights[i];
-    return ts;
-  }
-
-  _balance(account) {
-    let balance = 0;
-    for (let i = 0; i < this.slotWeights.length; ++i)
-      if (this._balances[account])
-        balance += (this._balances[account][i] ?? 0) * this.slotWeights[i];
-    return balance;
+    this.slotData[slotId].totalSupply = (this.slotData[slotId].totalSupply ?? 0) + amount;
+    this.slotData[slotId].balances[account] = (this.slotData[slotId].balances[account] ?? 0) + amount;
   }
 
   notifyRewardAmount(reward){
-    this._updateReward();
-
-    // Update state
-    if (this.timestamp >= this.periodFinish) {
-      this.rewardRate = reward / this.rewardsDuration;
-    } else {
-      const remaining = this.periodFinish - this.timestamp;
-      const leftover = remaining * this.rewardRate;
-      this.rewardRate = reward + leftover / this.rewardsDuration;
+    // Accumulate weights
+    let weightSum = 0;
+    let rewardRate = 0;
+    for (let i = 0; i < this.slotData.length; ++i) {
+      this._updateReward(undefined, i);
+      weightSum += this.slotData[i].weight;
+      rewardRate += this.slotData[i].rewardRate;
     }
     // Update state
-    this.lastUpdateTime = this.timestamp;
+    if (this.timestamp >= this.periodFinish) {
+      rewardRate = reward / this.rewardsDuration;
+    } else {
+      const remaining = this.periodFinish - this.timestamp;
+      const leftover = remaining * rewardRate;
+      rewardRate = reward + leftover / this.rewardsDuration;
+    }
+    for (let i = 0; i < this.slotData.length; ++i) {
+      this.slotData[i].rewardRate = (rewardRate * this.slotData[i].weight) / weightSum;
+      this.slotData[i].lastUpdateTime = this.timestamp;
+    }
     // solhint-disable-next-line not-rely-on-time
     this.periodFinish = this.timestamp + this.rewardsDuration;
   }
 
   weightSlotId(slotId, weight)
   {
-    this._updateReward();
-    if (slotId == this.slotWeights.length) {
-      this._totalSupplys.push(0);
-      this.slotWeights.push(weight);
-    } else this.slotWeights[slotId] = weight;
+    let rewardRate = 0;
+    let weightSum = 0;
+    for (let i = 0; i < this.slotData.length; ++i) {
+      this._updateReward(undefined, i);
+      rewardRate += this.slotData[i].rewardRate;
+      weightSum += this.slotData[i].weight;
+    }
+    if (slotId == this.slotData.length) {
+      this.slotData.push({
+        totalSupply: 0,
+        weight,
+        rewardPerTokenStored: 0,
+        lastUpdateTime: 0,
+        balances: new Map(),
+        rewards: new Map(),
+        userRewardPerTokenPaid: new Map()
+      });
+    } else {
+      weightSum -= this.slotData[slotId].weight;
+      this.slotData[slotId].weight = weight;
+    }
+    weightSum += weight;
+
+    for (let i = 0; i < this.slotData.length; ++i) {
+      this.slotData[i].rewardRate = (rewardRate * this.slotData[i].weight) / weightSum;
+    }
   }
 }
 
@@ -102,5 +121,18 @@ farm.addShares('A', 1, 0);
 farm.addShares('B', 1, 1);
 farm.timestamp = 50;
 farm.weightSlotId(1,2);
-console.log(farm.earned('A'));
-console.log(farm.earned('B'));
+console.log(farm.earned('A', 0));
+console.log(farm.earned('B', 1));
+farm.timestamp = 100;
+console.log(farm.earned('A', 0));
+console.log(farm.earned('B', 1));
+farm.notifyRewardAmount(10);
+console.log(farm.earned('A', 0));
+console.log(farm.earned('B', 1));
+farm.timestamp = 150;
+console.log(farm.earned('A', 0));
+console.log(farm.earned('B', 1));
+farm.weightSlotId(1,1);
+farm.timestamp = 200;
+console.log(farm.earned('A', 0));
+console.log(farm.earned('B', 1));
