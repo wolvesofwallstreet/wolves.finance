@@ -45,6 +45,7 @@ const SFT_MINTER_PROXY_CONTRACT = 'WOWSSftMinterProxy';
 const TRADE_FLOOR_PROXY_CONTRACT = 'TradeFloorProxy';
 const CFOLIO_FARM_LP_CONTRACT = 'CFolioFarmLP';
 const CFOLIO_FARM_SC_CONTRACT = 'CFolioFarmSC';
+const CFOLIO_FARM_FOR_TEST_CONTRACT = 'CFolioFarmForTest';
 const CFOLIO_ITEM_HANDLER_LP_PROXY_CONTRACT = 'CFolioItemHandlerLPProxy';
 const CFOLIO_ITEM_HANDLER_SC_PROXY_CONTRACT = 'CFolioItemHandlerSCProxy';
 const POLYGON_ROOT_TUNNEL_PROXY_CONTRACT = 'PolygonRootTunnelProxy';
@@ -1070,6 +1071,40 @@ const func = async function (hardhat_re) {
 
       generatedAddresses.cfolioItemHandlerSCProxy =
         cfolioItemHandlerSCProxyReceipt.address;
+    }
+  }
+
+  if (hardhat_re.network.tags.test) {
+    //////////////////////////////////////////////////////////////////////////////
+    //
+    // Deploy Dummy Farm for reward testing
+    //
+    //////////////////////////////////////////////////////////////////////////////
+
+    if (configAddresses.cfolioFarmForTest) {
+      log_step(`Using CFolioFarmForTest: ${configAddresses.cfolioFarmForTest}`);
+      generatedAddresses.cfolioFarmForTest = configAddresses.cfolioFarmForTest;
+    } else {
+      log_step('Deploying CFolioFarmForTest');
+
+      const CFOLIO_FARM_FOR_TEST_NAME = 'CFolio Farm Test';
+
+      const cfolioFarmForTestReceipt = await deploy(
+        CFOLIO_FARM_FOR_TEST_CONTRACT,
+        {
+          contract: CFOLIO_FARM_CONTRACT,
+          from: deployer,
+          args: [
+            marketingWallet,
+            CFOLIO_FARM_FOR_TEST_NAME,
+            generatedAddresses.controller,
+          ],
+          log: true,
+          deterministicDeployment: true,
+        }
+      );
+
+      generatedAddresses.cfolioFarmForTest = cfolioFarmForTestReceipt.address;
     }
   }
 
