@@ -79,6 +79,9 @@ const ADDRESS_BOOK_STAKE_FARM_KEY = ethers.utils.formatBytes32String(
 );
 const ADDRESS_BOOK_UNIV2_PAIR_KEY =
   ethers.utils.formatBytes32String('UNISWAP_V2_PAIR');
+const ADDRESS_BOOK_UNIV2_PAIR_NATIVE_KEY = ethers.utils.formatBytes32String(
+  'UNISWAP_V2_PAIR_NATIVE'
+);
 const ADDRESS_BOOK_WOWS_BOOSTER_PROXY_KEY =
   ethers.utils.formatBytes32String('WOWS_BOOSTER_PROXY');
 const ADDRESS_BOOK_SFT_EVALUATOR_PROXY_KEY = ethers.utils.formatBytes32String(
@@ -329,6 +332,20 @@ const func = async function (hardhat_re) {
     ADDRESS_BOOK_UNIV2_PAIR_KEY,
     generatedAddresses.uniV2Pair
   );
+
+  if (hardhat_re.network.tags.sidechain || hardhat_re.network.tags.test) {
+    generatedAddresses.uniV2PairNative = !configAddresses.uniV2PairNative
+      ? generatedAddresses.uniV2Pair
+      : configAddresses.uniV2PairNative;
+
+    await setRegistryKey(
+      deployer,
+      execute,
+      ADDRESS_REGISTRY_INSTANCE,
+      ADDRESS_BOOK_UNIV2_PAIR_NATIVE_KEY,
+      generatedAddresses.uniV2PairNative
+    );
+  }
 
   //////////////////////////////////////////////////////////////////////////////
   // Booster
