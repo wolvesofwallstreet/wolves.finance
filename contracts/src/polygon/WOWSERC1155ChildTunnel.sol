@@ -390,7 +390,7 @@ contract WOWSERC1155ChildTunnel is
       uint256 numCfis = _getUint256(data, dataIndex++);
       for (uint256 i = 0; i < numCfis; ++i) {
         uint256 cfiType = _getUint256(data, dataIndex++);
-        sftMinter_.mintCFolioItemSFT(user, cfiType, tokenId, noInvest);
+        sftMinter_.mintCFolioItemSFT(user, cfiType, tokenId, 0, noInvest);
       }
       uint256 hasBooster = _getUint256(data, dataIndex++);
       if (hasBooster > 0) {
@@ -403,6 +403,7 @@ contract WOWSERC1155ChildTunnel is
         user,
         cfiType,
         uint256(-1),
+        0,
         noInvest
       );
     }

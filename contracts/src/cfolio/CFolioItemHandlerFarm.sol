@@ -248,6 +248,7 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
     address from,
     uint256 baseTokenId,
     uint256 tokenId,
+    uint256 slotId,
     uint256[] calldata amounts
   ) external override {
     // allow fast lane from sftMinter
@@ -263,7 +264,7 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
     );
 
     // Call the implementation
-    _deposit(itemCFolio, from, amounts);
+    _deposit(itemCFolio, from, slotId, amounts);
 
     // Update rewards if CFI is inside cfolio
     if (baseCFolio != address(0))
@@ -282,6 +283,7 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
   function withdraw(
     uint256 baseTokenId,
     uint256 tokenId,
+    uint256 slotId,
     uint256[] calldata amounts
   ) external override {
     // Validate parameters
@@ -292,7 +294,7 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
     );
 
     // Call the implementation
-    _withdraw(itemCFolio, amounts);
+    _withdraw(itemCFolio, slotId, amounts);
 
     // Update rewards if CFI is inside cfolio
     if (baseCFolio != address(0))
@@ -382,15 +384,18 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
   function _deposit(
     address itemCFolio,
     address payer,
+    uint256 slotId,
     uint256[] calldata amounts
   ) internal virtual;
 
   /**
    * @dev Withdraw amounts
    */
-  function _withdraw(address itemCFolio, uint256[] calldata amounts)
-    internal
-    virtual;
+  function _withdraw(
+    address itemCFolio,
+    uint256 slotId,
+    uint256[] calldata amounts
+  ) internal virtual;
 
   /**
    * @dev Verify if target base SFT is allowed

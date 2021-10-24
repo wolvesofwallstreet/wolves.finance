@@ -155,6 +155,7 @@ abstract contract CFolioItemHandlerMain is ICFolioItemHandler {
     address, /* from*/
     uint256, /* baseTokenId*/
     uint256, /* tokenId*/
+    uint256, /* slotId*/
     uint256[] calldata /* amounts*/
   ) external pure override {
     revert('CFIH: Not implemented');
@@ -166,6 +167,7 @@ abstract contract CFolioItemHandlerMain is ICFolioItemHandler {
   function withdraw(
     uint256, /* baseTokenId*/
     uint256, /* tokenId*/
+    uint256, /* slotId*/
     uint256[] calldata /* amounts*/
   ) external pure override {
     revert('CFIH: Not implemented');
