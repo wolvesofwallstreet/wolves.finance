@@ -559,8 +559,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       autoUpgradeText,
       apr,
       apy,
-      investment,
-      share;
+      investment;
     if (currentRender?.cfi && currentCard) {
       quantity = (currentCard as CFOLIO_ITEM).maxMintable;
       investment =
@@ -598,18 +597,18 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         const rewardIndex = currentLevel.type === 'wolves' ? 0 : 1;
         const rewardInfo =
           StoreClasses.store.getAssets().rewardInfo[rewardIndex];
-        if (rewardInfo.apr) {
-          const aprNum = (rewardInfo.apr * profitReward) / 100;
+        if (rewardInfo.slotInfo.length > 0) {
+          const maxSlot = rewardInfo.slotInfo.reduce((p, v) => (p > v ? p : v));
+          const aprNum = (maxSlot.apr * profitReward) / 100;
           apr = aprNum.toFixed(2);
           apy = StoreClasses.store.aprToApy(aprNum);
-          share = currentRender.sft?.rewardShare.toFixed(2);
         }
       }
     }
 
     const claimableAmount = currentRender?.sft
-      ? currentRender?.sft.rewardEarned +
-        currentRender?.sft.boosterRewards.pending
+      ? currentRender.sft.rewardEarned.reduce((p, c) => p + c, 0) +
+        currentRender.sft.boosterRewards.pending
       : 0;
     const claimText =
       currentRender?.sft && claimableAmount > 0
@@ -745,6 +744,10 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       boosterPeriod = 'No period started';
     }
 
+    const rewardEarned = currentRender?.sft
+      ? currentRender.sft.rewardEarned.reduce((p, c) => p + c, 0)
+      : 0;
+
     if (modalOpen && currentRender?.sft) {
       if (currentRender.sft.rewardEarned) {
         let lockRewards;
@@ -757,7 +760,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
           ? { l: t('page4.txPending'), d: true }
           : {
               l: t(lockRewards ? 'page4.lockWows' : 'page4.claim', {
-                amount: currentRender.sft.rewardEarned.toFixed(6),
+                amount: rewardEarned.toFixed(6),
               }),
               d: false,
             };
@@ -961,13 +964,6 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                           </h3>
                         </li>
                       )}
-                      {share && (
-                        <li>
-                          <h3 className="no-margin">
-                            {t('page4.share', { share })}
-                          </h3>
-                        </li>
-                      )}
                       {autoUpgrade && (
                         <li>
                           {typeof autoUpgrade !== 'number' ? (
@@ -1086,7 +1082,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                     </>
                   )}
                 </span>
-                {currentRender?.sft && currentRender.sft.rewardEarned > 0 && (
+                {currentRender?.sft && rewardEarned > 0 && (
                   <>
                     <hr />
                     <span className="tk-vincente-bold font-22 d-block w-100 text-center">

@@ -173,8 +173,8 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
                   isWallet: false,
                   status: SFTS.UNLOCKED,
                   rewardRate: 0,
-                  rewardShare: 0,
-                  rewardEarned: 0,
+                  rewardShare: [],
+                  rewardEarned: [],
                   mintTimestamp: 0,
                   cfolioItems: [],
                   boosterRewards: {
@@ -286,6 +286,10 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
 
     const startPosition = 0;
 
+    const _sumEarned = (sft: SFT) => {
+      return sft.rewardEarned.reduce((prev, cur) => prev + cur, 0);
+    };
+
     return (
       <>
         <div
@@ -391,7 +395,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
                         (display === 'my' || type === level.type) && (
                           <CardBox
                             sft={id}
-                            earned={id.rewardEarned + id.boosterRewards.pending}
+                            earned={_sumEarned(id) + id.boosterRewards.pending}
                             key={'card_' + index}
                             t={t}
                             progressRefs={this.progressRefs}

@@ -91,6 +91,7 @@ interface ChainAddresses {
   wssEndpoint?: string;
   token: string;
   uniV2Pair: string;
+  uniV2PairNative: string;
   stakeFarm?: string;
   sftMinterProxy: string;
   sftHolderProxy: string;
@@ -177,23 +178,23 @@ export enum SFTS {
   BRIDGE_READY,
 }
 
-export type SFTCHILD = {
+export interface SFTCHILD {
   tokenId: ethers.BigNumber;
   levelId: number;
   cardId: number;
   status: SFTS;
   type: number;
   assets: number[];
-};
+}
 
-export type BoosterRewards = {
+export interface BoosterRewards {
   total: number;
   pending: number;
   apr: number;
   secsLeft?: number;
-};
+}
 
-export type SFT = {
+export interface SFT {
   tokenId: ethers.BigNumber;
   levelId: number;
   cardId: number;
@@ -202,20 +203,26 @@ export type SFT = {
   isWallet: boolean;
   status: SFTS;
   rewardRate: number;
-  rewardShare: number;
-  rewardEarned: number;
+  rewardShare: number[];
+  rewardEarned: number[];
   mintTimestamp: number;
   cfolioItems: SFTCHILD[];
   boosterRewards: BoosterRewards;
-};
+}
 
 export const BIGNUMBER_MAX = ethers.BigNumber.from(
   '0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
 );
 
+export const STAKE_CURRENCIES = [
+  [],
+  ['WETH/WOWS', 'WMATIC/WOWS'],
+  ['WETH/WOWS', 'WFTM/WOWS'],
+];
+
 export const STABLE_CURRENCIES = [
-  ['DAI', 'USDC', 'USDT', 'am3Crv'],
-  ['DAI', 'USDC', 'USDT', 'TUSD', 'yCrv'],
+  [['DAI', 'USDC', 'USDT', 'am3Crv']],
+  [['DAI', 'USDC', 'USDT', 'TUSD', 'yCrv']],
   [],
 ];
 
@@ -224,13 +231,30 @@ const SECONDS_PER_YEAR = 31536000;
 export const REWARD_POOL_LP = 0;
 export const REWARD_POOL_SC = 1;
 
-type REWARD_INFO = {
+interface REWARD_INFO_SLOT {
   total: ethers.BigNumber;
-  rewardDuration: number;
   rewardPerDuration: ethers.BigNumber;
-  priceWOWS: number;
   priceToken: number;
   apr: number;
+}
+
+const INITIAL_REWARD_SLOT: REWARD_INFO_SLOT = {
+  total: ethers.BigNumber.from(0),
+  rewardPerDuration: ethers.BigNumber.from(0),
+  priceToken: 0,
+  apr: 0,
+};
+
+interface REWARD_INFO {
+  rewardDuration: number;
+  priceWOWS: number;
+  slotInfo: REWARD_INFO_SLOT[];
+}
+
+const INITIAL_REWARD: REWARD_INFO = {
+  rewardDuration: 0,
+  priceWOWS: 0,
+  slotInfo: [],
 };
 
 export type ASSET_BALANCE = {
@@ -241,6 +265,7 @@ export type ASSET_BALANCE = {
     address?: string;
     allowance: number;
     handlerAddress?: string;
+    handlerSlotId?: number;
   };
 };
 
@@ -287,13 +312,12 @@ class Store {
   sftHolderContractRO?: ethers.Contract;
   sftMintContractRO?: ethers.Contract;
   tradeFloorContractRO?: ethers.Contract;
-  lpContractRO?: ethers.Contract;
   uniDaiWethPairContractRO?: ethers.Contract;
-  curveDepositContractRO?: ethers.Contract;
 
   cfolioFarmLpAddress = '';
   cfolioFarmScAddress = '';
   bridgeTargetAddress = '';
+  curveDepositAddress = '';
 
   static nullAddress = '0x0000000000000000000000000000000000000000';
   static BASE_CARD_MAX = ethers.BigNumber.from('0xFFFFFFFFFFFFFFFF');
@@ -323,7 +347,19 @@ class Store {
         value: 0,
         allowance: 0,
       },
-      'WETH/WOWS LP': {
+      'WETH/WOWS': {
+        decimals: 18,
+        dust: Store.DUST_18,
+        value: 0,
+        allowance: 0,
+      },
+      'WMATIC/WOWS': {
+        decimals: 18,
+        dust: Store.DUST_18,
+        value: 0,
+        allowance: 0,
+      },
+      'WFTM/WOWS': {
         decimals: 18,
         dust: Store.DUST_18,
         value: 0,
@@ -369,14 +405,7 @@ class Store {
     userSFT: [],
     cards: { levelNames: [], cards: [], myPackLevelDescriptions: [] },
     cfolioItems: [],
-    rewardInfo: Array.from({ length: 2 }, () => ({
-      total: ethers.BigNumber.from(0),
-      rewardDuration: 0,
-      rewardPerDuration: ethers.BigNumber.from(0),
-      priceWOWS: 0,
-      priceToken: 0,
-      apr: 0,
-    })),
+    rewardInfo: Array.from({ length: 2 }, () => ({ ...INITIAL_REWARD })),
   } as ASSETS;
 
   constructor() {
@@ -677,14 +706,15 @@ class Store {
       this.boosterContract = undefined;
       this.ethersSigner = undefined;
       this.polygonBridge = undefined;
-    }
-    this.address = '';
-    if (clearCache) {
-      this.web3Modal.clearCachedProvider();
-      window.localStorage.removeItem('WALLETCONNECT_DEEPLINK_CHOICE');
-    }
-    if (fireEvent) {
-      this._emitNetworkChange();
+
+      this.address = '';
+      if (clearCache) {
+        this.web3Modal.clearCachedProvider();
+        window.localStorage.removeItem('WALLETCONNECT_DEEPLINK_CHOICE');
+      }
+      if (fireEvent) {
+        this._emitNetworkChange();
+      }
     }
   };
 
@@ -695,8 +725,6 @@ class Store {
       this.sftMintContractRO = undefined;
       this.tradeFloorContractRO?.removeAllListeners();
       this.tradeFloorContractRO = undefined;
-      this.lpContractRO?.removeAllListeners();
-      this.lpContractRO = undefined;
       this.uniDaiWethPairContractRO = undefined;
     } catch (e) {
       console.log(e);
@@ -757,7 +785,6 @@ class Store {
     this.eventProvider?.removeAllListeners();
     this.sftHolderContractRO?.removeAllListeners();
     this.tradeFloorContractRO?.removeAllListeners();
-    this.lpContractRO?.removeAllListeners();
 
     const handleTransfer = (
       operator: string,
@@ -789,17 +816,6 @@ class Store {
     this.tradeFloorContractRO?.on('TransferBatch', (operator, from, to) =>
       handleTransfer(operator, from, to, false)
     );
-    this.lpContractRO?.on('Transfer', (from, to) => {
-      if (
-        ethers.utils.getAddress(from) === this.address ||
-        ethers.utils.getAddress(to) === this.address
-      ) {
-        this._addDQ(0, {
-          type: ASSETS_STATE,
-          content: { filter: ['balances'] },
-        } as Payload);
-      }
-    });
     return true;
   }
 
@@ -935,6 +951,19 @@ class Store {
     }
   };
 
+  getStakeCurrencies() {
+    switch (this.chainId) {
+      case 137:
+      case 80001:
+        return STAKE_CURRENCIES[1];
+      case 250:
+      case 4001:
+        return STAKE_CURRENCIES[2];
+      default:
+        return STAKE_CURRENCIES[0];
+    }
+  }
+
   getStableCurrencies() {
     switch (this.chainId) {
       case 137:
@@ -958,12 +987,6 @@ class Store {
 
     if (chainAddresses) {
       this.tokenContractAddress = chainAddresses.token;
-      this.lpContractRO = new ethers.Contract(
-        chainAddresses.uniV2Pair,
-        UniV2PairAbi,
-        provider
-      );
-
       if (chainAddresses.sftHolderProxy) {
         this.sftHolderContractRO = new ethers.Contract(
           chainAddresses.sftHolderProxy,
@@ -998,23 +1021,18 @@ class Store {
         );
       } else this.uniDaiWethPairContractRO = undefined;
 
-      if (chainAddresses.curveADeposit) {
-        this.curveDepositContractRO = new ethers.Contract(
-          chainAddresses.curveADeposit,
-          CurveDepositAbi,
-          provider
-        );
-      } else if (chainAddresses.curveYDeposit) {
-        this.curveDepositContractRO = new ethers.Contract(
-          chainAddresses.curveYDeposit,
-          CurveDepositAbi,
-          provider
-        );
-      } else this.curveDepositContractRO = undefined;
-
       // Setup our balances
       this.assets.balances['WOWS'].address = chainAddresses.token;
-      this.assets.balances['WETH/WOWS LP'].address = this.lpContractRO.address;
+      this.assets.balances['WETH/WOWS'].address = chainAddresses.uniV2Pair;
+      this.assets.balances['WMATIC/WOWS'].address =
+        this.chainId === 137 || this.chainId === 80001
+          ? chainAddresses.uniV2PairNative || undefined
+          : undefined;
+      this.assets.balances['WFTM/WOWS'].address =
+        this.chainId === 250 || this.chainId === 4001
+          ? chainAddresses.uniV2PairNative || undefined
+          : undefined;
+
       this.assets.balances['USDC'].address = chainAddresses.usdcToken;
       this.assets.balances['USDT'].address = chainAddresses.usdtToken;
       this.assets.balances['DAI'].address = chainAddresses.daiToken;
@@ -1024,8 +1042,15 @@ class Store {
 
       this.assets.balances['WOWS'].handlerAddress =
         chainAddresses.sftMinterProxy;
-      this.assets.balances['WETH/WOWS LP'].handlerAddress =
+      this.assets.balances['WETH/WOWS'].handlerAddress =
         chainAddresses.cfolioItemHandlerLPProxy;
+      this.assets.balances['WETH/WOWS'].handlerSlotId = 0;
+      this.assets.balances['WMATIC/WOWS'].handlerAddress =
+        chainAddresses.cfolioItemHandlerLPProxy;
+      this.assets.balances['WMATIC/WOWS'].handlerSlotId = 1;
+      this.assets.balances['WFTM/WOWS'].handlerAddress =
+        chainAddresses.cfolioItemHandlerLPProxy;
+      this.assets.balances['WFTM/WOWS'].handlerSlotId = 1;
       this.assets.balances['USDC'].handlerAddress =
         chainAddresses.cfolioItemHandlerSCProxy;
       this.assets.balances['USDT'].handlerAddress =
@@ -1036,6 +1061,15 @@ class Store {
         chainAddresses.cfolioItemHandlerSCProxy;
       this.assets.balances['yCrv'].handlerAddress =
         chainAddresses.cfolioItemHandlerSCProxy;
+
+      this.assets.rewardInfo[0] = { ...INITIAL_REWARD };
+      this.assets.rewardInfo[1] = { ...INITIAL_REWARD };
+
+      if (chainAddresses.curveYDeposit)
+        this.curveDepositAddress = chainAddresses.curveYDeposit;
+      else if (chainAddresses.curveADeposit)
+        this.curveDepositAddress = chainAddresses.curveADeposit;
+      else this.curveDepositAddress = '';
     } else {
       this.tokenContractAddress = Store.nullAddress;
       for (const [, value] of Object.entries(this.assets.balances)) {
@@ -1203,8 +1237,8 @@ class Store {
               ? SFTS.LOCKED
               : SFTS.UNLOCKED,
             rewardRate: 0,
-            rewardShare: 0,
-            rewardEarned: 0,
+            rewardShare: [],
+            rewardEarned: [],
             mintTimestamp: 0,
             cfolioItems: [],
             boosterRewards: {
@@ -1231,8 +1265,8 @@ class Store {
         isWallet: true,
         status: SFTS.UNLOCKED,
         rewardRate: 0,
-        rewardShare: 0,
-        rewardEarned: 0,
+        rewardShare: [],
+        rewardEarned: [],
         mintTimestamp: 0,
         cfolioItems: [],
         boosterRewards: {
@@ -1291,8 +1325,8 @@ class Store {
             const numAssets = readUint256(result2, readIndex++).toNumber();
             const bidx =
               this.assets.cfolioItems[child.levelId].type === 'lpInvestment'
-                ? ['WETH/WOWS LP']
-                : this.getStableCurrencies();
+                ? this.getStakeCurrencies()
+                : this.getStableCurrencies()[0];
             for (let index = 0; index < numAssets; ++index) {
               child.assets.push(
                 this.fromWei(
@@ -1322,8 +1356,6 @@ class Store {
 
       for (let i = 0; i < 2; ++i) {
         if (!contracts[i]) {
-          this.assets.rewardInfo[i].apr = 0;
-          this.assets.rewardInfo[i].rewardDuration = 0;
           continue;
         }
 
@@ -1336,7 +1368,7 @@ class Store {
         if (sfts.length === 0) continue;
 
         // Returns:
-        //  result: totalsupply, rewardDur, rewardsPerDur, [share, earned]
+        //  result: rewardDur, slotCount, [totalSupply, rewardPerDuration, [share, earned]
         //  boosterLocked
         //  boosterPending
         //  boosterApr
@@ -1348,25 +1380,39 @@ class Store {
         let readIndex = 0;
         const cfiResult = result.result;
         const ri = this.assets.rewardInfo[i];
-        ri.total = readUint256(cfiResult, readIndex++);
-        const total = this.fromWei(ri.total);
         ri.rewardDuration = readUint256(cfiResult, readIndex++).toNumber();
-        ri.rewardPerDuration = readUint256(cfiResult, readIndex++);
-        sfts.forEach((sft, index) => {
-          sft.rewardShare =
-            (this.fromWei(readUint256(cfiResult, readIndex++)) * 100) / total;
-          sft.rewardEarned = this.fromWei(readUint256(cfiResult, readIndex++));
-          sft.boosterRewards.total = this.fromWei(result.boosterLocked[index]);
-          sft.boosterRewards.pending = this.fromWei(
-            result.boosterPending[index]
-          );
-          sft.boosterRewards.apr = this.fromWei(result.boosterApr[index]);
-          sft.boosterRewards.secsLeft = result.boosterSecsLeft[index].eq(
-            BIGNUMBER_MAX
-          )
-            ? undefined
-            : result.boosterSecsLeft[index].toNumber();
-        });
+        const numSlots = readUint256(cfiResult, readIndex++).toNumber();
+        ri.slotInfo = Array.from({ length: numSlots }, () => ({
+          ...INITIAL_REWARD_SLOT,
+        }));
+        for (let slotId = 0; slotId < numSlots; ++slotId) {
+          const ris = ri.slotInfo[slotId];
+          ris.total = readUint256(cfiResult, readIndex++);
+          const total = this.fromWei(ris.total);
+          ris.rewardPerDuration = readUint256(cfiResult, readIndex++);
+          for (let index = 0; index < sfts.length; ++index) {
+            const sft = sfts[index];
+            if (slotId === 0) sft.rewardShare = sft.rewardEarned = [];
+            sft.rewardShare.push(
+              (this.fromWei(readUint256(cfiResult, readIndex++)) * 100) / total
+            );
+            sft.rewardEarned.push(
+              this.fromWei(readUint256(cfiResult, readIndex++))
+            );
+            sft.boosterRewards.total = this.fromWei(
+              result.boosterLocked[index]
+            );
+            sft.boosterRewards.pending = this.fromWei(
+              result.boosterPending[index]
+            );
+            sft.boosterRewards.apr = this.fromWei(result.boosterApr[index]);
+            sft.boosterRewards.secsLeft = result.boosterSecsLeft[index].eq(
+              BIGNUMBER_MAX
+            )
+              ? undefined
+              : result.boosterSecsLeft[index].toNumber();
+          }
+        }
       }
       await this._updatePoolAPR();
       emitter.emit(ASSETS_STATE, { status: 'rewards' } as AssetStateresult);
@@ -1407,7 +1453,7 @@ class Store {
                           (amount, index) =>
                             (item.assets[index] = this.fromWei(
                               amount,
-                              this.assets.balances[stableCurrencies[index]]
+                              this.assets.balances[stableCurrencies[0][index]]
                                 .decimals
                             ))
                         );
@@ -1506,85 +1552,92 @@ class Store {
   };
 
   async _updatePoolAPR() {
-    let lpContractRO = this.lpContractRO;
-    if (this.chainId === 137) {
-      const provider = new ethers.providers.InfuraProvider(
-        'mainnet',
-        process.env.REACT_APP_INFURA_ID
+    let nativeWowsPrice = ethers.BigNumber.from(0);
+    let stakePrice = ethers.BigNumber.from(0);
+    const e18 = ethers.BigNumber.from('10').pow(18);
+
+    // Step 1 get WOWS/WETH ETH
+    if (this.isSidechain()) {
+      const results = await (
+        await fetch(
+          'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2',
+          {
+            method: 'POST', // or 'PUT'
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: `{"query":"{pair(id:\\"0xdf21bb85a5bfb606bfca4562aa8cea2017622415\\") { reserve0 reserveUSD totalSupply}}","variables":null}`,
+          }
+        )
+      ).json();
+      const reserve0 = this.toWei(results.data.pair.reserve0.slice(0, 19));
+      const reserveUSD = this.toWei(results.data.pair.reserveUSD.slice(0, 19));
+      const totalSupply = this.toWei(
+        results.data.pair.totalSupply.slice(0, 19)
       );
-      lpContractRO = new ethers.Contract(
-        (addresses as IIndexable)[1].uniV2Pair,
+      nativeWowsPrice = reserveUSD.mul(e18).div(reserve0.mul(2));
+      stakePrice = reserveUSD.mul(e18).div(totalSupply);
+    } else if (
+      this.assets.balances['WETH/WOWS'].address &&
+      this.uniDaiWethPairContractRO
+    ) {
+      const lpContract = new ethers.Contract(
+        this.assets.balances['WETH/WOWS'].address,
         UniV2PairAbi,
-        provider
+        this.eventProvider
       );
-    } else if (this.isSidechain()) return;
-
-    if (this.uniDaiWethPairContractRO && lpContractRO) {
-      const e18 = ethers.BigNumber.from('10').pow(18);
-
       const daiWethReserves = await this.uniDaiWethPairContractRO.getReserves();
       // Price of 1 WETH in DAI
       const wethPrice = daiWethReserves.reserve0.gt(daiWethReserves.reserve1)
         ? daiWethReserves.reserve0.mul(e18).div(daiWethReserves.reserve1)
         : daiWethReserves.reserve1.mul(e18).div(daiWethReserves.reserve0);
 
-      const wowsWethReserves = await lpContractRO.getReserves();
+      const wowsWethReserves = await lpContract.getReserves();
       // Price of 1 WOWS
-      const wowsPrice = wowsWethReserves.reserve1
+      nativeWowsPrice = wowsWethReserves.reserve1
         .mul(wethPrice)
         .div(wowsWethReserves.reserve0);
-
-      for (let i = 0; i < 2; ++i) {
-        const rewardInfo = this.assets.rewardInfo[i];
-
-        rewardInfo.priceWOWS = this.fromWei(wowsPrice);
-
-        let stakedPrice;
-        if (i === 0) {
-          // TotalSupply of the WOWS/WETH pool
-          const wowsWethTotalSupply = await lpContractRO.totalSupply();
-
-          // Total price of pool
-          const poolPrice = wowsWethReserves.reserve0
-            .mul(wowsPrice)
-            .add(wowsWethReserves.reserve1.mul(wethPrice))
-            .div(e18);
-
-          rewardInfo.priceToken = this.fromWei(
-            poolPrice.mul(e18).div(wowsWethTotalSupply)
+      stakePrice = nativeWowsPrice
+        .mul(2)
+        .mul(wowsWethReserves.reserve0)
+        .div(await lpContract.totalSupply());
+    }
+    for (let i = 0; i < 2; ++i) {
+      const ri = this.assets.rewardInfo[i];
+      ri.priceWOWS = this.fromWei(nativeWowsPrice);
+      for (let slotId = 0; slotId < ri.slotInfo.length; ++slotId) {
+        const ris = ri.slotInfo[slotId];
+        if (i === 0 && slotId === 0) {
+          //lead pool
+          ris.priceToken = this.fromWei(stakePrice);
+        } else if (i === 0) {
+          // native pool, todo
+          stakePrice = ethers.BigNumber.from(0);
+        } else if (this.curveDepositAddress) {
+          const curveContract = new ethers.Contract(
+            this.curveDepositAddress,
+            CurveDepositAbi,
+            this.eventProvider
           );
-
-          // Staked share
-          stakedPrice = poolPrice
-            .mul(ethers.BigNumber.from(rewardInfo.total))
-            .div(wowsWethTotalSupply);
-        } else if (this.curveDepositContractRO) {
           // Get the DAI price of one yCrv token
-          const priceToken =
-            await this.curveDepositContractRO.calc_withdraw_one_coin(
-              this.toWei(1),
-              0
-            );
-          rewardInfo.priceToken = this.fromWei(priceToken);
-
-          // Staked share
-          stakedPrice = priceToken
-            .mul(ethers.BigNumber.from(rewardInfo.total))
-            .div(e18);
-        } else stakedPrice = ethers.BigNumber.from(0);
-
-        if (rewardInfo.rewardDuration) {
-          // yearly emission
-          const emmission = wowsPrice.mul(
-            rewardInfo.rewardPerDuration
-              .mul(ethers.BigNumber.from(SECONDS_PER_YEAR))
-              .div(ethers.BigNumber.from(rewardInfo.rewardDuration).mul(e18))
+          stakePrice = await curveContract.calc_withdraw_one_coin(
+            this.toWei(1),
+            0
           );
+          ris.priceToken = this.fromWei(stakePrice);
+        } else stakePrice = ethers.BigNumber.from(0);
 
-          const apr = stakedPrice.gt(0)
-            ? emmission.mul(100).div(stakedPrice).toNumber()
+        if (ri.rewardDuration) {
+          // yearly emission
+          const emmission = nativeWowsPrice.mul(
+            ris.rewardPerDuration
+              .mul(ethers.BigNumber.from(SECONDS_PER_YEAR))
+              .div(ethers.BigNumber.from(ri.rewardDuration))
+          );
+          const apr = stakePrice.gt(0)
+            ? emmission.mul(100).div(stakePrice.mul(ris.total)).toNumber()
             : 0;
-          rewardInfo.apr = apr;
+          ris.apr = apr;
         }
       }
     }
@@ -2057,10 +2110,10 @@ class Store {
     let cfihContract, balances;
     if (cfiLevel.type === 'lpInvestment') {
       cfihContract = this.cfihLpContract;
-      balances = ['WETH/WOWS LP'];
+      balances = this.getStakeCurrencies();
     } else {
       cfihContract = this.cfihScContract;
-      balances = this.getStableCurrencies();
+      balances = this.getStableCurrencies()[0];
     }
 
     if (!cfihContract || !this.ethersSigner) {
@@ -2087,7 +2140,7 @@ class Store {
           if (investWeiAmount.sub(walletAmount).lt(balance.dust)) {
             investWeiAmount = walletAmount;
           } else {
-            throw new Error('Insufficient LP balances');
+            throw new Error('Insufficient balances');
           }
         } else if (walletAmount.sub(investWeiAmount).lt(balance.dust)) {
           // Try to invest dust, too
@@ -2173,10 +2226,10 @@ class Store {
       let cfihContract, balances;
       if (cfiLevel.type === 'lpInvestment') {
         cfihContract = this.cfihLpContract;
-        balances = ['WETH/WOWS LP'];
+        balances = this.getStakeCurrencies();
       } else {
         cfihContract = this.cfihScContract;
-        balances = this.getStableCurrencies();
+        balances = this.getStableCurrencies()[0];
       }
 
       if (!cfihContract || !this.ethersSigner) {
@@ -2207,7 +2260,7 @@ class Store {
           if (withdrawWeiAmount.sub(cfolioAmounts[index]).lt(balance.dust)) {
             withdrawWeiAmount = cfolioAmounts[index];
           } else {
-            throw new Error('Insufficient LP balances');
+            throw new Error('Insufficient balances');
           }
         } else if (
           cfolioAmounts[index].sub(withdrawWeiAmount).lt(balance.dust)
@@ -2514,7 +2567,7 @@ class Store {
     return parseFloat(ethers.utils.formatUnits(n, decimals));
   }
 
-  toWei(n: number, decimals = 18) {
+  toWei(n: number | string, decimals = 18) {
     const parsed = typeof n === 'number' ? n.toFixed(decimals) : n;
     return ethers.utils.parseUnits(parsed, decimals);
   }

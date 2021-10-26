@@ -414,6 +414,7 @@ export class MessageProof {
       if (scanHeaderFrom) {
         if (scanHeaderFrom < this.localStorageItems.ethLastHeaderScanned)
           scanHeaderFrom = this.localStorageItems.ethLastHeaderScanned;
+        if (scanHeaderTo < scanHeaderFrom) scanHeaderTo = scanHeaderFrom;
         await this._findHeaderBlockNumber(scanHeaderFrom, scanHeaderTo);
       }
       if (
@@ -615,7 +616,7 @@ export class MessageProof {
       const filter = {
         ...this.checkPointManager.filters.NewHeaderBlock(),
         fromBlock: scanStart,
-        toBlock: scanEnd + 1000,
+        toBlock: scanEnd + 999,
       };
       logs = await this.checkPointManager.provider.getLogs(filter);
     }
@@ -649,7 +650,7 @@ export class MessageProof {
 
     if (this.changed) {
       this.localStorageItems.ethLastHeaderScanned =
-        logs[logs.length - 1].blockNumber;
+        logs.length > 0 ? logs[logs.length - 1].blockNumber : scanEnd + 1000;
 
       window.localStorage.setItem(
         this.localStorageKey,

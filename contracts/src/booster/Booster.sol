@@ -218,12 +218,11 @@ contract Booster is IBooster, AccessControl {
       // Prepare locking amount into SFT
       TimeLock storage currentLock = timeLocks[recipient];
 
+      // Update pending rewards
+      uint256 ts = _getTimestamp();
+      _updatePendingRewards(currentLock, ts);
+
       if (currentLock.end != 0) {
-        uint256 ts = _getTimestamp();
-
-        // Update pending rewards
-        _updatePendingRewards(currentLock, ts);
-
         // Add more
         require(currentLock.fee == fee, 'B: Fee change');
 

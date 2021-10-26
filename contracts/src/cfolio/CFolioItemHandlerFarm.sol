@@ -359,6 +359,7 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
     for (uint256 slotId = 0; slotId < slotCount; ++slotId) {
       result = abi.encodePacked(
         result,
+        _cfolioFarm.totalSupply(slotId),
         _cfolioFarm.getRewardsForDuration(slotId)
       );
       // Iterate through all tokenIds and collect reward info
