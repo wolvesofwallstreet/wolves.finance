@@ -48,7 +48,7 @@ function StakeLP({
 }: PROPS): JSX.Element {
   const [tabOption, setTabOption] = useState(0);
   const [investAmount, setInvestAmount] = useState(
-    StoreClasses.store.getAssets().balances['WETH/WOWS LP'].value
+    StoreClasses.store.getAssets().balances['WETH/WOWS'].value
   );
   const [hasSft, setHasSft] = useState(false);
   const [inputVal, setInputVal] = useState(0);
@@ -64,7 +64,7 @@ function StakeLP({
     const onAssetsState = (params: AssetStateresult) => {
       if (params.status === 'balances') {
         setInvestAmount(
-          StoreClasses.store.getAssets().balances['WETH/WOWS LP'].value
+          StoreClasses.store.getAssets().balances['WETH/WOWS'].value
         );
       }
     };
