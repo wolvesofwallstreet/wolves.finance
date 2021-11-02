@@ -65,6 +65,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
   slideIndex = 0;
   displayType = '';
   toolTippLink = '';
+  tokenPrice = 0;
   continueBuy: (() => void) | undefined;
 
   constructor(props: PROPS) {
@@ -81,6 +82,20 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
     const query = new URLSearchParams(location.search);
     this.displayType = query.get('type') || 'lpInvestment';
     this.toolTippLink = '?type=' + this.displayType;
+  }
+
+  setCurrentSlide(val: number) {
+    const { history, location } = this.props;
+    const query = new URLSearchParams(location.search);
+    const baseTokenId = this.receiverImages[val].tokenId?.toHexString();
+    if (baseTokenId) {
+      query.set('baseTokenId', baseTokenId);
+    } else {
+      this.slideIndex = 0;
+      query.delete('baseTokenId');
+      this._updateCFolioItems();
+    }
+    history.replace('?' + query.toString());
   }
 
   setCurrentImage(val: number) {
@@ -109,6 +124,19 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
       this.toolTippLink = '?type=' + this.displayType;
       this.setState({ currentImage: 0 });
       this._updateImages();
+    }
+
+    if (query.get('baseTokenId')) {
+      const newBaseTokenId = ethers.BigNumber.from(query.get('baseTokenId'));
+      const index = this.receiverImages.findIndex(
+        (elem) => elem.tokenId && elem.tokenId.eq(newBaseTokenId)
+      );
+      if (index >= 0 && index !== this.slideIndex) {
+        this.slideIndex = index;
+        this.sliderInterface?.go(index);
+        this._updateCFolioItems();
+        return;
+      }
     }
 
     let index: number | undefined;
@@ -162,8 +190,14 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
     const tokenIds = assets.userSFT;
 
     const newImages: IMAGE[] = [];
-    const allowedLevel =
-      this.displayType === 'lpInvestment' ? 0xff000000f0 : 0xff0000000f;
+    let allowedLevel = 0;
+    if (this.displayType === 'lpInvestment') {
+      allowedLevel = 0xff000000f0;
+      this.tokenPrice = assets.rewardInfo[0].slotInfo[0].priceToken;
+    } else {
+      allowedLevel = 0xff0000000f;
+      this.tokenPrice = assets.rewardInfo[1].slotInfo[0].priceToken;
+    }
 
     tokenIds.forEach((sft, tokenIdIdx) => {
       if (
@@ -253,8 +287,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
 
   sliderCB(_: string | undefined, index: number) {
     if (index !== this.slideIndex) {
-      this.slideIndex = index;
-      this._updateCFolioItems();
+      this.setCurrentSlide(index);
     }
   }
 
@@ -325,6 +358,13 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
       this.setState({ modalOpen: false });
       if (this.continueBuy) this.continueBuy();
     };
+
+    let investment = 0,
+      investmentUSD = 0;
+    if (renderCFolioItem) {
+      investment = renderCFolioItem.assets[renderCFolioItem.assets.length - 1];
+      investmentUSD = investment * this.tokenPrice;
+    }
 
     return (
       <>
@@ -456,12 +496,6 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
                         <>
                           TOKEN ID:{' '}
                           {renderCFolioItem.tokenId.mask(128).toHexString()}
-                          <br />
-                          INVESTMENT:{' '}
-                          {renderCFolioItem.assets[
-                            renderCFolioItem.assets.length - 1
-                          ].toFixed(4)}
-                          {' ' + controlAttr.investCurrency}
                         </>
                       ) : (
                         cfolioItemCard && (
@@ -483,6 +517,13 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
                   id="cfolioInvest-control"
                   className="bg-blue-transparent-light tk-grotesk-lightbold"
                 >
+                  {renderCFolioItem && (
+                    <h3 className="tk-vincente">
+                      MY INVESTMENT: {investment.toFixed(2)}
+                      {' ' + controlAttr.investCurrency + ' '}(
+                      {investmentUSD.toFixed(2)} USD)
+                    </h3>
+                  )}
                   {this.displayType === 'lpInvestment' ? (
                     <StakeLP {...controlAttr} />
                   ) : (

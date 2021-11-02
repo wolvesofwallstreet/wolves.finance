@@ -11,8 +11,9 @@ import { BigNumber, ethers } from 'ethers';
 import React, { Component } from 'react';
 import { Modal } from 'react-bootstrap';
 import { TFunction, withTranslation } from 'react-i18next';
-import { RouteComponentProps } from 'react-router-dom';
+import { Link, RouteComponentProps } from 'react-router-dom';
 
+import GoTo from '../../assets/goto.svg';
 import Logo from '../../assets/wolves-token_99.png';
 import {
   ASSETS_STATE,
@@ -683,13 +684,23 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                     {cfolios[sftChild.levelId].cards[sftChild.cardId].name}
                   </h3>
                   <h3>
-                    {t('page.tokenId')}:{' '}
-                    {sftChild.tokenId.mask(128).toHexString()}
+                    {t('page.tokenId')}: {sftChild.tokenId.toHexString()}
                   </h3>
                   <h3>
                     {t('page.investment')}:{' '}
                     {sftChild.assets[assetIndex].toFixed(6)}{' '}
-                    {cfolios[sftChild.levelId].token}
+                    {cfolios[sftChild.levelId].token}{' '}
+                    <Link
+                      to={`/cfolio-invest?type=${
+                        cfolios[sftChild.levelId].type
+                      }&baseTokenId=${currentRender.tokenId?.toHexString()}&tokenId=${sftChild.tokenId.toHexString()}`}
+                    >
+                      <img
+                        style={{ marginBottom: '4px' }}
+                        alt="G"
+                        src={GoTo}
+                      ></img>
+                    </Link>
                   </h3>
                 </>
               )}
