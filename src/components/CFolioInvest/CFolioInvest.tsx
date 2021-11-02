@@ -124,6 +124,7 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
       this.toolTippLink = '?type=' + this.displayType;
       this.setState({ currentImage: 0 });
       this._updateImages();
+      this._updateRewards();
     }
 
     if (query.get('baseTokenId')) {
@@ -181,7 +182,19 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
       this._updateImages();
     } else if (result.status === 'cfolio_amount') {
       this.setState({ currentImage: this.state.currentImage });
+    } else if (result.status === 'rewards') {
+      this._updateRewards();
+      this.setState({ currentImage: this.state.currentImage });
     }
+  }
+
+  _updateRewards() {
+    const rewards = StoreClasses.store.getAssets().rewardInfo;
+    const rewardMain = this.displayType === 'lpInvestment' ? 0 : 1;
+
+    this.tokenPrice = rewards[rewardMain].slotInfo[0]
+      ? rewards[rewardMain].slotInfo[0].priceToken
+      : 0;
   }
 
   _updateImages() {
@@ -190,14 +203,8 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
     const tokenIds = assets.userSFT;
 
     const newImages: IMAGE[] = [];
-    let allowedLevel = 0;
-    if (this.displayType === 'lpInvestment') {
-      allowedLevel = 0xff000000f0;
-      this.tokenPrice = assets.rewardInfo[0].slotInfo[0].priceToken;
-    } else {
-      allowedLevel = 0xff0000000f;
-      this.tokenPrice = assets.rewardInfo[1].slotInfo[0].priceToken;
-    }
+    const allowedLevel =
+      this.displayType === 'lpInvestment' ? 0xff000000f0 : 0xff0000000f;
 
     tokenIds.forEach((sft, tokenIdIdx) => {
       if (

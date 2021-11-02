@@ -1991,6 +1991,7 @@ class Store {
             this.address,
             cfolioType,
             sftTokenId,
+            0,
             investWeiAmounts
           );
         options = { gasLimit: gasEstimation.toNumber() + additionalGas };
@@ -2060,6 +2061,7 @@ class Store {
             this.address,
             sftTokenId,
             cfolioTokenId,
+            0,
             investWeiAmounts
           );
         options = { gasLimit: gasEstimation.toNumber() + additionalGas };
@@ -2069,6 +2071,7 @@ class Store {
         this.address,
         sftTokenId,
         cfolioTokenId,
+        0,
         investWeiAmounts,
         options
       );
@@ -2284,6 +2287,7 @@ class Store {
           await cfihContract.estimateGas.withdraw(
             sftTokenId,
             cfolioTokenId,
+            0,
             withdrawWeiAmounts
           );
         options = { gasLimit: gasEstimation.toNumber() + 400000 };
@@ -2292,6 +2296,7 @@ class Store {
       const tx = await cfihContract.withdraw(
         sftTokenId,
         cfolioTokenId,
+        0,
         withdrawWeiAmounts,
         options
       );
