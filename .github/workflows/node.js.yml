@@ -130,7 +130,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install Python dependencies
-        run: pip3 install -r requirements.txt
+        run: |
+          pip3 install --upgrade pip
+          pip3 install -r requirements.txt
 
       - name: yarn lint
         run: yarn lint
