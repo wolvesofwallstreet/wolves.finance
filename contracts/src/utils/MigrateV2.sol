@@ -374,7 +374,7 @@ contract MigrateToV2 is ERC1155Holder {
       uint256 poolState = _boosterOld.migrateInitialize(cfolio);
 
       if ((poolState & 1) != 0) {
-        // Acive booster pool, claim rewards into it
+        // Active booster pool, claim rewards into it
         _sftMinterOld.claimSFTRewards(tokenId, 1);
       } else {
         // No active booster Pool, claim everything into users wallet
