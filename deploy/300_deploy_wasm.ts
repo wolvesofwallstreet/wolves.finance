@@ -16,6 +16,7 @@ require('hardhat-deploy-ethers');
 
 // TODO: Fully qualified contract names
 const FILESYSTEM_CONTRACT = 'Filesystem';
+const TASK_MANAGER_CONTRACT = 'TaskManager';
 
 // Path to address files
 const CONFIG_ADDRESSES = `${__dirname}/../src/config/addresses.json`;
@@ -87,6 +88,28 @@ const func = async function (hardhat_re) {
     });
 
     generatedAddresses.filesystem = filesystemReceipt.address;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // Deploy Task Manager
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  if (configAddresses.taskManager) {
+    log_step(`Using deployed Task Manager: ${configAddresses.taskManager}`);
+    generatedAddresses.taskManager = configAddresses.taskManager;
+  } else {
+    log_step('Deploying Task Manager');
+
+    const taskManagerReceipt = await deploy(TASK_MANAGER_CONTRACT, {
+      from: deployer,
+      log: true,
+      args: [generatedAddresses.filesystem],
+      deterministicDeployment: true,
+    });
+
+    generatedAddresses.taskManager = taskManagerReceipt.address;
   }
 
   //////////////////////////////////////////////////////////////////////////////
