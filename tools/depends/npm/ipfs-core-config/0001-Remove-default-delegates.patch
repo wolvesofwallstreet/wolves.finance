@@ -1,0 +1,38 @@
+From 8c54830283cdd3fddd12cf421dcb3c4589996920 Mon Sep 17 00:00:00 2001
+From: juztamau5 <juztamau5@gmail.com>
+Date: Thu, 4 Nov 2021 13:54:13 -0700
+Subject: [PATCH] Remove default delegates
+
+Fixes the error:
+
+  TypeError: Agent is not a constructor
+    at getLibp2pOptions (node_modules/ipfs-core/cjs/src/components/libp2p.js:124:47)
+    at Object.createLibp2p (node_modules/ipfs-core/cjs/src/components/libp2p.js:31:25)
+    at initRepo (node_modules/ipfs-core/cjs/src/components/storage.js:101:33)
+    at loadRepo (node_modules/ipfs-core/cjs/src/components/storage.js:71:10)
+    at Function.start (node_modules/ipfs-core/cjs/src/components/storage.js:46:39)
+    at Proxy.create (node_modules/ipfs-core/cjs/src/components/index.js:296:21)
+    at bootstrapIPFS (test/web3/test-ipfs.ts:21:18)
+    at Context.<anonymous> (test/web3/test-ipfs.ts:33:21)
+---
+ cjs/src/config.browser.js | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/cjs/src/config.browser.js b/cjs/src/config.browser.js
+index 780987c..83a6a64 100644
+--- a/cjs/src/config.browser.js
++++ b/cjs/src/config.browser.js
+@@ -9,10 +9,6 @@ var config_browser = () => ({
+     Gateway: '',
+     RPC: '',
+     Delegates: [
+-      '/dns4/node0.delegate.ipfs.io/tcp/443/https',
+-      '/dns4/node1.delegate.ipfs.io/tcp/443/https',
+-      '/dns4/node2.delegate.ipfs.io/tcp/443/https',
+-      '/dns4/node3.delegate.ipfs.io/tcp/443/https'
+     ]
+   },
+   Discovery: {
+-- 
+2.30.2
+

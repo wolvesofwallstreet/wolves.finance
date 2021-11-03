@@ -1,0 +1,48 @@
+From 6ec188474b3667e810af1ed4fea375a66dceb2f4 Mon Sep 17 00:00:00 2001
+From: juztamau5 <juztamau5@gmail.com>
+Date: Thu, 4 Nov 2021 14:12:18 -0700
+Subject: [PATCH] Fix error in Node
+
+Error was:
+
+  ReferenceError: crypto is not defined
+    at Hasher.encode (node_modules/multiformats/cjs/src/hashes/sha2-browser.js:7:56)
+    at Hasher.digest (node_modules/multiformats/cjs/src/hashes/hasher.js:16:35)
+    at Object.loadMfsRoot (node_modules/ipfs-core/cjs/src/components/files/utils/with-mfs-root.js:58:36)
+    at Object.toMfsPath (node_modules/ipfs-core/cjs/src/components/files/utils/to-mfs-path.js:17:16)
+    at mfsStat (node_modules/ipfs-core/cjs/src/components/files/stat.js:47:34)
+    at /home/garrett/Documents/wows/node_modules/ipfs-core/cjs/src/components/files/utils/create-lock.js:22:18
+    at Object.start (node_modules/ipfs-core/cjs/src/mfs-preload.js:42:21)
+    at async Promise.all (index 2)
+    at IPFS.start (node_modules/ipfs-core/cjs/src/components/start.js:15:5)
+    at Proxy.create (node_modules/ipfs-core/cjs/src/components/index.js:320:5)
+    at bootstrapIPFS (test/web3/test-ipfs.ts:21:18)
+    at Context.<anonymous> (test/web3/test-ipfs.ts:33:21)
+---
+ cjs/src/hashes/sha2-browser.js | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/cjs/src/hashes/sha2-browser.js b/cjs/src/hashes/sha2-browser.js
+index 4972a9a..d19369d 100644
+--- a/cjs/src/hashes/sha2-browser.js
++++ b/cjs/src/hashes/sha2-browser.js
+@@ -4,7 +4,15 @@ Object.defineProperty(exports, '__esModule', { value: true });
+ 
+ var hasher = require('./hasher.js');
+ 
+-const sha = name => async data => new Uint8Array(await crypto.subtle.digest(name, data));
++let webcrypto;
++
++if (typeof crypto !== 'undefined') {
++  webcrypto = crypto;
++} else {
++  webcrypto = require('crypto').webcrypto;
++}
++
++const sha = name => async data => new Uint8Array(await webcrypto.subtle.digest(name, data));
+ const sha256 = hasher.from({
+   name: 'sha2-256',
+   code: 18,
+-- 
+2.30.2
+

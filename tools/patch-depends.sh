@@ -61,3 +61,5 @@ function patch_package() {
 #
 patch_package "@openzeppelin/contracts" "0001-Make-ERC1155.uri-public-2576.patch"
 patch_package "hardhat-deploy" "0001-allow-to-in-execute.patch"
+patch_package "ipfs-core-config" "0001-Remove-default-delegates.patch"
+patch_package "multiformats" "0001-Fix-error-in-Node.patch"
