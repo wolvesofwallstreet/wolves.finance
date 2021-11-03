@@ -7,6 +7,6 @@
   "exclude_optimization": true,
   "exclude_dependencies": false,
   "filter_paths": "@openzeppelin,bytecode,depends",
-  "solc": "tools/bin/solc-0.7.6",
+  "solc": "tools/bin/solidity/solc-0.7.6",
   "solc_disable_warnings": true
 }

@@ -61,6 +61,14 @@ jobs:
             node_modules
           key: npm-install-${{ matrix.os }}-${{ matrix.node-version }}-${{ hashFiles('package.json', 'yarn.lock', 'tools/patch-depends.sh', 'tools/depends/npm/**') }}
 
+      - name: Restore native dependencies
+        id: restore-native
+        uses: actions/cache@v2
+        with:
+          path: |
+            tools/bin
+          key: restore-native-${{ hashFiles('tools/build-depends.sh', 'tools/depends/native/**') }}
+
       - name: Restore smart contract dependencies
         id: restore-contracts
         uses: actions/cache@v2
@@ -102,14 +110,6 @@ jobs:
             tools/repos/curve-contracts
           key: restore-curve-${{ hashFiles('tools/depends/chain/curve-contracts/**') }}
 
-      - name: Restore downloaded dependencies
-        id: restore-downloads
-        uses: actions/cache@v2
-        with:
-          path: |
-            tools/bin
-          key: restore-downloads-${{ hashFiles('tools/download-depends.sh') }}
-
       - name: yarn install
         if: steps.restore-node.outputs.cache-hit != 'true'
         run: yarn install
@@ -117,9 +117,13 @@ jobs:
       - name: yarn audit-ci
         run: yarn audit-ci
 
+      - name: Download native dependencies
+        if: steps.restore-native.outputs.cache-hit != 'true'
+        run: yarn depends:native
+
       - name: Build smart contract dependencies
         if: steps.restore-contracts.outputs.cache-hit != 'true'
-        run: yarn depends
+        run: yarn depends:chain
 
       - name: yarn compile
         run: yarn compile
