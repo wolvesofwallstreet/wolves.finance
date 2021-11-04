@@ -13,10 +13,10 @@ import './components/theme/button/wolve_button.css';
 import './components/theme/form/input/wolve_input.css';
 
 import React from 'react';
-import { Modal } from 'react-bootstrap';
+//import { Modal } from 'react-bootstrap';
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
 
-import Logo from './assets/logo.png';
+//import Logo from './assets/logo.png';
 import CFolioInvest from './components/CFolioInvest';
 import CFolioItemSfts from './components/CFolioItemSfts';
 import CFolioManager from './components/CFolioManager/CFolioManager';
@@ -86,7 +86,7 @@ class App extends React.Component<unknown, APP_STATE> {
             </StoreContainer>
           </BrowserRouter>
         </div>
-        {StoreClasses.store.chainId === 4711 && (
+        {/*StoreClasses.store.chainId === 137 && (
           <Modal show={true} backdrop="static" animation={false}>
             <Modal.Header>
               <h3 className="mb-0">
@@ -105,7 +105,7 @@ class App extends React.Component<unknown, APP_STATE> {
               Thank you for your patience!
             </Modal.Body>
           </Modal>
-        )}
+        )*/}
       </>
     );
   }

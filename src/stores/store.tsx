@@ -1392,7 +1392,10 @@ class Store {
           ris.rewardPerDuration = readUint256(cfiResult, readIndex++);
           for (let index = 0; index < sfts.length; ++index) {
             const sft = sfts[index];
-            if (slotId === 0) sft.rewardShare = sft.rewardEarned = [];
+            if (slotId === 0) {
+              sft.rewardShare = [];
+              sft.rewardEarned = [];
+            }
             sft.rewardShare.push(
               (this.fromWei(readUint256(cfiResult, readIndex++)) * 100) / total
             );
