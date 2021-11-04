@@ -13,8 +13,10 @@ import './components/theme/button/wolve_button.css';
 import './components/theme/form/input/wolve_input.css';
 
 import React from 'react';
+import { Modal } from 'react-bootstrap';
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
 
+import Logo from './assets/logo.png';
 import CFolioInvest from './components/CFolioInvest';
 import CFolioItemSfts from './components/CFolioItemSfts';
 import CFolioManager from './components/CFolioManager/CFolioManager';
@@ -54,35 +56,57 @@ class App extends React.Component<unknown, APP_STATE> {
 
   render(): JSX.Element {
     return (
-      <div className="App">
-        <BrowserRouter>
-          <StoreContainer>
-            <WolfToast />
-            <Route component={Header} />
-            <Switch>
-              <Route
-                path="/shop"
-                render={(props) => <Page3 {...props} display={'shop'} />}
-              />
-              <Route
-                path="/my"
-                render={(props) => <Page3 {...props} display={'my'} />}
-              />
-              <Route path="/detail" component={Page4} />
-              <Route path="/status" component={PageStatus} />
-              <Route path="/cfolio-sfts" component={CFolioItemSfts} />
-              {this.state.isSideChain && (
-                <Route path="/cfolio-invest" component={CFolioInvest} />
-              )}
-              {this.state.isSideChain && (
-                <Route path="/c_folio_manager" component={CFolioManager} />
-              )}
-              <Route component={Page1} />
-            </Switch>
-            <Footer />
-          </StoreContainer>
-        </BrowserRouter>
-      </div>
+      <>
+        <div className="App">
+          <BrowserRouter>
+            <StoreContainer>
+              <WolfToast />
+              <Route component={Header} />
+              <Switch>
+                <Route
+                  path="/shop"
+                  render={(props) => <Page3 {...props} display={'shop'} />}
+                />
+                <Route
+                  path="/my"
+                  render={(props) => <Page3 {...props} display={'my'} />}
+                />
+                <Route path="/detail" component={Page4} />
+                <Route path="/status" component={PageStatus} />
+                <Route path="/cfolio-sfts" component={CFolioItemSfts} />
+                {this.state.isSideChain && (
+                  <Route path="/cfolio-invest" component={CFolioInvest} />
+                )}
+                {this.state.isSideChain && (
+                  <Route path="/c_folio_manager" component={CFolioManager} />
+                )}
+                <Route component={Page1} />
+              </Switch>
+              <Footer />
+            </StoreContainer>
+          </BrowserRouter>
+        </div>
+        {StoreClasses.store.chainId === 137 && (
+          <Modal show={true} backdrop="static" animation={false}>
+            <Modal.Header>
+              <h3 className="mb-0">
+                <img alt="logo" src={Logo} width="28px" className="mr-1 mb-1" />
+                Maintenance
+              </h3>
+            </Modal.Header>
+            <Modal.Body>
+              We are updating the reward farm contracts for liquidity and stable
+              coin investments to allow multiple investment types in single,
+              self balancing reward farms in future.
+              <br />
+              Maintenance window is expected to close at 2021-11-04 12:00 UTC
+              <br />
+              <br />
+              Thank you for your patience!
+            </Modal.Body>
+          </Modal>
+        )}
+      </>
     );
   }
 }
