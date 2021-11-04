@@ -77,11 +77,6 @@ class CFolioInvest extends React.Component<PROPS, STATE> {
     };
     this._onAssetsState = this._onAssetsState.bind(this);
     this.sliderCB = this.sliderCB.bind(this);
-
-    const { location } = this.props;
-    const query = new URLSearchParams(location.search);
-    this.displayType = query.get('type') || 'lpInvestment';
-    this.toolTippLink = '?type=' + this.displayType;
   }
 
   setCurrentSlide(val: number) {
