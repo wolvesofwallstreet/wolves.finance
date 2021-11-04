@@ -86,7 +86,7 @@ class App extends React.Component<unknown, APP_STATE> {
             </StoreContainer>
           </BrowserRouter>
         </div>
-        {StoreClasses.store.chainId === 137 && (
+        {StoreClasses.store.chainId === 4711 && (
           <Modal show={true} backdrop="static" animation={false}>
             <Modal.Header>
               <h3 className="mb-0">
@@ -99,7 +99,7 @@ class App extends React.Component<unknown, APP_STATE> {
               coin investments to allow multiple investment types in single,
               self balancing reward farms in future.
               <br />
-              Maintenance window is expected to close at 2021-11-04 12:00 UTC
+              Maintenance window is expected to close at 2021-11-04 17:00 UTC
               <br />
               <br />
               Thank you for your patience!
