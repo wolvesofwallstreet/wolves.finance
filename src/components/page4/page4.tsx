@@ -690,17 +690,19 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                     {t('page.investment')}:{' '}
                     {sftChild.assets[assetIndex].toFixed(6)}{' '}
                     {cfolios[sftChild.levelId].token}{' '}
-                    <Link
-                      to={`/cfolio-invest?type=${
-                        cfolios[sftChild.levelId].type
-                      }&baseTokenId=${currentRender.tokenId?.toHexString()}&tokenId=${sftChild.tokenId.toHexString()}`}
-                    >
-                      <img
-                        style={{ marginBottom: '4px' }}
-                        alt="G"
-                        src={GoTo}
-                      ></img>
-                    </Link>
+                    {currentRender.sft.status === SFTS.UNLOCKED && (
+                      <Link
+                        to={`/cfolio-invest?type=${
+                          cfolios[sftChild.levelId].type
+                        }&baseTokenId=${currentRender.tokenId?.toHexString()}&tokenId=${sftChild.tokenId.toHexString()}`}
+                      >
+                        <img
+                          style={{ marginBottom: '4px' }}
+                          alt="G"
+                          src={GoTo}
+                        ></img>
+                      </Link>
+                    )}
                   </h3>
                 </>
               )}
