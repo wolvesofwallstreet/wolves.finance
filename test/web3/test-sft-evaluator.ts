@@ -267,6 +267,7 @@ describe('SFT evaluator', function () {
         // Alternate types, to fit in SFT minter's limit of 100 per type
         [cFolioItemType, cFolioItemType + 1][i % 2],
         MAX_UINT256,
+        0,
         [],
         options
       );

@@ -549,6 +549,7 @@ describe('SC NFTs', function () {
       marketingWallet.address, // Recipient
       cFolioItemType,
       wowsTokenIdWolf,
+      0,
       []
     );
     await chai.expect(tx).to.be.revertedWith('CFIHSC: Bois only');
@@ -579,6 +580,7 @@ describe('SC NFTs', function () {
       marketingWallet.address, // Recipient
       cFolioItemType,
       wowsTokenIdBoi,
+      0,
       [daiBalance, usdcBalance, usdtBalance, tusdBalance, 0],
       options
     );
@@ -796,6 +798,7 @@ describe('SC NFTs', function () {
     const tx = cfolioItemHandlerSCContract.withdraw(
       wowsTokenIdBoi,
       cfolioItemTokenId,
+      0,
       [1, 0, 0, 0, 0]
     );
     await chai.expect(tx).to.be.revertedWith('CFHI: Access denied');
@@ -868,6 +871,7 @@ describe('SC NFTs', function () {
     const tx = cfolioItemHandlerSCContract.withdraw(
       MAX_UINT256,
       cfolioItemTokenId,
+      0,
       [daiBalance.mul(10), 0, 0, 0]
     );
     await chai.expect(tx).to.be.reverted;
@@ -881,6 +885,7 @@ describe('SC NFTs', function () {
     const tx = cfolioItemHandlerSCContract.withdraw(
       MAX_UINT256,
       cfolioItemTokenId,
+      0,
       [100, 0, 0, 0, 100]
     );
     await chai.expect(tx).to.not.be.reverted;
@@ -932,6 +937,7 @@ describe('SC NFTs', function () {
       marketingWallet.address,
       MAX_UINT256,
       cfolioItemTokenId,
+      0,
       [100, 0, 0, 0, 0]
     );
     await chai.expect(tx).to.not.be.reverted;
@@ -974,6 +980,7 @@ describe('SC NFTs', function () {
     const tx = cfolioItemHandlerSCContract.withdraw(
       MAX_UINT256,
       cfolioItemTokenId,
+      0,
       [0, 0, 0, 0, 100]
     );
     await chai.expect(tx).to.not.be.reverted;
@@ -1025,6 +1032,7 @@ describe('SC NFTs', function () {
       marketingWallet.address,
       MAX_UINT256,
       cfolioItemTokenId,
+      0,
       [0, 0, 0, 0, 100]
     );
     await chai.expect(tx).to.not.be.reverted;
@@ -1206,6 +1214,7 @@ describe('SC NFTs', function () {
     const tx = cfolioItemHandlerSCContract.withdraw(
       wowsTokenIdBoi,
       cfolioItemTokenId,
+      0,
       [100, 0, 0, 0, 100]
     );
 
@@ -1256,6 +1265,7 @@ describe('SC NFTs', function () {
       marketingWallet.address,
       wowsTokenIdBoi,
       cfolioItemTokenId,
+      0,
       [100, 0, 0, 0, 0]
     );
 
@@ -1323,6 +1333,7 @@ describe('SC NFTs', function () {
     const tx = cfolioItemHandlerSCContract.withdraw(
       wowsTokenIdBoi,
       cfolioItemTokenIdTf,
+      0,
       [1, 0, 0, 0, 0]
     );
     await chai.expect(tx).to.be.revertedWith('CFHI: Access denied (B)');
@@ -1417,6 +1428,7 @@ describe('SC NFTs', function () {
     const tx = cfolioItemHandlerSCContract.withdraw(
       MAX_UINT256,
       cfolioItemTokenId,
+      0,
       [tokenAmounts[0], 0, 0, 0, tokenAmounts[4]]
     );
     await chai.expect(tx).to.not.be.reverted;

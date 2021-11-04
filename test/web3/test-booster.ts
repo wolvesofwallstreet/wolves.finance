@@ -51,13 +51,18 @@ function toWei(n: number, decimals = 18) {
   return ethers.utils.parseUnits(parsed, decimals);
 }
 
-type RewardInfo = {
+interface RewardInfoSlot {
   total?: ethers.BigNumber;
-  rewardDuration?: number;
   rewardPerDuration?: ethers.BigNumber;
   rewardShare?: ethers.BigNumber;
   rewardEarned?: ethers.BigNumber;
-};
+}
+
+interface RewardInfo {
+  rewardDuration?: number;
+  numSlots?: number;
+  slotInfo?: RewardInfoSlot[];
+}
 
 // Parse RewardInfo
 function parseRewardInfo(result: ethers.BigNumber[]): RewardInfo {
@@ -67,12 +72,16 @@ function parseRewardInfo(result: ethers.BigNumber[]): RewardInfo {
   const readUint256 = (s: string, i: number) =>
     ethers.BigNumber.from('0x' + s.substr(i * 64 + 2, 64));
 
-  ri.total = readUint256(result, readIndex++);
+  ri.slotCount = readUint256(result, readIndex++).toNumber(); // Expected 1
   ri.rewardDuration = readUint256(result, readIndex++).toNumber();
-  ri.rewardPerDuration = readUint256(result, readIndex++);
-  ri.rewardShare = readUint256(result, readIndex++);
-  ri.rewardEarned = readUint256(result, readIndex++);
-
+  ri.slotInfo = [
+    {
+      total: readUint256(result, readIndex++),
+      rewardPerDuration: readUint256(result, readIndex++),
+      rewardShare: readUint256(result, readIndex++),
+      rewardEarned: readUint256(result, readIndex++),
+    } as RewardInfoSlot,
+  ];
   return ri;
 }
 
@@ -310,6 +319,7 @@ describe('Booster rewards', function () {
       marketingWallet.address, // Recipient
       cFolioItemType,
       wowsTokenIdWolf,
+      0,
       [investBalance]
     );
     await chai.expect(tx).to.not.be.reverted;
@@ -329,11 +339,11 @@ describe('Booster rewards', function () {
     );
     // 50% prowess -> 5LP token share
     chai
-      .expect(rewardInfo.rewardShare)
+      .expect(rewardInfo.slotInfo[0].rewardShare)
       .to.be.equal(ethers.BigNumber.from('5000000000000000000'));
     // ~13 WOWS earned in 24 hours
     chai
-      .expect(rewardInfo.rewardEarned)
+      .expect(rewardInfo.slotInfo[0].rewardEarned)
       .to.be.within(
         ethers.BigNumber.from('13736000000000000000'),
         ethers.BigNumber.from('13737000000000000000')
@@ -392,7 +402,7 @@ describe('Booster rewards', function () {
     );
     // ~178 WOWS earned in 15 days hours (end of farm duration)
     chai
-      .expect(rewardInfo.rewardEarned)
+      .expect(rewardInfo.slotInfo[0].rewardEarned)
       .to.be.within(
         ethers.BigNumber.from('178570000000000000000'),
         ethers.BigNumber.from('178580000000000000000')
