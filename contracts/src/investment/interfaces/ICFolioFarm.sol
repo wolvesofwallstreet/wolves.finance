@@ -8,12 +8,14 @@
 
 pragma solidity 0.7.6;
 
+import './IFarm.sol';
+
 /**
  * @title ICFolioFarm
  *
  * @dev ICFolioFarm is the business logic interface to c-folio farms.
  */
-interface ICFolioFarm {
+interface ICFolioFarm is IFarm {
   /**
    * @dev Return number of slots
    */
@@ -22,7 +24,7 @@ interface ICFolioFarm {
   /**
    * @dev Return total invested balance
    */
-  function totalSupply() external view returns (uint256);
+  function totalSupply(uint256 slotId) external view returns (uint256);
 
   /**
    * @dev Return invested balance of account
@@ -38,9 +40,20 @@ interface ICFolioFarm {
   function balancesOf(address account) external view returns (uint256[] memory);
 
   /**
-   * @dev Return total, balances[account], rewardDuration, rewardForDuration, earned[account]
+   * @dev Return absolute amount of rewards during duration
    */
-  function getUIData(address account) external view returns (uint256[5] memory);
+  function getRewardsForDuration(uint256 slotId)
+    external
+    view
+    returns (uint256);
+
+  /**
+   * @dev Return share and earned amounts
+   */
+  function getShareAndEarned(address account, uint256 slotId)
+    external
+    view
+    returns (uint256 share, uint256 earned);
 
   /**
    * @dev Increase amount of non-rewarded asset
@@ -70,6 +83,16 @@ interface ICFolioFarm {
   ) external;
 
   /**
+   * @dev Migrate amount of shares and rewards
+   */
+  function migrateShares(
+    address account,
+    uint256 amount,
+    uint256 slotId,
+    uint256 reward
+  ) external;
+
+  /**
    * @dev Remove amount of previous added shares, rewards will not be claimed
    */
   function removeShares(
@@ -80,8 +103,13 @@ interface ICFolioFarm {
 
   /**
    * @dev Claim rewards harvested during reward time
+   * @notice Empty slotIds get all rewards
    */
-  function getReward(address account, address rewardRecipient) external;
+  function getRewards(
+    address account,
+    address rewardRecipient,
+    uint256[] memory slotIds
+  ) external;
 }
 
 /**

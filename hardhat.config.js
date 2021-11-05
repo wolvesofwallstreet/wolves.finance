@@ -197,13 +197,13 @@ const config = {
       accounts: TESTNET_ACCOUNTS,
     },
     mumbai: {
-      tags: ['sidechain', 'needYearn'],
+      tags: ['sidechain', 'needYearn', 'polygon'],
       url: 'https://matic-mumbai.chainstacklabs.com',
       accounts: TESTNET_ACCOUNTS,
       gasPrice: 1500000000,
     },
     polygon: {
-      tags: ['sidechain', 'curve3pool'],
+      tags: ['sidechain', 'curve3pool', 'polygon'],
       url: 'https://polygon-rpc.com',
       accounts: TESTNET_ACCOUNTS,
       gasPrice: 10000000000,

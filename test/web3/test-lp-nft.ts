@@ -446,6 +446,7 @@ describe('LP NFTs', function () {
       marketingWallet.address, // Recipient
       cFolioItemType,
       wowsTokenIdBoi,
+      0,
       []
     );
     await chai.expect(tx).to.be.revertedWith('CFIHLP: Wolves only');
@@ -471,6 +472,7 @@ describe('LP NFTs', function () {
       marketingWallet.address, // Recipient
       cFolioItemType,
       wowsTokenIdWolf,
+      0,
       [lpBalance]
     );
 
@@ -663,6 +665,7 @@ describe('LP NFTs', function () {
     const tx = cfolioItemHandlerLPContract.withdraw(
       MAX_UINT256,
       cfolioItemTokenId,
+      0,
       [lpBalance.div(2)]
     );
     await chai.expect(tx).to.be.revertedWith('CFHI: Access denied');
@@ -725,6 +728,7 @@ describe('LP NFTs', function () {
     const tx = cfolioItemHandlerLPContract.withdraw(
       MAX_UINT256,
       cfolioItemTokenId,
+      0,
       [lpBalance.add(1)]
     );
     await chai.expect(tx).to.be.revertedWith('SafeMath#sub: UNDERFLOW');
@@ -738,6 +742,7 @@ describe('LP NFTs', function () {
     const tx = cfolioItemHandlerLPContract.withdraw(
       MAX_UINT256,
       cfolioItemTokenId,
+      0,
       [lpBalance.div(2)]
     );
     await chai.expect(tx).to.not.be.reverted;
@@ -789,6 +794,7 @@ describe('LP NFTs', function () {
       marketingWallet.address,
       MAX_UINT256,
       cfolioItemTokenId,
+      0,
       [lpBalance.div(2)]
     );
     await chai.expect(tx).to.not.be.reverted;
@@ -962,6 +968,7 @@ describe('LP NFTs', function () {
     const tx = cfolioItemHandlerLPContract.withdraw(
       wowsTokenIdWolf,
       cfolioItemTokenId,
+      0,
       [lpBalance.div(2)]
     );
     await chai.expect(tx).to.not.be.reverted;
@@ -1013,6 +1020,7 @@ describe('LP NFTs', function () {
       marketingWallet.address,
       wowsTokenIdWolf,
       cfolioItemTokenId,
+      0,
       [lpBalance.div(2)]
     );
     await chai.expect(tx).to.not.be.reverted;
@@ -1081,6 +1089,7 @@ describe('LP NFTs', function () {
     const tx = cfolioItemHandlerLPContract.withdraw(
       wowsTokenIdWolf,
       cfolioItemTokenIdTf,
+      0,
       [lpBalance.div(2)]
     );
     await chai.expect(tx).to.be.revertedWith('CFHI: Access denied (B)');
@@ -1159,6 +1168,7 @@ describe('LP NFTs', function () {
     const tx = cfolioItemHandlerLPContract.withdraw(
       MAX_UINT256,
       cfolioItemTokenId,
+      0,
       [lpBalance]
     );
     await chai.expect(tx).to.not.be.reverted;

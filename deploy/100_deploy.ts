@@ -45,6 +45,7 @@ const SFT_MINTER_PROXY_CONTRACT = 'WOWSSftMinterProxy';
 const TRADE_FLOOR_PROXY_CONTRACT = 'TradeFloorProxy';
 const CFOLIO_FARM_LP_CONTRACT = 'CFolioFarmLP';
 const CFOLIO_FARM_SC_CONTRACT = 'CFolioFarmSC';
+const CFOLIO_FARM_FOR_TEST_CONTRACT = 'CFolioFarmForTest';
 const CFOLIO_ITEM_HANDLER_LP_PROXY_CONTRACT = 'CFolioItemHandlerLPProxy';
 const CFOLIO_ITEM_HANDLER_SC_PROXY_CONTRACT = 'CFolioItemHandlerSCProxy';
 const POLYGON_ROOT_TUNNEL_PROXY_CONTRACT = 'PolygonRootTunnelProxy';
@@ -78,6 +79,9 @@ const ADDRESS_BOOK_STAKE_FARM_KEY = ethers.utils.formatBytes32String(
 );
 const ADDRESS_BOOK_UNIV2_PAIR_KEY =
   ethers.utils.formatBytes32String('UNISWAP_V2_PAIR');
+const ADDRESS_BOOK_UNIV2_PAIR_NATIVE_KEY = ethers.utils.formatBytes32String(
+  'UNISWAP_V2_PAIR_NATIVE'
+);
 const ADDRESS_BOOK_WOWS_BOOSTER_PROXY_KEY =
   ethers.utils.formatBytes32String('WOWS_BOOSTER_PROXY');
 const ADDRESS_BOOK_SFT_EVALUATOR_PROXY_KEY = ethers.utils.formatBytes32String(
@@ -328,6 +332,20 @@ const func = async function (hardhat_re) {
     ADDRESS_BOOK_UNIV2_PAIR_KEY,
     generatedAddresses.uniV2Pair
   );
+
+  if (hardhat_re.network.tags.sidechain || hardhat_re.network.tags.test) {
+    generatedAddresses.uniV2PairNative = !configAddresses.uniV2PairNative
+      ? generatedAddresses.uniV2Pair
+      : configAddresses.uniV2PairNative;
+
+    await setRegistryKey(
+      deployer,
+      execute,
+      ADDRESS_REGISTRY_INSTANCE,
+      ADDRESS_BOOK_UNIV2_PAIR_NATIVE_KEY,
+      generatedAddresses.uniV2PairNative
+    );
+  }
 
   //////////////////////////////////////////////////////////////////////////////
   // Booster
@@ -1070,6 +1088,40 @@ const func = async function (hardhat_re) {
 
       generatedAddresses.cfolioItemHandlerSCProxy =
         cfolioItemHandlerSCProxyReceipt.address;
+    }
+  }
+
+  if (hardhat_re.network.tags.test) {
+    //////////////////////////////////////////////////////////////////////////////
+    //
+    // Deploy Dummy Farm for reward testing
+    //
+    //////////////////////////////////////////////////////////////////////////////
+
+    if (configAddresses.cfolioFarmForTest) {
+      log_step(`Using CFolioFarmForTest: ${configAddresses.cfolioFarmForTest}`);
+      generatedAddresses.cfolioFarmForTest = configAddresses.cfolioFarmForTest;
+    } else {
+      log_step('Deploying CFolioFarmForTest');
+
+      const CFOLIO_FARM_FOR_TEST_NAME = 'CFolio Farm Test';
+
+      const cfolioFarmForTestReceipt = await deploy(
+        CFOLIO_FARM_FOR_TEST_CONTRACT,
+        {
+          contract: CFOLIO_FARM_CONTRACT,
+          from: deployer,
+          args: [
+            marketingWallet,
+            CFOLIO_FARM_FOR_TEST_NAME,
+            generatedAddresses.controller,
+          ],
+          log: true,
+          deterministicDeployment: true,
+        }
+      );
+
+      generatedAddresses.cfolioFarmForTest = cfolioFarmForTestReceipt.address;
     }
   }
 

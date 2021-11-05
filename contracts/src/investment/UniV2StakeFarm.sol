@@ -279,7 +279,7 @@ contract UniV2StakeFarm is
 
   // We don't have any slot handling
   // solhint-disable-next-line no-empty-blocks
-  function weightSlotId(uint256 slotId, uint256 weight) external override {}
+  function weightSlot(uint256 slotId, uint256 weight) external override {}
 
   // Added to support recovering LP Rewards from other systems to be distributed to holders
   function recoverERC20(address tokenAddress, uint256 tokenAmount)

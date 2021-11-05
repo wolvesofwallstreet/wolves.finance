@@ -22,6 +22,10 @@ import '../utils/TokenIds.sol';
 import './interfaces/ICFolioItemHandler.sol';
 import './interfaces/ISFTEvaluator.sol';
 
+interface ICFolioFarmOld is ICFolioFarm {
+  function earned(address account) external view returns (uint256);
+}
+
 /**
  * @dev CFolioItemHandlerFarm manages CFolioItems, minted in the SFT contract.
  *
@@ -244,6 +248,7 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
     address from,
     uint256 baseTokenId,
     uint256 tokenId,
+    uint256 slotId,
     uint256[] calldata amounts
   ) external override {
     // allow fast lane from sftMinter
@@ -259,7 +264,7 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
     );
 
     // Call the implementation
-    _deposit(itemCFolio, from, amounts);
+    _deposit(itemCFolio, from, slotId, amounts);
 
     // Update rewards if CFI is inside cfolio
     if (baseCFolio != address(0))
@@ -278,6 +283,7 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
   function withdraw(
     uint256 baseTokenId,
     uint256 tokenId,
+    uint256 slotId,
     uint256[] calldata amounts
   ) external override {
     // Validate parameters
@@ -288,7 +294,7 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
     );
 
     // Call the implementation
-    _withdraw(itemCFolio, amounts);
+    _withdraw(itemCFolio, slotId, amounts);
 
     // Update rewards if CFI is inside cfolio
     if (baseCFolio != address(0))
@@ -334,7 +340,8 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
       'CFHI: Forbidden'
     );
 
-    _cfolioFarm.getReward(cfolio, recipient);
+    // Get rewards from all slots
+    _cfolioFarm.getRewards(cfolio, recipient, new uint256[](0));
   }
 
   /**
@@ -346,29 +353,23 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
     override
     returns (bytes memory result)
   {
-    uint256[5] memory uiData;
+    uint256 slotCount = _cfolioFarm.slotCount();
+    result = abi.encodePacked(_cfolioFarm.rewardsDuration(), slotCount);
 
-    // Get basic data once
-    uiData = _cfolioFarm.getUIData(address(0));
-
-    // total / rewardDuration / rewardPerDuration
-    result = abi.encodePacked(uiData[0], uiData[2], uiData[3]);
-
-    uint256 length = tokenIds.length;
-    if (length > 0) {
+    for (uint256 slotId = 0; slotId < slotCount; ++slotId) {
+      result = abi.encodePacked(
+        result,
+        _cfolioFarm.totalSupply(slotId),
+        _cfolioFarm.getRewardsForDuration(slotId)
+      );
       // Iterate through all tokenIds and collect reward info
-      for (uint256 i = 0; i < length; ++i) {
-        uint256 sftTokenId = tokenIds[i].toSftTokenId();
-        uint256 share = 0;
-        uint256 earned = 0;
-        if (sftTokenId.isBaseCard()) {
-          address cfolio = _sftHolder.tokenIdToAddress(sftTokenId);
-          if (cfolio != address(0)) {
-            uiData = _cfolioFarm.getUIData(cfolio);
-            share = uiData[1];
-            earned = uiData[4];
-          }
-        }
+      for (uint256 i = 0; i < tokenIds.length; ++i) {
+        (uint256 share, uint256 earned) = tokenIds[i].isBaseCard()
+          ? _cfolioFarm.getShareAndEarned(
+            _sftHolder.tokenIdToAddress(tokenIds[i].toSftTokenId()),
+            slotId
+          )
+          : (0, 0);
         result = abi.encodePacked(result, share, earned);
       }
     }
@@ -384,15 +385,18 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
   function _deposit(
     address itemCFolio,
     address payer,
+    uint256 slotId,
     uint256[] calldata amounts
   ) internal virtual;
 
   /**
    * @dev Withdraw amounts
    */
-  function _withdraw(address itemCFolio, uint256[] calldata amounts)
-    internal
-    virtual;
+  function _withdraw(
+    address itemCFolio,
+    uint256 slotId,
+    uint256[] calldata amounts
+  ) internal virtual;
 
   /**
    * @dev Verify if target base SFT is allowed
@@ -416,6 +420,33 @@ abstract contract CFolioItemHandlerFarm is ICFolioItemHandler, Context {
     //
     // slither-disable-next-line suicidal
     selfdestruct(payable(_admin));
+  }
+
+  /**
+   * @dev Migrate set of addresses from an old Farm into the current one
+   */
+  function migrateFromFarm(
+    ICFolioFarmOld from,
+    uint256 slotIdFrom,
+    uint256 slotIdTo,
+    address[] memory sfts
+  ) external onlyAdmin {
+    for (uint256 i = 0; i < sfts.length; ++i) {
+      uint256 tokenId = _sftHolder.addressToTokenId(sfts[i]);
+      require(tokenId != uint256(-1), 'CFIH: No SFT');
+
+      uint256 amount = from.balanceOf(sfts[i], slotIdFrom);
+      if (tokenId.isBaseCard()) {
+        _cfolioFarm.migrateShares(
+          sfts[i],
+          amount,
+          slotIdTo,
+          from.earned(sfts[i])
+        );
+      } else if (amount > 0) {
+        _cfolioFarm.addAssets(sfts[i], amount, slotIdTo);
+      }
+    }
   }
 
   //////////////////////////////////////////////////////////////////////////////

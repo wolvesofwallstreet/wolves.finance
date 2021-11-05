@@ -52,7 +52,7 @@ function Stable({
   const [balances] = useState(StoreClasses.store.getAssets().balances);
   const [modal, showModal] = useState(false);
 
-  const currencies = StoreClasses.store.getStableCurrencies();
+  const currencies = StoreClasses.store.getStableCurrencies()[0];
 
   const handleBuy = () => {
     if (!beforeBuy(handleBuy)) return;

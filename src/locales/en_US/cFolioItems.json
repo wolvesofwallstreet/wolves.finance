@@ -1,10 +1,10 @@
 [
   {
     "type": "lpInvestment",
-    "token": "WOWS/ETH LP",
-    "title": " WELCOME TO THE WOWS/ETH STAKE I-NFTs",
-    "shortDescription": "UNI-V2 WOWS/ETH STAKE I-NFTs",
-    "description": "This \"STAKE I-NFT\" allows to stake WOWS/ETH on the tradefloor with the rest of the pack. You can sell this investment NFT with or without its added value at any point currently on any third party platform, and on ours when this is launched.",
+    "token": "WOWS/ETH",
+    "title": " WELCOME TO THE WOWS LIQUIDITY TOKEN I-NFTs",
+    "shortDescription": "UNI-V2 LIQUIDITY TOKEN I-NFTs",
+    "description": "This I-NFT allows to stake WOWS/ETH on the tradefloor with the rest of the pack. You can sell this investment NFT with or without its added value at any point currently on any third party platform, and on ours when this is launched.",
     "constraints": "wolves",
     "cards": [
       {

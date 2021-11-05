@@ -187,11 +187,11 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
                 disabled: type === 'bois',
               },
               {
-                id: t('header.buyYearn'),
+                id: t('header.buyStable'),
                 to: '/cfolio-sfts?type=stableInvestment',
               },
               {
-                id: t('header.yearnInvest'),
+                id: t('header.stableInvest'),
                 to: '/cfolio-invest?type=stableInvestment',
               },
             ],

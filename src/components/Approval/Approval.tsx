@@ -77,7 +77,11 @@ function Approval({ hideCB, show, t }: PROPS): JSX.Element {
     };
   }, []);
 
-  const balances = StoreClasses.store.getAssets().balances;
+  const balances = Object.fromEntries(
+    Object.entries(StoreClasses.store.getAssets().balances).filter(
+      ([_, val]) => val.address !== undefined
+    )
+  );
 
   const revoke = (key: string) => {
     const payload = {

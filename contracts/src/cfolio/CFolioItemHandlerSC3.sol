@@ -78,6 +78,7 @@ contract CFolioItemHandlerSC3 is CFolioItemHandlerFarm {
   function _deposit(
     address itemCFolio,
     address payer,
+    uint256, /*slotId*/
     uint256[] calldata amounts
   ) internal override {
     // Validate input
@@ -151,10 +152,11 @@ contract CFolioItemHandlerSC3 is CFolioItemHandlerFarm {
    *     the array is the minimum amount of stablecoin tokens that must be
    *     withdrawn.
    */
-  function _withdraw(address itemCFolio, uint256[] calldata amounts)
-    internal
-    override
-  {
+  function _withdraw(
+    address itemCFolio,
+    uint256, /*slotId*/
+    uint256[] calldata amounts
+  ) internal override {
     // Validate input
     require(amounts.length == 4, 'CFIHSC: Amount length invalid');
 

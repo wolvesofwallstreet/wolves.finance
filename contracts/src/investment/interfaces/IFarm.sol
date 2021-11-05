@@ -51,5 +51,5 @@ interface IFarm {
   /**
    * @dev Set the weight of investment token relative to 0
    */
-  function weightSlotId(uint256 slotId, uint256 weight) external;
+  function weightSlot(uint256 slotId, uint256 weight) external;
 }

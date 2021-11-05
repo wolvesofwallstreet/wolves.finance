@@ -17,8 +17,10 @@ interface IWOWSSftMinter {
    *
    * Approval of WOWS token required before the call.
    *
+   * @param recipient The recipient address of the CFI, must be msg.sender for external calls
    * @param cfolioItemType The item type of the SFT
    * @param sftTokenId If <> -1 recipient is the SFT c-folio / handler must be called
+   * @param investSlotId Id of investment slot in Farm
    * @param investAmounts Arguments needed for the handler (in general investments).
    * Investments may be zero if the user is just buying an SFT.
    */
@@ -26,6 +28,7 @@ interface IWOWSSftMinter {
     address recipient,
     uint256 cfolioItemType,
     uint256 sftTokenId,
+    uint256 investSlotId,
     uint256[] calldata investAmounts
   ) external returns (uint256 tokenId);
 }

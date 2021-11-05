@@ -11,8 +11,9 @@ import { BigNumber, ethers } from 'ethers';
 import React, { Component } from 'react';
 import { Modal } from 'react-bootstrap';
 import { TFunction, withTranslation } from 'react-i18next';
-import { RouteComponentProps } from 'react-router-dom';
+import { Link, RouteComponentProps } from 'react-router-dom';
 
+import GoTo from '../../assets/goto.svg';
 import Logo from '../../assets/wolves-token_99.png';
 import {
   ASSETS_STATE,
@@ -391,11 +392,13 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
 
   _onClaimBooster(): void {
     const { currentIndex, renderList } = this.state;
+    const canRelock =
+      (renderList[currentIndex].sft?.boosterRewards.secsLeft ?? 0) > 0;
     const payload: Payload = {
       type: SFT_CLAIM_BOOSTER,
       content: {
         id: renderList[currentIndex].sft?.tokenId,
-        time: this.state.boosterRelock,
+        time: canRelock ? this.state.boosterRelock : 0,
       },
     };
     this.setState({ txPending: true });
@@ -549,7 +552,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
 
     const assetIndex =
       currentLevel?.type === 'bois' || currentLevel?.type === 'stableInvestment'
-        ? StoreClasses.store.getStableCurrencies().length - 1
+        ? StoreClasses.store.getStableCurrencies()[0].length - 1
         : 0;
 
     let price,
@@ -559,8 +562,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       autoUpgradeText,
       apr,
       apy,
-      investment,
-      share;
+      investment;
     if (currentRender?.cfi && currentCard) {
       quantity = (currentCard as CFOLIO_ITEM).maxMintable;
       investment =
@@ -598,18 +600,18 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         const rewardIndex = currentLevel.type === 'wolves' ? 0 : 1;
         const rewardInfo =
           StoreClasses.store.getAssets().rewardInfo[rewardIndex];
-        if (rewardInfo.apr) {
-          const aprNum = (rewardInfo.apr * profitReward) / 100;
+        if (rewardInfo.slotInfo.length > 0) {
+          const maxSlot = rewardInfo.slotInfo.reduce((p, v) => (p > v ? p : v));
+          const aprNum = (maxSlot.apr * profitReward) / 100;
           apr = aprNum.toFixed(2);
           apy = StoreClasses.store.aprToApy(aprNum);
-          share = currentRender.sft?.rewardShare.toFixed(2);
         }
       }
     }
 
     const claimableAmount = currentRender?.sft
-      ? currentRender?.sft.rewardEarned +
-        currentRender?.sft.boosterRewards.pending
+      ? currentRender.sft.rewardEarned.reduce((p, c) => p + c, 0) +
+        currentRender.sft.boosterRewards.pending
       : 0;
     const claimText =
       currentRender?.sft && claimableAmount > 0
@@ -682,13 +684,25 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                     {cfolios[sftChild.levelId].cards[sftChild.cardId].name}
                   </h3>
                   <h3>
-                    {t('page.tokenId')}:{' '}
-                    {sftChild.tokenId.mask(128).toHexString()}
+                    {t('page.tokenId')}: {sftChild.tokenId.toHexString()}
                   </h3>
                   <h3>
                     {t('page.investment')}:{' '}
                     {sftChild.assets[assetIndex].toFixed(6)}{' '}
-                    {cfolios[sftChild.levelId].token}
+                    {cfolios[sftChild.levelId].token}{' '}
+                    {currentRender.sft.status === SFTS.UNLOCKED && (
+                      <Link
+                        to={`/cfolio-invest?type=${
+                          cfolios[sftChild.levelId].type
+                        }&baseTokenId=${currentRender.tokenId?.toHexString()}&tokenId=${sftChild.tokenId.toHexString()}`}
+                      >
+                        <img
+                          style={{ marginBottom: '4px' }}
+                          alt="G"
+                          src={GoTo}
+                        ></img>
+                      </Link>
+                    )}
                   </h3>
                 </>
               )}
@@ -745,6 +759,10 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       boosterPeriod = 'No period started';
     }
 
+    const rewardEarned = currentRender?.sft
+      ? currentRender.sft.rewardEarned.reduce((p, c) => p + c, 0)
+      : 0;
+
     if (modalOpen && currentRender?.sft) {
       if (currentRender.sft.rewardEarned) {
         let lockRewards;
@@ -757,7 +775,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
           ? { l: t('page4.txPending'), d: true }
           : {
               l: t(lockRewards ? 'page4.lockWows' : 'page4.claim', {
-                amount: currentRender.sft.rewardEarned.toFixed(6),
+                amount: rewardEarned.toFixed(6),
               }),
               d: false,
             };
@@ -961,13 +979,6 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                           </h3>
                         </li>
                       )}
-                      {share && (
-                        <li>
-                          <h3 className="no-margin">
-                            {t('page4.share', { share })}
-                          </h3>
-                        </li>
-                      )}
                       {autoUpgrade && (
                         <li>
                           {typeof autoUpgrade !== 'number' ? (
@@ -1086,7 +1097,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                     </>
                   )}
                 </span>
-                {currentRender?.sft && currentRender.sft.rewardEarned > 0 && (
+                {currentRender?.sft && rewardEarned > 0 && (
                   <>
                     <hr />
                     <span className="tk-vincente-bold font-22 d-block w-100 text-center">

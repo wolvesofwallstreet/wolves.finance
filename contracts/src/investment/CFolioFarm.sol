@@ -16,14 +16,13 @@ import '../utils/ERC20Recovery.sol';
 
 import './interfaces/ICFolioFarm.sol';
 import './interfaces/IController.sol';
-import './interfaces/IFarm.sol';
 
 /**
  * @notice Farm is owned by a CFolio contract.
  *
  * All state modifing calls are only allowed from this owner.
  */
-contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
+contract CFolioFarm is ICFolioFarm, Ownable, ERC20Recovery {
   using SafeMath for uint256;
   using SafeERC20 for IERC20;
 
@@ -31,23 +30,25 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
   // State
   //////////////////////////////////////////////////////////////////////////////
 
-  uint256 public override periodFinish = 0;
-  uint256 public rewardRate = 0;
-  uint256 public override rewardsDuration = 14 days;
-  uint256 public lastUpdateTime;
-  uint256 public rewardPerTokenStored;
-  uint256 private availableRewards;
-
-  mapping(address => uint256) public userRewardPerTokenPaid;
-  mapping(address => uint256) public rewards;
-
   // Unique name of this farm instance, used in controller
   string private _farmName;
 
-  uint256[] private _totalSupplys;
-  uint256[] public slotWeights;
+  uint256 public override periodFinish = 0;
+  uint256 public override rewardsDuration = 14 days;
+  uint256 public availableRewards;
+  uint256 public rewardRate;
 
-  mapping(address => mapping(uint256 => uint256)) private _balances;
+  struct Slot {
+    uint256 rewardPerTokenStored;
+    uint256 totalSupply;
+    uint256 rewardRate;
+    uint256 weight;
+    uint256 lastUpdateTime;
+    mapping(address => uint256) userRewardPerTokenPaid;
+    mapping(address => uint256) rewards;
+    mapping(address => uint256) balances;
+  }
+  Slot[] public slots;
 
   // The address of the controller
   IController public override controller;
@@ -98,14 +99,12 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
   }
 
   modifier updateReward(address account) {
-    rewardPerTokenStored = rewardPerToken();
-    lastUpdateTime = lastTimeRewardApplicable();
+    _updateReward(account);
+    _;
+  }
 
-    if (account != address(0)) {
-      rewards[account] = earned(account);
-      userRewardPerTokenPaid[account] = rewardPerTokenStored;
-    }
-
+  modifier verifySlotId(uint256 slotId) {
+    require(slotId < slots.length, 'CFolioFarm: Invalid slotId');
     _;
   }
 
@@ -128,9 +127,8 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
     // Initialize state
     _farmName = _name;
     controller = IController(_controller);
-    // TotalSupply for slot 0
-    _totalSupplys.push(0);
-    slotWeights.push(1E18);
+
+    _newSlot(1E18);
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -141,8 +139,13 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
     return _farmName;
   }
 
-  function totalSupply() external view override returns (uint256) {
-    return _totalSupply();
+  function totalSupply(uint256 slotId)
+    external
+    view
+    override
+    returns (uint256)
+  {
+    return slots[slotId].totalSupply;
   }
 
   function balanceOf(address account, uint256 slotId)
@@ -151,7 +154,7 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
     override
     returns (uint256)
   {
-    return _balances[account][slotId];
+    return slots[slotId].balances[account];
   }
 
   function balancesOf(address account)
@@ -160,10 +163,10 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
     override
     returns (uint256[] memory result)
   {
-    uint256 _slotCount = slotWeights.length;
+    uint256 _slotCount = slots.length;
     result = new uint256[](_slotCount);
     for (uint256 slotId = 0; slotId < _slotCount; ++slotId)
-      result[slotId] = _balances[account][slotId];
+      result[slotId] = slots[slotId].balances[account];
   }
 
   function lastTimeRewardApplicable() public view returns (uint256) {
@@ -171,165 +174,219 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
     return block.timestamp < periodFinish ? block.timestamp : periodFinish;
   }
 
-  function rewardPerToken() public view returns (uint256) {
-    uint256 ts = _totalSupply();
+  function rewardPerToken(uint256 slotId) public view returns (uint256) {
+    Slot storage slot = slots[slotId];
+    uint256 ts = slot.totalSupply;
     if (ts == 0) {
-      return rewardPerTokenStored;
+      return slot.rewardPerTokenStored;
     }
 
     return
-      rewardPerTokenStored.add(
+      slot.rewardPerTokenStored.add(
         lastTimeRewardApplicable()
-          .sub(lastUpdateTime)
-          .mul(rewardRate)
+          .sub(slot.lastUpdateTime)
+          .mul(slot.rewardRate)
           .mul(1e18)
           .div(ts)
       );
   }
 
-  function earned(address account) public view returns (uint256) {
+  function earned(address account, uint256 slotId)
+    public
+    view
+    returns (uint256)
+  {
+    Slot storage slot = slots[slotId];
     return
-      _balance(account)
-        .mul(rewardPerToken().sub(userRewardPerTokenPaid[account]))
+      slot
+        .balances[account]
+        .mul(rewardPerToken(slotId).sub(slot.userRewardPerTokenPaid[account]))
         .div(1e18)
-        .add(rewards[account]);
+        .add(slot.rewards[account]);
   }
 
-  function getRewardForDuration() external view returns (uint256) {
-    return rewardRate.mul(rewardsDuration);
-  }
-
-  function getUIData(address account)
+  function getRewardsForDuration(uint256 slotId)
     external
     view
     override
-    returns (uint256[5] memory)
+    returns (uint256)
   {
-    uint256[5] memory result = [
-      _totalSupply(),
-      _balance(account),
-      rewardsDuration,
-      rewardRate.mul(rewardsDuration),
-      earned(account)
-    ];
-    return result;
+    return slots[slotId].rewardRate.mul(rewardsDuration);
   }
 
   function slotCount() external view override returns (uint256) {
-    return slotWeights.length;
+    return slots.length;
+  }
+
+  function getShareAndEarned(address account, uint256 slotId)
+    external
+    view
+    override
+    returns (uint256 share_, uint256 earned_)
+  {
+    share_ = slots[slotId].balances[account];
+    earned_ = earned(account, slotId);
   }
 
   //////////////////////////////////////////////////////////////////////////////
   // Mutators
   //////////////////////////////////////////////////////////////////////////////
 
+  /**
+   * @dev See {ICFolioFarm-addAsset}
+   */
   function addAssets(
     address account,
     uint256 amount,
     uint256 slotId
-  ) external override onlyOwner {
+  ) external override onlyOwner verifySlotId(slotId) {
     // Validate parameters
     require(amount > 0, 'CFolioFarm: Cannot add 0');
     require(!controller.paused(), 'CFolioFarm: Controller paused');
 
+    Slot storage slot = slots[slotId];
     // Update state
-    _balances[account][slotId] = _balances[account][slotId].add(amount);
+    slot.balances[account] = slot.balances[account].add(amount);
 
     // Dispatch event
-    emit AssetAdded(account, amount, _balances[account][slotId], slotId);
+    emit AssetAdded(account, amount, slot.balances[account], slotId);
   }
 
+  /**
+   * @dev See {ICFolioFarm-removeAsset}
+   */
   function removeAssets(
     address account,
     uint256 amount,
     uint256 slotId
-  ) external override onlyOwner {
+  ) external override onlyOwner verifySlotId(slotId) {
     // Validate parameters
     require(amount > 0, 'CFolioFarm: Cannot remove 0');
+    require(slotId < slots.length, 'CFolioFarm: Invalid slotId');
 
+    Slot storage slot = slots[slotId];
     // Update state
-    _balances[account][slotId] = _balances[account][slotId].sub(amount);
+    slot.balances[account] = slot.balances[account].sub(amount);
 
     // Dispatch event
-    emit AssetRemoved(account, amount, _balances[account][slotId], slotId);
+    emit AssetRemoved(account, amount, slot.balances[account], slotId);
   }
 
+  /**
+   * @dev See {ICFolioFarm-addShares}
+   */
   function addShares(
     address account,
     uint256 amount,
     uint256 slotId
-  ) external override onlyOwner updateReward(account) {
+  ) external override onlyOwner verifySlotId(slotId) updateReward(account) {
     // Validate parameters
     require(amount > 0, 'CFolioFarm: Cannot add 0');
     require(!controller.paused(), 'CFolioFarm: Controller paused');
-    require(slotId < slotWeights.length, 'CFolioFarm: Invalid slotId');
+
+    Slot storage slot = slots[slotId];
 
     // Update state
-    _totalSupplys[slotId] = _totalSupplys[slotId].add(amount);
-    _balances[account][slotId] = _balances[account][slotId].add(amount);
+    slot.totalSupply = slot.totalSupply.add(amount);
+    slot.balances[account] = slot.balances[account].add(amount);
 
     // Notify controller
     controller.onDeposit(amount);
+
+    // Split up rewardRate
+    _rebalance();
 
     // Dispatch event
     emit ShareAdded(account, amount, slotId);
   }
 
+  /**
+   * @dev See {ICFolioFarm-migrateShares}
+   */
+  function migrateShares(
+    address account,
+    uint256 amount,
+    uint256 slotId,
+    uint256 reward
+  ) external override onlyOwner verifySlotId(slotId) updateReward(account) {
+    Slot storage slot = slots[slotId];
+    if (amount > 0) {
+      require(slot.balances[account] == 0, 'CFF: Balance not empty');
+      // Update state
+      slot.totalSupply = slot.totalSupply.add(amount);
+      slot.balances[account] = amount;
+
+      // Split up rewardRate
+      _rebalance();
+
+      // Dispatch event
+      emit ShareAdded(account, amount, slotId);
+    }
+    if (reward > 0) {
+      require(slot.rewards[account] == 0, 'CFF: Rewards not empty');
+      // Update state
+      slot.rewards[account] = reward;
+      availableRewards = availableRewards.add(reward);
+    }
+  }
+
+  /**
+   * @dev See {ICFolioFarm-removeShares}
+   */
   function removeShares(
     address account,
     uint256 amount,
     uint256 slotId
-  ) public override onlyOwner updateReward(account) {
+  ) public override onlyOwner verifySlotId(slotId) updateReward(account) {
     // Validate parameters
     require(amount > 0, 'CFolioFarm: Cannot remove 0');
-    require(slotId < slotWeights.length, 'CFolioFarm: Invalid slotId');
+
+    Slot storage slot = slots[slotId];
 
     // Update state
-    _totalSupplys[slotId] = _totalSupplys[slotId].sub(amount);
-    _balances[account][slotId] = _balances[account][slotId].sub(amount);
+    slot.totalSupply = slot.totalSupply.sub(amount);
+    slot.balances[account] = slot.balances[account].sub(amount);
 
     // Notify controller
     controller.onWithdraw(amount);
+
+    // Split up rewardRate
+    _rebalance();
 
     // Dispatch event
     emit ShareRemoved(account, amount, slotId);
   }
 
-  function getReward(address account, address rewardRecipient)
-    public
-    override
-    onlyOwner
-    updateReward(account)
-  {
-    // Load state
-    uint256 reward = rewards[account];
-
-    if (reward > 0) {
-      // Update state
-      rewards[account] = 0;
-      availableRewards = availableRewards.sub(reward);
-
-      // Notify controller
-      controller.payOutRewards(rewardRecipient, reward);
-
-      // Dispatch event
-      emit RewardPaid(account, rewardRecipient, reward);
+  function getRewards(
+    address account,
+    address rewardRecipient,
+    uint256[] memory slotIds
+  ) public override onlyOwner updateReward(account) {
+    if (slotIds.length == 0) {
+      for (uint256 slotId = 0; slotId < slots.length; ++slotId)
+        _getRewards(account, rewardRecipient, slotId);
+    } else {
+      for (uint256 i = 0; i < slotIds.length; ++i)
+        _getRewards(account, rewardRecipient, slotIds[i]);
     }
   }
 
-  function weightSlotId(uint256 slotId, uint256 weight)
+  function weightSlot(uint256 slotId, uint256 weight)
     external
     override
     onlyController
     updateReward(address(0))
   {
-    uint256 _slotCount = slotWeights.length;
-    require(slotId <= _slotCount, 'CFolioFarm: Invalid slotId');
-    if (slotId == _slotCount) {
-      _totalSupplys.push(0);
-      slotWeights.push(weight);
-    } else slotWeights[slotId] = weight;
+    // Validate parameters
+    require(slotId <= slots.length, 'CFolioFarm: Invalid slotId');
 
+    // Add / change Slot
+    if (slotId == slots.length) {
+      _newSlot(weight);
+    } else {
+      slots[slotId].weight = weight;
+    }
+    _rebalance();
     // Emit event
     emit SlotWeightChanged(slotId, weight);
   }
@@ -360,13 +417,13 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
     onlyController
     updateReward(address(0))
   {
-    // Update state
     // solhint-disable-next-line not-rely-on-time
-    if (block.timestamp >= periodFinish) {
+    uint256 ts = block.timestamp;
+    // Update state
+    if (ts >= periodFinish) {
       rewardRate = reward.div(rewardsDuration);
     } else {
-      // solhint-disable-next-line not-rely-on-time
-      uint256 remaining = periodFinish.sub(block.timestamp);
+      uint256 remaining = periodFinish.sub(ts);
       uint256 leftover = remaining.mul(rewardRate);
       rewardRate = reward.add(leftover).div(rewardsDuration);
     }
@@ -387,12 +444,12 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
       rewardRate <= availableRewards.div(rewardsDuration),
       'Provided reward too high'
     );
+    for (uint256 slotId = 0; slotId < slots.length; ++slotId)
+      slots[slotId].lastUpdateTime = ts;
 
-    // Update state
-    // solhint-disable-next-line not-rely-on-time
-    lastUpdateTime = block.timestamp;
-    // solhint-disable-next-line not-rely-on-time
-    periodFinish = block.timestamp.add(rewardsDuration);
+    periodFinish = ts.add(rewardsDuration);
+
+    _rebalance();
 
     // Dispatch event
     emit RewardAdded(reward);
@@ -430,19 +487,58 @@ contract CFolioFarm is IFarm, ICFolioFarm, Ownable, ERC20Recovery {
     emit RewardsDurationUpdated(rewardsDuration);
   }
 
-  function _totalSupply() private view returns (uint256 ts) {
-    ts = 0;
-    for (uint256 i = 0; i < slotWeights.length; ++i)
-      ts += _totalSupplys[i] * slotWeights[i];
-    ts /= 1E18;
+  function _updateReward(address account) private {
+    uint256 lastUpdateTime = lastTimeRewardApplicable();
+
+    for (uint256 slotId = 0; slotId < slots.length; ++slotId) {
+      Slot storage slot = slots[slotId];
+      slot.rewardPerTokenStored = rewardPerToken(slotId);
+      slot.lastUpdateTime = lastUpdateTime;
+      if (account != address(0)) {
+        slot.rewards[account] = earned(account, slotId);
+        slot.userRewardPerTokenPaid[account] = slot.rewardPerTokenStored;
+      }
+    }
   }
 
-  function _balance(address account) private view returns (uint256 balance) {
-    balance = 0;
-    mapping(uint256 => uint256) storage balances = _balances[account];
+  function _newSlot(uint256 weight) private {
+    slots.push();
+    slots[slots.length - 1].weight = weight;
+  }
 
-    for (uint256 i = 0; i < slotWeights.length; ++i)
-      balance += balances[i] * slotWeights[i];
-    balance /= 1e18;
+  function _rebalance() private {
+    uint256 weightSum;
+    for (uint256 slotId = 0; slotId < slots.length; ++slotId)
+      weightSum = weightSum.add(
+        slots[slotId].weight.mul(slots[slotId].totalSupply)
+      );
+    for (uint256 slotId = 0; slotId < slots.length; ++slotId)
+      slots[slotId].rewardRate = weightSum > 0
+        ? rewardRate
+          .mul(slots[slotId].weight)
+          .mul(slots[slotId].totalSupply)
+          .div(weightSum)
+        : 0;
+  }
+
+  function _getRewards(
+    address account,
+    address rewardRecipient,
+    uint256 slotId
+  ) private {
+    // Load state
+    uint256 reward = slots[slotId].rewards[account];
+
+    if (reward > 0) {
+      // Update state
+      slots[slotId].rewards[account] = 0;
+      availableRewards = availableRewards.sub(reward);
+
+      // Notify controller
+      controller.payOutRewards(rewardRecipient, reward);
+
+      // Dispatch event
+      emit RewardPaid(account, rewardRecipient, reward);
+    }
   }
 }

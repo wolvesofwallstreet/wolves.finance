@@ -75,6 +75,12 @@ interface IMinterOld {
 }
 
 interface ICFolioItemHandlerOld {
+  function withdraw(
+    uint256 baseTokenId,
+    uint256 tokenId,
+    uint256[] calldata amounts
+  ) external;
+
   function cfolioFarm() external returns (address);
 }
 
@@ -423,7 +429,7 @@ contract MigrateToV2 is ERC1155Holder {
         uint256[] memory amounts = new uint256[](5);
         amounts[4] = tokenAmount;
 
-        ICFolioItemHandler(handler).withdraw(baseTokenId, tokenId, amounts);
+        ICFolioItemHandlerOld(handler).withdraw(baseTokenId, tokenId, amounts);
         if (yCrvBulk) {
           BulkSlot storage slot = bulkLookup[from];
           if (slot.amount == 0) {
@@ -441,7 +447,7 @@ contract MigrateToV2 is ERC1155Holder {
         uint256[] memory amounts = new uint256[](1);
         amounts[0] = tokenAmount;
 
-        ICFolioItemHandler(handler).withdraw(baseTokenId, tokenId, amounts);
+        ICFolioItemHandlerOld(handler).withdraw(baseTokenId, tokenId, amounts);
         _uniV2LPToken.safeTransfer(from, amounts[0]);
       }
     }

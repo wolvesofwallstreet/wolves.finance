@@ -35,12 +35,14 @@ interface ICFolioItemHandler is ICFolioItemCallback {
    * @param from must be msg.sender for calls not from sftMinter
    * @param baseTokenId cFolio tokenId, must be unlocked, or -1
    * @param tokenId cFolioItem tokenId, must be unlocked if not in unlocked cFolio
+   * @param slotId The slot in the rewardFarm to deposit funds
    * @param amounts Investment amounts, implementation specific
    */
   function deposit(
     address from,
     uint256 baseTokenId,
     uint256 tokenId,
+    uint256 slotId,
     uint256[] calldata amounts
   ) external;
 
@@ -51,11 +53,13 @@ interface ICFolioItemHandler is ICFolioItemCallback {
    *
    * @param baseTokenId cFolio tokenId, must be unlocked, or -1
    * @param tokenId cFolioItem tokenId, must be unlocked if not in unlocked cFolio
+   * @param slotId The slot in the rewardFarm to withdraw funds
    * @param amounts Investment amounts, implementation specific
    */
   function withdraw(
     uint256 baseTokenId,
     uint256 tokenId,
+    uint256 slotId,
     uint256[] calldata amounts
   ) external;
 
