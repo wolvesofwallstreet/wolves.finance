@@ -223,7 +223,7 @@ export const STAKE_CURRENCIES = [
 export const STABLE_CURRENCIES = [
   [['DAI', 'USDC', 'USDT', 'am3Crv']],
   [['DAI', 'USDC', 'USDT', 'TUSD', 'yCrv']],
-  [],
+  [[]],
 ];
 
 const SECONDS_PER_YEAR = 31536000;
