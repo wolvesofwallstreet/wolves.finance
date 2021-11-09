@@ -215,9 +215,9 @@ export const BIGNUMBER_MAX = ethers.BigNumber.from(
 );
 
 export const STAKE_CURRENCIES = [
-  [],
-  ['WETH/WOWS', 'WMATIC/WOWS'],
-  ['WETH/WOWS', 'WFTM/WOWS'],
+  [[]],
+  [['WETH/WOWS'], ['WMATIC/WOWS']],
+  [['WETH/WOWS'], ['WFTM/WOWS']],
 ];
 
 export const STABLE_CURRENCIES = [
@@ -1325,7 +1325,7 @@ class Store {
             const numAssets = readUint256(result2, readIndex++).toNumber();
             const bidx =
               this.assets.cfolioItems[child.levelId].type === 'lpInvestment'
-                ? this.getStakeCurrencies()
+                ? this.getStakeCurrencies()[0]
                 : this.getStableCurrencies()[0];
             for (let index = 0; index < numAssets; ++index) {
               child.assets.push(
@@ -2116,7 +2116,7 @@ class Store {
     let cfihContract, balances;
     if (cfiLevel.type === 'lpInvestment') {
       cfihContract = this.cfihLpContract;
-      balances = this.getStakeCurrencies();
+      balances = this.getStakeCurrencies()[0];
     } else {
       cfihContract = this.cfihScContract;
       balances = this.getStableCurrencies()[0];
@@ -2232,7 +2232,7 @@ class Store {
       let cfihContract, balances;
       if (cfiLevel.type === 'lpInvestment') {
         cfihContract = this.cfihLpContract;
-        balances = this.getStakeCurrencies();
+        balances = this.getStakeCurrencies()[0];
       } else {
         cfihContract = this.cfihScContract;
         balances = this.getStableCurrencies()[0];
