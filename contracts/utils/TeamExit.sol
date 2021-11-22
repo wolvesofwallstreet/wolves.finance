@@ -47,10 +47,10 @@ contract FarmRewards {
   }
 
   function _calculate() private view returns (uint256 result) {
-    result = 200;
+    result = 350;
     uint256 monthPassed = (block.timestamp - startTime) / (86400 * 30);
-    if (monthPassed > 5) monthPassed = 5;
-    if (monthPassed > 0) result += (150 + (monthPassed - 1) * 100);
+    if (monthPassed > 3) monthPassed = 3;
+    if (monthPassed > 0) result += (200 + (monthPassed - 1) * 100);
     result = result * 1e18;
   }
 }
