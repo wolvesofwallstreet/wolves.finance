@@ -357,11 +357,14 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
   }
 
   _onClaimBooster(): void {
+    const { currentIndex } = this.state;
+    const canRelock =
+      (this.renderList[currentIndex].sft?.boosterRewards.secsLeft ?? 0) > 0;
     const payload: Payload = {
       type: SFT_CLAIM_BOOSTER,
       content: {
         id: this.renderList[this.state.currentIndex].sft?.tokenId,
-        time: this.state.boosterRelock,
+        time: canRelock ? this.state.boosterRelock : 0,
       },
     };
     this.setState({ txPending: true });
