@@ -99,9 +99,9 @@ const BOOSTER_ABI = `${__dirname}/../src/abi/contracts/src/booster/Booster.sol/B
 const SFT_HOLDER_ABI = `${__dirname}/../src/abi/contracts/src/token/WOWSERC1155.sol/WOWSERC1155.json`;
 const SFT_MINTER_ABI = `${__dirname}/../src/abi/contracts/src/crowdsale/WOWSSftMinter.sol/WOWSSftMinter.json`;
 const TRADE_FLOOR_ABI = `${__dirname}/../src/abi/contracts/src/token/TradeFloor.sol/TradeFloor.json`;
-const CFOLIO_ITEM_HANDLER_SC2_ABI = `${__dirname}/../src/abi/contracts/src/cfolio/CFolioItemHandlerSC2.sol/CFolioItemHandlerSC2.json`;
-const CFOLIO_ITEM_HANDLER_SC3_ABI = `${__dirname}/../src/abi/contracts/src/cfolio/CFolioItemHandlerSC3.sol/CFolioItemHandlerSC3.json`;
-const CFOLIO_ITEM_HANDLER_SC4_ABI = `${__dirname}/../src/abi/contracts/src/cfolio/CFolioItemHandlerSC4.sol/CFolioItemHandlerSC4.json`;
+const CFOLIO_ITEM_HANDLER_SCAFTM_ABI = `${__dirname}/../src/abi/contracts/src/cfolio/CFolioItemHandlerSCAFtm.sol/CFolioItemHandlerSCAFtm.json`;
+const CFOLIO_ITEM_HANDLER_SCAPOLY_ABI = `${__dirname}/../src/abi/contracts/src/cfolio/CFolioItemHandlerSCAPoly.sol/CFolioItemHandlerSCAPoly.json`;
+const CFOLIO_ITEM_HANDLER_SCY_ABI = `${__dirname}/../src/abi/contracts/src/cfolio/CFolioItemHandlerSCY.sol/CFolioItemHandlerSCY.json`;
 const POLYGON_ROOT_TUNNEL_ABI = `${__dirname}/../src/abi/contracts/src/polygon/WOWSERC1155RootTunnel.sol/WOWSERC1155RootTunnel.json`;
 const POLYGON_CHILD_TUNNEL_ABI = `${__dirname}/../src/abi/contracts/src/polygon/WOWSERC1155ChildTunnel.sol/WOWSERC1155ChildTunnel.json`;
 
@@ -879,10 +879,10 @@ const func = async function (hardhat_re) {
     const cfolioItemHandlerSCAbi = JSON.parse(
       fs.readFileSync(
         hardhat_re.network.tags.curve2pool
-          ? CFOLIO_ITEM_HANDLER_SC2_ABI
+          ? CFOLIO_ITEM_HANDLER_SCAFTM_ABI
           : hardhat_re.network.tags.curve3pool
-          ? CFOLIO_ITEM_HANDLER_SC3_ABI
-          : CFOLIO_ITEM_HANDLER_SC4_ABI
+          ? CFOLIO_ITEM_HANDLER_SCAPOLY_ABI
+          : CFOLIO_ITEM_HANDLER_SCY_ABI
       )
     );
 

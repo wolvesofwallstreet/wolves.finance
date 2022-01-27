@@ -9,7 +9,7 @@
 pragma solidity >=0.7.0 <0.8.0;
 
 /* solhint-disable func-name-mixedcase */
-abstract contract ICurveFiDeposit4 {
+abstract contract ICurveFiDepositY {
   function add_liquidity(uint256[4] calldata uAmounts, uint256 minMintAmount)
     external
     virtual;

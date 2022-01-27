@@ -10,7 +10,7 @@ pragma solidity >=0.7.0 <0.8.0;
 
 import '../../0xerc1155/interfaces/IERC20.sol';
 import '../../0xerc1155/utils/SafeERC20.sol';
-import '../../interfaces/curve/CurveDepositInterface2.sol';
+import '../../interfaces/curve/CurveDepositInterfaceY.sol';
 
 import './CFolioItemHandlerFarm.sol';
 
@@ -19,7 +19,7 @@ import './CFolioItemHandlerFarm.sol';
  *
  * See {CFolioItemHandlerFarm}.
  */
-contract CFolioItemHandlerSC2 is CFolioItemHandlerFarm {
+contract CFolioItemHandlerSC4 is CFolioItemHandlerFarm {
   using SafeMath for uint256;
   using SafeERC20 for IERC20;
 
@@ -30,8 +30,8 @@ contract CFolioItemHandlerSC2 is CFolioItemHandlerFarm {
   // Curve pool token contract
   IERC20 public immutable curveToken;
 
-  // Curve 2 stable coin pool deposit contract
-  ICurveFiDeposit2 public immutable curveDeposit;
+  // Curve 4 stable coin pool deposit contract
+  ICurveFiDepositY public immutable curveDeposit;
 
   //////////////////////////////////////////////////////////////////////////////
   // Initialization
@@ -46,12 +46,12 @@ contract CFolioItemHandlerSC2 is CFolioItemHandlerFarm {
    */
   constructor(
     IAddressRegistry addressRegistry,
-    ICurveFiDeposit2 depositContract,
+    ICurveFiDepositY depositContract,
     address farm
   ) CFolioItemHandlerFarm(addressRegistry, farm) {
-    // The pool deposit contract
+    // The Y pool deposit contract
     curveDeposit = depositContract;
-    curveToken = IERC20(address(depositContract));
+    curveToken = IERC20(depositContract.token());
   }
 
   /**
@@ -59,12 +59,12 @@ contract CFolioItemHandlerSC2 is CFolioItemHandlerFarm {
    */
   function initialize() public {
     // Approve stablecoin spending
-    for (uint256 i = 0; i < 2; ++i) {
-      address underlyingCoin = curveDeposit.coins(i);
+    for (uint256 i = 0; i < 4; ++i) {
+      address underlyingCoin = curveDeposit.underlying_coins(int128(i));
       IERC20(underlyingCoin).safeApprove(address(curveDeposit), uint256(-1));
     }
 
-    // Approve pool token spending
+    // Approve yCRV spending
     curveToken.approve(address(curveDeposit), uint256(-1));
   }
 
@@ -82,31 +82,25 @@ contract CFolioItemHandlerSC2 is CFolioItemHandlerFarm {
     uint256[] calldata amounts
   ) internal override {
     // Validate input
-    require(amounts.length == 3, 'CFIHSC: Amount length invalid');
+    require(amounts.length == 5, 'CFIHSC: Amount length invalid');
 
-    // Keep track of how many pool tokens were received
+    // Keep track of how many Y pool tokens were received
     uint256 beforeBalance = curveToken.balanceOf(address(this));
 
     // Keep track of amounts
-    uint256[2] memory stableAmounts;
+    uint256[4] memory stableAmounts;
     uint256 totalStableAmount;
 
     // Update state
-    for (uint256 i = 0; i < 2; ++i) {
-      if (amounts[i] > 0) {
-        address underlyingCoin = curveDeposit.coins(i);
+    for (uint256 i = 0; i < 4; ++i) {
+      address underlyingCoin = curveDeposit.underlying_coins(int128(i));
 
-        IERC20(underlyingCoin).safeTransferFrom(
-          payer,
-          address(this),
-          amounts[i]
-        );
+      IERC20(underlyingCoin).safeTransferFrom(payer, address(this), amounts[i]);
 
-        uint256 stableAmount = IERC20(underlyingCoin).balanceOf(address(this));
+      uint256 stableAmount = IERC20(underlyingCoin).balanceOf(address(this));
 
-        stableAmounts[i] = stableAmount;
-        totalStableAmount += stableAmount;
-      }
+      stableAmounts[i] = stableAmount;
+      totalStableAmount += stableAmount;
     }
 
     if (totalStableAmount > 0) {
@@ -121,12 +115,12 @@ contract CFolioItemHandlerSC2 is CFolioItemHandlerFarm {
       );
     }
 
-    // Handle pool
-    uint256 poolAmount = amounts[2];
+    // Handle Y pool
+    uint256 yPoolAmount = amounts[4];
 
     // Update state
-    if (poolAmount > 0) {
-      curveToken.safeTransferFrom(payer, address(this), poolAmount);
+    if (yPoolAmount > 0) {
+      curveToken.safeTransferFrom(payer, address(this), yPoolAmount);
     }
 
     // Validate state
@@ -150,11 +144,11 @@ contract CFolioItemHandlerSC2 is CFolioItemHandlerFarm {
    * base SFT.
    *
    * @param itemCFolio The address of the target CFolioItem cryptofolio
-   * @param amounts The amounts, with the tokens being 2 * stable coin +
-   *     pool token. Pool token must be specified, as pool tokens are held by
-   *     this contract. If all stablecoin amounts are 0, then ypool token is withdrawn to the
+   * @param amounts The amounts, with the tokens being DAI/USDC/USDT/TUSD/yCRV.
+   *     yCRV must be specified, as yCRV tokens are held by this contract.
+   *     If all four stablecoin amounts are 0, then yCRV is withdrawn to the
    *     sender's wallet. If exactly one of the four stablecoin amounts is > 0,
-   *     then pool token will be converted to the specified stablecoin. The amount in
+   *     then yCRV will be converted to the specified stablecoin. The amount in
    *     the array is the minimum amount of stablecoin tokens that must be
    *     withdrawn.
    */
@@ -164,30 +158,33 @@ contract CFolioItemHandlerSC2 is CFolioItemHandlerFarm {
     uint256[] calldata amounts
   ) internal override {
     // Validate input
-    require(amounts.length == 3, 'CFIHSC: Amount length invalid');
+    require(amounts.length == 5, 'CFIHSC: Amount length invalid');
 
     // Validate parameters
-    uint256 poolAmount = amounts[2];
-    require(poolAmount > 0, 'CFIHSC: pool amount is 0');
+    uint256 yPoolAmount = amounts[4];
+    require(yPoolAmount > 0, 'CFIHSC: yCRV amount is 0');
 
     // Get single coin and amount
-    (uint256 stableCoinIndex, uint256 stableCoinAmount) = _getStableCoinInfo(
+    (int128 stableCoinIndex, uint256 stableCoinAmount) = _getStableCoinInfo(
       amounts
     );
 
-    // Keep track of how many pool tokens were sent
+    // Keep track of how many Y pool tokens were sent
     uint256 balanceBefore = curveToken.balanceOf(address(this));
 
     // Update state
-    if (stableCoinIndex != uint256(-1)) {
+    if (stableCoinIndex != -1) {
       // Call to external contract
       curveDeposit.remove_liquidity_one_coin(
-        poolAmount,
-        int128(stableCoinIndex),
-        stableCoinAmount
+        yPoolAmount,
+        stableCoinIndex,
+        stableCoinAmount,
+        true
       );
 
-      address underlyingCoin = curveDeposit.coins(stableCoinIndex);
+      address underlyingCoin = curveDeposit.underlying_coins(
+        int128(stableCoinIndex)
+      );
       uint256 underlyingCoinAmount = IERC20(underlyingCoin).balanceOf(
         address(this)
       );
@@ -195,9 +192,9 @@ contract CFolioItemHandlerSC2 is CFolioItemHandlerFarm {
       // Transfer stablecoins back to the sender
       IERC20(underlyingCoin).safeTransfer(_msgSender(), underlyingCoinAmount);
     } else {
-      // No stablecoins were passed, sender is withdrawing pool tokens directly
-      // Transfer pool tokens back to the sender
-      curveToken.safeTransfer(_msgSender(), poolAmount);
+      // No stablecoins were passed, sender is withdrawing Y pool tokens directly
+      // Transfer Y pool tokens back to the sender
+      curveToken.safeTransfer(_msgSender(), yPoolAmount);
     }
 
     // Valiate state
@@ -230,10 +227,10 @@ contract CFolioItemHandlerSC2 is CFolioItemHandlerFarm {
   /**
    * @dev See {ICFolioItemHandler-getAmounts}
    *
-   * The returned token array is 2 stable coins + pool token. Tokens are held in
-   * this contract as pool token, so the last item will be the amount of the pool token. The
-   * stablecoin amounts are the amount that would be withdrawn if all
-   * pool tokens were converted to the corresponding stablecoin upon withdrawal. This
+   * The returned token array is DAI/USDC/USDT/TUSD/yCRV. Tokens are held in
+   * this contract as yCRV, so the fifth item will be the amount of yCRV. The
+   * four stablecoin amounts are the amount that would be withdrawn if all
+   * yCRV were converted to the corresponding stablecoin upon withdrawal. This
    * value is calculated by Curve.
    */
   function getAmounts(address cfolioItem)
@@ -242,15 +239,15 @@ contract CFolioItemHandlerSC2 is CFolioItemHandlerFarm {
     override
     returns (uint256[] memory result)
   {
-    result = new uint256[](3);
+    result = new uint256[](5);
 
     uint256 wrappedAmount = _cfolioFarm.balanceOf(cfolioItem, 0);
 
-    for (uint256 i = 0; i < 2; ++i) {
+    for (uint256 i = 0; i < 4; ++i) {
       result[i] = curveDeposit.calc_withdraw_one_coin(wrappedAmount, int128(i));
     }
 
-    result[2] = wrappedAmount;
+    result[4] = wrappedAmount;
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -270,7 +267,7 @@ contract CFolioItemHandlerSC2 is CFolioItemHandlerFarm {
    * If no stablecoin amounts are > 0, then a coin index of -1 is returned,
    * with a 0 amount.
    *
-   * @param amounts The amounts array: 2 * stable coin + pool token
+   * @param amounts The amounts array: DAI/USDC/USDT/TUSD/yCRV
    *
    * @return stableCoinIndex The index of the stablecoin with amount > 0, or -1
    *     if all four stablecoin amounts are 0
@@ -280,14 +277,14 @@ contract CFolioItemHandlerSC2 is CFolioItemHandlerFarm {
   function _getStableCoinInfo(uint256[] calldata amounts)
     private
     pure
-    returns (uint256 stableCoinIndex, uint256 stableCoinAmount)
+    returns (int128 stableCoinIndex, uint256 stableCoinAmount)
   {
-    stableCoinIndex = uint256(-1);
+    stableCoinIndex = -1;
 
-    for (uint256 i = 0; i < 2; ++i) {
+    for (uint128 i = 0; i < 4; ++i) {
       if (amounts[i] > 0) {
-        require(stableCoinIndex == uint256(-1), 'Multiple amounts > 0');
-        stableCoinIndex = i;
+        require(stableCoinIndex == -1, 'Multiple amounts > 0');
+        stableCoinIndex = int8(i);
         stableCoinAmount = amounts[i];
       }
     }
