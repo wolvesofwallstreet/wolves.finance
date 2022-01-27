@@ -1200,9 +1200,9 @@ class Store {
       } else {
         for (const level of this.assets.cards.cards) {
           level.price = 0;
-          level.quantity = 0;
+          level.quantity = 40;
           for (const card of level.cards) {
-            card.minted = 0;
+            card.minted = 40;
           }
         }
       }

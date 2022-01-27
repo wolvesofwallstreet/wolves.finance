@@ -962,6 +962,21 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                         <li>
                           <h3 className="no-margin">
                             {t('page.prowess')}: {profitReward}%{' '}
+                            {autoUpgrade && '('}
+                            {autoUpgrade &&
+                              (typeof autoUpgrade !== 'number' ? (
+                                t('page.autoUpgrade') + ':' + autoUpgrade
+                              ) : autoUpgrade > 0 || txPending ? (
+                                autoUpgradeText
+                              ) : (
+                                <span
+                                  className="ulink c-pointer"
+                                  onClick={() => this._onUpgrade()}
+                                >
+                                  {autoUpgradeText}
+                                </span>
+                              ))}
+                            {autoUpgrade && ')'}
                           </h3>
                         </li>
                       )}
@@ -985,23 +1000,6 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                           <h3 className="no-margin">
                             {t('page4.aprapy', { apr, apy })}
                           </h3>
-                        </li>
-                      )}
-                      {autoUpgrade && (
-                        <li>
-                          {typeof autoUpgrade !== 'number' ? (
-                            <h3 className="no-margin">
-                              {t('page.autoUpgrade')}: {autoUpgrade}
-                            </h3>
-                          ) : (
-                            <input
-                              className="wolves-btn tk-grotesk-lightbold font-16 mt-1"
-                              type="button"
-                              value={autoUpgradeText}
-                              disabled={autoUpgrade > 0 || txPending}
-                              onClick={() => this._onUpgrade()}
-                            />
-                          )}
                         </li>
                       )}
                       {share && (
