@@ -30,9 +30,9 @@ const SFT_EVALUATOR_PROXY_CONTRACT = 'SFTEvaluatorProxy';
 const TRADE_FLOOR_CONTRACT = 'TradeFloor';
 const CFOLIO_FARM_CONTRACT = 'CFolioFarm';
 const CFOLIO_ITEM_HANDLER_LP_CONTRACT = 'CFolioItemHandlerLP';
-const CFOLIO_ITEM_HANDLER_SC2_CONTRACT = 'CFolioItemHandlerSC3';
-const CFOLIO_ITEM_HANDLER_SC3_CONTRACT = 'CFolioItemHandlerSC3';
-const CFOLIO_ITEM_HANDLER_SC4_CONTRACT = 'CFolioItemHandlerSC4';
+const CFOLIO_ITEM_HANDLER_SCAFTM_CONTRACT = 'CFolioItemHandlerSCAFtm';
+const CFOLIO_ITEM_HANDLER_SCAPOLY_CONTRACT = 'CFolioItemHandlerSCAPoly';
+const CFOLIO_ITEM_HANDLER_SCY_CONTRACT = 'CFolioItemHandlerSCY';
 const POLYGON_ROOT_TUNNEL_CONTRACT = 'WOWSERC1155RootTunnel';
 const POLYGON_CHILD_TUNNEL_CONTRACT = 'WOWSERC1155ChildTunnel';
 const MIGRATE_V2_CONTRACT = 'MigrateToV2';
@@ -1024,10 +1024,10 @@ const func = async function (hardhat_re) {
 
       const cfolioItemHandlerSCContractReceipt = await deploy(
         hardhat_re.network.tags.curve2pool
-          ? CFOLIO_ITEM_HANDLER_SC2_CONTRACT
+          ? CFOLIO_ITEM_HANDLER_SCAFTM_CONTRACT
           : hardhat_re.network.tags.curve3pool
-          ? CFOLIO_ITEM_HANDLER_SC3_CONTRACT
-          : CFOLIO_ITEM_HANDLER_SC4_CONTRACT,
+          ? CFOLIO_ITEM_HANDLER_SCAPOLY_CONTRACT
+          : CFOLIO_ITEM_HANDLER_SCY_CONTRACT,
         {
           from: deployer,
           args: [

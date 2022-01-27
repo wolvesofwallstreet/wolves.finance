@@ -19,7 +19,7 @@ import './CFolioItemHandlerFarm.sol';
  *
  * See {CFolioItemHandlerFarm}.
  */
-contract CFolioItemHandlerSC3 is CFolioItemHandlerFarm {
+contract CFolioItemHandlerSCAPoly is CFolioItemHandlerFarm {
   using SafeMath for uint256;
   using SafeERC20 for IERC20;
 

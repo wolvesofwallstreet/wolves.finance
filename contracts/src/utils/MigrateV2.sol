@@ -14,7 +14,7 @@ import '../utils/AddressBook.sol';
 import '../utils/interfaces/IAddressRegistry.sol';
 import '../utils/TokenIds.sol';
 
-import '../../interfaces/curve/CurveDepositInterface4.sol';
+import '../../interfaces/curve/CurveDepositInterfaceY.sol';
 
 interface ISFTEvaluatorOld {
   /**
@@ -125,7 +125,7 @@ contract MigrateToV2 is ERC1155Holder {
   IMinterOld private immutable _sftMinterOld;
 
   IERC20 private immutable _yCrvToken;
-  ICurveFiDeposit4 private immutable _curveYDeposit;
+  ICurveFiDepositY private immutable _curveYDeposit;
 
   IWOWSERC1155 private immutable _sftContract;
   address private immutable _admin;
@@ -189,7 +189,7 @@ contract MigrateToV2 is ERC1155Holder {
     _sftMinterOld = IMinterOld(regOld.getRegistryEntry(SFT_MINTER));
 
     _yCrvToken = IERC20(regOld.getRegistryEntry(CURVE_Y_TOKEN));
-    _curveYDeposit = ICurveFiDeposit4(regOld.getRegistryEntry(CURVE_Y_DEPOSIT));
+    _curveYDeposit = ICurveFiDepositY(regOld.getRegistryEntry(CURVE_Y_DEPOSIT));
   }
 
   //////////////////////////////////////////////////////////////////////////////
