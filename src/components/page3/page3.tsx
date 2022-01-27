@@ -20,6 +20,7 @@ import {
 import {
   AssetStateresult,
   BIGNUMBER_MAX,
+  CHAINSTATE,
   ConnectResult,
   Payload,
   SFT,
@@ -218,7 +219,10 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
           if (this.walletTokenIds.length > 0) {
             this.levelFilter |= 1 << 4;
           }
-          if (hasCFolioItems && StoreClasses.store.isSidechain()) {
+          if (
+            hasCFolioItems &&
+            StoreClasses.store.getChainState() === CHAINSTATE.SIDE_CHAIN
+          ) {
             this.progessStart = new Date();
             this.progressInterval = window.setInterval(
               this._ticker.bind(this),
@@ -270,7 +274,7 @@ class Page3 extends Component<PAGE3_PROPS, PAGE3_STATE> {
   }
 
   _updateRewards = async () => {
-    if (StoreClasses.store.isSidechain()) {
+    if (StoreClasses.store.getChainState() === CHAINSTATE.SIDE_CHAIN) {
       StoreClasses.dispatcher.dispatch({
         type: SFT_REWARD,
         content: {},

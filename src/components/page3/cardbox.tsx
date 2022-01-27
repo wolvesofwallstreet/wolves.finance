@@ -13,6 +13,7 @@ import { Link } from 'react-router-dom';
 
 import {
   BIGNUMBER_MAX,
+  CHAINSTATE,
   SFT,
   SFTCHILD,
   SFTS,
@@ -117,6 +118,11 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
     }
   };
 
+  const isSidechain =
+    StoreClasses.store.getChainState() === CHAINSTATE.SIDE_CHAIN;
+  const isMainchain =
+    StoreClasses.store.getChainState() === CHAINSTATE.MAIN_CHAIN;
+
   return (
     <div className="card-container">
       <span className="tk-vincente-lightbold font-32">{name}</span>
@@ -175,7 +181,7 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
           ></span>
         </span>
         {tokenId === undefined ? (
-          StoreClasses.store.isSidechain() ? (
+          !isMainchain ? (
             <span className="tk-grotesk-lightbold font-14 ellipsis">
               {t('page.availableOnETH')}
             </span>
@@ -189,7 +195,7 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
               </span>
             </>
           )
-        ) : sft && StoreClasses.store.isSidechain() ? (
+        ) : sft && isSidechain ? (
           <>
             <span className="tk-grotesk-lightbold font-14 ellipsis">
               {t('page.prowess')}: {prowess / 10000}%
@@ -199,7 +205,7 @@ export function CardBox(props: CARDBOX_PROPS): JSX.Element {
             </span>
           </>
         ) : (
-          StoreClasses.store.isSidechain() && (
+          isSidechain && (
             <>
               <span className="tk-grotesk-lightbold font-14 ellipsis">
                 {t('page.investment')}: {investment}

@@ -29,6 +29,7 @@ import {
 } from '../../stores/constants';
 import {
   AssetStateresult,
+  CHAINSTATE,
   ConnectResult,
   Payload,
   SFT,
@@ -490,7 +491,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
     const buttonText = !isWalletConnected
       ? { l: t('header.connectWallet').toString(), d: true }
       : noQuantity
-      ? StoreClasses.store.isSidechain()
+      ? StoreClasses.store.getChainState() !== CHAINSTATE.MAIN_CHAIN
         ? { l: t('page.availableOnETH'), d: true }
         : { l: t('page4.noQuantity').toString(), d: true }
       : txPending
@@ -562,6 +563,7 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
       autoUpgradeText,
       apr,
       apy,
+      share,
       investment;
     if (currentRender?.cfi && currentCard) {
       quantity = (currentCard as CFOLIO_ITEM).maxMintable;
@@ -605,6 +607,9 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
           const aprNum = (maxSlot.apr * profitReward) / 100;
           apr = aprNum.toFixed(2);
           apy = StoreClasses.store.aprToApy(aprNum);
+          // TODO: Make Multi line
+          if (currentRender.sft && currentRender.sft.rewardShare.length > 0)
+            share = currentRender.sft?.rewardShare[0].toFixed(2);
         }
       }
     }
@@ -755,7 +760,10 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
         default:
           boosterPeriod = 'Unknown';
       }
-    } else if (StoreClasses.store.isSidechain() && currentRender?.sft) {
+    } else if (
+      StoreClasses.store.getChainState() === CHAINSTATE.SIDE_CHAIN &&
+      currentRender?.sft
+    ) {
       boosterPeriod = 'No period started';
     }
 
@@ -996,7 +1004,14 @@ class Page4 extends Component<PAGE4_PROPS, PAGE4_STATE> {
                           )}
                         </li>
                       )}
-                      {price && (
+                      {share && (
+                        <li>
+                          <h3 className="no-margin">
+                            {t('page4.share', { share })}
+                          </h3>
+                        </li>
+                      )}
+                      {(price ?? 0) > 0 && (
                         <li>
                           <h3 className="no-margin">
                             {t('page.price')}: {price} WOWS

@@ -16,6 +16,7 @@ import logo from '../../assets/wolves_sft_logo.svg';
 import { ASSETS_STATE, CONNECTION_CHANGED } from '../../stores/constants';
 import {
   AssetStateresult,
+  CHAINSTATE,
   ConnectResult,
   StoreClasses,
 } from '../../stores/store';
@@ -30,12 +31,13 @@ interface HEADER_STATE {
   networkName: string;
   wowsPrice?: number;
   wowsAmount?: number;
-  isSidechain?: boolean;
+  chainState?: CHAINSTATE;
 }
 
 type DropDownItem = {
   id: string;
   to: string;
+  disabled: boolean;
 };
 
 type NAVITEM = {
@@ -56,7 +58,7 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
       address: '',
       networkName: '',
       wowsAmount: 0,
-      isSidechain: false,
+      chainState: CHAINSTATE.UNKNOWN,
     };
 
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -77,8 +79,8 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
 
   onConnectionChanged(params: ConnectResult): void {
     if (params.type === 'prod') this.setState(params);
-    const isSidechain = this.store.isSidechain();
-    if (isSidechain !== this.state.isSidechain) this.setState({ isSidechain });
+    const chainState = this.store.getChainState();
+    if (chainState !== this.state.chainState) this.setState({ chainState });
   }
 
   onAssetsState(status: AssetStateresult): void {
@@ -105,20 +107,20 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
   }
 
   _shortAddress(): string {
-    const { address, networkName } = this.state;
-    return address !== ''
+    const { address, chainState, networkName } = this.state;
+    return chainState === CHAINSTATE.INVALID_CHAIN
+      ? 'WRONG NETWORK'
+      : address !== ''
       ? address.substring(0, 6) +
-          '...' +
-          address.substring(address.length - 4, address.length) +
-          ' (' +
-          networkName +
-          ')'
+        '...' +
+        address.substring(address.length - 4, address.length) +
+        ' (' +
+        networkName +
+        ')'
       : 'CONNECT WALLET';
   }
 
   renderDropDown(title: string, dropdownItems: DropDownItem[]): ReactNode {
-    const { pathname, search } = this.props.location;
-
     return (
       <span className="nav-item dropdown mx-0 my-0" key={Math.random() + title}>
         <span
@@ -130,7 +132,7 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
         </span>
         <ul className="dropdown-menu bg-blue-transparent-dark translateY_-10">
           {dropdownItems.map((item, index) => {
-            const isActiveNav = pathname + search === item.to;
+            const isActiveNav = item.disabled;
             return (
               <li key={'navLink' + index}>
                 {isActiveNav && (
@@ -152,104 +154,118 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
   _getNavItems(): NAVITEM[] {
     const { location, t } = this.props;
     const query = new URLSearchParams(location.search);
+    const currentPath = location.pathname + location.search;
     const type = query.get('type');
     const levelId = query.get('levelId') || 0;
-    const result = StoreClasses.store.isSidechain()
-      ? [
-          {
-            id: 'WOLF TRADE FLOOR',
-            to: '/wolf_trade_floor-1',
-            disabled: location.pathname === '/wolf_trade_floor',
-            dropdownItems: [
-              {
-                id: t('header.viewWolvesCf'),
-                to: '/shop?type=wolves&levelId=' + levelId,
-                disabled: type === 'wolves',
-              },
-              {
-                id: t('header.buyStake'),
-                to: '/cfolio-sfts?type=lpInvestment',
-              },
-              {
-                id: t('header.stakeInvest'),
-                to: '/cfolio-invest?type=lpInvestment',
-              },
-            ],
-          },
-          {
-            id: 'BOIS BOARDROOMS',
-            to: '/wolf_trade_floor-1',
-            disabled: location.pathname === '/wolf_trade_floor',
-            dropdownItems: [
-              {
-                id: t('header.viewBoisCf'),
-                to: '/shop?type=bois&levelId=' + levelId,
-                disabled: type === 'bois',
-              },
-              {
-                id: t('header.buyStable'),
-                to: '/cfolio-sfts?type=stableInvestment',
-              },
-              {
-                id: t('header.stableInvest'),
-                to: '/cfolio-invest?type=stableInvestment',
-              },
-            ],
-          },
-          {
-            id: t('header.myPack'),
-            to: '/my?type=myPack&levelId=' + levelId,
-            disabled: location.pathname === '/my',
-          },
-          {
-            id: 'C-FOLIO MANAGER',
-            to: '/c_folio_manager',
-            disabled: location.pathname === '/c_folio_manager',
-          },
-        ]
-      : [
-          {
-            id: 'WOLF TRADE FLOOR',
-            to: '/wolf_trade_floor-1',
-            disabled: location.pathname === '/wolf_trade_floor',
-            dropdownItems: [
-              {
-                id: t('header.wolvesCf'),
-                to: '/shop?type=wolves&levelId=' + levelId,
-                disabled: type === 'wolves',
-              },
-            ],
-          },
-          {
-            id: 'BOIS BOARDROOMS',
-            to: '/wolf_trade_floor-1',
-            disabled: location.pathname === '/wolf_trade_floor',
-            dropdownItems: [
-              {
-                id: t('header.boisCf'),
-                to: '/shop?type=bois&levelId=' + levelId,
-                disabled: type === 'bois',
-              },
-            ],
-          },
-          {
-            id: t('header.myPack'),
-            to: '/my?type=myPack&levelId=' + levelId,
-            disabled: location.pathname === '/my',
-          },
-          {
-            id: 'WOWS V1',
-            to: 'https://appv1.wows.finance',
-            disabled: false,
-          },
-        ];
+    const result =
+      this.state.chainState === CHAINSTATE.SIDE_CHAIN
+        ? [
+            {
+              id: 'WOLF TRADE FLOOR',
+              to: '/wolf_trade_floor-1',
+              disabled: location.pathname === '/wolf_trade_floor',
+              dropdownItems: [
+                {
+                  id: t('header.viewWolvesCf'),
+                  to: '/shop?type=wolves&levelId=' + levelId,
+                  disabled: type === 'wolves',
+                },
+                {
+                  id: t('header.buyStake'),
+                  to: '/cfolio-sfts?type=lpInvestment',
+                  disabled: currentPath.startsWith(
+                    '/cfolio-sfts?type=lpInvestment'
+                  ),
+                },
+                {
+                  id: t('header.stakeInvest'),
+                  to: '/cfolio-invest?type=lpInvestment',
+                  disabled: currentPath.startsWith(
+                    '/cfolio-invest?type=lpInvestment'
+                  ),
+                },
+              ],
+            },
+            {
+              id: 'BOIS BOARDROOMS',
+              to: '/wolf_trade_floor-1',
+              disabled: location.pathname === '/wolf_trade_floor',
+              dropdownItems: [
+                {
+                  id: t('header.viewBoisCf'),
+                  to: '/shop?type=bois&levelId=' + levelId,
+                  disabled: type === 'bois',
+                },
+                {
+                  id: t('header.buyStable'),
+                  to: '/cfolio-sfts?type=stableInvestment',
+                  disabled: currentPath.startsWith(
+                    '/cfolio-sfts?type=stableInvestment'
+                  ),
+                },
+                {
+                  id: t('header.stableInvest'),
+                  to: '/cfolio-invest?type=stableInvestment',
+                  disabled: currentPath.startsWith(
+                    '/cfolio-invest?type=stableInvestment'
+                  ),
+                },
+              ],
+            },
+            {
+              id: t('header.myPack'),
+              to: '/my?type=myPack&levelId=' + levelId,
+              disabled: location.pathname === '/my',
+            },
+            {
+              id: 'C-FOLIO MANAGER',
+              to: '/c_folio_manager',
+              disabled: location.pathname === '/c_folio_manager',
+            },
+          ]
+        : [
+            {
+              id: 'WOLF TRADE FLOOR',
+              to: '/wolf_trade_floor-1',
+              disabled: location.pathname === '/wolf_trade_floor',
+              dropdownItems: [
+                {
+                  id: t('header.wolvesCf'),
+                  to: '/shop?type=wolves&levelId=' + levelId,
+                  disabled: type === 'wolves',
+                },
+              ],
+            },
+            {
+              id: 'BOIS BOARDROOMS',
+              to: '/wolf_trade_floor-1',
+              disabled: location.pathname === '/wolf_trade_floor',
+              dropdownItems: [
+                {
+                  id: t('header.boisCf'),
+                  to: '/shop?type=bois&levelId=' + levelId,
+                  disabled: type === 'bois',
+                },
+              ],
+            },
+            {
+              id: t('header.myPack'),
+              to: '/my?type=myPack&levelId=' + levelId,
+              disabled: location.pathname === '/my',
+            },
+            {
+              id: 'WOWS V1',
+              to: 'https://appv1.wows.finance',
+              disabled: false,
+            },
+          ];
     return result;
   }
 
   render(): ReactNode {
     const shortAddress = this._shortAddress();
     const navItems = this._getNavItems();
-    const isSidechain = this.state.isSidechain;
+    const chainState = this.state.chainState;
     return (
       <Navbar bg="wolf" variant="dark" expand="md">
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
@@ -288,11 +304,15 @@ class Header extends Component<HEADER_PROPS, HEADER_STATE> {
         <div className="dp-conn-container">
           <div className="dp-chain-container">
             <span
-              className={`icon ethereum${isSidechain ? '' : ' selected'}`}
+              className={`icon ethereum${
+                chainState === CHAINSTATE.MAIN_CHAIN ? ' selected' : ''
+              }`}
               onClick={() => StoreClasses.store.switchChain('ethereum')}
             />
             <span
-              className={`icon polygon${isSidechain ? ' selected' : ''}`}
+              className={`icon polygon${
+                chainState === CHAINSTATE.SIDE_CHAIN ? ' selected' : ''
+              }`}
               onClick={() => StoreClasses.store.switchChain('polygon')}
             />
           </div>

@@ -28,16 +28,21 @@ import Page4 from './components/page4';
 import { PageStatus } from './components/pageStatus';
 import WolfToast from './components/toast/wolftoast';
 import { CONNECTION_CHANGED } from './stores/constants';
-import { ConnectResult, StoreClasses, StoreContainer } from './stores/store';
+import {
+  CHAINSTATE,
+  ConnectResult,
+  StoreClasses,
+  StoreContainer,
+} from './stores/store';
 
 type APP_STATE = {
-  isSideChain: boolean;
+  chainState: CHAINSTATE;
 };
 
 class App extends React.Component<unknown, APP_STATE> {
   constructor(props: unknown) {
     super(props);
-    this.state = { isSideChain: false };
+    this.state = { chainState: CHAINSTATE.UNKNOWN };
   }
 
   componentDidMount(): void {
@@ -50,7 +55,7 @@ class App extends React.Component<unknown, APP_STATE> {
 
   setNetwork = (result: ConnectResult): void => {
     if (result.type === 'prod' && result.address !== '') {
-      this.setState({ isSideChain: StoreClasses.store.isSidechain() });
+      this.setState({ chainState: StoreClasses.store.getChainState() });
     }
   };
 
@@ -74,10 +79,10 @@ class App extends React.Component<unknown, APP_STATE> {
                 <Route path="/detail" component={Page4} />
                 <Route path="/status" component={PageStatus} />
                 <Route path="/cfolio-sfts" component={CFolioItemSfts} />
-                {this.state.isSideChain && (
+                {this.state.chainState === CHAINSTATE.SIDE_CHAIN && (
                   <Route path="/cfolio-invest" component={CFolioInvest} />
                 )}
-                {this.state.isSideChain && (
+                {this.state.chainState === CHAINSTATE.SIDE_CHAIN && (
                   <Route path="/c_folio_manager" component={CFolioManager} />
                 )}
                 <Route component={Page1} />

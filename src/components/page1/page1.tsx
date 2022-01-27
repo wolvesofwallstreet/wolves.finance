@@ -12,7 +12,7 @@ import { Link } from 'react-router-dom';
 
 import BoisLogo from '../../assets/bois_shadow.png';
 import WolvesLogo from '../../assets/wolves_shadow.png';
-import { StoreClasses } from '../../stores/store';
+import { CHAINSTATE, StoreClasses } from '../../stores/store';
 
 type PAGE1_PROPS = {
   t: TFunction;
@@ -27,7 +27,7 @@ function Page1(props: PAGE1_PROPS) {
         <div className="page1-title-box-text">
           <h2 className="tk-vincente-bold no-margin">{t('page1.head1')}</h2>
           <h3 className="tk-aktiv-grotesk-condensed">{t('page1.head2')}</h3>
-          {!StoreClasses.store.isSidechain() && (
+          {StoreClasses.store.getChainState() === CHAINSTATE.MAIN_CHAIN && (
             <>
               <a
                 id="wows-link"

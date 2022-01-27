@@ -178,6 +178,13 @@ export enum SFTS {
   BRIDGE_READY,
 }
 
+export enum CHAINSTATE {
+  UNKNOWN,
+  INVALID_CHAIN,
+  MAIN_CHAIN,
+  SIDE_CHAIN,
+}
+
 export interface SFTCHILD {
   tokenId: ethers.BigNumber;
   levelId: number;
@@ -334,6 +341,7 @@ class Store {
   lastAprTime = 0;
   eventsSuspended = false;
   lock = new AsyncLock();
+  web3Provider?: ethers.providers.Provider;
 
   dispatchQueue: Payload[] = [];
 
@@ -600,8 +608,22 @@ class Store {
     return wss ? chainAddresses?.wssEndpoint : chainAddresses?.rpcEndpoint;
   }
 
-  isSidechain(): boolean {
-    return this.networkName.startsWith('matic');
+  getChainState(): CHAINSTATE {
+    if (window.ethereum?.chainId) {
+      const chainId = parseInt(window.ethereum?.chainId);
+      switch (chainId) {
+        case 137:
+        case 80001:
+          return CHAINSTATE.SIDE_CHAIN;
+        case 1:
+        case 4:
+        case 5:
+          return CHAINSTATE.MAIN_CHAIN;
+        default:
+          return CHAINSTATE.INVALID_CHAIN;
+      }
+    }
+    return CHAINSTATE.UNKNOWN;
   }
 
   getBridgeTarget(): { name: string; address: string } {
@@ -622,10 +644,19 @@ class Store {
         ethersProvider = new ethers.providers.JsonRpcProvider(endpoint);
       } else {
         const web3Provider = await this.web3Modal.connect();
-        await this.subscribeProvider(web3Provider);
-
+        if (!this.web3Provider) {
+          this.web3Provider = web3Provider;
+          await this.subscribeProvider(web3Provider);
+        }
         ethersProvider = new ethers.providers.Web3Provider(web3Provider);
       }
+
+      if (this.getChainState() === CHAINSTATE.INVALID_CHAIN) {
+        this.close();
+        this._emitNetworkChange();
+        throw new Error('Unsupported Network');
+      }
+
       const accounts = await ethersProvider.listAccounts();
       this.address = ethers.utils.getAddress(accounts[this.accountId]);
       const network = await ethersProvider.getNetwork();
@@ -729,7 +760,7 @@ class Store {
     } catch (e) {
       console.log(e);
     }
-    console.log('Disconnect due to WS close');
+    console.log('Close');
     await this.disconnect(false, true);
     if (this.eventProvider) {
       try {
@@ -912,9 +943,9 @@ class Store {
     if (window.ethereum) {
       let newChain = 0;
       if (chain === 'polygon') {
-        newChain = this.chainId === 1 ? 137 : 80001;
+        newChain = this.chainId === 5 ? 80001 : 137;
       } else {
-        newChain = this.chainId === 137 ? 1 : 5;
+        newChain = this.chainId === 80001 ? 5 : 1;
       }
       if (newChain) {
         try {
@@ -1083,7 +1114,7 @@ class Store {
     provider: ethers.providers.JsonRpcProvider
   ): Promise<boolean> {
     const chainAddresses = this._getChainAddresses();
-    if (chainAddresses) {
+    if (chainAddresses && chainAddresses.token) {
       const signer = provider.getSigner(this.accountId);
       this.tokenContract = new ethers.Contract(
         chainAddresses.token,
@@ -1142,7 +1173,7 @@ class Store {
     );
 
     try {
-      if (!this.isSidechain()) {
+      if (this.getChainState() === CHAINSTATE.MAIN_CHAIN) {
         const sftResult:
           | {
               prices: ethers.BigNumber[];
@@ -1164,6 +1195,14 @@ class Store {
               index++;
             }
             if (index >= sftResult.prices.length) break;
+          }
+        }
+      } else {
+        for (const level of this.assets.cards.cards) {
+          level.price = 0;
+          level.quantity = 0;
+          for (const card of level.cards) {
+            card.minted = 0;
           }
         }
       }
@@ -1560,7 +1599,7 @@ class Store {
     const e18 = ethers.BigNumber.from('10').pow(18);
 
     // Step 1 get WOWS/WETH ETH
-    if (this.isSidechain()) {
+    if (this.getChainState() !== CHAINSTATE.MAIN_CHAIN) {
       const results = await (
         await fetch(
           'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2',
@@ -2006,6 +2045,7 @@ class Store {
           this.address,
           cfolioType,
           sftTokenId,
+          0,
           investWeiAmounts,
           options
         );
