@@ -232,6 +232,7 @@ const func = async function (hardhat_re) {
   }
   if (!hardhat_re.network.tags.needYearn) {
     generatedAddresses.curveADeposit = configAddresses.curveADeposit;
+    generatedAddresses.curveAGauge = configAddresses.curveAGauge;
     generatedAddresses.curveYDeposit = configAddresses.curveYDeposit;
     generatedAddresses.curve2Deposit = configAddresses.curve2Deposit;
   }
@@ -1035,10 +1036,13 @@ const func = async function (hardhat_re) {
             hardhat_re.network.tags.curve2pool
               ? generatedAddresses.curve2Deposit
               : hardhat_re.network.tags.curve3pool
-              ? generatedAddresses.curveADeposit
+              ? [
+                  generatedAddresses.curveADeposit,
+                  generatedAddresses.curveAGauge,
+                ]
               : generatedAddresses.curveYDeposit,
             generatedAddresses.cfolioFarmSC,
-          ],
+          ].flat(1),
           log: true,
           deterministicDeployment: true,
         }

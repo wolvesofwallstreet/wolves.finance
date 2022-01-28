@@ -11,6 +11,7 @@ pragma solidity >=0.7.0 <0.8.0;
 import '../../0xerc1155/interfaces/IERC20.sol';
 import '../../0xerc1155/utils/SafeERC20.sol';
 import '../../interfaces/curve/CurveDepositInterfaceAPoly.sol';
+import '../../interfaces/curve/CurveGaugeInterfaceAPoly.sol';
 
 import './CFolioItemHandlerFarm.sol';
 
@@ -30,8 +31,11 @@ contract CFolioItemHandlerSCAPoly is CFolioItemHandlerFarm {
   // Curve pool token contract
   IERC20 public immutable curveToken;
 
-  // Curve 3 stable coin pool deposit contract
+  // Curve AAVE stable coin pool deposit contract on Polygon
   ICurveFiDepositAPoly public immutable curveDeposit;
+
+  // Curve AAVE stable coin pool gauge contract on Polygon
+  ICurveFiGaugeAPoly public immutable curveGauge;
 
   //////////////////////////////////////////////////////////////////////////////
   // Initialization
@@ -47,11 +51,20 @@ contract CFolioItemHandlerSCAPoly is CFolioItemHandlerFarm {
   constructor(
     IAddressRegistry addressRegistry,
     ICurveFiDepositAPoly depositContract,
+    ICurveFiGaugeAPoly gaugeContract,
     address farm
   ) CFolioItemHandlerFarm(addressRegistry, farm) {
     // The pool deposit contract
     curveDeposit = depositContract;
+    // The pool gauge contract
+    curveGauge = gaugeContract;
+    // curve am3 token
     curveToken = IERC20(depositContract.lp_token());
+    // Validate the gauge contract
+    require(
+      depositContract.lp_token() == gaugeContract.lp_token(),
+      'CFIHSC: Invalid gauge'
+    );
   }
 
   /**
@@ -64,8 +77,20 @@ contract CFolioItemHandlerSCAPoly is CFolioItemHandlerFarm {
       IERC20(underlyingCoin).safeApprove(address(curveDeposit), uint256(-1));
     }
 
-    // Approve pool token spending
+    // Approve CurveDeposit to withdraw our curveToken
     curveToken.approve(address(curveDeposit), uint256(-1));
+    // Approve CurveGauge to deposit our curveToken
+    curveToken.approve(address(curveGauge), uint256(-1));
+  }
+
+  /**
+   * @dev One time gauge initializer
+   */
+  function migrateGauge() external onlyAdmin {
+    // Approve CurveGauge to deposit our curveToken
+    curveToken.approve(address(curveGauge), uint256(-1));
+    // Deposit all Curve token into Gauge to earn MATIC and CRV
+    curveGauge.deposit(curveToken.balanceOf(address(this)));
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -123,15 +148,16 @@ contract CFolioItemHandlerSCAPoly is CFolioItemHandlerFarm {
       curveToken.safeTransferFrom(payer, address(this), poolAmount);
     }
 
-    // Validate state
-    uint256 afterBalance = curveToken.balanceOf(address(this));
-    require(afterBalance > beforeBalance, 'CFIFSC: No investment');
+    // SafeMath reverts if subtraction is invalid
+    uint256 amount = curveToken.balanceOf(address(this)).sub(beforeBalance);
+    // Deposit am3Crv pool tokens into the gauge
+    curveGauge.deposit(amount);
 
     // Record assets in Farm contract. They don't earn rewards.
     //
     // NOTE: {addAssets} must only be called from Investment CFolios. This
     // call is allowed without any investment.
-    _cfolioFarm.addAssets(itemCFolio, afterBalance.sub(beforeBalance), 0);
+    _cfolioFarm.addAssets(itemCFolio, amount, 0);
   }
 
   /**
@@ -164,10 +190,18 @@ contract CFolioItemHandlerSCAPoly is CFolioItemHandlerFarm {
     uint256 poolAmount = amounts[3];
     require(poolAmount > 0, 'CFIHSC: pool amount is 0');
 
+    // Record assets in Farm contract. They don't earn rewards.
+    //
+    // NOTE: {removeAssets} must only be called from Investment CFolios.
+    _cfolioFarm.removeAssets(itemCFolio, poolAmount, 0);
+
     // Get single coin and amount
     (uint256 stableCoinIndex, uint256 stableCoinAmount) = _getStableCoinInfo(
       amounts
     );
+
+    // Withdraw am3crv-gauge token
+    curveGauge.withdraw(poolAmount);
 
     // Keep track of how many pool tokens were sent
     uint256 balanceBefore = curveToken.balanceOf(address(this));
@@ -189,20 +223,16 @@ contract CFolioItemHandlerSCAPoly is CFolioItemHandlerFarm {
 
       // Transfer stablecoins back to the sender
       IERC20(underlyingCoin).safeTransfer(_msgSender(), underlyingCoinAmount);
-    } else {
+
+      uint256 balanceAfter = curveToken.balanceOf(address(this));
+      poolAmount = poolAmount.sub(balanceBefore.sub(balanceAfter));
+    }
+
+    if (poolAmount > 0) {
       // No stablecoins were passed, sender is withdrawing pool tokens directly
       // Transfer pool tokens back to the sender
       curveToken.safeTransfer(_msgSender(), poolAmount);
     }
-
-    // Valiate state
-    uint256 balanceAfter = curveToken.balanceOf(address(this));
-    require(balanceAfter < balanceBefore, 'Nothing withdrawn');
-
-    // Record assets in Farm contract. They don't earn rewards.
-    //
-    // NOTE: {removeAssets} must only be called from Investment CFolios.
-    _cfolioFarm.removeAssets(itemCFolio, balanceBefore.sub(balanceAfter), 0);
   }
 
   /**
