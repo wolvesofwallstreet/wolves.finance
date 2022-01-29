@@ -8,7 +8,7 @@
 
 import WalletConnectProvider from '@walletconnect/web3-provider';
 import ERC20Abi from 'abi/contracts/0xerc1155/interfaces/IERC20.sol/IERC20.json';
-import CurveDepositAbi from 'abi/contracts/interfaces/curve/CurveDepositInterface3.sol/ICurveFiDeposit3.json';
+import CurveDepositAbi from 'abi/contracts/interfaces/curve/CurveDepositInterfaceAPoly.sol/ICurveFiDepositAPoly.json';
 import UniV2PairAbi from 'abi/contracts/interfaces/uniswap/IUniswapV2Pair.sol/IUniswapV2Pair.json';
 import BoosterAbi from 'abi/contracts/src/booster/Booster.sol/Booster.json';
 import CFolioItemHandlerAbi from 'abi/contracts/src/cfolio/interfaces/ICFolioItemHandler.sol/ICFolioItemHandler.json';
