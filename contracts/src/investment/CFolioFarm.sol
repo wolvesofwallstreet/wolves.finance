@@ -36,7 +36,7 @@ contract CFolioFarm is ICFolioFarm, Ownable, ERC20Recovery {
   uint256 public override periodFinish = 0;
   uint256 public override rewardsDuration = 14 days;
   uint256 public availableRewards;
-  uint256 public rewardRate;
+  uint256 public override rewardRate;
 
   struct Slot {
     uint256 rewardPerTokenStored;

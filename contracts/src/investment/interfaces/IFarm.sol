@@ -32,6 +32,11 @@ interface IFarm {
   function rewardsDuration() external view returns (uint256);
 
   /**
+   * @dev Return the rewards rate (token per second)
+   */
+  function rewardRate() external view returns (uint256);
+
+  /**
    * @dev Sets a new controller, can only be called by current controller
    */
   function setController(address newController) external;

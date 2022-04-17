@@ -380,6 +380,40 @@ contract Controller is IController, Context, Ownable {
     IFarm(farmAddress).setRewardsDuration(newDuration);
   }
 
+  /**
+   * @dev Set farm rewards in case something needs to be adjusted
+   * during an active period
+   *
+   * @param farmAddress Contract address of farm to change duration
+   * @param reward The new reward amount for the next period
+   *
+   * @notice The reward period will be renewed and will run for the
+   * next IFarm::rewardsDuration
+   */
+  function setFarmRewards(address farmAddress, uint256 reward)
+    external
+    onlyOwner
+  {
+    // Validate parameters
+    require(IFarm(farmAddress).controller() == this, 'Invalid farm (C)');
+
+    // solhint-disable-next-line not-rely-on-time
+    uint256 ts = block.timestamp;
+
+    // Calculate remaining rewards
+    uint256 periodFinish = IFarm(farmAddress).periodFinish();
+    require(ts < periodFinish, 'Only on active farms');
+    uint256 leftOver = periodFinish.sub(ts).mul(
+      IFarm(farmAddress).rewardRate()
+    );
+
+    // Adjust reward so we start the new period with expected amount
+    reward = reward.sub(leftOver);
+
+    // Update state
+    IFarm(farmAddress).notifyRewardAmount(reward);
+  }
+
   //////////////////////////////////////////////////////////////////////////////
   // Utility functions
   //////////////////////////////////////////////////////////////////////////////
