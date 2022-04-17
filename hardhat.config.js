@@ -206,7 +206,7 @@ const config = {
       tags: ['sidechain', 'curve3pool', 'polygon'],
       url: 'https://polygon-rpc.com',
       accounts: TESTNET_ACCOUNTS,
-      gasPrice: 10000000000,
+      gasPrice: 50000000000,
     },
     fantom: {
       tags: ['sidechain', 'fantom', 'curve2pool'],
