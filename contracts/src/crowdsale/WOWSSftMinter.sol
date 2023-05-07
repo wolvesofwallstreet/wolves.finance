@@ -631,7 +631,8 @@ contract WOWSSftMinter is Context, AccessControl, IWOWSSftMinter {
         uint256 cfolioType = _sftContract.getCFolioItemType(tokenId);
         uint256[] memory amounts;
 
-        address cfolio = _sftContract.tokenIdToAddress(tokenId);
+        uint256 sftTokenId = tokenId.toSftTokenId();
+        address cfolio = _sftContract.tokenIdToAddress(sftTokenId);
         require(address(cfolio) != address(0), 'WM: Invalid cfi');
 
         address handler = IWOWSCryptofolio(cfolio).handler();
